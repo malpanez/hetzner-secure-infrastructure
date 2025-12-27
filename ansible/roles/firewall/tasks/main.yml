@@ -2,22 +2,22 @@
 # Firewall Role - UFW Configuration
 
 - name: Install UFW
-  apt:
+  ansible.builtin.apt:
     name: ufw
     state: present
   tags: packages
 
 - name: Set UFW default policies
-  ufw:
+  community.general.ufw:
     direction: "{{ item.direction }}"
     policy: "{{ item.policy }}"
   loop:
-    - { direction: 'incoming', policy: "{{ ufw_default_incoming_policy }}" }
-    - { direction: 'outgoing', policy: "{{ ufw_default_outgoing_policy }}" }
+    - { direction: incoming, policy: "{{ ufw_default_incoming_policy }}" }
+    - { direction: outgoing, policy: "{{ ufw_default_outgoing_policy }}" }
   tags: policy
 
 - name: Configure UFW allowed ports
-  ufw:
+  community.general.ufw:
     rule: "{{ item.rule }}"
     port: "{{ item.port }}"
     proto: "{{ item.proto }}"
@@ -26,6 +26,6 @@
   tags: rules
 
 - name: Enable UFW
-  ufw:
+  community.general.ufw:
     state: enabled
   tags: enable

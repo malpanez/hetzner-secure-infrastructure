@@ -2,14 +2,13 @@
 # OpenBao Role - Handlers
 
 - name: restart openbao
-  systemd:
+  ansible.builtin.systemd:
     name: openbao
     state: restarted
-    daemon_reload: yes
+    daemon_reload: true
   tags: [openbao]
-
 - name: reload openbao
-  systemd:
+  ansible.builtin.systemd:
     name: openbao
     state: reloaded
   tags: [openbao]

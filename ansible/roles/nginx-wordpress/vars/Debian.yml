@@ -8,15 +8,15 @@ nginx_vhost_path: /etc/nginx/sites-available
 nginx_vhost_enabled_path: /etc/nginx/sites-enabled
 
 php_packages:
-  - "php{{ php_version }}-fpm"
-  - "php{{ php_version }}-common"
-  - "php{{ php_version }}-mysql"
-  - "php{{ php_version }}-curl"
-  - "php{{ php_version }}-gd"
-  - "php{{ php_version }}-mbstring"
-  - "php{{ php_version }}-xml"
-  - "php{{ php_version }}-zip"
+  - php{{ php_version }}-fpm
+  - php{{ php_version }}-common
+  - php{{ php_version }}-mysql
+  - php{{ php_version }}-curl
+  - php{{ php_version }}-gd
+  - php{{ php_version }}-mbstring
+  - php{{ php_version }}-xml
+  - php{{ php_version }}-zip
 
-php_fpm_service: "php{{ php_version }}-fpm"
-php_fpm_pool_path: "/etc/php/{{ php_version }}/fpm/pool.d"
-php_ini_path: "/etc/php/{{ php_version }}/fpm/php.ini"
+php_fpm_service: php{{ php_version }}-fpm
+php_fpm_pool_path: /etc/php/{{ php_version }}/fpm/pool.d
+php_ini_path: /etc/php/{{ php_version }}/fpm/php.ini

@@ -22,12 +22,12 @@
 # ========================================
 - name: Apply common security hardening to all servers
   hosts: hetzner
-  become: yes
-  gather_facts: yes
+  become: true
+  gather_facts: true
 
   pre_tasks:
     - name: Display deployment information
-      debug:
+      ansible.builtin.debug:
         msg: |
           ========================================
           Deploying to: {{ inventory_hostname }}
@@ -36,30 +36,26 @@
           IP: {{ ansible_default_ipv4.address | default('N/A') }}
           ========================================
       tags: [always]
-
     - name: Update apt cache (Debian/Ubuntu)
-      apt:
-        update_cache: yes
+      ansible.builtin.apt:
+        update_cache: true
         cache_valid_time: 3600
       when: ansible_os_family == 'Debian'
       tags: [always]
-
     - name: Check OS compatibility
-      assert:
+      ansible.builtin.assert:
         that:
           - ansible_distribution in ['Debian', 'Ubuntu']
           - ansible_distribution_major_version | int >= 12
-        fail_msg: "This playbook requires Debian 12+ or Ubuntu 22.04+"
-        success_msg: "OS compatibility check passed"
+        fail_msg: This playbook requires Debian 12+ or Ubuntu 22.04+
+        success_msg: OS compatibility check passed
       tags: [always]
 
   roles:
     - role: common
       tags: [common, base]
-
     - role: security-hardening
       tags: [security, hardening]
-
     - role: firewall
       tags: [security, firewall]
       when: firewall_enabled | default(true) | bool
@@ -80,7 +76,7 @@
 
   post_tasks:
     - name: Flush handlers
-      meta: flush_handlers
+      ansible.builtin.meta: flush_handlers
       tags: [always]
 
 # ========================================
@@ -88,13 +84,13 @@
 # ========================================
 - name: Deploy OpenBao secrets management
   hosts: secrets_servers
-  become: yes
-  gather_facts: yes
+  become: true
+  gather_facts: true
 
   pre_tasks:
     - name: Check OpenBao deployment status
-      debug:
-        msg: "OpenBao will {{ 'be deployed' if (deploy_openbao | default(true) | bool) else 'NOT be deployed' }} on {{ inventory_hostname }}"
+      ansible.builtin.debug:
+        msg: OpenBao will {{ 'be deployed' if (deploy_openbao | default(true) | bool) else 'NOT be deployed' }} on {{ inventory_hostname }}
       tags: [openbao]
 
   roles:
@@ -104,7 +100,7 @@
 
   post_tasks:
     - name: Display OpenBao information
-      debug:
+      ansible.builtin.debug:
         msg: |
           ========================================
           OpenBao Deployed Successfully
@@ -129,13 +125,13 @@
 # ========================================
 - name: Deploy monitoring stack
   hosts: monitoring_servers
-  become: yes
-  gather_facts: yes
+  become: true
+  gather_facts: true
 
   pre_tasks:
     - name: Check monitoring deployment status
-      debug:
-        msg: "Monitoring will {{ 'be deployed' if (deploy_monitoring | default(true) | bool) else 'NOT be deployed' }} on {{ inventory_hostname }}"
+      ansible.builtin.debug:
+        msg: Monitoring will {{ 'be deployed' if (deploy_monitoring | default(true) | bool) else 'NOT be deployed' }} on {{ inventory_hostname }}
       tags: [monitoring]
 
   roles:
@@ -149,7 +145,7 @@
 
   post_tasks:
     - name: Display monitoring information
-      debug:
+      ansible.builtin.debug:
         msg: |
           ========================================
           Monitoring Stack Deployed
@@ -171,8 +167,8 @@
 # ========================================
 - name: Deploy Node Exporter metrics
   hosts: monitored_servers
-  become: yes
-  gather_facts: yes
+  become: true
+  gather_facts: true
 
   roles:
     - role: node-exporter
@@ -184,19 +180,18 @@
 # ========================================
 - name: Deploy WordPress application stack
   hosts: wordpress_servers
-  become: yes
-  gather_facts: yes
+  become: true
+  gather_facts: true
 
   roles:
     - role: valkey
       tags: [wordpress, redis, cache, performance]
-
     - role: nginx-wordpress
       tags: [wordpress, nginx, webserver]
 
   post_tasks:
     - name: Display WordPress deployment information
-      debug:
+      ansible.builtin.debug:
         msg: |
           ========================================
           WordPress Stack Deployed
@@ -239,29 +234,26 @@
 # ========================================
 - name: Validate complete deployment
   hosts: all
-  become: yes
-  gather_facts: no
+  become: true
+  gather_facts: false
 
   tasks:
     - name: Verify all servers are accessible
-      ping:
+      ansible.builtin.ping:
       tags: [validate]
-
     - name: Gather service facts
-      service_facts:
+      ansible.builtin.service_facts:
       tags: [validate]
-
     - name: Check critical services
-      assert:
+      ansible.builtin.assert:
         that:
           - ansible_facts.services['ssh.service'].state == 'running'
           - ansible_facts.services['ufw.service'].state == 'running' or not (firewall_enabled | default(true))
-        fail_msg: "Critical services not running!"
-        success_msg: "All critical services operational"
+        fail_msg: Critical services not running!
+        success_msg: All critical services operational
       tags: [validate]
-
     - name: Display comprehensive deployment summary
-      debug:
+      ansible.builtin.debug:
         msg: |
           ========================================
           🎉 DEPLOYMENT COMPLETE
@@ -309,11 +301,11 @@
 # ========================================
 - name: Display post-deployment checklist
   hosts: localhost
-  gather_facts: no
+  gather_facts: false
 
   tasks:
     - name: Show post-deployment tasks
-      debug:
+      ansible.builtin.debug:
         msg: |
           ========================================
           📋 POST-DEPLOYMENT CHECKLIST

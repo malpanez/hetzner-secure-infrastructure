@@ -5,11 +5,11 @@
 # Version and Installation
 # ========================================
 
-node_exporter_version: "1.7.0"
-node_exporter_user: "node-exporter"
-node_exporter_group: "node-exporter"
-node_exporter_install_dir: "/usr/local/bin"
-node_exporter_textfile_dir: "/var/lib/node_exporter/textfile_collector"
+node_exporter_version: 1.7.0
+node_exporter_user: node-exporter
+node_exporter_group: node-exporter
+node_exporter_install_dir: /usr/local/bin
+node_exporter_textfile_dir: /var/lib/node_exporter/textfile_collector
 
 # ========================================
 # Network Configuration
@@ -47,8 +47,8 @@ node_exporter_disabled_collectors:
 
 # TLS Configuration (optional)
 node_exporter_tls_enabled: false
-node_exporter_tls_cert_file: "/etc/node_exporter/tls/cert.pem"
-node_exporter_tls_key_file: "/etc/node_exporter/tls/key.pem"
+node_exporter_tls_cert_file: /etc/node_exporter/tls/cert.pem
+node_exporter_tls_key_file: /etc/node_exporter/tls/key.pem
 
 # Basic auth (optional)
 node_exporter_web_basic_auth_enabled: false
@@ -61,7 +61,7 @@ node_exporter_web_basic_auth_users: []
 # ========================================
 
 node_exporter_firewall_allowed_ips:
-  - "127.0.0.1/32"
+  - 127.0.0.1/32
   # Add your Prometheus server IP here
   # - "{{ prometheus_server_ip }}/32"
 
@@ -69,8 +69,8 @@ node_exporter_firewall_allowed_ips:
 # Systemd Service
 # ========================================
 
-node_exporter_systemd_restart: "on-failure"
-node_exporter_systemd_restart_sec: "5s"
+node_exporter_systemd_restart: on-failure
+node_exporter_systemd_restart_sec: 5s
 node_exporter_systemd_limit_nofile: 8192
 
 # ========================================
@@ -82,7 +82,6 @@ node_exporter_extra_args: ""
 
 # Environment variables
 node_exporter_env_vars: {}
-
 # ========================================
 # Custom Metrics Scripts
 # ========================================
@@ -92,9 +91,9 @@ node_exporter_custom_metrics_enabled: true
 
 # Custom metric scripts to deploy
 node_exporter_custom_scripts:
-  - name: "disk_usage"
+  - name: disk_usage
     enabled: true
-  - name: "backup_age"
+  - name: backup_age
     enabled: true
 
 # ========================================

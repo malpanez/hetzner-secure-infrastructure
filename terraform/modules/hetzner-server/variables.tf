@@ -138,3 +138,21 @@ variable "prevent_destroy" {
   type        = bool
   default     = true
 }
+
+variable "firewall_name" {
+  description = "Custom name for the firewall (defaults to server_name-firewall)"
+  type        = string
+  default     = ""
+}
+
+variable "volume_name" {
+  description = "Custom name for the volume (defaults to server_name-volume)"
+  type        = string
+  default     = ""
+}
+
+variable "image_id" {
+  description = "Specific image ID to use (overrides image name)"
+  type        = number
+  default     = null
+}

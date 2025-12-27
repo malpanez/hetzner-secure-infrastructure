@@ -2,55 +2,49 @@
 # OpenBao Role - Main Tasks
 
 - name: Check if deployment is enabled
-  debug:
+  ansible.builtin.debug:
     msg: "OpenBao deployment: {{ deploy_openbao | default(true) }}"
   tags: [openbao]
-
 - name: Skip OpenBao deployment if not enabled
-  meta: end_play
+  ansible.builtin.meta: end_play
   when: deploy_openbao is defined and not deploy_openbao
   tags: [openbao]
-
 - name: Include OS-specific variables
-  include_vars: "{{ ansible_os_family }}.yml"
+  ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
   tags: [openbao]
-
 - name: Install dependencies
-  apt:
+  ansible.builtin.apt:
     name:
       - unzip
       - jq
       - curl
       - openssl
     state: present
-    update_cache: yes
+    update_cache: true
   tags: [openbao, packages]
-
 - name: Create OpenBao system group
-  group:
+  ansible.builtin.group:
     name: "{{ openbao_group }}"
-    system: yes
+    system: true
     state: present
   tags: [openbao, users]
-
 - name: Create OpenBao system user
-  user:
+  ansible.builtin.user:
     name: "{{ openbao_user }}"
     group: "{{ openbao_group }}"
-    system: yes
+    system: true
     shell: /bin/false
     home: "{{ openbao_data_dir }}"
-    createhome: no
+    createhome: false
     state: present
   tags: [openbao, users]
-
 - name: Create OpenBao directories
-  file:
+  ansible.builtin.file:
     path: "{{ item }}"
     state: directory
     owner: "{{ openbao_user }}"
     group: "{{ openbao_group }}"
-    mode: '0750'
+    mode: "0750"
   loop:
     - "{{ openbao_config_dir }}"
     - "{{ openbao_data_dir }}"
@@ -58,48 +52,42 @@
     - "{{ openbao_log_dir }}"
     - "{{ openbao_backup_dir }}"
   tags: [openbao, directories]
-
 - name: Check if OpenBao binary exists
-  stat:
+  ansible.builtin.stat:
     path: "{{ openbao_install_dir }}/bao"
   register: openbao_binary
   tags: [openbao, install]
-
 - name: Download OpenBao binary
-  get_url:
-    url: "https://github.com/openbao/openbao/releases/download/v{{ openbao_version }}/bao_{{ openbao_version }}_linux_amd64.zip"
-    dest: "/tmp/openbao_{{ openbao_version }}.zip"
-    mode: '0644'
+  ansible.builtin.get_url:
+    url: https://github.com/openbao/openbao/releases/download/v{{ openbao_version }}/bao_{{ openbao_version }}_linux_amd64.zip
+    dest: /tmp/openbao_{{ openbao_version }}.zip
+    mode: "0644"
   when: not openbao_binary.stat.exists
   tags: [openbao, install]
-
 - name: Extract OpenBao binary
-  unarchive:
-    src: "/tmp/openbao_{{ openbao_version }}.zip"
+  ansible.builtin.unarchive:
+    src: /tmp/openbao_{{ openbao_version }}.zip
     dest: "{{ openbao_install_dir }}"
-    remote_src: yes
+    remote_src: true
     creates: "{{ openbao_install_dir }}/bao"
   when: not openbao_binary.stat.exists
   tags: [openbao, install]
-
 - name: Set OpenBao binary permissions
-  file:
+  ansible.builtin.file:
     path: "{{ openbao_install_dir }}/bao"
     owner: root
     group: root
-    mode: '0755'
+    mode: "0755"
   tags: [openbao, install]
-
 - name: Set OpenBao binary capabilities
-  capabilities:
+  community.general.capabilities:
     path: "{{ openbao_install_dir }}/bao"
     capability: cap_ipc_lock=+ep
     state: present
   when: not openbao_disable_mlock
   tags: [openbao, install]
-
 - name: Generate self-signed TLS certificate
-  command: >
+  ansible.builtin.command: >
     openssl req -x509 -newkey rsa:4096
     -keyout {{ openbao_tls_key_file }}
     -out {{ openbao_tls_cert_file }}
@@ -109,88 +97,79 @@
     creates: "{{ openbao_tls_cert_file }}"
   when: openbao_tls_enabled and openbao_tls_self_signed
   tags: [openbao, tls]
-
 - name: Set TLS certificate permissions
-  file:
+  ansible.builtin.file:
     path: "{{ item }}"
     owner: "{{ openbao_user }}"
     group: "{{ openbao_group }}"
-    mode: '0600'
+    mode: "0600"
   loop:
     - "{{ openbao_tls_cert_file }}"
     - "{{ openbao_tls_key_file }}"
   when: openbao_tls_enabled
   tags: [openbao, tls]
-
 - name: Deploy OpenBao configuration
-  template:
+  ansible.builtin.template:
     src: config.hcl.j2
     dest: "{{ openbao_config_dir }}/config.hcl"
     owner: "{{ openbao_user }}"
     group: "{{ openbao_group }}"
-    mode: '0640'
+    mode: "0640"
   notify: restart openbao
   tags: [openbao, config]
-
 - name: Deploy OpenBao systemd service
-  template:
+  ansible.builtin.template:
     src: openbao.service.j2
     dest: /etc/systemd/system/openbao.service
     owner: root
     group: root
-    mode: '0644'
+    mode: "0644"
   notify: restart openbao
   tags: [openbao, systemd]
-
 - name: Enable and start OpenBao service
-  systemd:
+  ansible.builtin.systemd:
     name: openbao
-    enabled: yes
+    enabled: true
     state: started
-    daemon_reload: yes
+    daemon_reload: true
   tags: [openbao, service]
-
 - name: Configure UFW firewall for OpenBao
-  ufw:
+  community.general.ufw:
     rule: allow
     port: "8200"
     proto: tcp
     from_ip: "{{ item }}"
-    comment: "OpenBao API"
+    comment: OpenBao API
   loop: "{{ openbao_firewall_allowed_ips }}"
   when: openbao_firewall_enabled
   tags: [openbao, firewall]
-
 - name: Wait for OpenBao to start
-  wait_for:
+  ansible.builtin.wait_for:
     port: 8200
     delay: 5
     timeout: 60
   tags: [openbao, service]
-
 - name: Deploy backup script
-  template:
+  ansible.builtin.template:
     src: backup-openbao.sh.j2
     dest: /usr/local/bin/backup-openbao.sh
     owner: root
     group: root
-    mode: '0750'
+    mode: "0750"
   when: openbao_backup_enabled
   tags: [openbao, backup]
-
 - name: Configure backup cron job
-  cron:
-    name: "OpenBao backup"
+  ansible.builtin.cron:
+    name: OpenBao backup
     minute: "0"
     hour: "2"
-    job: "/usr/local/bin/backup-openbao.sh >> /var/log/openbao/backup.log 2>&1"
+    job: /usr/local/bin/backup-openbao.sh >> /var/log/openbao/backup.log 2>&1
     user: root
     state: present
   when: openbao_backup_enabled
   tags: [openbao, backup]
-
 - name: Display post-installation instructions
-  debug:
+  ansible.builtin.debug:
     msg: |
       ========================================
       OpenBao Installation Complete

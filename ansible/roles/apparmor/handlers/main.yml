@@ -1,10 +1,8 @@
 ---
 - name: reload apparmor profiles
-  command: systemctl reload apparmor
-
+  ansible.builtin.command: systemctl reload apparmor
 - name: update grub
-  command: update-grub
-
+  ansible.builtin.command: update-grub
 - name: reboot required
-  set_fact:
+  ansible.builtin.set_fact:
     ansible_reboot_required: true

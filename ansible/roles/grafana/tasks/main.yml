@@ -2,15 +2,13 @@
 # Grafana Role - Main Tasks
 
 - name: Check if deployment is enabled
-  debug:
+  ansible.builtin.debug:
     msg: "Grafana deployment: {{ deploy_grafana | default(true) }}"
   tags: [grafana]
-
 - name: Skip Grafana deployment if not enabled
-  meta: end_play
+  ansible.builtin.meta: end_play
   when: deploy_grafana is defined and not deploy_grafana
   tags: [grafana]
-
 # ========================================
 # APT Installation Method
 # ========================================
@@ -18,34 +16,31 @@
 - name: Install Grafana from APT repository
   block:
     - name: Install dependencies
-      apt:
+      ansible.builtin.apt:
         name:
           - apt-transport-https
           - software-properties-common
           - wget
           - gnupg
         state: present
-        update_cache: yes
+        update_cache: true
       tags: [grafana, packages]
-
     - name: Add Grafana GPG key
-      apt_key:
+      ansible.builtin.apt_key:
         url: https://apt.grafana.com/gpg.key
         state: present
       tags: [grafana, packages]
-
     - name: Add Grafana APT repository
-      apt_repository:
-        repo: "deb https://apt.grafana.com stable main"
+      ansible.builtin.apt_repository:
+        repo: deb https://apt.grafana.com stable main
         state: present
         filename: grafana
       tags: [grafana, packages]
-
     - name: Install Grafana
-      apt:
-        name: "grafana{% if grafana_version != 'latest' %}={{ grafana_version }}{% endif %}"
+      ansible.builtin.apt:
+        name: grafana{% if grafana_version != 'latest' %}={{ grafana_version }}{% endif %}
         state: present
-        update_cache: yes
+        update_cache: true
       tags: [grafana, packages]
 
   when: grafana_install_method == 'apt'
@@ -55,12 +50,12 @@
 # ========================================
 
 - name: Create Grafana directories
-  file:
+  ansible.builtin.file:
     path: "{{ item }}"
     state: directory
     owner: "{{ grafana_user }}"
     group: "{{ grafana_group }}"
-    mode: '0755'
+    mode: "0755"
   loop:
     - "{{ grafana_data_dir }}"
     - "{{ grafana_log_dir }}"
@@ -72,154 +67,142 @@
     - "{{ grafana_config_dir }}/provisioning/notifiers"
     - "{{ grafana_config_dir }}/provisioning/plugins"
   tags: [grafana, directories]
-
 # ========================================
 # Configuration
 # ========================================
 
 - name: Deploy Grafana configuration
-  template:
+  ansible.builtin.template:
     src: grafana.ini.j2
     dest: "{{ grafana_config_dir }}/grafana.ini"
     owner: "{{ grafana_user }}"
     group: "{{ grafana_group }}"
-    mode: '0640'
+    mode: "0640"
   notify: restart grafana
   tags: [grafana, config]
-
 # ========================================
 # Provisioning - Data Sources
 # ========================================
 
 - name: Provision Grafana datasources
-  template:
+  ansible.builtin.template:
     src: datasources.yml.j2
     dest: "{{ grafana_config_dir }}/provisioning/datasources/ansible.yml"
     owner: "{{ grafana_user }}"
     group: "{{ grafana_group }}"
-    mode: '0640'
+    mode: "0640"
   notify: restart grafana
   tags: [grafana, datasources]
-
 # ========================================
 # Provisioning - Dashboards
 # ========================================
 
 - name: Provision dashboard configuration
-  template:
+  ansible.builtin.template:
     src: dashboards.yml.j2
     dest: "{{ grafana_config_dir }}/provisioning/dashboards/ansible.yml"
     owner: "{{ grafana_user }}"
     group: "{{ grafana_group }}"
-    mode: '0640'
+    mode: "0640"
   when: grafana_dashboards_enabled
   notify: restart grafana
   tags: [grafana, dashboards]
-
 - name: Download default dashboards
-  get_url:
-    url: "https://grafana.com/api/dashboards/{{ item.dashboard_id }}/revisions/{{ item.dashboard_revision }}/download"
+  ansible.builtin.get_url:
+    url: https://grafana.com/api/dashboards/{{ item.dashboard_id }}/revisions/{{ item.dashboard_revision }}/download
     dest: "{{ grafana_dashboards_dir }}/{{ item.name }}.json"
     owner: "{{ grafana_user }}"
     group: "{{ grafana_group }}"
-    mode: '0644'
+    mode: "0644"
   loop: "{{ grafana_default_dashboards }}"
   when:
     - grafana_dashboards_enabled
     - item.enabled | default(true)
   tags: [grafana, dashboards]
-
 # ========================================
 # Plugins
 # ========================================
 
 - name: Install Grafana plugins
-  command: "grafana-cli plugins install {{ item }}"
+  ansible.builtin.command: grafana-cli plugins install {{ item }}
   args:
     creates: "{{ grafana_plugins_dir }}/{{ item }}"
   loop: "{{ grafana_plugins }}"
   notify: restart grafana
   tags: [grafana, plugins]
-
 # ========================================
 # Service Management
 # ========================================
 
 - name: Enable and start Grafana service
-  systemd:
+  ansible.builtin.systemd:
     name: grafana-server
-    enabled: yes
+    enabled: true
     state: started
-    daemon_reload: yes
+    daemon_reload: true
   tags: [grafana, service]
-
 # ========================================
 # Firewall Configuration
 # ========================================
 
 - name: Allow Grafana port in firewall
-  ufw:
+  community.general.ufw:
     rule: allow
     port: "{{ grafana_port }}"
     proto: tcp
     src: "{{ item }}"
-    comment: "Grafana Web UI"
+    comment: Grafana Web UI
   loop: "{{ grafana_firewall_allowed_ips }}"
   when: firewall_enabled | default(true)
   tags: [grafana, firewall]
-
 # ========================================
 # Backup Configuration
 # ========================================
 
 - name: Deploy Grafana backup script
-  template:
+  ansible.builtin.template:
     src: backup-grafana.sh.j2
     dest: /usr/local/bin/backup-grafana
     owner: root
     group: root
-    mode: '0755'
+    mode: "0755"
   when: grafana_backup_enabled
   tags: [grafana, backup]
-
 - name: Create Grafana backup cron job
-  cron:
-    name: "Grafana backup"
+  ansible.builtin.cron:
+    name: Grafana backup
     minute: "{{ grafana_backup_schedule.split()[0] }}"
     hour: "{{ grafana_backup_schedule.split()[1] }}"
     day: "{{ grafana_backup_schedule.split()[2] }}"
     month: "{{ grafana_backup_schedule.split()[3] }}"
     weekday: "{{ grafana_backup_schedule.split()[4] }}"
     user: root
-    job: "/usr/local/bin/backup-grafana > /dev/null 2>&1"
+    job: /usr/local/bin/backup-grafana > /dev/null 2>&1
     state: present
   when: grafana_backup_enabled
   tags: [grafana, backup]
-
 # ========================================
 # Validation
 # ========================================
 
 - name: Wait for Grafana to be ready
-  uri:
-    url: "http://localhost:{{ grafana_port }}/api/health"
+  ansible.builtin.uri:
+    url: http://localhost:{{ grafana_port }}/api/health
     status_code: 200
   register: result
   until: result.status == 200
   retries: 12
   delay: 5
   tags: [grafana, validate]
-
 - name: Get Grafana version
-  uri:
-    url: "http://localhost:{{ grafana_port }}/api/health"
+  ansible.builtin.uri:
+    url: http://localhost:{{ grafana_port }}/api/health
     method: GET
-    return_content: yes
+    return_content: true
   register: grafana_health
   tags: [grafana, validate]
-
 - name: Display Grafana status
-  debug:
+  ansible.builtin.debug:
     msg: |
       Grafana deployed successfully!
       - Web UI: http://{{ ansible_host }}:{{ grafana_port }}

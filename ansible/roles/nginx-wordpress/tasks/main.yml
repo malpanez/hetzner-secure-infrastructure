@@ -3,17 +3,15 @@
 # Optimized for WordPress + Tutor LMS on Debian 13
 
 - name: Include OS-specific variables
-  include_vars: "{{ ansible_os_family }}.yml"
+  ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
   tags: [nginx, wordpress]
-
 - name: Update apt cache
-  apt:
-    update_cache: yes
+  ansible.builtin.apt:
+    update_cache: true
     cache_valid_time: 3600
   tags: [nginx, wordpress]
-
 - name: Install Nginx and dependencies
-  apt:
+  ansible.builtin.apt:
     name:
       - nginx
       - nginx-extras # Includes additional modules (brotli, etc.)
@@ -21,140 +19,125 @@
       - python3-certbot-nginx # For Let's Encrypt
     state: present
   tags: [nginx, wordpress]
-
 - name: Install PHP and extensions
-  apt:
+  ansible.builtin.apt:
     name:
-      - "php{{ php_version }}-fpm"
-      - "php{{ php_version }}-mysql"
-      - "php{{ php_version }}-curl"
-      - "php{{ php_version }}-gd"
-      - "php{{ php_version }}-mbstring"
-      - "php{{ php_version }}-xml"
-      - "php{{ php_version }}-zip"
-      - "php{{ php_version }}-intl"
-      - "php{{ php_version }}-bcmath"
-      - "php{{ php_version }}-imagick"
-      - "php{{ php_version }}-redis" # For object caching
-      - "php{{ php_version }}-opcache" # PHP opcode caching
+      - php{{ php_version }}-fpm
+      - php{{ php_version }}-mysql
+      - php{{ php_version }}-curl
+      - php{{ php_version }}-gd
+      - php{{ php_version }}-mbstring
+      - php{{ php_version }}-xml
+      - php{{ php_version }}-zip
+      - php{{ php_version }}-intl
+      - php{{ php_version }}-bcmath
+      - php{{ php_version }}-imagick
+      - php{{ php_version }}-redis # For object caching
+      - php{{ php_version }}-opcache # PHP opcode caching
     state: present
   tags: [nginx, wordpress, php]
-
 - name: Ensure Nginx service is enabled
-  systemd:
+  ansible.builtin.systemd:
     name: nginx
-    enabled: yes
+    enabled: true
   tags: [nginx]
-
 - name: Ensure PHP-FPM service is enabled
-  systemd:
-    name: "php{{ php_version }}-fpm"
-    enabled: yes
+  ansible.builtin.systemd:
+    name: php{{ php_version }}-fpm
+    enabled: true
   tags: [php]
-
 - name: Create Nginx cache directory
-  file:
+  ansible.builtin.file:
     path: "{{ nginx_fastcgi_cache_path }}"
     state: directory
     owner: "{{ wordpress_user }}"
     group: "{{ wordpress_group }}"
-    mode: '0755'
+    mode: "0755"
   when: nginx_fastcgi_cache_enabled
   tags: [nginx, cache]
-
 - name: Generate Diffie-Hellman parameters (may take a while)
-  openssl_dhparam:
+  community.crypto.openssl_dhparam:
     path: /etc/nginx/dhparam.pem
     size: 2048
   notify: reload nginx
   tags: [nginx, ssl]
-
 - name: Create Let's Encrypt webroot directory
-  file:
+  ansible.builtin.file:
     path: /var/www/letsencrypt
     state: directory
     owner: "{{ wordpress_user }}"
     group: "{{ wordpress_group }}"
-    mode: '0755'
+    mode: "0755"
   tags: [nginx, ssl]
-
 - name: Backup original nginx.conf
-  copy:
+  ansible.builtin.copy:
     src: /etc/nginx/nginx.conf
     dest: /etc/nginx/nginx.conf.backup
-    remote_src: yes
-    force: no
+    remote_src: true
+    force: false
   when: nginx_backup_config
   tags: [nginx, backup]
-
 - name: Deploy optimized nginx.conf
-  template:
+  ansible.builtin.template:
     src: nginx.conf.j2
     dest: /etc/nginx/nginx.conf
     owner: root
     group: root
-    mode: '0644'
-    validate: 'nginx -t -c %s'
+    mode: "0644"
+    validate: nginx -t -c %s
   notify: reload nginx
   tags: [nginx, config]
-
 - name: Create WordPress document root
-  file:
+  ansible.builtin.file:
     path: "{{ wordpress_root }}"
     state: directory
     owner: "{{ wordpress_user }}"
     group: "{{ wordpress_group }}"
-    mode: '0755'
+    mode: "0755"
   tags: [wordpress]
-
 - name: Deploy WordPress site configuration
-  template:
+  ansible.builtin.template:
     src: wordpress.conf.j2
-    dest: "/etc/nginx/sites-available/{{ wordpress_domain }}.conf"
+    dest: /etc/nginx/sites-available/{{ wordpress_domain }}.conf
     owner: root
     group: root
-    mode: '0644'
-    validate: 'nginx -t'
+    mode: "0644"
+    validate: nginx -t
   notify: reload nginx
   tags: [nginx, wordpress, config]
-
 - name: Enable WordPress site
-  file:
-    src: "/etc/nginx/sites-available/{{ wordpress_domain }}.conf"
-    dest: "/etc/nginx/sites-enabled/{{ wordpress_domain }}.conf"
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/{{ wordpress_domain }}.conf
+    dest: /etc/nginx/sites-enabled/{{ wordpress_domain }}.conf
     state: link
   notify: reload nginx
   tags: [nginx, wordpress]
-
 - name: Disable default Nginx site
-  file:
+  ansible.builtin.file:
     path: /etc/nginx/sites-enabled/default
     state: absent
   notify: reload nginx
   tags: [nginx]
-
 - name: Configure PHP-FPM pool
-  template:
+  ansible.builtin.template:
     src: php-fpm-pool.conf.j2
-    dest: "/etc/php/{{ php_version }}/fpm/pool.d/{{ wordpress_domain }}.conf"
+    dest: /etc/php/{{ php_version }}/fpm/pool.d/{{ wordpress_domain }}.conf
     owner: root
     group: root
-    mode: '0644'
+    mode: "0644"
   notify: restart php-fpm
   tags: [php, config]
-
 - name: Configure PHP ini settings
-  template:
+  ansible.builtin.template:
     src: php.ini.j2
-    dest: "/etc/php/{{ php_version }}/fpm/conf.d/99-wordpress.ini"
+    dest: /etc/php/{{ php_version }}/fpm/conf.d/99-wordpress.ini
     owner: root
     group: root
-    mode: '0644'
+    mode: "0644"
   notify: restart php-fpm
   tags: [php, config]
-
 - name: Create maintenance page
-  copy:
+  ansible.builtin.copy:
     dest: "{{ nginx_maintenance_page }}"
     content: |
       <!DOCTYPE html>
@@ -173,11 +156,10 @@
       </html>
     owner: "{{ wordpress_user }}"
     group: "{{ wordpress_group }}"
-    mode: '0644'
+    mode: "0644"
   tags: [nginx, maintenance]
-
 - name: Set up logrotate for Nginx logs
-  copy:
+  ansible.builtin.copy:
     dest: /etc/logrotate.d/nginx-wordpress
     content: |
       {{ nginx_access_log }} {{ nginx_error_log }} {
@@ -195,23 +177,20 @@
       }
     owner: root
     group: root
-    mode: '0644'
+    mode: "0644"
   tags: [nginx, logging]
-
 - name: Ensure Nginx is running
-  systemd:
+  ansible.builtin.systemd:
     name: nginx
     state: started
   tags: [nginx]
-
 - name: Ensure PHP-FPM is running
-  systemd:
-    name: "php{{ php_version }}-fpm"
+  ansible.builtin.systemd:
+    name: php{{ php_version }}-fpm
     state: started
   tags: [php]
-
 - name: Display SSL certificate instructions
-  debug:
+  ansible.builtin.debug:
     msg: |
       ========================================
       NEXT STEPS - SSL Certificate
@@ -229,9 +208,8 @@
 
       ========================================
   tags: [nginx, ssl, info]
-
 - name: Display WordPress installation instructions
-  debug:
+  ansible.builtin.debug:
     msg: |
       ========================================
       WordPress Installation

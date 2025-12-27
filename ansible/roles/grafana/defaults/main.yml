@@ -5,14 +5,14 @@
 # Version and Installation
 # ========================================
 
-grafana_version: "10.2.3"
-grafana_user: "grafana"
-grafana_group: "grafana"
-grafana_install_method: "apt"  # apt or binary
-grafana_config_dir: "/etc/grafana"
-grafana_data_dir: "/var/lib/grafana"
-grafana_log_dir: "/var/log/grafana"
-grafana_plugins_dir: "/var/lib/grafana/plugins"
+grafana_version: 10.2.3
+grafana_user: grafana
+grafana_group: grafana
+grafana_install_method: apt # apt or binary
+grafana_config_dir: /etc/grafana
+grafana_data_dir: /var/lib/grafana
+grafana_log_dir: /var/log/grafana
+grafana_plugins_dir: /var/lib/grafana/plugins
 
 # ========================================
 # Network Configuration
@@ -21,14 +21,14 @@ grafana_plugins_dir: "/var/lib/grafana/plugins"
 grafana_listen_address: "0.0.0.0"
 grafana_port: 3000
 grafana_domain: "{{ ansible_host }}"
-grafana_root_url: "http://{{ grafana_domain }}:{{ grafana_port }}"
+grafana_root_url: http://{{ grafana_domain }}:{{ grafana_port }}
 grafana_serve_from_sub_path: false
 
 # ========================================
 # Security
 # ========================================
 
-grafana_admin_user: "admin"
+grafana_admin_user: admin
 grafana_admin_password: "{{ lookup('password', '/dev/null length=16 chars=ascii_letters,digits') }}"
 grafana_secret_key: "{{ lookup('password', '/dev/null length=32 chars=ascii_letters,digits') }}"
 
@@ -36,12 +36,12 @@ grafana_secret_key: "{{ lookup('password', '/dev/null length=32 chars=ascii_lett
 grafana_allow_sign_up: false
 grafana_allow_org_create: false
 grafana_auto_assign_org: true
-grafana_auto_assign_org_role: "Viewer"
+grafana_auto_assign_org_role: Viewer
 
 # Session security
 grafana_cookie_secure: false
-grafana_cookie_samesite: "lax"
-grafana_session_life_time: 86400  # 24 hours
+grafana_cookie_samesite: lax
+grafana_session_life_time: 86400 # 24 hours
 
 # ========================================
 # Authentication
@@ -60,10 +60,10 @@ grafana_auth_ldap_enabled: false
 # Database
 # ========================================
 
-grafana_database_type: "sqlite3"
-grafana_database_host: "127.0.0.1:3306"
-grafana_database_name: "grafana"
-grafana_database_user: "grafana"
+grafana_database_type: sqlite3
+grafana_database_host: 127.0.0.1:3306
+grafana_database_name: grafana
+grafana_database_user: grafana
 grafana_database_password: ""
 grafana_database_path: "{{ grafana_data_dir }}/grafana.db"
 
@@ -72,16 +72,16 @@ grafana_database_path: "{{ grafana_data_dir }}/grafana.db"
 # ========================================
 
 grafana_datasources:
-  - name: "Prometheus"
-    type: "prometheus"
-    access: "proxy"
-    url: "http://localhost:9090"
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://localhost:9090
     is_default: true
     editable: true
     json_data:
-      timeInterval: "15s"
-      queryTimeout: "60s"
-      httpMethod: "POST"
+      timeInterval: 15s
+      queryTimeout: 60s
+      httpMethod: POST
 
 # ========================================
 # Dashboards
@@ -89,11 +89,11 @@ grafana_datasources:
 
 grafana_dashboards_enabled: true
 grafana_default_dashboards:
-  - name: "node-exporter-full"
+  - name: node-exporter-full
     enabled: true
     dashboard_id: 1860
     dashboard_revision: 31
-  - name: "prometheus-stats"
+  - name: prometheus-stats
     enabled: true
     dashboard_id: 3662
     dashboard_revision: 2
@@ -101,7 +101,6 @@ grafana_default_dashboards:
 # Custom dashboard directories
 grafana_dashboards_dir: "{{ grafana_data_dir }}/dashboards"
 grafana_dashboard_providers: []
-
 # ========================================
 # Plugins
 # ========================================
@@ -115,11 +114,11 @@ grafana_plugins:
 # ========================================
 
 grafana_smtp_enabled: false
-grafana_smtp_host: "localhost:25"
+grafana_smtp_host: localhost:25
 grafana_smtp_user: ""
 grafana_smtp_password: ""
-grafana_smtp_from_address: "admin@grafana.localhost"
-grafana_smtp_from_name: "Grafana"
+grafana_smtp_from_address: admin@grafana.localhost
+grafana_smtp_from_name: Grafana
 grafana_smtp_skip_verify: false
 
 # ========================================
@@ -128,16 +127,16 @@ grafana_smtp_skip_verify: false
 
 grafana_alerting_enabled: true
 grafana_alerting_execute_alerts: true
-grafana_alerting_error_or_timeout: "alerting"
-grafana_alerting_nodata_or_nullvalues: "no_data"
+grafana_alerting_error_or_timeout: alerting
+grafana_alerting_nodata_or_nullvalues: no_data
 grafana_alerting_concurrent_render_limit: 5
 
 # ========================================
 # Logging
 # ========================================
 
-grafana_log_mode: "console file"
-grafana_log_level: "info"
+grafana_log_mode: console file
+grafana_log_level: info
 grafana_log_max_days: 7
 
 # ========================================
@@ -167,7 +166,7 @@ grafana_security_x_xss_protection: true
 # ========================================
 
 grafana_firewall_allowed_ips:
-  - "127.0.0.1/32"
+  - 127.0.0.1/32
   # Add your IP addresses here
   # - "203.0.113.0/24"
 
@@ -176,9 +175,9 @@ grafana_firewall_allowed_ips:
 # ========================================
 
 grafana_backup_enabled: true
-grafana_backup_dir: "/var/backups/grafana"
+grafana_backup_dir: /var/backups/grafana
 grafana_backup_retention_days: 7
-grafana_backup_schedule: "0 3 * * *"  # 3 AM daily
+grafana_backup_schedule: "0 3 * * *" # 3 AM daily
 
 # ========================================
 # Deployment Control
@@ -193,15 +192,15 @@ deploy_grafana: true
 grafana_analytics_reporting_enabled: false
 grafana_analytics_check_for_updates: false
 grafana_snapshots_external_enabled: false
-grafana_users_default_theme: "dark"
+grafana_users_default_theme: dark
 
 # Server settings
-grafana_server_protocol: "http"
+grafana_server_protocol: http
 grafana_server_http_addr: "{{ grafana_listen_address }}"
 grafana_server_http_port: "{{ grafana_port }}"
 grafana_server_domain: "{{ grafana_domain }}"
 grafana_server_root_url: "{{ grafana_root_url }}"
-grafana_server_static_root_path: "public"
+grafana_server_static_root_path: public
 grafana_server_enable_gzip: true
 grafana_server_cert_file: ""
 grafana_server_cert_key: ""

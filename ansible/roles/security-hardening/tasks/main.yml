@@ -2,7 +2,7 @@
 # Security Hardening Role
 
 - name: Install security packages
-  apt:
+  ansible.builtin.apt:
     name:
       - unattended-upgrades
       - apt-listchanges
@@ -13,146 +13,141 @@
   tags: packages
 
 - name: Configure sysctl parameters
-  sysctl:
+  ansible.posix.sysctl:
     name: "{{ item.key }}"
     value: "{{ item.value }}"
-    sysctl_set: yes
+    sysctl_set: true
     state: present
-    reload: yes
+    reload: true
   loop: "{{ sysctl_config | dict2items }}"
   when: kernel_hardening_enabled | default(true)
   tags: sysctl
 
 - name: Deploy sysctl configuration file
-  template:
+  ansible.builtin.template:
     src: 99-hardening.conf.j2
     dest: /etc/sysctl.d/99-hardening.conf
     owner: root
     group: root
-    mode: '0644'
+    mode: "0644"
   notify: reload sysctl
   tags: sysctl
 
 - name: Configure unattended-upgrades
-  template:
+  ansible.builtin.template:
     src: 50unattended-upgrades.j2
     dest: /etc/apt/apt.conf.d/50unattended-upgrades
     owner: root
     group: root
-    mode: '0644'
+    mode: "0644"
   when: unattended_upgrades_enabled | default(true)
   tags: auto-updates
 
 - name: Enable unattended-upgrades
-  template:
+  ansible.builtin.template:
     src: 20auto-upgrades.j2
     dest: /etc/apt/apt.conf.d/20auto-upgrades
     owner: root
     group: root
-    mode: '0644'
+    mode: "0644"
   when: unattended_upgrades_enabled | default(true)
   tags: auto-updates
 
 - name: Secure shared memory
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/fstab
-    line: "tmpfs /run/shm tmpfs defaults,noexec,nosuid 0 0"
+    line: tmpfs /run/shm tmpfs defaults,noexec,nosuid 0 0
     state: present
   tags: filesystem
 
 - name: Disable core dumps
   block:
     - name: Disable core dumps via limits
-      pam_limits:
-        domain: '*'
+      community.general.pam_limits:
+        domain: "*"
         limit_type: hard
         limit_item: core
-        value: '0'
-    
+        value: "0"
+
     - name: Disable core dumps via sysctl
-      sysctl:
+      ansible.posix.sysctl:
         name: fs.suid_dumpable
-        value: '0'
+        value: "0"
         state: present
-        reload: yes
+        reload: true
   tags: security
 
 - name: Configure password quality requirements
-  apt:
+  ansible.builtin.apt:
     name: libpam-pwquality
     state: present
   tags: [security, password]
-
 - name: Set password quality policy
-  template:
+  ansible.builtin.template:
     src: pwquality.conf.j2
     dest: /etc/security/pwquality.conf
     owner: root
     group: root
-    mode: '0644'
+    mode: "0644"
   tags: [security, password]
-
 - name: Disable USB storage (optional)
-  copy:
+  ansible.builtin.copy:
     content: |
       # Disable USB storage
       blacklist usb-storage
     dest: /etc/modprobe.d/disable-usb-storage.conf
     owner: root
     group: root
-    mode: '0644'
+    mode: "0644"
   when: disable_usb_storage | default(false)
   tags: [security, usb]
-
 - name: Configure login.defs
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/login.defs
     regexp: "{{ item.regexp }}"
     line: "{{ item.line }}"
     state: present
   loop:
-    - { regexp: '^PASS_MAX_DAYS', line: 'PASS_MAX_DAYS   90' }
-    - { regexp: '^PASS_MIN_DAYS', line: 'PASS_MIN_DAYS   1' }
-    - { regexp: '^PASS_WARN_AGE', line: 'PASS_WARN_AGE   7' }
-    - { regexp: '^UMASK', line: 'UMASK           027' }
+    - { regexp: ^PASS_MAX_DAYS, line: PASS_MAX_DAYS   90 }
+    - { regexp: ^PASS_MIN_DAYS, line: PASS_MIN_DAYS   1 }
+    - { regexp: ^PASS_WARN_AGE, line: PASS_WARN_AGE   7 }
+    - { regexp: ^UMASK, line: UMASK           027 }
   tags: [security, password]
-
 - name: Restrict cron to authorized users
   block:
     - name: Create cron.allow
-      file:
+      ansible.builtin.file:
         path: /etc/cron.allow
         state: touch
         owner: root
         group: root
-        mode: '0640'
-    
+        mode: "0640"
+
     - name: Add admin user to cron.allow
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: /etc/cron.allow
         line: "{{ admin_username }}"
         state: present
-    
+
     - name: Remove cron.deny if exists
-      file:
+      ansible.builtin.file:
         path: /etc/cron.deny
         state: absent
   tags: [security, cron]
-
 - name: Set permissions on sensitive files
-  file:
+  ansible.builtin.file:
     path: "{{ item }}"
-    mode: '0600'
+    mode: "0600"
     owner: root
     group: root
   loop:
     - /etc/crontab
     - /etc/ssh/sshd_config
-  ignore_errors: yes
+  ignore_errors: true
   tags: permissions
 
 - name: Initialize AIDE database (this may take a while)
-  shell: aideinit && mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db
+  ansible.builtin.shell: aideinit && mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db
   args:
     creates: /var/lib/aide/aide.db
   when: aide_enabled | default(false)

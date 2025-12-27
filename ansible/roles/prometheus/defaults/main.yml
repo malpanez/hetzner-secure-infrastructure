@@ -7,13 +7,13 @@
 # Version and Installation
 # ========================================
 
-prometheus_version: "2.48.0"
-prometheus_user: "prometheus"
-prometheus_group: "prometheus"
-prometheus_install_dir: "/opt/prometheus"
-prometheus_config_dir: "/etc/prometheus"
-prometheus_data_dir: "/var/lib/prometheus"
-prometheus_log_dir: "/var/log/prometheus"
+prometheus_version: 2.48.0
+prometheus_user: prometheus
+prometheus_group: prometheus
+prometheus_install_dir: /opt/prometheus
+prometheus_config_dir: /etc/prometheus
+prometheus_data_dir: /var/lib/prometheus
+prometheus_log_dir: /var/log/prometheus
 
 # ========================================
 # Network Configuration
@@ -21,22 +21,22 @@ prometheus_log_dir: "/var/log/prometheus"
 
 prometheus_listen_address: "0.0.0.0"
 prometheus_port: 9090
-prometheus_external_url: "http://{{ ansible_host }}:{{ prometheus_port }}"
+prometheus_external_url: http://{{ ansible_host }}:{{ prometheus_port }}
 
 # ========================================
 # Data Retention
 # ========================================
 
-prometheus_retention_time: "30d"
-prometheus_retention_size: "0"  # 0 = unlimited
+prometheus_retention_time: 30d
+prometheus_retention_size: "0" # 0 = unlimited
 
 # ========================================
 # Scrape Configuration
 # ========================================
 
-prometheus_global_scrape_interval: "15s"
-prometheus_global_scrape_timeout: "10s"
-prometheus_global_evaluation_interval: "15s"
+prometheus_global_scrape_interval: 15s
+prometheus_global_scrape_timeout: 10s
+prometheus_global_evaluation_interval: 15s
 
 # ========================================
 # Scrape Targets
@@ -45,7 +45,6 @@ prometheus_global_evaluation_interval: "15s"
 # Targets are automatically generated from inventory groups
 # Override these if you need custom targets
 prometheus_scrape_targets: []
-
 # Static job configurations
 prometheus_static_jobs: []
 #  - job_name: 'custom-app'
@@ -59,7 +58,7 @@ prometheus_static_jobs: []
 # ========================================
 
 prometheus_alertmanager_enabled: false
-prometheus_alertmanager_url: "http://localhost:9093"
+prometheus_alertmanager_url: http://localhost:9093
 
 # ========================================
 # Remote Write/Read
@@ -73,7 +72,6 @@ prometheus_remote_write: []
 #      password: "pass"
 
 prometheus_remote_read: []
-
 # ========================================
 # Storage Configuration
 # ========================================
@@ -105,7 +103,7 @@ prometheus_tls_key_file: "{{ prometheus_config_dir }}/tls/key.pem"
 # ========================================
 
 prometheus_firewall_allowed_ips:
-  - "127.0.0.1/32"
+  - 127.0.0.1/32
   # Add your Grafana server IP here
   # - "{{ grafana_server_ip }}/32"
 
@@ -113,8 +111,8 @@ prometheus_firewall_allowed_ips:
 # Systemd Service
 # ========================================
 
-prometheus_systemd_restart: "on-failure"
-prometheus_systemd_restart_sec: "5s"
+prometheus_systemd_restart: on-failure
+prometheus_systemd_restart_sec: 5s
 prometheus_systemd_limit_nofile: 65536
 
 # ========================================
@@ -122,9 +120,9 @@ prometheus_systemd_limit_nofile: 65536
 # ========================================
 
 prometheus_backup_enabled: true
-prometheus_backup_dir: "/var/backups/prometheus"
+prometheus_backup_dir: /var/backups/prometheus
 prometheus_backup_retention_days: 7
-prometheus_backup_schedule: "0 2 * * *"  # 2 AM daily
+prometheus_backup_schedule: "0 2 * * *" # 2 AM daily
 
 # ========================================
 # Node Exporter Scrape Config
@@ -161,13 +159,13 @@ prometheus_rules_dir: "{{ prometheus_config_dir }}/rules"
 
 # Default alert rules
 prometheus_default_rules:
-  - name: "instance_down"
+  - name: instance_down
     enabled: true
-  - name: "high_cpu"
+  - name: high_cpu
     enabled: true
-  - name: "high_memory"
+  - name: high_memory
     enabled: true
-  - name: "disk_space"
+  - name: disk_space
     enabled: true
 
 # ========================================
@@ -176,7 +174,6 @@ prometheus_default_rules:
 
 prometheus_recording_rules_enabled: false
 prometheus_recording_rules: []
-
 # ========================================
 # Deployment Control
 # ========================================
