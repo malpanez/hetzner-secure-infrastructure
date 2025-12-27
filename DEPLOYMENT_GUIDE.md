@@ -364,7 +364,48 @@ graph TB
 
 ## Costos Estimados
 
-### 💰 Gastos Iniciales OBLIGATORIOS (Antes de Empezar)
+### 💰 Gastos: ¿Qué es OBLIGATORIO y Qué es OPCIONAL?
+
+#### Resumen Ejecutivo
+
+```mermaid
+flowchart TD
+    A[Gastos para Deployment] --> B[OBLIGATORIOS<br/>$210 USD / €191]
+    A --> C[OPCIONALES<br/>€0 - €infinito]
+
+    B --> B1[LearnDash: $199]
+    B --> B2[Hetzner CX22: €5.39/mes]
+    B --> B3[Dominio: €0 ya tienes]
+    B --> B4[Cloudflare Free: €0]
+
+    C --> C1[Hetzner Volume: +€2.40/mes]
+    C --> C2[Hetzner Backup: +€1.08/mes]
+    C --> C3[Cloudflare Pro: +$20/mes]
+    C --> C4[Plugins WP: €0-€200/año]
+    C --> C5[SMTP Pro: +€10/mes]
+
+    style B fill:#ffe1e1
+    style B1 fill:#ffe1e1
+    style B2 fill:#ffe1e1
+    style C fill:#e1ffe1
+```
+
+#### Tabla de Gastos OBLIGATORIOS vs OPCIONALES
+
+| Servicio | Obligatorio | Opcional | Costo | Notas |
+|----------|-------------|----------|-------|-------|
+| **LearnDash** | ✅ SÍ | | $199/año | SIN ESTO NO HAY LMS - WordPress solo es un blog |
+| **Hetzner CX22** | ✅ SÍ | | €5.39/mes | Servidor mínimo funcional |
+| **Dominio** | ✅ SÍ | | €0 (ya tienes) | Ya pagado en GoDaddy |
+| **Cloudflare Free** | ✅ SÍ | | €0 gratis | CDN, SSL, DNS - Plan Free suficiente |
+| **Hetzner Volume 20GB** | | ⚠️ Depende | €2.40/mes | Solo si >10GB uploads/videos |
+| **Hetzner Backup** | | ✅ Recomendado | €1.08/mes | Backups automáticos diarios |
+| **Cloudflare Pro** | | ❌ NO necesario | $20/mes | Solo si >100k visitas/mes |
+| **WP Plugins (gratis)** | | ✅ Recomendado | €0 | Wordfence, UpdraftPlus, etc. |
+| **WP Rocket** | | ❌ NO necesario | $59/año | Nginx ya cachea |
+| **SMTP Gratis** | | ✅ Recomendado | €0 | SendGrid/Mailgun free tier |
+
+**TOTAL OBLIGATORIO:** $199 + €5.39/mes = **~$210 inicial + €65/año**
 
 #### Timeline de Pagos - ¿Cuándo y Dónde Pagar?
 
