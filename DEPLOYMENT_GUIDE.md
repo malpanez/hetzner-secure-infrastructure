@@ -366,20 +366,93 @@ graph TB
 
 ### 💰 Gastos Iniciales OBLIGATORIOS (Antes de Empezar)
 
+#### Timeline de Pagos - ¿Cuándo y Dónde Pagar?
+
+```mermaid
+gantt
+    title Timeline de Gastos para Deployment
+    dateFormat YYYY-MM-DD
+    section Antes de Empezar
+    Comprar LearnDash :milestone, m1, 2024-01-01, 0d
+    section Durante Deployment
+    Terraform Apply (Hetzner cobra) :milestone, m2, 2024-01-02, 0d
+    Migrar DNS a Cloudflare (Gratis) :milestone, m3, 2024-01-02, 0d
+    section Post-Deployment
+    Instalar LearnDash Plugin :milestone, m4, 2024-01-03, 0d
+    Plugins opcionales (Gratis) :milestone, m5, 2024-01-03, 0d
+    section Mensual/Anual
+    Hetzner factura mensual :milestone, m6, 2024-02-01, 0d
+    Renovación dominio anual :milestone, m7, 2025-01-01, 0d
+    Renovación LearnDash anual :milestone, m8, 2025-01-01, 0d
+```
+
 **Necesitas tener disponibles ANTES del deployment:**
 
-| Concepto | Costo | Cuándo Pagar | Notas |
-|----------|-------|--------------|-------|
-| **LearnDash License** | $199 USD (~€186) | **AHORA** | Obligatorio - Sin esto WordPress no funciona como LMS |
-| **Hetzner Cloud (Mes 1)** | €5.39 | Al crear servidor | Se cobra al crear el servidor CX22 |
-| **Dominio GoDaddy** | €0 | Ya lo tienes | Solo necesitas transferir DNS a Cloudflare (gratis) |
-| **TOTAL INICIAL** | **~$210 USD / €191** | | Este es el gasto mínimo para empezar |
+| Paso | Concepto | Dónde | Cuándo | Costo | Método de Pago |
+|------|----------|-------|--------|-------|----------------|
+| **1** | **LearnDash License** | [learndash.com/pricing](https://www.learndash.com/pricing/) | **ANTES de terraform** | $199 USD | Tarjeta/PayPal |
+| **2** | **Hetzner Cloud** | [console.hetzner.cloud](https://console.hetzner.cloud) | Durante `terraform apply` | €5.39 | Tarjeta/PayPal/Transferencia |
+| **3** | **Dominio** | Ya lo tienes en GoDaddy | N/A | €0 (gratis) | Ya pagado |
+| **4** | **Cloudflare** | [dash.cloudflare.com](https://dash.cloudflare.com) | Durante DNS setup | €0 (gratis) | N/A |
+| | **TOTAL INICIAL** | | | **~$210 / €191** | |
 
 **IMPORTANTE:**
-- ✅ **Dominio:** Ya lo tienes - NO necesitas pagar nada extra, solo cambiar nameservers
-- ✅ **Cloudflare:** Gratis - Plan Free es suficiente
+- ✅ **Dominio:** Ya lo tienes - NO necesitas pagar nada extra, solo cambiar nameservers (gratis)
+- ✅ **Cloudflare:** Plan Free es suficiente - 100% gratis
 - ✅ **SSL:** Gratis - Cloudflare lo provee automáticamente
 - ❌ **Volume extra:** OPCIONAL - No es obligatorio, explicación abajo
+
+#### ¿Qué Plugins se Instalan Automáticamente?
+
+```mermaid
+flowchart TD
+    A[WordPress Plugins] --> B[Instalación Automática<br/>via Ansible]
+    A --> C[Instalación Manual<br/>Requerida]
+
+    B --> B1[❌ NINGUNO<br/>Ansible instala SOLO WordPress Core]
+
+    C --> C1[✅ LearnDash - OBLIGATORIO<br/>$199/año]
+    C --> C2[⚠️ Otros plugins - OPCIONALES<br/>Instalar según necesidad]
+
+    C1 --> C1A[Debes comprarlo y subirlo<br/>manualmente via wp-admin]
+
+    C2 --> C2A[Wordfence Security Gratis]
+    C2 --> C2B[UpdraftPlus Backups Gratis]
+    C2 --> C2C[WP Mail SMTP Gratis]
+    C2 --> C2D[Imagify Gratis hasta 20MB/mes]
+
+    style C1 fill:#ffe1e1
+    style C1A fill:#ffe1e1
+    style C2A fill:#e1ffe1
+    style C2B fill:#e1ffe1
+```
+
+**CLARIFICACIÓN IMPORTANTE:**
+
+| Software | Instalación | Costo | Cuándo/Cómo |
+|----------|------------|-------|-------------|
+| **WordPress Core** | ✅ Automática (Ansible) | Gratis | Durante `ansible-playbook` |
+| **Nginx + PHP** | ✅ Automática (Ansible) | Gratis | Durante `ansible-playbook` |
+| **MariaDB** | ✅ Automática (Ansible) | Gratis | Durante `ansible-playbook` |
+| **Prometheus + Grafana** | ✅ Automática (Ansible) | Gratis | Durante `ansible-playbook` |
+| **LearnDash Plugin** | ❌ MANUAL | $199/año | Después deployment, via WP Admin |
+| **Otros plugins WP** | ❌ Manual | Gratis/Pago | Después deployment, según necesidad |
+
+**WordPress Plugins (Instalación Manual Después de Deployment):**
+
+1. **OBLIGATORIO:**
+   - LearnDash LMS (~$199/año) - Comprar antes, instalar después del deployment
+
+2. **RECOMENDADOS (Gratis):**
+   - Wordfence Security - Firewall + malware scanner
+   - UpdraftPlus - Backups a cloud (Cloudflare R2, Google Drive, etc.)
+   - WP Mail SMTP - Configurar email via SendGrid/Mailgun
+   - Imagify - Optimización automática de imágenes
+
+3. **OPCIONALES (Pago):**
+   - WP Rocket (~$59/año) - Caché avanzado (Nginx ya cachea, no crítico)
+   - Uncanny Toolkit Pro (~$119/año) - Mejoras UI para LearnDash
+   - GamiPress Pro (~$79/año) - Gamificación avanzada
 
 ### 📦 ¿Qué es el Hetzner Volume y lo necesito?
 
@@ -930,6 +1003,100 @@ dig monitoring.tudominio.com +short
 
 ### Paso 4: Configurar Inventario de Ansible
 
+**¡Tienes razón!** Ansible puede usar inventario dinámico con el plugin de Hetzner Cloud que descubre servidores automáticamente.
+
+```mermaid
+flowchart LR
+    A[Opciones de Inventario] --> B[Inventario Estático]
+    A --> C[Inventario Dinámico]
+
+    B --> B1[Editar hosts.yml manualmente]
+    B --> B2[✓ Simple y directo]
+    B --> B3[✗ Hay que actualizar IPs]
+
+    C --> C1[Plugin Hetzner Cloud]
+    C --> C2[✓ Descubre servidores automáticamente]
+    C --> C3[✓ Usa labels de Terraform]
+    C --> C4[✗ Requiere HCLOUD_TOKEN]
+
+    style C fill:#e1ffe1
+    style C2 fill:#e1ffe1
+```
+
+#### Opción 1: Inventario Dinámico (RECOMENDADO)
+
+El plugin de Hetzner Cloud ya está configurado en [`ansible/inventory/hetzner.yml`](ansible/inventory/hetzner.yml)
+
+**Ventajas:**
+- ✅ Descubre servidores automáticamente desde Hetzner API
+- ✅ Lee labels de Terraform (environment, project, etc.)
+- ✅ No necesitas copiar/pegar IPs manualmente
+- ✅ Se actualiza automáticamente cuando añades servidores
+
+**Usar inventario dinámico:**
+
+```bash
+cd ansible
+
+# Verificar que el plugin funciona
+ansible-inventory -i inventory/hetzner.yml --graph
+
+# Debe mostrar:
+# @all:
+#   |--@hetzner:
+#   |  |--@env_production:
+#   |  |  |--wordpress-prod
+#   |--@ungrouped:
+
+# Ver todas las variables descubiertas
+ansible-inventory -i inventory/hetzner.yml --host wordpress-prod
+
+# Test de conectividad
+ansible -i inventory/hetzner.yml hetzner -m ping
+```
+
+**Configurar variables de grupo:**
+
+```bash
+# Editar variables de producción
+nano ansible/inventory/group_vars/env_production/wordpress.yml
+```
+
+**Contenido de `wordpress.yml`:**
+
+```yaml
+---
+# WordPress configuration
+wordpress_domain: "tudominio.com"
+wordpress_title: "Mi Plataforma LMS"
+wordpress_admin_email: "admin@tudominio.com"
+
+# Database
+wordpress_db_name: "wordpress_prod"
+wordpress_db_user: "wordpress"
+
+# Monitoring
+grafana_domain: "monitoring.tudominio.com"
+prometheus_retention: "30d"
+
+# SSH config
+ansible_user: miguel
+ansible_ssh_private_key_file: ~/.ssh/id_ed25519
+ansible_python_interpreter: /usr/bin/python3
+```
+
+**Ejecutar playbook con inventario dinámico:**
+
+```bash
+ansible-playbook -i inventory/hetzner.yml \
+  playbooks/site.yml \
+  --ask-vault-pass
+```
+
+#### Opción 2: Inventario Estático (Alternativa Simple)
+
+Si prefieres control manual o no quieres usar el plugin dinámico:
+
 ```bash
 # Editar inventario de producción
 nano ansible/inventory/production/hosts.yml
@@ -946,7 +1113,7 @@ all:
         wordpress-prod:
           ansible_host: TU.IP.DEL.SERVIDOR  # De terraform output
           ansible_user: miguel
-          ansible_ssh_private_key_file: ~/.ssh/hetzner_ed25519
+          ansible_ssh_private_key_file: ~/.ssh/id_ed25519
           ansible_python_interpreter: /usr/bin/python3
 
       vars:
@@ -963,6 +1130,27 @@ all:
         grafana_domain: "monitoring.tudominio.com"
         prometheus_retention: "30d"
 ```
+
+**Ejecutar playbook con inventario estático:**
+
+```bash
+ansible-playbook -i inventory/production/hosts.yml \
+  playbooks/site.yml \
+  --ask-vault-pass
+```
+
+#### ¿Cuál usar?
+
+| Criterio | Inventario Dinámico | Inventario Estático |
+|----------|-------------------|-------------------|
+| **Complejidad** | Media | Baja |
+| **Mantenimiento** | Automático | Manual |
+| **Múltiples servidores** | ✅ Excelente | ⚠️ Tedioso |
+| **Control preciso** | ⚠️ Basado en labels | ✅ Total |
+| **Requerimientos** | HCLOUD_TOKEN en env | Solo IP del servidor |
+| **Recomendado para** | Producción, múltiples servers | Testing, servidor único |
+
+**Recomendación:** Usa **inventario dinámico** si tienes `HCLOUD_TOKEN` configurado (que ya lo tienes en `.env`)
 
 ### Paso 5: Deployment con Ansible
 
