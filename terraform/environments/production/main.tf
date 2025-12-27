@@ -6,12 +6,20 @@ terraform {
       source  = "hetznercloud/hcloud"
       version = "~> 1.45"
     }
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 4.0"
+    }
   }
 }
 
 # Provider configuration
 provider "hcloud" {
   token = var.hcloud_token
+}
+
+provider "cloudflare" {
+  api_token = var.cloudflare_api_token
 }
 
 # Production server
@@ -81,4 +89,21 @@ resource "local_file" "ssh_config" {
     ssh_key      = "~/.ssh/id_ed25519_sk"
   })
   filename = "${path.module}/.ssh_config"
+}
+
+# Cloudflare DNS and Security Configuration
+module "cloudflare" {
+  count  = var.enable_cloudflare ? 1 : 0
+  source = "../../modules/cloudflare-config"
+
+  domain_name = var.domain
+  server_ipv4 = module.production_server.server_ipv4
+  server_ipv6 = module.production_server.server_ipv6
+
+  # Security features (all available on Free plan)
+  enable_course_protection   = false  # Set true to require login for /courses/*
+  enable_rate_limiting       = true   # Free tier allows 1 rule
+  enable_custom_error_pages  = false  # Optional
+  enable_cloudflare_access   = false  # Requires paid plan
+  custom_error_page_url      = ""
 }

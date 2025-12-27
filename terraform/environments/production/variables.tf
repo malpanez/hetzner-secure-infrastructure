@@ -31,7 +31,7 @@ variable "location" {
 variable "admin_username" {
   description = "Admin username"
   type        = string
-  default     = "miguel"
+  default     = "malpanez"
 }
 
 variable "ssh_public_key" {
@@ -138,4 +138,18 @@ variable "labels" {
   description = "Additional labels"
   type        = map(string)
   default     = {}
+}
+
+# Cloudflare configuration
+variable "cloudflare_api_token" {
+  description = "Cloudflare API Token"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "enable_cloudflare" {
+  description = "Enable Cloudflare DNS and security configuration"
+  type        = bool
+  default     = false  # Set to true to enable automatic DNS management
 }
