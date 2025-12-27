@@ -9,6 +9,8 @@
       - needrestart
       - debsums
       - aide
+      - auditd
+      - audispd-plugins
     state: present
   tags: packages
 
@@ -145,6 +147,36 @@
     - /etc/ssh/sshd_config
   failed_when: false
   tags: permissions
+
+- name: Configure auditd
+  ansible.builtin.template:
+    src: auditd.conf.j2
+    dest: /etc/audit/auditd.conf
+    owner: root
+    group: root
+    mode: "0640"
+  when: auditd_enabled | default(true)
+  notify: restart auditd
+  tags: [security, auditd]
+
+- name: Deploy audit rules
+  ansible.builtin.template:
+    src: audit.rules.j2
+    dest: /etc/audit/rules.d/hardening.rules
+    owner: root
+    group: root
+    mode: "0640"
+  when: auditd_enabled | default(true)
+  notify: restart auditd
+  tags: [security, auditd]
+
+- name: Enable and start auditd service
+  ansible.builtin.systemd:
+    name: auditd
+    enabled: true
+    state: started
+  when: auditd_enabled | default(true)
+  tags: [security, auditd]
 
 - name: Initialize AIDE database (this may take a while)
   ansible.builtin.shell: aideinit && mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db

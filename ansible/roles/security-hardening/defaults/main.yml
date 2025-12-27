@@ -1,0 +1,57 @@
+---
+# Security Hardening Role Variables
+
+# Kernel hardening
+kernel_hardening_enabled: true
+
+# Unattended upgrades
+unattended_upgrades_enabled: true
+
+# AIDE File Integrity Monitoring
+aide_enabled: false
+
+# Auditd Configuration
+auditd_enabled: true
+auditd_max_log_file: 8
+auditd_max_log_file_action: rotate
+auditd_num_logs: 5
+auditd_space_left: 75
+auditd_space_left_action: email
+auditd_admin_space_left: 50
+auditd_admin_space_left_action: suspend
+auditd_disk_full_action: suspend
+auditd_disk_error_action: suspend
+auditd_action_mail_acct: root
+
+# USB storage
+disable_usb_storage: false
+
+# Admin user
+admin_username: miguel
+
+# Sysctl hardening configuration
+sysctl_config:
+  # Network security
+  net.ipv4.conf.all.rp_filter: 1
+  net.ipv4.conf.default.rp_filter: 1
+  net.ipv4.conf.all.accept_redirects: 0
+  net.ipv4.conf.default.accept_redirects: 0
+  net.ipv4.conf.all.secure_redirects: 0
+  net.ipv4.conf.default.secure_redirects: 0
+  net.ipv4.conf.all.send_redirects: 0
+  net.ipv4.conf.default.send_redirects: 0
+  net.ipv4.icmp_echo_ignore_broadcasts: 1
+  net.ipv4.icmp_ignore_bogus_error_responses: 1
+  net.ipv4.tcp_syncookies: 1
+  net.ipv6.conf.all.accept_redirects: 0
+  net.ipv6.conf.default.accept_redirects: 0
+
+  # Kernel hardening
+  kernel.dmesg_restrict: 1
+  kernel.kptr_restrict: 2
+  kernel.yama.ptrace_scope: 1
+
+  # File system hardening
+  fs.protected_hardlinks: 1
+  fs.protected_symlinks: 1
+  fs.suid_dumpable: 0

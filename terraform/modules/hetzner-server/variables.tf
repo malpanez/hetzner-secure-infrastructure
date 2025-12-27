@@ -34,9 +34,19 @@ variable "ssh_port" {
 }
 
 variable "ssh_allowed_ips" {
-  description = "List of IPs allowed to connect via SSH"
+  description = "List of IPs allowed to connect via SSH - MUST specify your IPs"
   type        = list(string)
-  default     = ["0.0.0.0/0", "::/0"]
+  default     = []  # SECURITY: No default - must be explicitly set
+
+  validation {
+    condition     = length(var.ssh_allowed_ips) > 0
+    error_message = "SSH access IPs must be specified. Set ssh_allowed_ips in production variables."
+  }
+
+  validation {
+    condition     = !contains(var.ssh_allowed_ips, "0.0.0.0/0") && !contains(var.ssh_allowed_ips, "::/0")
+    error_message = "SSH must not be exposed to the internet (0.0.0.0/0 not allowed). Specify exact IP ranges."
+  }
 }
 
 variable "admin_username" {
