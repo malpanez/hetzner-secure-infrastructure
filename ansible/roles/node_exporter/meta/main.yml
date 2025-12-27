@@ -2,7 +2,7 @@
 # Node Exporter Role - Metadata
 
 galaxy_info:
-  role_name: node-exporter
+  role_name: node_exporter
   author: Infrastructure Team
   description: Prometheus Node Exporter for system metrics collection
   company: Your Company
@@ -22,7 +22,7 @@ galaxy_info:
   galaxy_tags:
     - monitoring
     - prometheus
-    - node-exporter
+    - nodeexporter
     - metrics
     - system
     - observability

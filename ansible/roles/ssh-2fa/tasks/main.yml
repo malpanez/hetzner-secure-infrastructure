@@ -17,6 +17,7 @@
     dest: /etc/ssh/sshd_config.backup-{{ ansible_date_time.epoch }}
     remote_src: true
     force: false
+    mode: '0600'
   tags: backup
 
 - name: Backup original PAM configuration
@@ -25,6 +26,7 @@
     dest: "{{ item }}.backup-{{ ansible_date_time.epoch }}"
     remote_src: true
     force: false
+    mode: '0600'
   loop:
     - /etc/pam.d/sshd
     - /etc/pam.d/sudo

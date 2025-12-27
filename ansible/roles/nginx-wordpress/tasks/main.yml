@@ -75,6 +75,7 @@
     dest: /etc/nginx/nginx.conf.backup
     remote_src: true
     force: false
+    mode: '0644'
   when: nginx_backup_config
   tags: [nginx, backup]
 - name: Deploy optimized nginx.conf

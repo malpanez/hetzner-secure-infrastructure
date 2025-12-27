@@ -22,6 +22,8 @@ skip_list:
   - name[casing]       # Allow flexible naming
   - role-name         # Allow flexible role naming
   - yaml[truthy]      # Allow yes/no as valid truthy values
+  - run-once          # Allow run_once in tasks
+  - key-order         # Allow flexible key ordering
 
 # Warn only (don't fail)
 warn_list:

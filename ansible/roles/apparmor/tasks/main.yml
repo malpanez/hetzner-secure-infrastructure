@@ -62,20 +62,24 @@
   loop:
     - usr.sbin.sshd
     - usr.bin.fail2ban-server
-  ignore_errors: true
+  failed_when: false
+  changed_when: true
   tags: profiles
 
 - name: Set AppArmor profiles to enforce mode
   ansible.builtin.command: aa-enforce /etc/apparmor.d/{{ item }}
   loop: "{{ apparmor_profiles }}"
   when: apparmor_enforce_mode | default(true)
-  ignore_errors: true
+  failed_when: false
+  changed_when: true
   tags: [profiles, enforce]
+
 - name: Set AppArmor profiles to complain mode (testing)
   ansible.builtin.command: aa-complain /etc/apparmor.d/{{ item }}
   loop: "{{ apparmor_profiles }}"
   when: not apparmor_enforce_mode | default(true)
-  ignore_errors: true
+  failed_when: false
+  changed_when: true
   tags: [profiles, complain]
 - name: Check AppArmor status
   ansible.builtin.command: aa-status
