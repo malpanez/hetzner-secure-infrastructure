@@ -161,14 +161,17 @@ terraform output server_ip
 
 ## 4️⃣ Configurar DNS en Cloudflare
 
-### Migrar dominio de GoDaddy a Cloudflare
+### OPCIÓN A: DNS Automático con Terraform (RECOMENDADO ✅)
 
-**En Cloudflare:**
+**Terraform gestiona DNS automáticamente por ti.**
+
+**Paso 1: Migrar dominio a Cloudflare**
+
 1. Ir a https://dash.cloudflare.com
 2. Click "Add a Site"
 3. Escribir tu dominio
 4. Elegir plan **Free**
-5. Cloudflare te da 2 nameservers (ejemplo: `alex.ns.cloudflare.com`)
+5. Cloudflare te da 2 nameservers
 
 **En GoDaddy:**
 1. Ir a https://account.godaddy.com
@@ -177,9 +180,50 @@ terraform output server_ip
 4. Pegar los 2 nameservers de Cloudflare
 5. Guardar
 
-**⏱️ Esperar: 2-6 horas (puede ser hasta 48h)**
+**⏱️ Esperar: 2-6 horas**
 
-### Crear registros DNS
+**Paso 2: Obtener API Token de Cloudflare**
+
+1. Cloudflare Dashboard → My Profile → API Tokens
+2. Click "Create Token"
+3. Usar template "Edit zone DNS"
+4. Zone Resources: Include → Specific zone → tu dominio
+5. **COPIAR** el token
+
+**Paso 3: Configurar Terraform**
+
+```bash
+# Añadir a .env
+echo 'export CLOUDFLARE_API_TOKEN="tu-token-aqui"' >> .env
+echo 'export TF_VAR_cloudflare_api_token="${CLOUDFLARE_API_TOKEN}"' >> .env
+source .env
+
+# Editar terraform.tfvars
+nano terraform/environments/production/terraform.tfvars
+```
+
+**Añadir estas líneas:**
+```hcl
+enable_cloudflare = true
+```
+
+**Paso 4: Terraform crea DNS automáticamente**
+
+```bash
+terraform apply
+# Terraform creará:
+# - Registro A: @ (root)
+# - Registro A: www
+# - Reglas WAF para WordPress
+# - Configuración SSL/TLS
+# - Rate limiting en login
+```
+
+**✅ Listo! DNS configurado automáticamente**
+
+---
+
+### OPCIÓN B: DNS Manual (Si no usas Cloudflare automation)
 
 **En Cloudflare → DNS → Records:**
 
@@ -191,13 +235,13 @@ Crear **3 registros A**:
 | A | www | TU.IP.DEL.SERVIDOR | ✅ ON |
 | A | monitoring | TU.IP.DEL.SERVIDOR | ❌ OFF |
 
-### Configurar SSL
-
 **En Cloudflare → SSL/TLS:**
-- Overview: Cambiar a **Full (strict)**
-- Edge Certificates: Activar **Always Use HTTPS**
+- Overview: **Full (strict)**
+- Always Use HTTPS: **On**
 
-**✅ Verificar DNS:**
+---
+
+**✅ Verificar DNS (ambas opciones):**
 ```bash
 dig tudominio.com +short
 # Debe mostrar una IP
