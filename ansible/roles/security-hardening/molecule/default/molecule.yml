@@ -30,6 +30,8 @@ provisioner:
       callback_whitelist: profile_tasks, timer, yaml
     ssh_connection:
       pipelining: true
+  env:
+    ANSIBLE_ROLES_PATH: ../../
   inventory:
     host_vars:
       debian-13-security:

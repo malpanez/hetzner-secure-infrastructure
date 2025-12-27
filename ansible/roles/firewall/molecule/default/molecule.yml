@@ -23,6 +23,8 @@ provisioner:
     defaults:
       callbacks_enabled: profile_tasks, timer
       stdout_callback: yaml
+  env:
+    ANSIBLE_ROLES_PATH: ../../
 
 verifier:
   name: ansible
