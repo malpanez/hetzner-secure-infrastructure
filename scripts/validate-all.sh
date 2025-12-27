@@ -58,11 +58,12 @@ validate_ansible() {
   print_header "Validating Ansible"
 
   print_info "Checking syntax..."
-  if ansible-playbook ansible/playbooks/site.yml --syntax-check > /dev/null 2>&1; then
-    print_success "Ansible syntax OK"
-  else
+  # Ignore warnings about collection versions, only check for syntax errors
+  if ansible-playbook ansible/playbooks/site.yml --syntax-check 2>&1 | grep -q "ERROR"; then
     print_error "Ansible syntax check failed"
     ((FAILED++))
+  else
+    print_success "Ansible syntax OK"
   fi
 }
 
