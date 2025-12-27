@@ -1,0 +1,26 @@
+---
+# Nginx WordPress Role - Handlers
+
+- name: reload nginx
+  systemd:
+    name: nginx
+    state: reloaded
+  tags: [nginx]
+
+- name: restart nginx
+  systemd:
+    name: nginx
+    state: restarted
+  tags: [nginx]
+
+- name: restart php-fpm
+  systemd:
+    name: "php{{ php_version }}-fpm"
+    state: restarted
+  tags: [php]
+
+- name: reload php-fpm
+  systemd:
+    name: "php{{ php_version }}-fpm"
+    state: reloaded
+  tags: [php]

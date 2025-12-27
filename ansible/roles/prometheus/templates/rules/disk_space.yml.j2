@@ -1,0 +1,46 @@
+---
+# Disk Space Alert Rules
+
+groups:
+  - name: disk_alerts
+    interval: 30s
+    rules:
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes{fstype!~"tmpfs|fuse.lxcfs|squashfs|vfat"} / node_filesystem_size_bytes{fstype!~"tmpfs|fuse.lxcfs|squashfs|vfat"}) * 100 < 20
+        for: 10m
+        labels:
+          severity: warning
+          category: storage
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Filesystem {{ $labels.mountpoint }} on {{ $labels.instance }} has less than 20% free space (current: {{ $value | humanize }}%)."
+
+      - alert: DiskSpaceCritical
+        expr: (node_filesystem_avail_bytes{fstype!~"tmpfs|fuse.lxcfs|squashfs|vfat"} / node_filesystem_size_bytes{fstype!~"tmpfs|fuse.lxcfs|squashfs|vfat"}) * 100 < 10
+        for: 5m
+        labels:
+          severity: critical
+          category: storage
+        annotations:
+          summary: "Critical disk space on {{ $labels.instance }}"
+          description: "Filesystem {{ $labels.mountpoint }} on {{ $labels.instance }} has less than 10% free space (current: {{ $value | humanize }}%)."
+
+      - alert: InodeLow
+        expr: (node_filesystem_files_free{fstype!~"tmpfs|fuse.lxcfs|squashfs|vfat"} / node_filesystem_files{fstype!~"tmpfs|fuse.lxcfs|squashfs|vfat"}) * 100 < 20
+        for: 10m
+        labels:
+          severity: warning
+          category: storage
+        annotations:
+          summary: "Low inode availability on {{ $labels.instance }}"
+          description: "Filesystem {{ $labels.mountpoint }} on {{ $labels.instance }} has less than 20% free inodes (current: {{ $value | humanize }}%)."
+
+      - alert: DiskIOHigh
+        expr: rate(node_disk_io_time_seconds_total[5m]) > 0.9
+        for: 10m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: "High disk I/O on {{ $labels.instance }}"
+          description: "Disk {{ $labels.device }} on {{ $labels.instance }} is experiencing high I/O ({{ $value | humanize }})."

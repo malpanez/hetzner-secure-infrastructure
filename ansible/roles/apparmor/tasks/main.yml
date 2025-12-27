@@ -1,0 +1,118 @@
+---
+# AppArmor Role - Mandatory Access Control
+
+- name: Install AppArmor packages
+  apt:
+    name:
+      - apparmor
+      - apparmor-utils
+      - apparmor-profiles
+      - apparmor-profiles-extra
+    state: present
+  tags: packages
+
+- name: Ensure AppArmor is enabled in GRUB
+  lineinfile:
+    path: /etc/default/grub
+    regexp: '^GRUB_CMDLINE_LINUX_DEFAULT='
+    line: 'GRUB_CMDLINE_LINUX_DEFAULT="quiet apparmor=1 security=apparmor"'
+    state: present
+  notify:
+    - update grub
+    - reboot required
+  tags: grub
+
+- name: Enable and start AppArmor service
+  systemd:
+    name: apparmor
+    enabled: yes
+    state: started
+  tags: service
+
+- name: Create custom profiles directory
+  file:
+    path: /etc/apparmor.d/local
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags: profiles
+
+- name: Deploy custom AppArmor profile for SSH
+  template:
+    src: apparmor.d/usr.sbin.sshd.j2
+    dest: /etc/apparmor.d/usr.sbin.sshd
+    owner: root
+    group: root
+    mode: '0644'
+  notify: reload apparmor profiles
+  tags: [profiles, ssh]
+
+- name: Deploy custom AppArmor profile for Fail2ban
+  template:
+    src: apparmor.d/usr.bin.fail2ban-server.j2
+    dest: /etc/apparmor.d/usr.bin.fail2ban-server
+    owner: root
+    group: root
+    mode: '0644'
+  notify: reload apparmor profiles
+  when: enable_fail2ban | default(true)
+  tags: [profiles, fail2ban]
+
+- name: Load AppArmor profiles
+  command: "apparmor_parser -r /etc/apparmor.d/{{ item }}"
+  loop:
+    - usr.sbin.sshd
+    - usr.bin.fail2ban-server
+  ignore_errors: yes
+  tags: profiles
+
+- name: Set AppArmor profiles to enforce mode
+  command: "aa-enforce /etc/apparmor.d/{{ item }}"
+  loop: "{{ apparmor_profiles }}"
+  when: apparmor_enforce_mode | default(true)
+  ignore_errors: yes
+  tags: [profiles, enforce]
+
+- name: Set AppArmor profiles to complain mode (testing)
+  command: "aa-complain /etc/apparmor.d/{{ item }}"
+  loop: "{{ apparmor_profiles }}"
+  when: not apparmor_enforce_mode | default(true)
+  ignore_errors: yes
+  tags: [profiles, complain]
+
+- name: Check AppArmor status
+  command: aa-status
+  register: apparmor_status
+  changed_when: false
+  tags: status
+
+- name: Display AppArmor status
+  debug:
+    var: apparmor_status.stdout_lines
+  tags: status
+
+- name: Install AppArmor notify for desktop (optional)
+  apt:
+    name: apparmor-notify
+    state: present
+  when: apparmor_notify_enabled | default(false)
+  tags: packages
+
+- name: Create AppArmor monitoring script
+  template:
+    src: aa-monitor.sh.j2
+    dest: /usr/local/bin/aa-monitor
+    owner: root
+    group: root
+    mode: '0755'
+  tags: monitoring
+
+- name: Configure AppArmor log rotation
+  template:
+    src: apparmor-logrotate.j2
+    dest: /etc/logrotate.d/apparmor
+    owner: root
+    group: root
+    mode: '0644'
+  tags: logging

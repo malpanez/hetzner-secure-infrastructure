@@ -1,0 +1,134 @@
+---
+# WordPress Configuration
+# Applies to wordpress_servers group
+
+# ========================================
+# WordPress Core
+# ========================================
+wordpress_domain: "{{ domain_name }}"
+wordpress_root: "/var/www/{{ domain_name }}"
+wordpress_user: www-data
+wordpress_group: www-data
+
+# WordPress version
+wordpress_version: latest  # or specific version like "6.4"
+
+# ========================================
+# WordPress Database
+# ========================================
+wordpress_db_host: localhost
+wordpress_db_name: wordpress
+wordpress_db_user: wordpress
+wordpress_db_password: "{{ vault_wordpress_db_password }}"
+wordpress_db_charset: utf8mb4
+wordpress_db_collate: utf8mb4_unicode_ci
+
+# ========================================
+# WordPress Security
+# ========================================
+wordpress_disable_file_edit: true
+wordpress_force_ssl_admin: true
+wordpress_auto_update_core: true
+
+# WordPress salts (auto-generated from WordPress API)
+wordpress_generate_salts: true
+
+# ========================================
+# LearnDash LMS Configuration
+# ========================================
+learndash_enabled: true
+learndash_version: latest  # Requires LearnDash Pro license
+
+# LearnDash features
+learndash_drip_content_enabled: true
+learndash_prerequisites_enabled: true
+learndash_certificates_enabled: true
+learndash_course_protection_enabled: true
+
+# ========================================
+# WordPress Plugins (MINIMAL - Professional Stack)
+# ========================================
+# NOTE: Most functionality handled by infrastructure:
+# - Caching: Cloudflare + Nginx FastCGI + Valkey
+# - Security: Cloudflare WAF + Nginx + AppArmor
+# - Minification: Cloudflare Auto Minify
+# - Compression: Cloudflare Brotli + Nginx Gzip
+# - Rate Limiting: Cloudflare + Nginx
+#
+# See docs/WORDPRESS_PLUGINS_ANALYSIS.md for full analysis
+
+wordpress_plugins:
+  # === REQUIRED (Infrastructure Integration) ===
+
+  # Valkey Object Cache Integration
+  - slug: redis-cache
+    state: present
+    activate: true
+    reason: "Connects WordPress to Valkey object cache"
+
+  # Nginx FastCGI Cache Purging
+  - slug: nginx-helper
+    state: present
+    activate: true
+    reason: "Auto-purge Nginx cache on content updates"
+
+  # Cloudflare Cache Purging
+  - slug: cloudflare
+    state: present
+    activate: true
+    reason: "Auto-purge Cloudflare edge cache on updates"
+
+  # === OPTIONAL (Evaluate based on needs) ===
+
+  # SEO Optimization (lighter than Yoast)
+  # - slug: rank-math
+  #   state: present
+  #   activate: true
+  #   reason: "SEO optimization (if needed)"
+
+  # Contact Forms (if needed)
+  # - slug: contact-form-7
+  #   state: present
+  #   activate: true
+  #   reason: "Simple contact forms"
+
+  # Anti-spam (Cloudflare CAPTCHA)
+  # - slug: cloudflare-turnstile
+  #   state: present
+  #   activate: true
+  #   reason: "Spam protection (free Cloudflare alternative to Akismet)"
+
+# ========================================
+# Plugins to AVOID (Redundant with Infrastructure)
+# ========================================
+wordpress_plugins_blacklist:
+  - w3-total-cache          # Redundant: Cloudflare + Nginx + Valkey
+  - wp-super-cache          # Redundant: Nginx FastCGI Cache
+  - wp-rocket               # Redundant: Full caching stack
+  - autoptimize             # Redundant: Cloudflare Auto Minify
+  - wordfence               # Redundant: Cloudflare WAF
+  - all-in-one-wp-security  # Redundant: Infrastructure security
+  - akismet                 # Alternative: Cloudflare Turnstile (free)
+  - smush                   # Alternative: External image optimization
+  - shortpixel              # Alternative: External image optimization
+
+# ========================================
+# WordPress Theme
+# ========================================
+wordpress_theme: astra  # Free version
+wordpress_theme_version: latest
+
+# ========================================
+# Upload Limits
+# ========================================
+wordpress_max_upload_size: "100M"
+wordpress_post_max_size: "100M"
+wordpress_memory_limit: "256M"
+
+# ========================================
+# Cloudflare Integration
+# ========================================
+cloudflare_enabled: true
+# Cloudflare API credentials in secrets.yml
+# cloudflare_api_token: "{{ vault_cloudflare_api_token }}"
+# cloudflare_zone_id: "{{ vault_cloudflare_zone_id }}"

@@ -1,0 +1,99 @@
+---
+# Valkey Role - Default Variables
+# Valkey: Open-source fork of Redis (Linux Foundation)
+# 100% compatible with Redis, actively developed, BSD license
+
+# ========================================
+# Version and Installation
+# ========================================
+
+valkey_version: "8.0"
+valkey_port: 6379
+valkey_bind_interface: "127.0.0.1"
+valkey_socket_enabled: true
+valkey_socket_path: "/var/run/valkey/valkey.sock"
+valkey_socket_perm: "0770"
+valkey_socket_group: "www-data"
+
+# ========================================
+# Memory Configuration
+# ========================================
+
+valkey_maxmemory: "256mb"
+valkey_maxmemory_policy: "allkeys-lru"
+valkey_maxmemory_samples: 5
+
+# ========================================
+# Persistence
+# ========================================
+
+valkey_save_enabled: true
+valkey_save_intervals:
+  - "900 1"
+  - "300 10"
+  - "60 10000"
+
+valkey_dir: "/var/lib/valkey"
+valkey_dbfilename: "dump.rdb"
+valkey_rdb_compression: true
+valkey_rdb_checksum: true
+
+valkey_appendonly: false
+valkey_appendfilename: "appendonly.aof"
+valkey_appendfsync: "everysec"
+
+# ========================================
+# Performance
+# ========================================
+
+valkey_databases: 16
+valkey_tcp_backlog: 511
+valkey_timeout: 300
+valkey_tcp_keepalive: 300
+
+# ========================================
+# Logging
+# ========================================
+
+valkey_loglevel: "notice"
+valkey_logfile: "/var/log/valkey/valkey-server.log"
+valkey_syslog_enabled: false
+
+# ========================================
+# Security
+# ========================================
+
+valkey_password_enabled: false
+valkey_password: ""
+valkey_protected_mode: true
+
+# ========================================
+# Slow Log
+# ========================================
+
+valkey_slowlog_log_slower_than: 10000
+valkey_slowlog_max_len: 128
+
+# ========================================
+# WordPress Integration
+# ========================================
+
+valkey_wordpress_plugin: "redis-cache"  # Works with Valkey (compatible)
+valkey_wordpress_database: 0
+valkey_wordpress_prefix: "wp_"
+
+# ========================================
+# Monitoring
+# ========================================
+
+valkey_exporter_enabled: true
+valkey_exporter_version: "1.62.0"  # Latest redis_exporter (works with Valkey)
+valkey_exporter_port: 9121
+
+# ========================================
+# Backup
+# ========================================
+
+valkey_backup_enabled: true
+valkey_backup_dir: "/var/backups/valkey"
+valkey_backup_retention_days: 7

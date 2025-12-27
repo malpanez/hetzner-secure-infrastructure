@@ -1,0 +1,8 @@
+# Sudoers configuration for {{ admin_username }}
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+# User privilege specification
+{{ admin_username }} ALL=(ALL:ALL) ALL
+
+# Allow passwordless sudo for specific commands (optional)
+# {{ admin_username }} ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart *, /usr/bin/systemctl status *

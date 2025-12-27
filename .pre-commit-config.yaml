@@ -1,0 +1,222 @@
+---
+# Pre-commit hooks for code quality
+# See https://pre-commit.com for more information
+# Updated: 2025-12-26
+
+default_install_hook_types: [pre-commit, commit-msg]
+default_stages: [pre-commit]
+fail_fast: false
+minimum_pre_commit_version: '3.0.0'
+
+repos:
+  # ============================================
+  # General file checks
+  # ============================================
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        name: Trim trailing whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+        name: Fix end of files
+      - id: check-yaml
+        name: Check YAML syntax
+        args: [--allow-multiple-documents]
+      - id: check-json
+        name: Check JSON syntax
+      - id: check-toml
+        name: Check TOML syntax
+      - id: check-added-large-files
+        name: Check for large files
+        args: [--maxkb=2000]
+      - id: check-case-conflict
+        name: Check for case conflicts
+      - id: check-merge-conflict
+        name: Check for merge conflicts
+      - id: check-executables-have-shebangs
+        name: Check executables have shebangs
+      - id: check-shebang-scripts-are-executable
+        name: Check shebangs are executable
+      - id: detect-private-key
+        name: Detect private keys
+      - id: mixed-line-ending
+        name: Check mixed line endings
+        args: [--fix=lf]
+      - id: no-commit-to-branch
+        name: Prevent commits to main
+        args: [--branch, main, --branch, master]
+
+  # ============================================
+  # Terraform/OpenTofu
+  # ============================================
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.96.2
+    hooks:
+      - id: terraform_fmt
+        name: Terraform Format
+        args:
+          - --args=-recursive
+          - --args=-diff
+      - id: terraform_validate
+        name: Terraform Validate
+        args:
+          - --hook-config=--retry-once-with-cleanup=true
+          - --tf-init-args=-backend=false
+      - id: terraform_docs
+        name: Terraform Docs
+        args:
+          - --hook-config=--path-to-file=README.md
+          - --hook-config=--add-to-existing-file=true
+          - --hook-config=--create-file-if-not-exist=true
+      - id: terraform_tflint
+        name: Terraform Lint
+        args:
+          - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
+          - --args=--format=compact
+      - id: terraform_trivy
+        name: Terraform Trivy Security Scan
+        args:
+          - --args=--severity=CRITICAL,HIGH
+          - --args=--exit-code=0
+
+  # ============================================
+  # TFSec security scanner
+  # ============================================
+  - repo: https://github.com/aquasecurity/tfsec
+    rev: v1.28.11
+    hooks:
+      - id: tfsec
+        name: TFSec Security Scanner
+        args:
+          - --minimum-severity=MEDIUM
+          - --format=default
+          - --soft-fail
+          - terraform/
+
+  # ============================================
+  # Ansible
+  # ============================================
+  - repo: https://github.com/ansible/ansible-lint
+    rev: v24.12.2
+    hooks:
+      - id: ansible-lint
+        name: Ansible Lint
+        files: ^ansible/
+        args:
+          - --force-color
+          - --offline
+          - --profile=production
+
+  # ============================================
+  # YAML
+  # ============================================
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        name: YAML Lint
+        args: [-c=.yamllint.yml, --strict]
+        types: [yaml]
+
+  # ============================================
+  # Shell scripts
+  # ============================================
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        name: ShellCheck
+        args: [-x, -e, SC1091, --severity=warning]
+
+  - repo: https://github.com/scop/pre-commit-shfmt
+    rev: v3.10.0-1
+    hooks:
+      - id: shfmt
+        name: Shell Format
+        args: [-w, -i, '2', -ci, -bn]
+
+  # ============================================
+  # Markdown
+  # ============================================
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.43.0
+    hooks:
+      - id: markdownlint
+        name: Markdown Lint
+        args: [--config=.markdownlint.json, --fix]
+
+  - repo: https://github.com/tcort/markdown-link-check
+    rev: v3.12.2
+    hooks:
+      - id: markdown-link-check
+        name: Check Markdown Links
+        args: [--config=.markdown-link-check.json]
+
+  # ============================================
+  # Secret detection
+  # ============================================
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.22.1
+    hooks:
+      - id: gitleaks
+        name: GitLeaks Secret Detection
+        args: [--verbose, --no-banner]
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        name: Detect Secrets
+        args: [--baseline, .secrets.baseline]
+        exclude: package.lock.json
+
+  # ============================================
+  # Security scanning
+  # ============================================
+  - repo: https://github.com/Checkmarx/kics
+    rev: v2.1.3
+    hooks:
+      - id: kics
+        name: KICS Security Scan
+        args: [--exclude-severities, info, low]
+
+  # ============================================
+  # Commit message validation
+  # ============================================
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.6.0
+    hooks:
+      - id: conventional-pre-commit
+        name: Conventional Commit
+        stages: [commit-msg]
+        args: [--force-scope, --strict]
+
+  # ============================================
+  # File size and content checks
+  # ============================================
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.10.0
+    hooks:
+      - id: python-check-blanket-noqa
+        name: Check blanket noqa
+      - id: python-check-blanket-type-ignore
+        name: Check blanket type ignore
+      - id: python-no-log-warn
+        name: Check for log.warn
+      - id: python-use-type-annotations
+        name: Enforce type annotations
+      - id: text-unicode-replacement-char
+        name: Check for unicode replacement chars
+
+# ============================================
+# CI Configuration
+# ============================================
+ci:
+  autofix_commit_msg: 'ci: auto fixes from pre-commit.ci hooks'
+  autofix_prs: true
+  autoupdate_branch: ''
+  autoupdate_commit_msg: 'ci: pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  skip: [terraform_validate, terraform_tflint, ansible-lint]
+  submodules: false

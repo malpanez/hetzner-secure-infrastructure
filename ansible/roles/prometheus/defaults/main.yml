@@ -1,0 +1,185 @@
+---
+# Prometheus Role - Default Variables
+#
+# These are default values that can be overridden in inventory
+
+# ========================================
+# Version and Installation
+# ========================================
+
+prometheus_version: "2.48.0"
+prometheus_user: "prometheus"
+prometheus_group: "prometheus"
+prometheus_install_dir: "/opt/prometheus"
+prometheus_config_dir: "/etc/prometheus"
+prometheus_data_dir: "/var/lib/prometheus"
+prometheus_log_dir: "/var/log/prometheus"
+
+# ========================================
+# Network Configuration
+# ========================================
+
+prometheus_listen_address: "0.0.0.0"
+prometheus_port: 9090
+prometheus_external_url: "http://{{ ansible_host }}:{{ prometheus_port }}"
+
+# ========================================
+# Data Retention
+# ========================================
+
+prometheus_retention_time: "30d"
+prometheus_retention_size: "0"  # 0 = unlimited
+
+# ========================================
+# Scrape Configuration
+# ========================================
+
+prometheus_global_scrape_interval: "15s"
+prometheus_global_scrape_timeout: "10s"
+prometheus_global_evaluation_interval: "15s"
+
+# ========================================
+# Scrape Targets
+# ========================================
+
+# Targets are automatically generated from inventory groups
+# Override these if you need custom targets
+prometheus_scrape_targets: []
+
+# Static job configurations
+prometheus_static_jobs: []
+#  - job_name: 'custom-app'
+#    static_configs:
+#      - targets: ['localhost:8080']
+#        labels:
+#          env: 'production'
+
+# ========================================
+# Alertmanager Integration
+# ========================================
+
+prometheus_alertmanager_enabled: false
+prometheus_alertmanager_url: "http://localhost:9093"
+
+# ========================================
+# Remote Write/Read
+# ========================================
+
+prometheus_remote_write: []
+# Example:
+#  - url: "https://prometheus-remote.example.com/api/v1/write"
+#    basic_auth:
+#      username: "user"
+#      password: "pass"
+
+prometheus_remote_read: []
+
+# ========================================
+# Storage Configuration
+# ========================================
+
+prometheus_storage_tsdb_path: "{{ prometheus_data_dir }}"
+prometheus_storage_tsdb_retention_time: "{{ prometheus_retention_time }}"
+prometheus_storage_tsdb_retention_size: "{{ prometheus_retention_size }}"
+
+# ========================================
+# Security
+# ========================================
+
+prometheus_web_listen_address: "{{ prometheus_listen_address }}:{{ prometheus_port }}"
+prometheus_web_external_url: "{{ prometheus_external_url }}"
+
+# Basic auth (optional)
+prometheus_web_basic_auth_enabled: false
+prometheus_web_basic_auth_users: []
+#  - username: "admin"
+#    password: "secure_password"  # Will be bcrypt hashed
+
+# TLS Configuration (optional)
+prometheus_tls_enabled: false
+prometheus_tls_cert_file: "{{ prometheus_config_dir }}/tls/cert.pem"
+prometheus_tls_key_file: "{{ prometheus_config_dir }}/tls/key.pem"
+
+# ========================================
+# Firewall Configuration
+# ========================================
+
+prometheus_firewall_allowed_ips:
+  - "127.0.0.1/32"
+  # Add your Grafana server IP here
+  # - "{{ grafana_server_ip }}/32"
+
+# ========================================
+# Systemd Service
+# ========================================
+
+prometheus_systemd_restart: "on-failure"
+prometheus_systemd_restart_sec: "5s"
+prometheus_systemd_limit_nofile: 65536
+
+# ========================================
+# Backup Configuration
+# ========================================
+
+prometheus_backup_enabled: true
+prometheus_backup_dir: "/var/backups/prometheus"
+prometheus_backup_retention_days: 7
+prometheus_backup_schedule: "0 2 * * *"  # 2 AM daily
+
+# ========================================
+# Node Exporter Scrape Config
+# ========================================
+
+prometheus_scrape_node_exporter: true
+prometheus_node_exporter_port: 9100
+
+# ========================================
+# Service Discovery
+# ========================================
+
+# File-based service discovery
+prometheus_file_sd_enabled: false
+prometheus_file_sd_path: "{{ prometheus_config_dir }}/file_sd"
+
+# ========================================
+# Additional Configuration
+# ========================================
+
+# Extra command-line arguments
+prometheus_extra_args: ""
+
+# Extra environment variables
+prometheus_env_vars: {}
+#  GOMAXPROCS: "2"
+
+# ========================================
+# Rule Files
+# ========================================
+
+prometheus_rules_enabled: true
+prometheus_rules_dir: "{{ prometheus_config_dir }}/rules"
+
+# Default alert rules
+prometheus_default_rules:
+  - name: "instance_down"
+    enabled: true
+  - name: "high_cpu"
+    enabled: true
+  - name: "high_memory"
+    enabled: true
+  - name: "disk_space"
+    enabled: true
+
+# ========================================
+# Recording Rules
+# ========================================
+
+prometheus_recording_rules_enabled: false
+prometheus_recording_rules: []
+
+# ========================================
+# Deployment Control
+# ========================================
+
+# This is set by inventory based on monitoring_server_ip
+deploy_prometheus: true

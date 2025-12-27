@@ -1,0 +1,101 @@
+---
+# Node Exporter Configuration
+# System metrics exporter for Prometheus
+# Deployed on ALL monitored servers
+
+# ========================================
+# Node Exporter Version
+# ========================================
+node_exporter_version: "1.7.0"
+
+# ========================================
+# Node Exporter Connection
+# ========================================
+node_exporter_listen_address: "0.0.0.0"
+node_exporter_port: 9100
+
+# ========================================
+# Node Exporter Enabled
+# ========================================
+node_exporter_enabled: true
+
+# ========================================
+# Node Exporter Collectors
+# ========================================
+# Enable all default collectors
+node_exporter_enabled_collectors:
+  - cpu
+  - diskstats
+  - filesystem
+  - loadavg
+  - meminfo
+  - netdev
+  - netstat
+  - stat
+  - time
+  - uname
+  - vmstat
+  - systemd
+  - textfile
+
+# Disabled collectors (optional)
+node_exporter_disabled_collectors: []
+
+# ========================================
+# Node Exporter Textfile Collector
+# ========================================
+# For custom metrics
+node_exporter_textfile_dir: /var/lib/node_exporter/textfile_collector
+
+# Custom metrics scripts
+node_exporter_custom_metrics_enabled: true
+node_exporter_custom_scripts:
+  - name: disk_usage
+    enabled: true
+    schedule: "*/5 * * * *"  # Every 5 minutes
+
+  - name: service_status
+    enabled: true
+    schedule: "*/1 * * * *"  # Every minute
+
+# ========================================
+# Node Exporter Security
+# ========================================
+# Firewall rules
+node_exporter_firewall_allowed_ips:
+  - 127.0.0.1/32
+  - "{{ monitoring_server_ip | default(wordpress_server_ip) }}/32"
+
+# ========================================
+# Node Exporter Filesystem Metrics
+# ========================================
+# Ignore certain filesystem types
+node_exporter_filesystem_ignored_mount_points:
+  - ^/(dev|proc|sys|var/lib/docker/.+)($|/)
+  - ^/(run|var/run)($|/)
+
+node_exporter_filesystem_ignored_fs_types:
+  - autofs
+  - binfmt_misc
+  - bpf
+  - cgroup
+  - cgroup2
+  - configfs
+  - debugfs
+  - devpts
+  - devtmpfs
+  - fusectl
+  - hugetlbfs
+  - mqueue
+  - nsfs
+  - overlay
+  - proc
+  - procfs
+  - pstore
+  - rpc_pipefs
+  - securityfs
+  - selinuxfs
+  - squashfs
+  - sysfs
+  - tmpfs
+  - tracefs

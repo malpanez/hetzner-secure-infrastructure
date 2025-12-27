@@ -1,0 +1,117 @@
+---
+# MariaDB Configuration for WordPress
+# 10-30% faster than MySQL, 100% compatible
+
+# ========================================
+# MariaDB Version
+# ========================================
+mariadb_version: "10.11"  # LTS version
+
+# ========================================
+# MariaDB Connection
+# ========================================
+mariadb_bind_address: 127.0.0.1
+mariadb_port: 3306
+mariadb_socket: /var/run/mysqld/mysqld.sock
+
+# ========================================
+# MariaDB Root Password
+# ========================================
+mariadb_root_password: "{{ vault_mariadb_root_password }}"
+
+# ========================================
+# MariaDB Character Set
+# ========================================
+mariadb_character_set_server: utf8mb4
+mariadb_collation_server: utf8mb4_unicode_ci
+
+# ========================================
+# MariaDB Performance Tuning
+# ========================================
+# For cx21 (4GB RAM) - allocate 25% to InnoDB
+mariadb_innodb_buffer_pool_size: 1G
+mariadb_innodb_buffer_pool_instances: 4
+mariadb_innodb_log_file_size: 256M
+mariadb_innodb_log_buffer_size: 16M
+mariadb_innodb_flush_log_at_trx_commit: 2  # Better performance, slight risk
+mariadb_innodb_flush_method: O_DIRECT
+
+# Query cache (if supported)
+mariadb_query_cache_type: 1
+mariadb_query_cache_size: 128M
+mariadb_query_cache_limit: 2M
+
+# Connection settings
+mariadb_max_connections: 200
+mariadb_max_connect_errors: 10000
+mariadb_connect_timeout: 10
+mariadb_wait_timeout: 600
+
+# Table cache
+mariadb_table_open_cache: 4096
+mariadb_table_definition_cache: 2048
+
+# Temporary tables
+mariadb_tmp_table_size: 64M
+mariadb_max_heap_table_size: 64M
+
+# Sort buffer
+mariadb_sort_buffer_size: 2M
+mariadb_read_buffer_size: 1M
+mariadb_read_rnd_buffer_size: 2M
+
+# Thread settings
+mariadb_thread_cache_size: 50
+mariadb_thread_stack: 256K
+
+# ========================================
+# MariaDB Logging
+# ========================================
+mariadb_log_error: /var/log/mysql/error.log
+mariadb_slow_query_log: 1
+mariadb_slow_query_log_file: /var/log/mysql/slow.log
+mariadb_long_query_time: 2  # Log queries slower than 2 seconds
+mariadb_log_queries_not_using_indexes: 0
+
+# Binary logging (disabled for single server)
+mariadb_log_bin_enabled: false
+
+# ========================================
+# MariaDB Security
+# ========================================
+mariadb_remove_anonymous_users: true
+mariadb_remove_test_database: true
+mariadb_disallow_root_remote_login: true
+
+# ========================================
+# MariaDB WordPress Database
+# ========================================
+mariadb_databases:
+  - name: "{{ wordpress_db_name }}"
+    encoding: utf8mb4
+    collation: utf8mb4_unicode_ci
+
+mariadb_users:
+  - name: "{{ wordpress_db_user }}"
+    password: "{{ wordpress_db_password }}"
+    priv: "{{ wordpress_db_name }}.*:ALL"
+    host: localhost
+
+# ========================================
+# MariaDB Backup
+# ========================================
+mariadb_backup_enabled: true
+mariadb_backup_schedule: "0 3 * * *"  # Daily at 3 AM
+mariadb_backup_retention_days: 7
+mariadb_backup_dir: /var/backups/mariadb
+mariadb_backup_databases:
+  - "{{ wordpress_db_name }}"
+
+# ========================================
+# MariaDB Monitoring
+# ========================================
+mariadb_exporter_enabled: true
+mariadb_exporter_version: "0.15.0"
+mariadb_exporter_port: 9104
+mariadb_exporter_user: exporter
+mariadb_exporter_password: "{{ vault_mariadb_exporter_password | default('changeme') }}"

@@ -1,0 +1,35 @@
+# Dynamic inventory plugin for Hetzner Cloud
+# This reads servers from both Terraform output AND Hetzner API
+
+plugin: hetzner.hcloud.hcloud
+
+# API token from environment
+token: "{{ lookup('env', 'HCLOUD_TOKEN') }}"
+
+# Keyed groups by labels
+keyed_groups:
+  - key: labels.environment
+    prefix: env
+  - key: labels.project
+    prefix: project
+  - key: server_type
+    prefix: type
+  - key: location
+    prefix: location
+
+# Compose variables for Ansible
+compose:
+  ansible_host: ipv4_address
+  ansible_user: miguel
+  ansible_ssh_private_key_file: ~/.ssh/id_ed25519_sk
+  server_type: server_type.name
+  datacenter: datacenter.name
+  
+# Groups
+groups:
+  hetzner: true
+  production: labels.environment == "production"
+  staging: labels.environment == "staging"
+  
+# Host variables
+hostvar_prefix: hcloud_

@@ -1,0 +1,121 @@
+# AppArmor profile for OpenSSH Server (sshd)
+# Managed by Ansible - DO NOT EDIT MANUALLY
+# Based on Debian/Ubuntu best practices
+
+#include <tunables/global>
+
+/usr/sbin/sshd {
+  #include <abstractions/authentication>
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/nameservice>
+  #include <abstractions/wutmp>
+
+  capability sys_chroot,
+  capability sys_resource,
+  capability sys_tty_config,
+  capability dac_override,
+  capability dac_read_search,
+  capability setgid,
+  capability setuid,
+  capability audit_write,
+  capability kill,
+
+  # Network access
+  network inet stream,
+  network inet6 stream,
+  network inet dgram,
+  network inet6 dgram,
+
+  # SSH daemon binary and config
+  /usr/sbin/sshd mrix,
+  /etc/ssh/sshd_config r,
+  /etc/ssh/sshd_config.d/ r,
+  /etc/ssh/sshd_config.d/* r,
+  /etc/ssh/ssh_config r,
+  /etc/ssh/ssh_host_*_key r,
+  /etc/ssh/ssh_host_*_key.pub r,
+
+  # PAM and authentication
+  /etc/pam.d/* r,
+  /etc/security/** r,
+  /etc/login.defs r,
+  /etc/default/locale r,
+  
+  # Google Authenticator (2FA)
+  /etc/pam.d/sshd r,
+  owner @{HOME}/.google_authenticator r,
+
+  # System files
+  /etc/environment r,
+  /etc/security/limits.d/ r,
+  /etc/security/limits.d/* r,
+  /etc/default/locale r,
+  /etc/locale.alias r,
+  /usr/share/locale/** r,
+
+  # Proc and sys
+  @{PROC}/sys/kernel/ngroups_max r,
+  @{PROC}/sys/crypto/fips_enabled r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/limits r,
+  owner @{PROC}/@{pid}/uid_map r,
+  owner @{PROC}/@{pid}/loginuid rw,
+  owner @{PROC}/@{pid}/oom_score_adj rw,
+  /sys/fs/cgroup/user.slice/user-@{uid}.slice/session-*.scope/cgroup.procs w,
+
+  # User home directories
+  owner @{HOME}/.ssh/authorized_keys r,
+  owner @{HOME}/.ssh/authorized_keys2 r,
+  owner @{HOME}/.ssh/environment r,
+  owner @{HOME}/.ssh/rc r,
+
+  # Run directory
+  /run/sshd/ w,
+  /run/sshd/** rw,
+  owner /run/user/@{uid}/ w,
+
+  # Logs
+  /var/log/auth.log w,
+  /var/log/btmp rw,
+  /var/log/wtmp rw,
+  /var/log/lastlog rw,
+
+  # Shells (transition to unconfined for user sessions)
+  /bin/bash Ux,
+  /bin/dash Ux,
+  /bin/sh Ux,
+  /usr/bin/bash Ux,
+
+  # Session management
+  /usr/bin/ssh-keysign Cx -> ssh-keysign,
+  /usr/lib/openssh/sftp-server Cx -> sftp-server,
+
+  # Privilege separation
+  /var/run/sshd.pid w,
+  /run/systemd/notify w,
+
+  # Allow FIDO2/Yubikey authentication
+  /dev/hidraw* rw,
+  /sys/class/hidraw/ r,
+  /sys/devices/**/hidraw/** r,
+
+  # Child profile for ssh-keysign
+  profile ssh-keysign {
+    #include <abstractions/base>
+    /usr/bin/ssh-keysign mr,
+    /etc/ssh/ssh_config r,
+    /etc/ssh/ssh_host_*_key r,
+  }
+
+  # Child profile for SFTP
+  profile sftp-server {
+    #include <abstractions/base>
+    /usr/lib/openssh/sftp-server mr,
+    owner @{HOME}/** rw,
+    owner @{HOME}/ r,
+  }
+
+  # Local customizations
+  #include <local/usr.sbin.sshd>
+}

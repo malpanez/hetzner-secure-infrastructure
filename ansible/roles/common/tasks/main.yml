@@ -1,0 +1,134 @@
+---
+# Common role - Basic system configuration
+
+- name: Set hostname
+  hostname:
+    name: "{{ inventory_hostname }}"
+  tags: hostname
+
+- name: Set timezone
+  timezone:
+    name: "{{ system_timezone }}"
+  tags: timezone
+
+- name: Set locale
+  locale_gen:
+    name: "{{ system_locale }}"
+    state: present
+  tags: locale
+
+- name: Update all packages
+  apt:
+    upgrade: dist
+    update_cache: yes
+    autoremove: yes
+    autoclean: yes
+  tags: [updates, packages]
+
+- name: Install essential packages
+  apt:
+    name: "{{ required_packages }}"
+    state: present
+  tags: packages
+
+- name: Install additional security tools
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - gnupg
+      - software-properties-common
+      - sudo
+      - rsyslog
+      - logrotate
+      - cron
+    state: present
+  tags: packages
+
+- name: Configure NTP
+  block:
+    - name: Install systemd-timesyncd
+      apt:
+        name: systemd-timesyncd
+        state: present
+    
+    - name: Configure NTP servers
+      template:
+        src: timesyncd.conf.j2
+        dest: /etc/systemd/timesyncd.conf
+        owner: root
+        group: root
+        mode: '0644'
+      notify: restart timesyncd
+    
+    - name: Enable and start timesyncd
+      systemd:
+        name: systemd-timesyncd
+        enabled: yes
+        state: started
+  when: ntp_enabled | default(true)
+  tags: ntp
+
+- name: Configure log rotation
+  template:
+    src: logrotate.conf.j2
+    dest: /etc/logrotate.d/custom
+    owner: root
+    group: root
+    mode: '0644'
+  tags: logging
+
+- name: Ensure admin user exists
+  user:
+    name: "{{ admin_username }}"
+    groups: "{{ admin_groups }}"
+    shell: /bin/bash
+    create_home: yes
+    append: yes
+  tags: user
+
+- name: Create .ssh directory for admin user
+  file:
+    path: "/home/{{ admin_username }}/.ssh"
+    state: directory
+    owner: "{{ admin_username }}"
+    group: "{{ admin_username }}"
+    mode: '0700'
+  tags: user
+
+- name: Set up sudoers for admin user
+  template:
+    src: sudoers.j2
+    dest: "/etc/sudoers.d/{{ admin_username }}"
+    owner: root
+    group: root
+    mode: '0440'
+    validate: 'visudo -cf %s'
+  tags: sudo
+
+- name: Disable root account password
+  user:
+    name: root
+    password: '!'
+  tags: security
+
+- name: Remove unnecessary packages
+  apt:
+    name:
+      - telnet
+      - rsh-client
+      - rsh-redone-client
+    state: absent
+    purge: yes
+  tags: [security, cleanup]
+
+- name: Check if reboot is required
+  stat:
+    path: /var/run/reboot-required
+  register: reboot_required_file
+  tags: always
+
+- name: Set reboot fact
+  set_fact:
+    ansible_reboot_required: "{{ reboot_required_file.stat.exists }}"
+  tags: always

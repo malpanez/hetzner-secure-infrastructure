@@ -1,0 +1,91 @@
+---
+# OpenBao Role - Default Variables
+
+# ========================================
+# OpenBao Configuration
+# ========================================
+
+openbao_version: "2.0.0"
+openbao_user: "openbao"
+openbao_group: "openbao"
+
+# Directories
+openbao_install_dir: "/usr/local/bin"
+openbao_config_dir: "/etc/openbao.d"
+openbao_data_dir: "/var/lib/openbao"
+openbao_tls_dir: "/etc/openbao.d/tls"
+openbao_log_dir: "/var/log/openbao"
+
+# Listen address
+openbao_listen_address: "0.0.0.0:8200"
+openbao_cluster_address: "{{ ansible_default_ipv4.address }}:8201"
+openbao_api_addr: "https://{{ ansible_default_ipv4.address }}:8200"
+
+# Storage backend
+openbao_storage_backend: "file"  # file, consul, raft
+openbao_storage_path: "{{ openbao_data_dir }}"
+
+# TLS/SSL
+openbao_tls_enabled: true
+openbao_tls_disable: false
+openbao_tls_cert_file: "{{ openbao_tls_dir }}/tls.crt"
+openbao_tls_key_file: "{{ openbao_tls_dir }}/tls.key"
+
+# Generate self-signed cert by default
+openbao_tls_self_signed: true
+openbao_tls_self_signed_subject: "/CN={{ ansible_default_ipv4.address }}"
+
+# UI
+openbao_ui_enabled: true
+
+# Logging
+openbao_log_level: "info"  # trace, debug, info, warn, error
+openbao_log_format: "standard"  # standard, json
+
+# Performance
+openbao_disable_mlock: true  # Set false if using encrypted volume
+
+# ========================================
+# Firewall Configuration
+# ========================================
+
+openbao_firewall_enabled: true
+openbao_firewall_allowed_ips:
+  - "{{ ansible_default_ipv4.address }}/32"  # Localhost
+  # Add application server IPs here
+
+# ========================================
+# Systemd Configuration
+# ========================================
+
+openbao_systemd_enabled: true
+openbao_systemd_restart: "on-failure"
+openbao_systemd_restart_sec: 5
+openbao_systemd_limit_nofile: 65536
+openbao_systemd_limit_memlock: "infinity"
+
+# ========================================
+# Initialization (Post-installation)
+# ========================================
+
+# Auto-unseal (requires additional setup)
+openbao_auto_unseal_enabled: false
+
+# Key shares for Shamir's Secret Sharing
+openbao_key_shares: 5
+openbao_key_threshold: 3
+
+# ========================================
+# Audit Logging
+# ========================================
+
+openbao_audit_enabled: true
+openbao_audit_path: "{{ openbao_data_dir }}/audit.log"
+
+# ========================================
+# Backup Configuration
+# ========================================
+
+openbao_backup_enabled: true
+openbao_backup_dir: "/backup/openbao"
+openbao_backup_retention_days: 30

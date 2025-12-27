@@ -1,0 +1,146 @@
+---
+# MariaDB Role - Default Variables
+# Optimized for WordPress + LearnDash
+
+# ========================================
+# Version
+# ========================================
+
+mariadb_version: "10.11"  # Latest LTS
+mariadb_distribution: "debian"
+
+# ========================================
+# Basic Configuration
+# ========================================
+
+mariadb_root_password: "{{ vault_mysql_root_password }}"
+mariadb_bind_address: "127.0.0.1"  # Localhost only for security
+mariadb_port: 3306
+
+# ========================================
+# WordPress Database
+# ========================================
+
+mariadb_databases:
+  - name: "{{ wordpress_db_name | default('wordpress') }}"
+    encoding: utf8mb4
+    collation: utf8mb4_unicode_ci
+
+mariadb_users:
+  - name: "{{ wordpress_db_user | default('wordpress') }}"
+    password: "{{ wordpress_db_password | default(vault_wordpress_db_password) }}"
+    priv: "{{ wordpress_db_name | default('wordpress') }}.*:ALL"
+    host: "localhost"
+
+# ========================================
+# Performance Configuration
+# ========================================
+
+# InnoDB Settings (optimized for 4GB RAM server)
+mariadb_innodb_buffer_pool_size: "1G"  # 25% of RAM for dedicated DB
+mariadb_innodb_buffer_pool_instances: 4
+mariadb_innodb_log_file_size: "256M"
+mariadb_innodb_log_buffer_size: "16M"
+mariadb_innodb_flush_log_at_trx_commit: 2  # Better performance, slight risk
+mariadb_innodb_flush_method: "O_DIRECT"
+mariadb_innodb_file_per_table: "ON"
+
+# Connection Settings
+mariadb_max_connections: 200
+mariadb_max_connect_errors: 10000
+mariadb_connect_timeout: 10
+mariadb_wait_timeout: 600
+mariadb_interactive_timeout: 600
+
+# Buffer Settings
+mariadb_key_buffer_size: "32M"
+mariadb_sort_buffer_size: "2M"
+mariadb_read_buffer_size: "2M"
+mariadb_read_rnd_buffer_size: "4M"
+mariadb_join_buffer_size: "4M"
+mariadb_table_open_cache: 4000
+mariadb_table_definition_cache: 2000
+
+# Thread Settings
+mariadb_thread_cache_size: 50
+mariadb_thread_stack: "256K"
+
+# Query Cache (deprecated but useful for read-heavy workloads)
+mariadb_query_cache_type: 0  # Disabled (use Redis instead)
+mariadb_query_cache_size: 0
+mariadb_query_cache_limit: "2M"
+
+# Temporary Tables
+mariadb_tmp_table_size: "64M"
+mariadb_max_heap_table_size: "64M"
+
+# ========================================
+# Logging
+# ========================================
+
+mariadb_log_error: "/var/log/mysql/error.log"
+mariadb_slow_query_log: 1
+mariadb_slow_query_log_file: "/var/log/mysql/slow-query.log"
+mariadb_long_query_time: 2  # Log queries taking > 2 seconds
+mariadb_log_queries_not_using_indexes: 0
+
+# Binary Logging (for backups and replication)
+mariadb_log_bin: "/var/log/mysql/mysql-bin"
+mariadb_binlog_format: "ROW"
+mariadb_expire_logs_days: 7
+mariadb_max_binlog_size: "100M"
+
+# ========================================
+# Security
+# ========================================
+
+mariadb_skip_name_resolve: "ON"  # Use IPs instead of hostnames
+mariadb_local_infile: "OFF"  # Prevent local file loading attacks
+mariadb_symbolic_links: "OFF"
+
+# ========================================
+# Character Set
+# ========================================
+
+mariadb_character_set_server: "utf8mb4"
+mariadb_collation_server: "utf8mb4_unicode_ci"
+
+# ========================================
+# WordPress-Specific Optimizations
+# ========================================
+
+# Increase packet size for large post content
+mariadb_max_allowed_packet: "64M"
+
+# WordPress uses many small queries
+mariadb_myisam_sort_buffer_size: "8M"
+
+# ========================================
+# Monitoring
+# ========================================
+
+mariadb_performance_schema: "ON"
+mariadb_mysqld_exporter_enabled: true
+mariadb_mysqld_exporter_version: "0.15.0"
+mariadb_mysqld_exporter_port: 9104
+
+mariadb_exporter_user: "exporter"
+mariadb_exporter_password: "{{ lookup('password', '/dev/null length=32 chars=ascii_letters,digits') }}"
+
+# ========================================
+# Backup
+# ========================================
+
+mariadb_backup_enabled: true
+mariadb_backup_dir: "/var/backups/mysql"
+mariadb_backup_retention_days: 7
+mariadb_backup_schedule: "0 1 * * *"  # 1 AM daily
+mariadb_backup_compress: true
+
+# ========================================
+# Tuning Wizard Settings
+# ========================================
+
+# Auto-tune based on server RAM
+# These are calculated values for 4GB RAM server
+mariadb_auto_tune: true

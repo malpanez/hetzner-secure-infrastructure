@@ -1,0 +1,15 @@
+# PAM configuration for sudo with 2FA
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+{% if enable_2fa_sudo | default(true) %}
+# Require 2FA for sudo
+auth       required     pam_google_authenticator.so nullok
+{% endif %}
+
+# Standard sudo authentication
+auth       include      system-auth
+account    include      system-auth
+password   include      system-auth
+session    optional     pam_keyinit.so revoke
+session    required     pam_limits.so
+session    include      system-auth

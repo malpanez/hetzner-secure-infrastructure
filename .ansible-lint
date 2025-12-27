@@ -1,0 +1,41 @@
+---
+# Ansible Lint Configuration
+
+# Exclude paths
+exclude_paths:
+  - .github/
+  - .woodpecker/
+  - .molecule/
+  - .terraform/
+  - venv/
+  - '**/*.md'
+
+# Enable specific rules
+enable_list:
+  - fqcn-builtins  # Require FQCN for builtin modules
+  - no-handler     # Handlers should do one thing
+  - no-jinja-when  # No Jinja2 in when conditions
+
+# Skip specific rules
+skip_list:
+  - yaml[line-length]  # Line length checked by yamllint
+  - name[casing]       # Allow flexible naming
+  - role-name         # Allow flexible role naming
+
+# Warn only (don't fail)
+warn_list:
+  - experimental
+  - ignore-errors
+  - no-changed-when
+
+# Use specific Ansible version
+#ansible_version: "2.15"
+
+# Offline mode (don't check for updates)
+offline: false
+
+# Use colored output
+colored: true
+
+# Parseable format for CI
+#parseable: true

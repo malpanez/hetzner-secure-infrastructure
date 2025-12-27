@@ -1,0 +1,26 @@
+# PAM configuration for SSH with 2FA
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+# Google Authenticator (TOTP) - nullok allows users without 2FA to login initially
+auth       required     pam_google_authenticator.so {{ pam_google_authenticator_options }}
+
+# Standard Unix authentication
+auth       required     pam_env.so
+auth       required     pam_unix.so
+
+# Account management
+account    required     pam_nologin.so
+account    include      password-auth
+
+# Password management  
+password   include      password-auth
+
+# Session management
+session    optional     pam_keyinit.so revoke
+session    required     pam_limits.so
+-session   optional     pam_systemd.so
+session    [success=1 default=ignore] pam_succeed_if.so service in crond quiet use_uid
+session    required     pam_unix.so
+
+# MOTD
+session    optional     pam_motd.so

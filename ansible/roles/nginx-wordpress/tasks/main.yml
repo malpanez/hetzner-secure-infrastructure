@@ -1,0 +1,267 @@
+---
+# Nginx WordPress Role - Main Tasks
+# Optimized for WordPress + Tutor LMS on Debian 13
+
+- name: Include OS-specific variables
+  include_vars: "{{ ansible_os_family }}.yml"
+  tags: [nginx, wordpress]
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  tags: [nginx, wordpress]
+
+- name: Install Nginx and dependencies
+  apt:
+    name:
+      - nginx
+      - nginx-extras # Includes additional modules (brotli, etc.)
+      - ssl-cert
+      - python3-certbot-nginx # For Let's Encrypt
+    state: present
+  tags: [nginx, wordpress]
+
+- name: Install PHP and extensions
+  apt:
+    name:
+      - "php{{ php_version }}-fpm"
+      - "php{{ php_version }}-mysql"
+      - "php{{ php_version }}-curl"
+      - "php{{ php_version }}-gd"
+      - "php{{ php_version }}-mbstring"
+      - "php{{ php_version }}-xml"
+      - "php{{ php_version }}-zip"
+      - "php{{ php_version }}-intl"
+      - "php{{ php_version }}-bcmath"
+      - "php{{ php_version }}-imagick"
+      - "php{{ php_version }}-redis" # For object caching
+      - "php{{ php_version }}-opcache" # PHP opcode caching
+    state: present
+  tags: [nginx, wordpress, php]
+
+- name: Ensure Nginx service is enabled
+  systemd:
+    name: nginx
+    enabled: yes
+  tags: [nginx]
+
+- name: Ensure PHP-FPM service is enabled
+  systemd:
+    name: "php{{ php_version }}-fpm"
+    enabled: yes
+  tags: [php]
+
+- name: Create Nginx cache directory
+  file:
+    path: "{{ nginx_fastcgi_cache_path }}"
+    state: directory
+    owner: "{{ wordpress_user }}"
+    group: "{{ wordpress_group }}"
+    mode: '0755'
+  when: nginx_fastcgi_cache_enabled
+  tags: [nginx, cache]
+
+- name: Generate Diffie-Hellman parameters (may take a while)
+  openssl_dhparam:
+    path: /etc/nginx/dhparam.pem
+    size: 2048
+  notify: reload nginx
+  tags: [nginx, ssl]
+
+- name: Create Let's Encrypt webroot directory
+  file:
+    path: /var/www/letsencrypt
+    state: directory
+    owner: "{{ wordpress_user }}"
+    group: "{{ wordpress_group }}"
+    mode: '0755'
+  tags: [nginx, ssl]
+
+- name: Backup original nginx.conf
+  copy:
+    src: /etc/nginx/nginx.conf
+    dest: /etc/nginx/nginx.conf.backup
+    remote_src: yes
+    force: no
+  when: nginx_backup_config
+  tags: [nginx, backup]
+
+- name: Deploy optimized nginx.conf
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: '0644'
+    validate: 'nginx -t -c %s'
+  notify: reload nginx
+  tags: [nginx, config]
+
+- name: Create WordPress document root
+  file:
+    path: "{{ wordpress_root }}"
+    state: directory
+    owner: "{{ wordpress_user }}"
+    group: "{{ wordpress_group }}"
+    mode: '0755'
+  tags: [wordpress]
+
+- name: Deploy WordPress site configuration
+  template:
+    src: wordpress.conf.j2
+    dest: "/etc/nginx/sites-available/{{ wordpress_domain }}.conf"
+    owner: root
+    group: root
+    mode: '0644'
+    validate: 'nginx -t'
+  notify: reload nginx
+  tags: [nginx, wordpress, config]
+
+- name: Enable WordPress site
+  file:
+    src: "/etc/nginx/sites-available/{{ wordpress_domain }}.conf"
+    dest: "/etc/nginx/sites-enabled/{{ wordpress_domain }}.conf"
+    state: link
+  notify: reload nginx
+  tags: [nginx, wordpress]
+
+- name: Disable default Nginx site
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: reload nginx
+  tags: [nginx]
+
+- name: Configure PHP-FPM pool
+  template:
+    src: php-fpm-pool.conf.j2
+    dest: "/etc/php/{{ php_version }}/fpm/pool.d/{{ wordpress_domain }}.conf"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart php-fpm
+  tags: [php, config]
+
+- name: Configure PHP ini settings
+  template:
+    src: php.ini.j2
+    dest: "/etc/php/{{ php_version }}/fpm/conf.d/99-wordpress.ini"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart php-fpm
+  tags: [php, config]
+
+- name: Create maintenance page
+  copy:
+    dest: "{{ nginx_maintenance_page }}"
+    content: |
+      <!DOCTYPE html>
+      <html>
+      <head>
+          <title>Maintenance</title>
+          <style>
+              body { font-family: Arial; text-align: center; padding: 50px; }
+              h1 { color: #333; }
+          </style>
+      </head>
+      <body>
+          <h1>🔧 Maintenance in Progress</h1>
+          <p>We'll be back shortly. Thank you for your patience!</p>
+      </body>
+      </html>
+    owner: "{{ wordpress_user }}"
+    group: "{{ wordpress_group }}"
+    mode: '0644'
+  tags: [nginx, maintenance]
+
+- name: Set up logrotate for Nginx logs
+  copy:
+    dest: /etc/logrotate.d/nginx-wordpress
+    content: |
+      {{ nginx_access_log }} {{ nginx_error_log }} {
+          daily
+          missingok
+          rotate 14
+          compress
+          delaycompress
+          notifempty
+          create 0640 {{ wordpress_user }} adm
+          sharedscripts
+          postrotate
+              [ -f /var/run/nginx.pid ] && kill -USR1 `cat /var/run/nginx.pid`
+          endscript
+      }
+    owner: root
+    group: root
+    mode: '0644'
+  tags: [nginx, logging]
+
+- name: Ensure Nginx is running
+  systemd:
+    name: nginx
+    state: started
+  tags: [nginx]
+
+- name: Ensure PHP-FPM is running
+  systemd:
+    name: "php{{ php_version }}-fpm"
+    state: started
+  tags: [php]
+
+- name: Display SSL certificate instructions
+  debug:
+    msg: |
+      ========================================
+      NEXT STEPS - SSL Certificate
+      ========================================
+
+      1. Obtain SSL certificate with Let's Encrypt:
+
+         sudo certbot --nginx -d {{ wordpress_domain }} -d www.{{ wordpress_domain }}
+
+      2. Certificate will auto-renew. Test renewal:
+
+         sudo certbot renew --dry-run
+
+      3. After obtaining certificate, update Cloudflare to "Strict" SSL mode
+
+      ========================================
+  tags: [nginx, ssl, info]
+
+- name: Display WordPress installation instructions
+  debug:
+    msg: |
+      ========================================
+      WordPress Installation
+      ========================================
+
+      Nginx and PHP are configured. Next:
+
+      1. Download WordPress:
+         cd /tmp
+         wget https://wordpress.org/latest.tar.gz
+         tar -xzf latest.tar.gz
+         sudo cp -r wordpress/* {{ wordpress_root }}/
+         sudo chown -R {{ wordpress_user }}:{{ wordpress_group }} {{ wordpress_root }}
+
+      2. Create database:
+         sudo mysql
+         CREATE DATABASE wordpress CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+         CREATE USER 'wordpress'@'localhost' IDENTIFIED BY 'strong_password';
+         GRANT ALL ON wordpress.* TO 'wordpress'@'localhost';
+         FLUSH PRIVILEGES;
+         EXIT;
+
+      3. Complete WordPress setup:
+         Visit: https://{{ wordpress_domain }}/wp-admin/install.php
+
+      4. Install recommended plugins:
+         - Wordfence Security
+         - WP Rocket (caching)
+         - LearnDash or Tutor LMS
+         - MailerLite
+
+      ========================================
+  tags: [wordpress, info]

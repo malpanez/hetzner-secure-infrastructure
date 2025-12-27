@@ -1,0 +1,38 @@
+# OpenBao Configuration
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+# Storage backend
+storage "{{ openbao_storage_backend }}" {
+{% if openbao_storage_backend == 'file' %}
+  path = "{{ openbao_storage_path }}"
+{% endif %}
+}
+
+# API listener
+listener "tcp" {
+  address       = "{{ openbao_listen_address }}"
+{% if openbao_tls_enabled %}
+  tls_cert_file = "{{ openbao_tls_cert_file }}"
+  tls_key_file  = "{{ openbao_tls_key_file }}"
+{% else %}
+  tls_disable   = true
+{% endif %}
+}
+
+# API addresses
+api_addr     = "{{ openbao_api_addr }}"
+cluster_addr = "https://{{ openbao_cluster_address }}"
+
+# UI
+ui = {{ openbao_ui_enabled | lower }}
+
+# Disable mlock if using encrypted volume
+disable_mlock = {{ openbao_disable_mlock | lower }}
+
+# Logging
+log_level  = "{{ openbao_log_level }}"
+log_format = "{{ openbao_log_format }}"
+
+# Performance tuning
+default_lease_ttl = "768h"  # 32 days
+max_lease_ttl     = "8760h" # 365 days

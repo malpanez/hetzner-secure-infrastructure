@@ -1,0 +1,15 @@
+---
+# Grafana Role - Handlers
+
+- name: restart grafana
+  systemd:
+    name: grafana-server
+    state: restarted
+    daemon_reload: yes
+  tags: [grafana]
+
+- name: reload grafana
+  systemd:
+    name: grafana-server
+    state: reloaded
+  tags: [grafana]

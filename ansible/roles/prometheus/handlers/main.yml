@@ -1,0 +1,21 @@
+---
+# Prometheus Role - Handlers
+
+- name: restart prometheus
+  systemd:
+    name: prometheus
+    state: restarted
+    daemon_reload: yes
+  tags: [prometheus]
+
+- name: reload prometheus
+  systemd:
+    name: prometheus
+    state: reloaded
+  tags: [prometheus]
+
+- name: validate prometheus config
+  command: "{{ prometheus_install_dir }}/promtool check config {{ prometheus_config_dir }}/prometheus.yml"
+  register: prometheus_config_check
+  changed_when: false
+  tags: [prometheus]

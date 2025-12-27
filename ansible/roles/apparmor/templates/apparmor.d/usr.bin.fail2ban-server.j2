@@ -1,0 +1,96 @@
+# AppArmor profile for Fail2ban server
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+#include <tunables/global>
+
+/usr/bin/fail2ban-server {
+  #include <abstractions/base>
+  #include <abstractions/python>
+  #include <abstractions/nameservice>
+
+  capability dac_override,
+  capability dac_read_search,
+  capability kill,
+  capability net_admin,
+  capability net_raw,
+
+  # Network
+  network inet stream,
+  network inet6 stream,
+  network inet dgram,
+  network inet6 dgram,
+  network unix stream,
+
+  # Fail2ban binary
+  /usr/bin/fail2ban-server r,
+  /usr/bin/python3.* ix,
+
+  # Fail2ban configuration
+  /etc/fail2ban/** r,
+  /etc/fail2ban/*.conf r,
+  /etc/fail2ban/filter.d/*.conf r,
+  /etc/fail2ban/action.d/*.conf r,
+  /etc/fail2ban/jail.d/*.conf r,
+
+  # Fail2ban data
+  /var/lib/fail2ban/ rw,
+  /var/lib/fail2ban/** rw,
+  /var/run/fail2ban/ rw,
+  /var/run/fail2ban/** rw,
+
+  # Logs - read access to monitor
+  /var/log/auth.log r,
+  /var/log/syslog r,
+  /var/log/*.log r,
+  
+  # Fail2ban own logs - write access
+  /var/log/fail2ban.log w,
+
+  # Socket
+  /var/run/fail2ban/fail2ban.sock rw,
+
+  # PID file
+  /var/run/fail2ban/fail2ban.pid rw,
+
+  # Proc
+  @{PROC}/sys/net/ipv4/conf/*/rp_filter r,
+  @{PROC}/sys/net/ipv6/conf/*/disable_ipv6 r,
+  owner @{PROC}/@{pid}/fd/ r,
+
+  # System commands for actions
+  /usr/sbin/iptables Cx -> iptables,
+  /usr/sbin/ip6tables Cx -> iptables,
+  /usr/sbin/iptables-save Cx -> iptables,
+  /usr/sbin/ip6tables-save Cx -> iptables,
+  /usr/bin/mail Cx -> mail,
+  /usr/sbin/sendmail Cx -> mail,
+
+  # Python modules
+  /usr/lib/python3*/** r,
+  /usr/local/lib/python3*/** r,
+
+  # Child profile for iptables
+  profile iptables {
+    #include <abstractions/base>
+    capability net_admin,
+    capability net_raw,
+    /usr/sbin/iptables* mr,
+    /usr/sbin/ip6tables* mr,
+    /etc/protocols r,
+    /usr/lib/x86_64-linux-gnu/xtables/*.so mr,
+    /proc/net/ip_tables_names r,
+    /proc/sys/net/ipv*/conf/*/rp_filter r,
+  }
+
+  # Child profile for mail
+  profile mail {
+    #include <abstractions/base>
+    /usr/bin/mail mr,
+    /usr/sbin/sendmail mr,
+    /etc/mail/* r,
+    /var/spool/mail/* rw,
+  }
+
+  # Local customizations
+  #include <local/usr.bin.fail2ban-server>
+}

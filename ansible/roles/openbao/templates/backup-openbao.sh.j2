@@ -1,0 +1,26 @@
+#!/bin/bash
+# OpenBao Backup Script
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+set -euo pipefail
+
+BACKUP_DIR="{{ openbao_backup_dir }}"
+DATE=$(date +%Y%m%d-%H%M%S)
+OPENBAO_DATA="{{ openbao_data_dir }}"
+RETENTION_DAYS={{ openbao_backup_retention_days }}
+
+# Create backup directory
+mkdir -p "${BACKUP_DIR}"
+
+# Backup OpenBao data
+tar -czf "${BACKUP_DIR}/openbao-data-${DATE}.tar.gz" "${OPENBAO_DATA}"
+
+# Backup configuration
+tar -czf "${BACKUP_DIR}/openbao-config-${DATE}.tar.gz" {{ openbao_config_dir }}
+
+# Remove old backups
+find "${BACKUP_DIR}" -name "*.tar.gz" -mtime "+${RETENTION_DAYS}" -delete
+
+echo "Backup completed: ${DATE}"
+echo "Files:"
+ls -lh "${BACKUP_DIR}/"*"${DATE}"*

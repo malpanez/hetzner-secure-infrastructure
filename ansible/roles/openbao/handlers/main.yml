@@ -1,0 +1,15 @@
+---
+# OpenBao Role - Handlers
+
+- name: restart openbao
+  systemd:
+    name: openbao
+    state: restarted
+    daemon_reload: yes
+  tags: [openbao]
+
+- name: reload openbao
+  systemd:
+    name: openbao
+    state: reloaded
+  tags: [openbao]

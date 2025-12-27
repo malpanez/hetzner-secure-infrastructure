@@ -1,0 +1,35 @@
+# Password quality requirements
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+# Minimum password length
+minlen = 14
+
+# Minimum number of character classes (uppercase, lowercase, digits, special)
+minclass = 3
+
+# Maximum number of consecutive characters of same type
+maxrepeat = 3
+
+# Maximum number of consecutive characters from same class
+maxclassrepeat = 4
+
+# Require at least one digit
+dcredit = -1
+
+# Require at least one uppercase
+ucredit = -1
+
+# Require at least one lowercase
+lcredit = -1
+
+# Require at least one special character
+ocredit = -1
+
+# Deny passwords based on dictionary words
+dictcheck = 1
+
+# Check against username
+usercheck = 1
+
+# Enforce for root
+enforce_for_root

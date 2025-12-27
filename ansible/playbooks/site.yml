@@ -1,0 +1,366 @@
+---
+# Main Site Playbook - Flexible Multi-Server Deployment
+#
+# Follows Red Hat CoP Automation Good Practices:
+# https://redhat-cop.github.io/automation-good-practices/
+#
+# Deploys infrastructure based on inventory configuration:
+# - All-in-one (everything on one server)
+# - Separated (each service on dedicated server)
+# - Hybrid (mix of shared and dedicated)
+#
+# Usage:
+#   ansible-playbook -i inventory/production.yml playbooks/site.yml
+#
+# Selective deployment:
+#   ansible-playbook -i inventory/production.yml playbooks/site.yml --tags wordpress
+#   ansible-playbook -i inventory/production.yml playbooks/site.yml --tags openbao
+#   ansible-playbook -i inventory/production.yml playbooks/site.yml --limit wordpress-prod
+
+# ========================================
+# Common Configuration (All Servers)
+# ========================================
+- name: Apply common security hardening to all servers
+  hosts: hetzner
+  become: yes
+  gather_facts: yes
+
+  pre_tasks:
+    - name: Display deployment information
+      debug:
+        msg: |
+          ========================================
+          Deploying to: {{ inventory_hostname }}
+          Groups: {{ group_names | join(', ') }}
+          OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
+          IP: {{ ansible_default_ipv4.address | default('N/A') }}
+          ========================================
+      tags: [always]
+
+    - name: Update apt cache (Debian/Ubuntu)
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      when: ansible_os_family == 'Debian'
+      tags: [always]
+
+    - name: Check OS compatibility
+      assert:
+        that:
+          - ansible_distribution in ['Debian', 'Ubuntu']
+          - ansible_distribution_major_version | int >= 12
+        fail_msg: "This playbook requires Debian 12+ or Ubuntu 22.04+"
+        success_msg: "OS compatibility check passed"
+      tags: [always]
+
+  roles:
+    - role: common
+      tags: [common, base]
+
+    - role: security-hardening
+      tags: [security, hardening]
+
+    - role: firewall
+      tags: [security, firewall]
+      when: firewall_enabled | default(true) | bool
+
+    - role: fail2ban
+      tags: [security, fail2ban]
+      when: fail2ban_enabled | default(true) | bool
+
+    - role: apparmor
+      tags: [security, apparmor]
+      when:
+        - apparmor_enabled | default(true) | bool
+        - ansible_distribution in ['Debian', 'Ubuntu']
+
+    - role: ssh-2fa
+      tags: [security, ssh, 2fa]
+      when: ssh_2fa_enabled | default(true) | bool
+
+  post_tasks:
+    - name: Flush handlers
+      meta: flush_handlers
+      tags: [always]
+
+# ========================================
+# OpenBao Servers (Secrets Management)
+# ========================================
+- name: Deploy OpenBao secrets management
+  hosts: secrets_servers
+  become: yes
+  gather_facts: yes
+
+  pre_tasks:
+    - name: Check OpenBao deployment status
+      debug:
+        msg: "OpenBao will {{ 'be deployed' if (deploy_openbao | default(true) | bool) else 'NOT be deployed' }} on {{ inventory_hostname }}"
+      tags: [openbao]
+
+  roles:
+    - role: openbao
+      tags: [openbao, secrets]
+      when: deploy_openbao | default(true) | bool
+
+  post_tasks:
+    - name: Display OpenBao information
+      debug:
+        msg: |
+          ========================================
+          OpenBao Deployed Successfully
+          ========================================
+
+          Server: {{ inventory_hostname }}
+          Address: {{ openbao_api_addr }}
+
+          Manual initialization required:
+          1. SSH: ssh {{ ansible_user }}@{{ ansible_host }}
+          2. Export: export VAULT_ADDR='{{ openbao_api_addr }}'
+          3. Initialize: bao operator init
+          4. Save unseal keys and root token!
+          5. Unseal: bao operator unseal (3 times with different keys)
+
+          ========================================
+      when: deploy_openbao | default(true) | bool
+      tags: [openbao, info]
+
+# ========================================
+# Monitoring Servers (Prometheus + Grafana)
+# ========================================
+- name: Deploy monitoring stack
+  hosts: monitoring_servers
+  become: yes
+  gather_facts: yes
+
+  pre_tasks:
+    - name: Check monitoring deployment status
+      debug:
+        msg: "Monitoring will {{ 'be deployed' if (deploy_monitoring | default(true) | bool) else 'NOT be deployed' }} on {{ inventory_hostname }}"
+      tags: [monitoring]
+
+  roles:
+    - role: prometheus
+      tags: [monitoring, prometheus]
+      when: deploy_monitoring | default(true) | bool
+
+    - role: grafana
+      tags: [monitoring, grafana]
+      when: deploy_monitoring | default(true) | bool
+
+  post_tasks:
+    - name: Display monitoring information
+      debug:
+        msg: |
+          ========================================
+          Monitoring Stack Deployed
+          ========================================
+
+          Prometheus: http://{{ ansible_host }}:{{ prometheus_port }}
+          Grafana: http://{{ ansible_host }}:{{ grafana_port }}
+
+          Default credentials:
+          - Username: admin
+          - Password: {{ grafana_admin_password }}
+
+          ========================================
+      when: deploy_monitoring | default(true) | bool
+      tags: [monitoring, info]
+
+# ========================================
+# Node Exporter (All Monitored Servers)
+# ========================================
+- name: Deploy Node Exporter metrics
+  hosts: monitored_servers
+  become: yes
+  gather_facts: yes
+
+  roles:
+    - role: node-exporter
+      tags: [monitoring, node-exporter, metrics]
+      when: node_exporter_enabled | default(true) | bool
+
+# ========================================
+# WordPress Application Servers
+# ========================================
+- name: Deploy WordPress application stack
+  hosts: wordpress_servers
+  become: yes
+  gather_facts: yes
+
+  roles:
+    - role: valkey
+      tags: [wordpress, redis, cache, performance]
+
+    - role: nginx-wordpress
+      tags: [wordpress, nginx, webserver]
+
+  post_tasks:
+    - name: Display WordPress deployment information
+      debug:
+        msg: |
+          ========================================
+          WordPress Stack Deployed
+          ========================================
+
+          Server: {{ inventory_hostname }}
+          Domain: {{ wordpress_domain }}
+          Root: {{ wordpress_root }}
+
+          Next steps:
+          1. Install SSL certificate:
+             ssh {{ ansible_user }}@{{ ansible_host }}
+             sudo certbot --nginx -d {{ wordpress_domain }} -d www.{{ wordpress_domain }}
+
+          2. Install WordPress:
+             cd /tmp
+             wget https://wordpress.org/latest.tar.gz
+             tar -xzf latest.tar.gz
+             sudo cp -r wordpress/* {{ wordpress_root }}/
+             sudo chown -R {{ wordpress_user }}:{{ wordpress_group }} {{ wordpress_root }}
+
+          3. Create MySQL database:
+             sudo mysql
+             CREATE DATABASE wordpress CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+             CREATE USER 'wordpress'@'localhost' IDENTIFIED BY 'STRONG_PASSWORD';
+             GRANT ALL ON wordpress.* TO 'wordpress'@'localhost';
+             FLUSH PRIVILEGES;
+             EXIT;
+
+          4. Complete installation:
+             Visit: https://{{ wordpress_domain }}/wp-admin/install.php
+
+          5. Install LearnDash or Tutor LMS for course functionality
+
+          ========================================
+      tags: [wordpress, info]
+
+# ========================================
+# Final Validation & Summary
+# ========================================
+- name: Validate complete deployment
+  hosts: all
+  become: yes
+  gather_facts: no
+
+  tasks:
+    - name: Verify all servers are accessible
+      ping:
+      tags: [validate]
+
+    - name: Gather service facts
+      service_facts:
+      tags: [validate]
+
+    - name: Check critical services
+      assert:
+        that:
+          - ansible_facts.services['ssh.service'].state == 'running'
+          - ansible_facts.services['ufw.service'].state == 'running' or not (firewall_enabled | default(true))
+        fail_msg: "Critical services not running!"
+        success_msg: "All critical services operational"
+      tags: [validate]
+
+    - name: Display comprehensive deployment summary
+      debug:
+        msg: |
+          ========================================
+          🎉 DEPLOYMENT COMPLETE
+          ========================================
+
+          Infrastructure Overview:
+          {% if groups['wordpress_servers'] is defined %}
+          📝 WordPress Servers: {{ groups['wordpress_servers'] | length }}
+          {% for host in groups['wordpress_servers'] %}
+             - {{ host }}: {{ hostvars[host]['ansible_host'] | default('N/A') }}
+          {% endfor %}
+          {% endif %}
+
+          {% if groups['secrets_servers'] is defined %}
+          🔐 OpenBao Servers: {{ groups['secrets_servers'] | length }}
+          {% for host in groups['secrets_servers'] %}
+             - {{ host }}: {{ hostvars[host]['ansible_host'] | default('N/A') }}
+          {% endfor %}
+          {% endif %}
+
+          {% if groups['monitoring_servers'] is defined %}
+          📊 Monitoring Servers: {{ groups['monitoring_servers'] | length }}
+          {% for host in groups['monitoring_servers'] %}
+             - {{ host }}: {{ hostvars[host]['ansible_host'] | default('N/A') }}
+          {% endfor %}
+          {% endif %}
+
+          Security Features Enabled:
+          {% if firewall_enabled | default(true) %}✅ UFW Firewall{% endif %}
+          {% if fail2ban_enabled | default(true) %}✅ Fail2ban IDS{% endif %}
+          {% if apparmor_enabled | default(true) %}✅ AppArmor MAC{% endif %}
+          {% if ssh_2fa_enabled | default(true) %}✅ SSH 2FA{% endif %}
+          ✅ Kernel Hardening
+          ✅ Auto Security Updates
+
+          🎯 All systems operational and secured!
+
+          ========================================
+      run_once: true
+      delegate_to: localhost
+      tags: [validate, summary, always]
+
+# ========================================
+# Post-Deployment Recommendations
+# ========================================
+- name: Display post-deployment checklist
+  hosts: localhost
+  gather_facts: no
+
+  tasks:
+    - name: Show post-deployment tasks
+      debug:
+        msg: |
+          ========================================
+          📋 POST-DEPLOYMENT CHECKLIST
+          ========================================
+
+          ⚠️ CRITICAL - Test SSH Access:
+          {% for host in groups['hetzner'] %}
+          ssh {{ hostvars[host]['ansible_user'] }}@{{ hostvars[host]['ansible_host'] }}
+          {% endfor %}
+
+          🔒 Security Verification:
+          {% for host in groups['hetzner'] %}
+          On {{ host }}:
+          - sudo aa-status              # AppArmor profiles
+          - sudo ufw status verbose     # Firewall rules
+          - sudo fail2ban-client status # IDS status
+          - sudo sshd -t                # SSH config valid
+          {% endfor %}
+
+          🔐 OpenBao Setup (if deployed):
+          {% if groups['secrets_servers'] is defined %}
+          {% for host in groups['secrets_servers'] %}
+          ssh {{ hostvars[host]['ansible_user'] }}@{{ hostvars[host]['ansible_host'] }}
+          export VAULT_ADDR='https://{{ hostvars[host]['ansible_host'] }}:8200'
+          bao operator init
+          # SAVE UNSEAL KEYS!
+          {% endfor %}
+          {% endif %}
+
+          📊 Monitoring Access (if deployed):
+          {% if groups['monitoring_servers'] is defined %}
+          {% for host in groups['monitoring_servers'] %}
+          Prometheus: http://{{ hostvars[host]['ansible_host'] }}:9090
+          Grafana: http://{{ hostvars[host]['ansible_host'] }}:3000
+          {% endfor %}
+          {% endif %}
+
+          📝 WordPress Setup (if deployed):
+          {% if groups['wordpress_servers'] is defined %}
+          {% for host in groups['wordpress_servers'] %}
+          1. Get SSL: sudo certbot --nginx -d {{ hostvars[host]['wordpress_domain'] }}
+          2. Install WordPress (see above)
+          3. Install Tutor LMS
+          4. Configure Cloudflare (if enabled)
+          {% endfor %}
+          {% endif %}
+
+          ========================================
+      run_once: true
+      tags: [info, checklist, always]

@@ -1,0 +1,52 @@
+# Hetzner Cloud API Token
+# Get from: https://console.hetzner.cloud/
+hcloud_token = "YOUR_HCLOUD_TOKEN_HERE"
+
+# SSH Public Key (Yubikey FIDO2)
+# Get with: cat ~/.ssh/id_ed25519_sk.pub
+ssh_public_key = "sk-ssh-ed25519@openssh.com AAAA... miguel@hetzner"
+
+# Server Configuration
+server_name    = "prod-server-01"
+server_type    = "cx22"  # 2 vCPU, 4GB RAM, 40GB SSD
+location       = "nbg1"  # Nuremberg (or: fsn1, hel1, ash, hil)
+admin_username = "miguel"
+
+# SSH Access
+ssh_port = 22
+# Restrict to your IP for production:
+# ssh_allowed_ips = ["YOUR_IP/32"]
+ssh_allowed_ips = ["0.0.0.0/0", "::/0"]
+
+# Firewall
+allow_http  = false
+allow_https = false
+
+# Additional ports (example)
+# additional_ports = [
+#   {
+#     protocol   = "tcp"
+#     port       = "8080"
+#     source_ips = ["0.0.0.0/0", "::/0"]
+#   }
+# ]
+
+# Storage (optional)
+volume_size = 0  # GB, 0 = no volume
+
+# Network (optional)
+enable_floating_ip = false
+
+# DNS (optional)
+reverse_dns_enabled = false
+domain              = "homelabforge.dev"
+# reverse_dns_ptr   = "prod-server-01.homelabforge.dev"
+
+# Protection
+prevent_destroy = true
+
+# Labels
+labels = {
+  project = "secure-infrastructure"
+  owner   = "miguel"
+}

@@ -1,0 +1,15 @@
+---
+# Node Exporter Role - Handlers
+
+- name: restart node-exporter
+  systemd:
+    name: node_exporter
+    state: restarted
+    daemon_reload: yes
+  tags: [node-exporter]
+
+- name: reload node-exporter
+  systemd:
+    name: node_exporter
+    state: reloaded
+  tags: [node-exporter]

@@ -1,0 +1,19 @@
+# Fail2ban configuration
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+[DEFAULT]
+bantime  = {{ fail2ban_bantime }}
+findtime = {{ fail2ban_findtime }}
+maxretry = {{ fail2ban_maxretry }}
+ignoreip = {{ fail2ban_ignoreip | join(' ') }}
+
+{% for service in fail2ban_services %}
+[{{ service.name }}]
+enabled = {{ service.enabled | ternary('true', 'false') }}
+port = {{ service.port }}
+filter = {{ service.filter }}
+logpath = {{ service.logpath }}
+maxretry = {{ service.maxretry }}
+bantime = {{ service.bantime }}
+findtime = {{ service.findtime }}
+{% endfor %}

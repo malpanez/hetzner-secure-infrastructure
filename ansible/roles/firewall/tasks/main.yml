@@ -1,0 +1,31 @@
+---
+# Firewall Role - UFW Configuration
+
+- name: Install UFW
+  apt:
+    name: ufw
+    state: present
+  tags: packages
+
+- name: Set UFW default policies
+  ufw:
+    direction: "{{ item.direction }}"
+    policy: "{{ item.policy }}"
+  loop:
+    - { direction: 'incoming', policy: "{{ ufw_default_incoming_policy }}" }
+    - { direction: 'outgoing', policy: "{{ ufw_default_outgoing_policy }}" }
+  tags: policy
+
+- name: Configure UFW allowed ports
+  ufw:
+    rule: "{{ item.rule }}"
+    port: "{{ item.port }}"
+    proto: "{{ item.proto }}"
+    comment: "{{ item.comment | default(omit) }}"
+  loop: "{{ ufw_allowed_ports }}"
+  tags: rules
+
+- name: Enable UFW
+  ufw:
+    state: enabled
+  tags: enable

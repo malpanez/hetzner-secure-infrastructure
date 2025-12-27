@@ -1,0 +1,22 @@
+---
+# Molecule converge playbook for security-hardening role
+
+- name: Converge
+  hosts: all
+  become: true
+
+  pre_tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      when: ansible_os_family == 'Debian'
+
+  roles:
+    - role: security-hardening
+      vars:
+        # Test variables
+        security_auto_updates_enabled: true
+        security_aide_enabled: true
+        security_kernel_hardening_enabled: true
+        security_disable_uncommon_protocols: true

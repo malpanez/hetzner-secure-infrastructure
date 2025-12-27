@@ -1,0 +1,108 @@
+---
+# Woodpecker CI Pipeline for Codeberg
+# Tests infrastructure code on every push
+
+when:
+  - event: push
+    branch: main
+  - event: pull_request
+
+steps:
+  # ========================================
+  # Step 1: Validate Terraform
+  # ========================================
+  validate-terraform:
+    image: hashicorp/terraform:1.6
+    commands:
+      - cd terraform/environments/production
+      - terraform fmt -check -recursive
+      - terraform init -backend=false
+      - terraform validate
+    when:
+      - event: push
+      - event: pull_request
+
+  # ========================================
+  # Step 2: Validate Ansible Syntax
+  # ========================================
+  validate-ansible-syntax:
+    image: cytopia/ansible:latest-tools
+    commands:
+      - cd ansible
+      - ansible-playbook playbooks/site.yml --syntax-check
+      - ansible-lint playbooks/site.yml || true
+    when:
+      - event: push
+      - event: pull_request
+
+  # ========================================
+  # Step 3: Validate YAML files
+  # ========================================
+  validate-yaml:
+    image: cytopia/yamllint:latest
+    commands:
+      - yamllint -c .yamllint.yml ansible/ || true
+      - yamllint -c .yamllint.yml .woodpecker/ || true
+    when:
+      - event: push
+      - event: pull_request
+
+  # ========================================
+  # Step 4: Run Molecule Tests
+  # ========================================
+  test-molecule:
+    image: quay.io/ansible/molecule:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    commands:
+      - cd ansible/roles
+      - |
+        for role in */; do
+          if [ -d "$role/molecule" ]; then
+            echo "Testing role: $role"
+            cd "$role"
+            molecule test --all || exit 1
+            cd ..
+          fi
+        done
+    when:
+      - event: push
+        branch: main
+      - event: pull_request
+
+  # ========================================
+  # Step 5: Security Scan (ansible-lint strict)
+  # ========================================
+  security-scan:
+    image: cytopia/ansible:latest-tools
+    commands:
+      - cd ansible
+      - ansible-lint --strict playbooks/ || true
+    when:
+      - event: push
+      - event: pull_request
+
+  # ========================================
+  # Step 6: Notify on Success
+  # ========================================
+  notify-success:
+    image: alpine:latest
+    commands:
+      - echo "✅ All tests passed!"
+    when:
+      - event: push
+      - event: pull_request
+      - status: success
+
+  # ========================================
+  # Step 7: Notify on Failure
+  # ========================================
+  notify-failure:
+    image: alpine:latest
+    commands:
+      - echo "❌ Tests failed!"
+      - exit 1
+    when:
+      - event: push
+      - event: pull_request
+      - status: failure

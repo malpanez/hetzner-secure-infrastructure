@@ -1,0 +1,171 @@
+---
+# Nginx Configuration for WordPress
+# Optimized for high performance and security
+
+# ========================================
+# Nginx Basic Configuration
+# ========================================
+nginx_user: www-data
+nginx_worker_processes: auto
+nginx_worker_connections: 2048
+nginx_worker_rlimit_nofile: 4096
+
+# ========================================
+# SSL/TLS Configuration
+# ========================================
+nginx_ssl_enabled: true
+nginx_ssl_certificate_provider: letsencrypt
+nginx_ssl_protocols: "TLSv1.2 TLSv1.3"
+nginx_ssl_ciphers: "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384"
+nginx_ssl_prefer_server_ciphers: "off"
+nginx_ssl_session_cache: "shared:SSL:10m"
+nginx_ssl_session_timeout: "1d"
+nginx_ssl_session_tickets: "off"
+
+# OCSP Stapling
+nginx_ssl_stapling: "on"
+nginx_ssl_stapling_verify: "on"
+nginx_ssl_trusted_certificate: "/etc/ssl/certs/ca-certificates.crt"
+
+# HSTS (HTTP Strict Transport Security)
+nginx_hsts_enabled: true
+nginx_hsts_max_age: 15768000  # 6 months
+nginx_hsts_include_subdomains: true
+nginx_hsts_preload: true
+
+# ========================================
+# FastCGI Cache Configuration
+# ========================================
+nginx_fastcgi_cache_enabled: true
+nginx_fastcgi_cache_path: /var/run/nginx-cache
+nginx_fastcgi_cache_levels: "1:2"
+nginx_fastcgi_cache_keys_zone_name: WORDPRESS
+nginx_fastcgi_cache_keys_zone_size: 100m
+nginx_fastcgi_cache_max_size: 1g
+nginx_fastcgi_cache_inactive: 60m
+nginx_fastcgi_cache_valid_200: 1h
+nginx_fastcgi_cache_valid_404: 10m
+nginx_fastcgi_cache_valid_redirect: 10m
+nginx_fastcgi_cache_use_stale: "error timeout invalid_header http_500 http_503"
+nginx_fastcgi_cache_background_update: "on"
+
+# Cache bypass conditions
+nginx_fastcgi_cache_bypass_logged_in: true
+nginx_fastcgi_cache_bypass_post: true
+nginx_fastcgi_cache_bypass_query_string: true
+nginx_fastcgi_cache_bypass_admin: true
+nginx_fastcgi_cache_bypass_woocommerce: true
+nginx_fastcgi_cache_bypass_learndash: true
+
+# ========================================
+# Gzip Compression
+# ========================================
+nginx_gzip_enabled: true
+nginx_gzip_vary: "on"
+nginx_gzip_proxied: any
+nginx_gzip_comp_level: 6
+nginx_gzip_types:
+  - text/plain
+  - text/css
+  - text/xml
+  - text/javascript
+  - application/json
+  - application/javascript
+  - application/xml+rss
+  - application/rss+xml
+  - font/truetype
+  - font/opentype
+  - application/vnd.ms-fontobject
+  - image/svg+xml
+
+# ========================================
+# Brotli Compression (if available)
+# ========================================
+nginx_brotli_enabled: false  # Requires nginx-module-brotli
+nginx_brotli_comp_level: 6
+
+# ========================================
+# Security Headers
+# ========================================
+nginx_security_headers:
+  X-Frame-Options: "SAMEORIGIN"
+  X-Content-Type-Options: "nosniff"
+  X-XSS-Protection: "1; mode=block"
+  Referrer-Policy: "strict-origin-when-cross-origin"
+  Permissions-Policy: "geolocation=(), microphone=(), camera=()"
+
+# CSP (Content Security Policy) - Disabled by default, configure per site
+nginx_csp_enabled: false
+# nginx_csp_header: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';"
+
+# ========================================
+# Rate Limiting
+# ========================================
+nginx_rate_limit_enabled: true
+nginx_rate_limit_zone_name: wordpress_limit
+nginx_rate_limit_zone_size: 10m
+nginx_rate_limit_requests_per_second: 10
+nginx_rate_limit_burst: 20
+
+# Login rate limiting (stricter)
+nginx_rate_limit_login_enabled: true
+nginx_rate_limit_login_requests_per_minute: 5
+
+# ========================================
+# Client Settings
+# ========================================
+nginx_client_max_body_size: "100M"
+nginx_client_body_timeout: 60
+nginx_client_header_timeout: 60
+nginx_keepalive_timeout: 65
+nginx_send_timeout: 60
+
+# ========================================
+# Buffer Settings
+# ========================================
+nginx_client_body_buffer_size: 128k
+nginx_client_header_buffer_size: 1k
+nginx_large_client_header_buffers: "4 16k"
+nginx_fastcgi_buffers: "16 16k"
+nginx_fastcgi_buffer_size: 32k
+
+# ========================================
+# Logging
+# ========================================
+nginx_access_log: /var/log/nginx/access.log
+nginx_error_log: /var/log/nginx/error.log
+nginx_log_level: warn
+
+# Disable access log for static files (optional)
+nginx_log_static_files: false
+
+# ========================================
+# Cloudflare Integration
+# ========================================
+# Restore real visitor IP from Cloudflare
+nginx_cloudflare_real_ip: true
+nginx_cloudflare_ips_v4:
+  - 173.245.48.0/20
+  - 103.21.244.0/22
+  - 103.22.200.0/22
+  - 103.31.4.0/22
+  - 141.101.64.0/18
+  - 108.162.192.0/18
+  - 190.93.240.0/20
+  - 188.114.96.0/20
+  - 197.234.240.0/22
+  - 198.41.128.0/17
+  - 162.158.0.0/15
+  - 104.16.0.0/13
+  - 104.24.0.0/14
+  - 172.64.0.0/13
+  - 131.0.72.0/22
+
+nginx_cloudflare_ips_v6:
+  - 2400:cb00::/32
+  - 2606:4700::/32
+  - 2803:f800::/32
+  - 2405:b500::/32
+  - 2405:8100::/32
+  - 2a06:98c0::/29
+  - 2c0f:f248::/32

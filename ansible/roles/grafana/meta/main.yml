@@ -1,0 +1,30 @@
+---
+# Grafana Role - Metadata
+
+galaxy_info:
+  role_name: grafana
+  author: Infrastructure Team
+  description: Grafana monitoring and visualization platform for Hetzner infrastructure
+  company: Your Company
+  license: MIT
+  min_ansible_version: "2.15"
+
+  platforms:
+    - name: Debian
+      versions:
+        - bookworm
+        - bullseye
+    - name: Ubuntu
+      versions:
+        - jammy
+        - focal
+
+  galaxy_tags:
+    - monitoring
+    - grafana
+    - visualization
+    - dashboards
+    - metrics
+    - observability
+
+dependencies: []

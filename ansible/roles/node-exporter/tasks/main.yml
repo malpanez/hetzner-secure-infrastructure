@@ -1,0 +1,221 @@
+---
+# Node Exporter Role - Main Tasks
+
+- name: Check if deployment is enabled
+  debug:
+    msg: "Node Exporter deployment: {{ node_exporter_enabled | default(true) }}"
+  tags: [node-exporter]
+
+- name: Skip Node Exporter deployment if not enabled
+  meta: end_play
+  when: node_exporter_enabled is defined and not node_exporter_enabled
+  tags: [node-exporter]
+
+# ========================================
+# User and Group Creation
+# ========================================
+
+- name: Create Node Exporter system group
+  group:
+    name: "{{ node_exporter_group }}"
+    system: yes
+    state: present
+  tags: [node-exporter, users]
+
+- name: Create Node Exporter system user
+  user:
+    name: "{{ node_exporter_user }}"
+    group: "{{ node_exporter_group }}"
+    system: yes
+    shell: /bin/false
+    home: "{{ node_exporter_textfile_dir }}"
+    createhome: no
+    state: present
+  tags: [node-exporter, users]
+
+# ========================================
+# Directory Creation
+# ========================================
+
+- name: Create Node Exporter textfile directory
+  file:
+    path: "{{ node_exporter_textfile_dir }}"
+    state: directory
+    owner: "{{ node_exporter_user }}"
+    group: "{{ node_exporter_group }}"
+    mode: '0755'
+  tags: [node-exporter, directories]
+
+- name: Create TLS directory
+  file:
+    path: "/etc/node_exporter/tls"
+    state: directory
+    owner: "{{ node_exporter_user }}"
+    group: "{{ node_exporter_group }}"
+    mode: '0700'
+  when: node_exporter_tls_enabled
+  tags: [node-exporter, tls]
+
+# ========================================
+# Download and Install Node Exporter
+# ========================================
+
+- name: Check if Node Exporter binary exists
+  stat:
+    path: "{{ node_exporter_install_dir }}/node_exporter"
+  register: node_exporter_binary
+  tags: [node-exporter, install]
+
+- name: Download Node Exporter
+  get_url:
+    url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+    dest: "/tmp/node_exporter-{{ node_exporter_version }}.tar.gz"
+    mode: '0644'
+  when: not node_exporter_binary.stat.exists
+  tags: [node-exporter, install]
+
+- name: Extract Node Exporter
+  unarchive:
+    src: "/tmp/node_exporter-{{ node_exporter_version }}.tar.gz"
+    dest: "/tmp"
+    remote_src: yes
+    creates: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64"
+  when: not node_exporter_binary.stat.exists
+  tags: [node-exporter, install]
+
+- name: Copy Node Exporter binary
+  copy:
+    src: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter"
+    dest: "{{ node_exporter_install_dir }}/node_exporter"
+    owner: "{{ node_exporter_user }}"
+    group: "{{ node_exporter_group }}"
+    mode: '0755'
+    remote_src: yes
+  when: not node_exporter_binary.stat.exists
+  tags: [node-exporter, install]
+
+- name: Clean up downloaded archive
+  file:
+    path: "/tmp/node_exporter-{{ node_exporter_version }}.tar.gz"
+    state: absent
+  tags: [node-exporter, cleanup]
+
+- name: Clean up extracted directory
+  file:
+    path: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64"
+    state: absent
+  tags: [node-exporter, cleanup]
+
+# ========================================
+# Configuration
+# ========================================
+
+- name: Deploy web configuration (if auth or TLS enabled)
+  template:
+    src: web-config.yml.j2
+    dest: /etc/node_exporter/web-config.yml
+    owner: "{{ node_exporter_user }}"
+    group: "{{ node_exporter_group }}"
+    mode: '0644'
+  when: node_exporter_web_basic_auth_enabled or node_exporter_tls_enabled
+  notify: restart node-exporter
+  tags: [node-exporter, config, security]
+
+# ========================================
+# Custom Metrics Scripts
+# ========================================
+
+- name: Deploy custom metrics scripts
+  template:
+    src: "metrics/{{ item.name }}.sh.j2"
+    dest: "/usr/local/bin/node-exporter-{{ item.name }}"
+    owner: root
+    group: root
+    mode: '0755'
+  loop: "{{ node_exporter_custom_scripts }}"
+  when:
+    - node_exporter_custom_metrics_enabled
+    - item.enabled | default(true)
+  tags: [node-exporter, metrics]
+
+- name: Create cron jobs for custom metrics
+  cron:
+    name: "Node Exporter custom metric: {{ item.name }}"
+    minute: "*/5"
+    user: root
+    job: "/usr/local/bin/node-exporter-{{ item.name }} > {{ node_exporter_textfile_dir }}/{{ item.name }}.prom 2>&1"
+    state: present
+  loop: "{{ node_exporter_custom_scripts }}"
+  when:
+    - node_exporter_custom_metrics_enabled
+    - item.enabled | default(true)
+  tags: [node-exporter, metrics, cron]
+
+# ========================================
+# Systemd Service
+# ========================================
+
+- name: Deploy Node Exporter systemd service
+  template:
+    src: node_exporter.service.j2
+    dest: /etc/systemd/system/node_exporter.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart node-exporter
+  tags: [node-exporter, service]
+
+- name: Enable and start Node Exporter service
+  systemd:
+    name: node_exporter
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  tags: [node-exporter, service]
+
+# ========================================
+# Firewall Configuration
+# ========================================
+
+- name: Allow Node Exporter port in firewall
+  ufw:
+    rule: allow
+    port: "{{ node_exporter_port }}"
+    proto: tcp
+    src: "{{ item }}"
+    comment: "Node Exporter Metrics"
+  loop: "{{ node_exporter_firewall_allowed_ips }}"
+  when: firewall_enabled | default(true)
+  tags: [node-exporter, firewall]
+
+# ========================================
+# Validation
+# ========================================
+
+- name: Wait for Node Exporter to be ready
+  uri:
+    url: "http://localhost:{{ node_exporter_port }}/metrics"
+    status_code: 200
+  register: result
+  until: result.status == 200
+  retries: 6
+  delay: 5
+  tags: [node-exporter, validate]
+
+- name: Get Node Exporter metrics sample
+  uri:
+    url: "http://localhost:{{ node_exporter_port }}/metrics"
+    method: GET
+    return_content: yes
+  register: node_exporter_metrics
+  tags: [node-exporter, validate]
+
+- name: Display Node Exporter status
+  debug:
+    msg: |
+      Node Exporter deployed successfully!
+      - Version: {{ node_exporter_version }}
+      - Metrics endpoint: http://{{ ansible_host }}:{{ node_exporter_port }}/metrics
+      - Textfile directory: {{ node_exporter_textfile_dir }}
+      - Custom scripts: {{ node_exporter_custom_scripts | selectattr('enabled', 'equalto', true) | list | length }}
+  tags: [node-exporter, info]

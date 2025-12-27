@@ -1,0 +1,42 @@
+---
+# Monitoring Role - Logging and monitoring setup
+
+- name: Ensure rsyslog is installed and running
+  apt:
+    name: rsyslog
+    state: present
+  tags: packages
+
+- name: Start and enable rsyslog
+  systemd:
+    name: rsyslog
+    enabled: yes
+    state: started
+  tags: service
+
+- name: Configure log rotation
+  template:
+    src: logrotate-security.j2
+    dest: /etc/logrotate.d/security
+    owner: root
+    group: root
+    mode: '0644'
+  tags: logrotate
+
+- name: Create monitoring scripts directory
+  file:
+    path: /usr/local/bin/monitoring
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags: scripts
+
+- name: Deploy security monitoring script
+  template:
+    src: security-check.sh.j2
+    dest: /usr/local/bin/security-check
+    owner: root
+    group: root
+    mode: '0755'
+  tags: scripts

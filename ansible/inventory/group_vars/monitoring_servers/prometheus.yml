@@ -1,0 +1,91 @@
+---
+# Prometheus Configuration
+# Time-series database for metrics
+
+# ========================================
+# Prometheus Version
+# ========================================
+prometheus_version: "2.48.0"
+
+# ========================================
+# Prometheus Connection
+# ========================================
+prometheus_listen_address: "0.0.0.0"
+prometheus_port: 9090
+prometheus_external_url: "http://{{ ansible_host }}:{{ prometheus_port }}"
+
+# ========================================
+# Prometheus Data Storage
+# ========================================
+prometheus_data_dir: /var/lib/prometheus
+prometheus_config_dir: /etc/prometheus
+prometheus_retention_time: 30d
+prometheus_retention_size: 0  # No size limit
+
+# ========================================
+# Prometheus Scrape Configuration
+# ========================================
+prometheus_global_scrape_interval: 15s
+prometheus_global_scrape_timeout: 10s
+prometheus_global_evaluation_interval: 15s
+
+# ========================================
+# Prometheus Targets
+# ========================================
+# Node Exporter (system metrics)
+prometheus_scrape_node_exporter: true
+prometheus_node_exporter_port: 9100
+
+# Valkey Exporter (cache metrics)
+prometheus_scrape_valkey_exporter: true
+prometheus_valkey_exporter_port: 9121
+
+# MariaDB Exporter (database metrics)
+prometheus_scrape_mariadb_exporter: true
+prometheus_mariadb_exporter_port: 9104
+
+# Nginx Exporter (web server metrics)
+prometheus_scrape_nginx_exporter: false  # Optional
+prometheus_nginx_exporter_port: 9113
+
+# ========================================
+# Prometheus Alerting
+# ========================================
+prometheus_alertmanager_enabled: false  # Enable later if needed
+prometheus_alertmanager_url: "http://localhost:9093"
+
+# ========================================
+# Prometheus Security
+# ========================================
+# Firewall rules
+prometheus_firewall_allowed_ips:
+  - 127.0.0.1/32
+  - "{{ wordpress_server_ip | default('') }}/32"
+  # Add your admin IP for web access
+  # - "203.0.113.50/32"
+
+# Basic auth (optional)
+prometheus_basic_auth_enabled: false
+# prometheus_basic_auth_username: admin
+# prometheus_basic_auth_password: "{{ vault_prometheus_password }}"
+
+# ========================================
+# Prometheus Backup
+# ========================================
+prometheus_backup_enabled: true
+prometheus_backup_schedule: "0 4 * * *"  # Daily at 4 AM
+prometheus_backup_retention_days: 7
+prometheus_backup_dir: /var/backups/prometheus
+
+# ========================================
+# Prometheus Remote Write (optional)
+# ========================================
+# For sending metrics to external services
+prometheus_remote_write_enabled: false
+# prometheus_remote_write_url: "https://prometheus.example.com/api/v1/write"
+
+# ========================================
+# Prometheus Service Discovery
+# ========================================
+# Auto-discover targets from inventory
+prometheus_auto_discover_targets: true

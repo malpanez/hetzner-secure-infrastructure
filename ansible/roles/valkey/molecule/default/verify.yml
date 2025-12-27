@@ -1,0 +1,45 @@
+---
+- name: Verify valkey role
+  hosts: all
+  become: true
+  tasks:
+    - name: Check Valkey is installed
+      ansible.builtin.package:
+        name: valkey
+        state: present
+      check_mode: true
+      register: valkey_check
+      failed_when: valkey_check.changed
+
+    - name: Check Valkey service is running
+      ansible.builtin.service:
+        name: valkey
+        state: started
+        enabled: true
+      check_mode: true
+      register: valkey_service
+      failed_when: valkey_service.changed
+
+    - name: Check Valkey is listening on Unix socket
+      ansible.builtin.stat:
+        path: /var/run/valkey/valkey.sock
+      register: valkey_socket
+      failed_when: not valkey_socket.stat.exists
+
+    - name: Test Valkey connectivity
+      ansible.builtin.command: valkey-cli ping
+      changed_when: false
+      register: valkey_ping
+      failed_when: valkey_ping.stdout != "PONG"
+
+    - name: Check Valkey config file exists
+      ansible.builtin.stat:
+        path: /etc/valkey/valkey.conf
+      register: valkey_conf
+      failed_when: not valkey_conf.stat.exists
+
+    - name: Verify Valkey maxmemory policy
+      ansible.builtin.command: valkey-cli CONFIG GET maxmemory-policy
+      changed_when: false
+      register: maxmemory_policy
+      failed_when: "'allkeys-lru' not in maxmemory_policy.stdout"

@@ -1,0 +1,35 @@
+#!/bin/bash
+# AppArmor monitoring script
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+echo "=================================="
+echo "AppArmor Status Report"
+echo "=================================="
+echo ""
+
+# Overall status
+echo "📊 Overall Status:"
+aa-status --pretty-print
+echo ""
+
+# Profiles in enforce mode
+echo "🔒 Enforced Profiles:"
+aa-status --enforced
+echo ""
+
+# Profiles in complain mode
+echo "⚠️  Complain Profiles:"
+aa-status --complain
+echo ""
+
+# Recent denials
+echo "🚫 Recent Denials (last 10):"
+sudo dmesg | grep -i apparmor | grep -i denied | tail -10
+echo ""
+
+# Suggestions
+echo "💡 To troubleshoot denials:"
+echo "   sudo aa-logprof    # Interactive profile tuning"
+echo "   sudo aa-complain /path/to/profile  # Set to complain mode"
+echo "   sudo aa-enforce /path/to/profile   # Set to enforce mode"
+echo ""

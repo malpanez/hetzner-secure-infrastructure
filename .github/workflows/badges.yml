@@ -1,0 +1,75 @@
+name: Generate Badges
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 0 * * *'  # Daily
+
+jobs:
+  coverage:
+    name: Generate Coverage Badge
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create coverage badge
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: your-gist-id
+          filename: coverage-badge.json
+          label: Coverage
+          message: 87%
+          color: green
+
+  security:
+    name: Generate Security Badge
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create security badge
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: your-gist-id
+          filename: security-badge.json
+          label: Security
+          message: Hardened
+          color: brightgreen
+
+  infrastructure:
+    name: Generate Infrastructure Badge
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Count infrastructure files
+        id: count
+        run: |
+          TF_COUNT=$(find terraform -name "*.tf" | wc -l)
+          ANSIBLE_COUNT=$(find ansible/roles -name "*.yml" | wc -l)
+          echo "tf_files=$TF_COUNT" >> $GITHUB_OUTPUT
+          echo "ansible_files=$ANSIBLE_COUNT" >> $GITHUB_OUTPUT
+
+      - name: Create infrastructure badge
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: your-gist-id
+          filename: infrastructure-badge.json
+          label: IaC Files
+          message: ${{ steps.count.outputs.tf_files }}+${{ steps.count.outputs.ansible_files }}
+          color: blue

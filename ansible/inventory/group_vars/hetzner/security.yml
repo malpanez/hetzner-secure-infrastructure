@@ -1,0 +1,138 @@
+---
+# Hetzner Security Configuration
+# Applies to ALL Hetzner servers
+
+# ========================================
+# SSH Hardening
+# ========================================
+ssh_port: 22
+ssh_permit_root_login: "no"
+ssh_password_authentication: no
+ssh_pubkey_authentication: yes
+ssh_challenge_response_authentication: yes
+ssh_use_pam: yes
+ssh_authentication_methods: "publickey,keyboard-interactive"
+
+# Allowed users and groups
+ssh_allowed_users:
+  - "{{ admin_username }}"
+
+ssh_allowed_groups:
+  - sudo
+
+# Modern ciphers and algorithms only
+ssh_ciphers:
+  - chacha20-poly1305@openssh.com
+  - aes256-gcm@openssh.com
+  - aes128-gcm@openssh.com
+
+ssh_macs:
+  - hmac-sha2-512-etm@openssh.com
+  - hmac-sha2-256-etm@openssh.com
+
+ssh_kex_algorithms:
+  - curve25519-sha256
+  - curve25519-sha256@libssh.org
+  - diffie-hellman-group16-sha512
+  - diffie-hellman-group18-sha512
+
+ssh_host_key_algorithms:
+  - ssh-ed25519
+  - rsa-sha2-512
+  - rsa-sha2-256
+
+# Connection settings
+ssh_client_alive_interval: 300
+ssh_client_alive_count_max: 2
+ssh_max_auth_tries: 3
+ssh_max_sessions: 10
+ssh_login_grace_time: 60
+
+# ========================================
+# 2FA Configuration
+# ========================================
+enable_2fa_ssh: true
+enable_2fa_sudo: true
+pam_google_authenticator_options: "nullok forward_pass"
+
+# ========================================
+# Firewall (UFW)
+# ========================================
+firewall_enabled: true
+ufw_default_incoming_policy: deny
+ufw_default_outgoing_policy: allow
+ufw_ssh_port: "{{ ssh_port }}"
+ufw_rate_limit_ssh: true
+
+ufw_allowed_ports:
+  - port: "{{ ssh_port }}"
+    proto: tcp
+    rule: limit
+    comment: "SSH with rate limiting"
+
+# ========================================
+# Fail2ban
+# ========================================
+fail2ban_enabled: true
+fail2ban_loglevel: INFO
+fail2ban_logtarget: /var/log/fail2ban.log
+fail2ban_socket: /var/run/fail2ban/fail2ban.sock
+fail2ban_pidfile: /var/run/fail2ban/fail2ban.pid
+
+fail2ban_ignoreip:
+  - 127.0.0.1/8
+  - ::1
+
+fail2ban_bantime: 3600  # 1 hour
+fail2ban_findtime: 600  # 10 minutes
+fail2ban_maxretry: 3
+
+fail2ban_destemail: root@localhost
+fail2ban_sendername: Fail2Ban
+fail2ban_mta: sendmail
+
+# Fail2ban jails
+fail2ban_services:
+  - name: sshd
+    enabled: true
+    port: "{{ ssh_port }}"
+    filter: sshd
+    logpath: /var/log/auth.log
+    maxretry: "{{ fail2ban_maxretry }}"
+    bantime: "{{ fail2ban_bantime }}"
+    findtime: "{{ fail2ban_findtime }}"
+
+# ========================================
+# AppArmor
+# ========================================
+apparmor_enabled: true
+apparmor_enforce_mode: true  # false = complain mode
+
+apparmor_profiles:
+  - /usr/sbin/sshd
+  - /usr/bin/fail2ban-server
+
+# ========================================
+# Automatic Updates
+# ========================================
+unattended_upgrades_enabled: true
+unattended_upgrades_automatic_reboot: false
+unattended_upgrades_automatic_reboot_time: "03:00"
+
+unattended_upgrades_origins:
+  - "origin=Debian,codename=${distro_codename},label=Debian"
+  - "origin=Debian,codename=${distro_codename},label=Debian-Security"
+  - "origin=Debian,codename=${distro_codename}-security,label=Debian-Security"
+
+unattended_upgrades_auto_fix_interrupted_dpkg: true
+unattended_upgrades_minimal_steps: true
+unattended_upgrades_install_on_shutdown: false
+unattended_upgrades_remove_unused_kernel_packages: true
+unattended_upgrades_remove_unused_dependencies: true
+
+# ========================================
+# Security Hardening
+# ========================================
+security_auto_updates_enabled: true
+security_aide_enabled: true
+security_kernel_hardening_enabled: true

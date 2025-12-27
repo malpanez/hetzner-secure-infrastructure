@@ -1,0 +1,73 @@
+---
+# Global variables for all hosts
+# These apply to ALL servers regardless of role
+
+# ========================================
+# Ansible Configuration
+# ========================================
+ansible_python_interpreter: /usr/bin/python3
+ansible_user: admin
+ansible_ssh_private_key_file: ~/.ssh/id_ed25519
+
+# ========================================
+# System Configuration
+# ========================================
+system_timezone: "Europe/Dublin"
+system_locale: "en_IE.UTF-8"
+
+# ========================================
+# Admin User
+# ========================================
+admin_username: miguel
+admin_groups:
+  - sudo
+
+# ========================================
+# Package Management
+# ========================================
+required_packages:
+  - curl
+  - wget
+  - vim
+  - git
+  - htop
+  - net-tools
+  - tcpdump
+  - lsof
+  - strace
+  - iotop
+  - ncdu
+  - tree
+
+# ========================================
+# NTP Configuration
+# ========================================
+ntp_enabled: true
+ntp_servers:
+  - 0.debian.pool.ntp.org
+  - 1.debian.pool.ntp.org
+  - 2.debian.pool.ntp.org
+  - 3.debian.pool.ntp.org
+
+# ========================================
+# Logging
+# ========================================
+log_retention_days: 30
+rsyslog_remote_logging: false
+logrotate_enabled: true
+
+# ========================================
+# Deployment Topology Variables
+# ========================================
+# These define which servers to use for each service
+# Set these in your deployment environment or CLI
+
+# Example for All-in-one (1 server):
+#   wordpress_server_ip: "65.108.1.100"
+#   openbao_server_ip: ""
+#   monitoring_server_ip: ""
+
+# Example for Separated (4 servers):
+#   wordpress_server_ip: "65.108.1.100"
+#   openbao_server_ip: "65.108.1.101"
+#   monitoring_server_ip: "65.108.1.102"

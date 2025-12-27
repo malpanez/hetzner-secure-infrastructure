@@ -1,0 +1,103 @@
+---
+# Valkey Object Cache Configuration
+# 100% Redis-compatible, open source (BSD license)
+
+# ========================================
+# Why Valkey?
+# ========================================
+# - Open source fork of Redis (Linux Foundation)
+# - 100% Redis protocol compatible
+# - BSD license (Redis changed to RSALv2/SSPLv1 in March 2024)
+# - Backed by AWS, Google Cloud, and other major tech companies
+# - Actively developed with performance improvements
+
+# ========================================
+# Valkey Version
+# ========================================
+valkey_version: "8.0"
+
+# ========================================
+# Valkey Connection
+# ========================================
+valkey_bind: 127.0.0.1
+valkey_port: 6379
+valkey_unixsocket: /var/run/valkey/valkey.sock
+valkey_unixsocketperm: 770
+
+# Use Unix socket for better performance (localhost only)
+valkey_connection_type: socket  # or "tcp"
+
+# ========================================
+# Valkey Memory Configuration
+# ========================================
+valkey_maxmemory: 256mb
+valkey_maxmemory_policy: allkeys-lru  # Evict least recently used keys
+
+# Memory optimization
+valkey_save_enabled: false  # Disable persistence (cache only)
+valkey_appendonly: no
+
+# ========================================
+# Valkey Performance
+# ========================================
+valkey_databases: 16
+valkey_timeout: 0  # No timeout for idle connections
+valkey_tcp_keepalive: 300
+
+# Slow log (queries slower than 10ms)
+valkey_slowlog_log_slower_than: 10000
+valkey_slowlog_max_len: 128
+
+# ========================================
+# Valkey Security
+# ========================================
+valkey_protected_mode: yes
+valkey_requirepass: ""  # Empty for localhost-only, set password for TCP
+
+# Disable dangerous commands
+valkey_rename_commands:
+  FLUSHDB: ""
+  FLUSHALL: ""
+  KEYS: ""
+  CONFIG: ""
+
+# ========================================
+# WordPress Integration
+# ========================================
+# WordPress plugin: Redis Object Cache
+# (100% compatible with Valkey)
+wordpress_object_cache_enabled: true
+wordpress_redis_client: phpredis
+wordpress_redis_scheme: unix
+wordpress_redis_path: "{{ valkey_unixsocket }}"
+wordpress_redis_database: 0
+wordpress_redis_prefix: wp_
+wordpress_redis_timeout: 1
+wordpress_redis_read_timeout: 1
+
+# ========================================
+# Valkey Monitoring
+# ========================================
+valkey_exporter_enabled: true
+valkey_exporter_version: "1.55.0"
+valkey_exporter_port: 9121
+valkey_exporter_namespace: valkey
+
+# ========================================
+# Valkey Backup
+# ========================================
+valkey_backup_enabled: true
+valkey_backup_schedule: "0 2 * * *"  # Daily at 2 AM
+valkey_backup_retention_days: 7
+valkey_backup_dir: /var/backups/valkey
+
+# ========================================
+# Valkey Tuning (for WordPress)
+# ========================================
+# Optimized for WordPress object caching
+valkey_hash_max_ziplist_entries: 512
+valkey_hash_max_ziplist_value: 64
+valkey_list_max_ziplist_size: -2
+valkey_set_max_intset_entries: 512
+valkey_zset_max_ziplist_entries: 128
+valkey_zset_max_ziplist_value: 64

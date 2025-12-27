@@ -1,0 +1,44 @@
+---
+# Production Inventory - Clean and Modular
+# All variables are in group_vars/ directories
+
+all:
+  children:
+    hetzner:
+      children:
+        # ========================================
+        # Application Servers
+        # ========================================
+        wordpress_servers:
+          hosts:
+            wordpress-prod:
+              ansible_host: "{{ wordpress_server_ip }}"
+
+        # ========================================
+        # Secrets Management (OpenBao)
+        # ========================================
+        secrets_servers:
+          hosts:
+            openbao-prod:
+              ansible_host: "{{ openbao_server_ip | default('') }}"
+              # Skip deployment if no IP provided (deploy on wordpress server instead)
+              deploy_openbao: "{{ openbao_server_ip is defined and openbao_server_ip != '' }}"
+
+        # ========================================
+        # Monitoring (Prometheus + Grafana)
+        # ========================================
+        monitoring_servers:
+          hosts:
+            monitoring-prod:
+              ansible_host: "{{ monitoring_server_ip | default('') }}"
+              # Skip deployment if no IP provided (deploy on wordpress server instead)
+              deploy_monitoring: "{{ monitoring_server_ip is defined and monitoring_server_ip != '' }}"
+
+    # ========================================
+    # Monitored Servers (Node Exporter on all)
+    # ========================================
+    monitored_servers:
+      children:
+        wordpress_servers: {}
+        secrets_servers: {}
+        monitoring_servers: {}

@@ -1,0 +1,32 @@
+#!/bin/bash
+# Security monitoring and checking script
+# Managed by Ansible
+
+echo "=========================================="
+echo "Security Status Report"
+echo "=========================================="
+echo ""
+
+echo "🔒 SSH Status:"
+systemctl status sshd --no-pager | head -5
+echo ""
+
+echo "🔥 Firewall Status:"
+ufw status verbose
+echo ""
+
+echo "🚫 Fail2ban Status:"
+fail2ban-client status
+echo ""
+
+echo "🛡️  AppArmor Status:"
+aa-status --pretty-print | head -20
+echo ""
+
+echo "📊 Recent Auth Failures:"
+grep "Failed password" /var/log/auth.log | tail -5
+echo ""
+
+echo "📈 Banned IPs (Fail2ban):"
+fail2ban-client status sshd | grep "Banned IP"
+echo ""
