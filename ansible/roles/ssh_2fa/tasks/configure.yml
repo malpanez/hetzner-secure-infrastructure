@@ -1,0 +1,81 @@
+---
+# SSH 2FA Role - Configuration Tasks
+
+- name: SSH 2FA | Configure | Ensure sshd_config.d directory exists
+  ansible.builtin.file:
+    path: /etc/ssh/sshd_config.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags: [ssh, config]
+
+- name: SSH 2FA | Configure | Deploy minimal main sshd_config with Include directive
+  ansible.builtin.template:
+    src: sshd_config_main.j2
+    dest: /etc/ssh/sshd_config
+    owner: root
+    group: root
+    mode: '0600'
+    validate: /usr/sbin/sshd -t -f %s
+    backup: true
+  notify: restart sshd
+  tags: [ssh, config]
+
+- name: SSH 2FA | Configure | Deploy hardened SSH configuration drop-in
+  ansible.builtin.template:
+    src: sshd_hardening.conf.j2
+    dest: /etc/ssh/sshd_config.d/99-hardening.conf
+    owner: root
+    group: root
+    mode: '0600'
+  notify: restart sshd
+  tags: [ssh, config]
+
+- name: SSH 2FA | Configure | Deploy 2FA SSH configuration drop-in
+  ansible.builtin.template:
+    src: sshd_2fa.conf.j2
+    dest: /etc/ssh/sshd_config.d/50-2fa.conf
+    owner: root
+    group: root
+    mode: '0600'
+  when: enable_2fa_ssh | default(true)
+  notify: restart sshd
+  tags: [ssh, 2fa, config]
+
+- name: SSH 2FA | Configure | Deploy PAM configuration for SSH with 2FA
+  ansible.builtin.template:
+    src: pam_sshd.j2
+    dest: /etc/pam.d/sshd
+    owner: root
+    group: root
+    mode: '0644'
+    backup: true
+  when: enable_2fa_ssh | default(true)
+  tags: [pam, 2fa]
+
+- name: SSH 2FA | Configure | Deploy PAM configuration for sudo with 2FA
+  ansible.builtin.template:
+    src: pam_sudo.j2
+    dest: /etc/pam.d/sudo
+    owner: root
+    group: root
+    mode: '0644'
+    backup: true
+  when: enable_2fa_sudo | default(true)
+  tags: [pam, 2fa, sudo]
+
+- name: SSH 2FA | Configure | Create SSH banner
+  ansible.builtin.template:
+    src: ssh_banner.j2
+    dest: /etc/ssh/banner
+    owner: root
+    group: root
+    mode: '0644'
+  when: ssh_banner_enabled | default(false)
+  tags: [ssh, banner]
+
+- name: SSH 2FA | Configure | Test SSH configuration
+  ansible.builtin.command: sshd -t
+  changed_when: false
+  tags: [ssh, test, validate]

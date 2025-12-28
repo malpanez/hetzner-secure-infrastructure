@@ -1,0 +1,67 @@
+# SSH Hardening Configuration
+# Managed by Ansible - ssh_2fa role
+# Security hardening following CIS benchmarks
+
+# Network Configuration
+{% if ssh_port is defined %}
+Port {{ ssh_port }}
+{% endif %}
+AddressFamily inet
+
+# Host Keys - Only strong algorithms
+HostKey /etc/ssh/ssh_host_ed25519_key
+HostKey /etc/ssh/ssh_host_rsa_key
+
+# Cryptographic Hardening - Modern algorithms only
+{% if ssh_ciphers is defined %}
+Ciphers {{ ssh_ciphers | join(',') }}
+{% endif %}
+{% if ssh_macs is defined %}
+MACs {{ ssh_macs | join(',') }}
+{% endif %}
+{% if ssh_kex_algorithms is defined %}
+KexAlgorithms {{ ssh_kex_algorithms | join(',') }}
+{% endif %}
+{% if ssh_host_key_algorithms is defined %}
+HostKeyAlgorithms {{ ssh_host_key_algorithms | join(',') }}
+{% endif %}
+
+# Authentication Security
+PasswordAuthentication {{ ssh_password_authentication | default('no') }}
+PermitEmptyPasswords no
+PermitRootLogin {{ ssh_permit_root_login | default('prohibit-password') }}
+HostbasedAuthentication no
+IgnoreRhosts yes
+
+# Disable insecure features
+PermitUserEnvironment no
+AllowAgentForwarding {{ ssh_allow_agent_forwarding | default('no') }}
+AllowTcpForwarding {{ ssh_allow_tcp_forwarding | default('no') }}
+X11Forwarding {{ ssh_x11_forwarding | default('no') }}
+PermitTunnel no
+Compression {{ ssh_compression | default('no') }}
+
+# Session Configuration
+ClientAliveInterval {{ ssh_client_alive_interval | default('300') }}
+ClientAliveCountMax {{ ssh_client_alive_count_max | default('2') }}
+LoginGraceTime {{ ssh_login_grace_time | default('60') }}
+MaxAuthTries {{ ssh_max_auth_tries | default('3') }}
+MaxSessions {{ ssh_max_sessions | default('10') }}
+MaxStartups {{ ssh_max_startups | default('10:30:60') }}
+
+# Logging
+SyslogFacility AUTH
+LogLevel {{ ssh_log_level | default('VERBOSE') }}
+
+# Banner
+{% if ssh_banner_enabled | default(false) %}
+Banner /etc/ssh/banner
+{% endif %}
+
+# Privilege Separation
+UsePrivilegeSeparation {{ ssh_use_privilege_separation | default('sandbox') }}
+StrictModes yes
+
+# Display
+PrintMotd no
+PrintLastLog yes

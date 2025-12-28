@@ -1,0 +1,16 @@
+# SSH 2FA Configuration
+# Managed by Ansible - ssh_2fa role
+# This file enables two-factor authentication for SSH
+
+# Enable keyboard-interactive for 2FA
+KbdInteractiveAuthentication yes
+ChallengeResponseAuthentication yes
+
+# Enable PAM for 2FA integration
+UsePAM yes
+
+# Require both publickey AND keyboard-interactive (2FA)
+AuthenticationMethods {{ ssh_authentication_methods | default('publickey,keyboard-interactive') }}
+
+# Allow publickey authentication
+PubkeyAuthentication yes
