@@ -1,6 +1,10 @@
 ---
 # Common Role - Main Tasks (Orchestrator)
 
+- name: Common | Main | Load OS-specific variables
+  ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
+  tags: [common, always]
+
 - name: Common | Main | Include system configuration tasks
   ansible.builtin.import_tasks: system.yml
   tags: [common, system]

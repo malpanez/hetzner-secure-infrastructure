@@ -1,0 +1,14 @@
+---
+# Common Role - Debian/Ubuntu Specific Variables
+
+# Package manager
+common_package_manager: apt
+
+# NTP package
+common_ntp_package: systemd-timesyncd
+
+# NTP service name
+common_ntp_service: systemd-timesyncd
+
+# Timezone data package
+common_timezone_package: tzdata

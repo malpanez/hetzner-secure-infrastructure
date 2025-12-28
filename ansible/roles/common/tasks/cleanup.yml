@@ -3,10 +3,8 @@
 
 - name: Common | Cleanup | Remove unnecessary packages
   ansible.builtin.apt:
-    name:
-      - telnet
-      - rsh-client
-      - rsh-redone-client
+    name: "{{ common_packages_to_remove }}"
     state: absent
     purge: true
+  when: common_cleanup_enabled
   tags: [common, security, cleanup]

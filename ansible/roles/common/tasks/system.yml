@@ -8,20 +8,20 @@
 
 - name: Common | System | Set timezone
   community.general.timezone:
-    name: "{{ system_timezone }}"
+    name: "{{ common_system_timezone }}"
   tags: [common, timezone]
 
 - name: Common | System | Set locale
   community.general.locale_gen:
-    name: "{{ system_locale }}"
+    name: "{{ common_system_locale }}"
     state: present
   tags: [common, locale]
 
 - name: Common | System | Configure NTP
   block:
-    - name: Common | System | Install systemd-timesyncd
+    - name: Common | System | Install NTP package
       ansible.builtin.apt:
-        name: systemd-timesyncd
+        name: "{{ common_ntp_package }}"
         state: present
         update_cache: true
 
@@ -31,16 +31,16 @@
         dest: /etc/systemd/timesyncd.conf
         owner: root
         group: root
-        mode: "0644"
+        mode: '0644'
       notify: restart timesyncd
 
-    - name: Common | System | Enable and start timesyncd
+    - name: Common | System | Enable and start NTP service
       ansible.builtin.systemd:
-        name: systemd-timesyncd
+        name: "{{ common_ntp_service }}"
         enabled: true
         state: started
         daemon_reload: true
-  when: ntp_enabled | default(true)
+  when: common_ntp_enabled
   tags: [common, ntp]
 
 - name: Common | System | Configure log rotation
@@ -49,7 +49,7 @@
     dest: /etc/logrotate.d/custom
     owner: root
     group: root
-    mode: "0644"
+    mode: '0644'
   tags: [common, logging]
 
 - name: Common | System | Check if reboot is required

@@ -7,26 +7,19 @@
     update_cache: true
     autoremove: true
     autoclean: true
+  when: common_perform_dist_upgrade
   tags: [common, updates, packages]
 
 - name: Common | Packages | Install essential packages
   ansible.builtin.apt:
-    name: "{{ required_packages }}"
+    name: "{{ common_required_packages }}"
     state: present
     update_cache: true
   tags: [common, packages]
 
 - name: Common | Packages | Install additional security tools
   ansible.builtin.apt:
-    name:
-      - apt-transport-https
-      - ca-certificates
-      - gnupg
-      - software-properties-common
-      - sudo
-      - rsyslog
-      - logrotate
-      - cron
+    name: "{{ common_security_packages }}"
     state: present
     update_cache: true
   tags: [common, packages]

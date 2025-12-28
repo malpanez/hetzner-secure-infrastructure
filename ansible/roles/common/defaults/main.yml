@@ -1,0 +1,81 @@
+---
+# Common Role - Default Variables
+
+# ========================================
+# System Configuration
+# ========================================
+
+# System timezone
+common_system_timezone: UTC
+
+# System locale
+common_system_locale: en_US.UTF-8
+
+# ========================================
+# Package Management
+# ========================================
+
+# Perform dist upgrade on first run
+common_perform_dist_upgrade: true
+
+# Essential packages list
+common_required_packages:
+  - apt-transport-https
+  - build-essential
+  - ca-certificates
+  - curl
+  - git
+  - gnupg
+  - htop
+  - net-tools
+  - software-properties-common
+  - sudo
+  - unzip
+  - vim
+  - wget
+
+# Security tools
+common_security_packages:
+  - cron
+  - logrotate
+  - rsyslog
+
+# ========================================
+# User Management
+# ========================================
+
+# Admin user configuration
+common_admin_user_create: true
+common_admin_user_name: admin
+common_admin_user_shell: /bin/bash
+common_admin_user_groups:
+  - sudo
+
+# SSH authorized keys for admin user
+common_admin_user_ssh_keys: []
+
+# ========================================
+# Cleanup
+# ========================================
+
+# Enable cleanup of unnecessary packages
+common_cleanup_enabled: true
+
+# Packages to remove
+common_packages_to_remove:
+  - snapd
+  - cloud-init
+
+# ========================================
+# NTP Configuration
+# ========================================
+
+# Enable NTP time synchronization
+common_ntp_enabled: true
+
+# NTP servers
+common_ntp_servers:
+  - 0.debian.pool.ntp.org
+  - 1.debian.pool.ntp.org
+  - 2.debian.pool.ntp.org
+  - 3.debian.pool.ntp.org
