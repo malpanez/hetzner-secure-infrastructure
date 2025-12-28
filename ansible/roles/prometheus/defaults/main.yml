@@ -4,16 +4,31 @@
 # These are default values that can be overridden in inventory
 
 # ========================================
+# Package Dependencies
+# ========================================
+
+prometheus_apt_dependencies:
+  - apt-transport-https
+  - software-properties-common
+  - wget
+  - gpg
+
+# ========================================
 # Version and Installation
 # ========================================
 
-prometheus_version: 2.48.0
+# Installation method: 'apt' (official Prometheus Community repo)
+prometheus_install_method: apt
+prometheus_version: latest # Or specific version like "2.48.0"
+
+# Paths (APT installation manages these automatically)
 prometheus_user: prometheus
 prometheus_group: prometheus
-prometheus_install_dir: /opt/prometheus
 prometheus_config_dir: /etc/prometheus
 prometheus_data_dir: /var/lib/prometheus
-prometheus_log_dir: /var/log/prometheus
+
+# GPG Key Configuration
+prometheus_gpg_key_url: https://s3.amazonaws.com/deb.robustperception.io/41EFC99D.gpg
 
 # ========================================
 # Network Configuration
@@ -125,11 +140,32 @@ prometheus_backup_retention_days: 7
 prometheus_backup_schedule: "0 2 * * *" # 2 AM daily
 
 # ========================================
-# Node Exporter Scrape Config
+# Exporters Scrape Config
 # ========================================
 
+# Node Exporter (system metrics)
 prometheus_scrape_node_exporter: true
 prometheus_node_exporter_port: 9100
+
+# Nginx Exporter
+prometheus_scrape_nginx_exporter: true
+prometheus_nginx_exporter_port: 9113
+
+# PHP-FPM Exporter
+prometheus_scrape_phpfpm_exporter: true
+prometheus_phpfpm_exporter_port: 9253
+
+# MariaDB Exporter
+prometheus_scrape_mariadb_exporter: true
+prometheus_mariadb_exporter_port: 9104
+
+# Valkey/Redis Exporter
+prometheus_scrape_valkey_exporter: true
+prometheus_valkey_exporter_port: 9121
+
+# Blackbox Exporter (SSL, HTTP probes)
+prometheus_scrape_blackbox_exporter: true
+prometheus_blackbox_exporter_port: 9115
 
 # ========================================
 # Service Discovery
@@ -166,6 +202,16 @@ prometheus_default_rules:
   - name: high_memory
     enabled: true
   - name: disk_space
+    enabled: true
+  - name: nginx_alerts
+    enabled: true
+  - name: php_fpm_alerts
+    enabled: true
+  - name: mariadb_alerts
+    enabled: true
+  - name: valkey_alerts
+    enabled: true
+  - name: ssl_certificate_alerts
     enabled: true
 
 # ========================================

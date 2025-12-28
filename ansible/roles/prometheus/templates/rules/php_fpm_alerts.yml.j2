@@ -1,0 +1,53 @@
+groups:
+  - name: php_fpm_alerts
+    interval: 30s
+    rules:
+      - alert: PHPFPMDown
+        expr: phpfpm_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: php-fpm
+        annotations:
+          summary: "PHP-FPM is down on {{ $labels.instance }}"
+          description: "PHP-FPM exporter cannot connect to PHP-FPM on {{ $labels.instance }} for more than 1 minute."
+
+      - alert: PHPFPMHighProcessUsage
+        expr: (phpfpm_active_processes / phpfpm_max_children) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          service: php-fpm
+        annotations:
+          summary: "PHP-FPM process usage high on {{ $labels.instance }}"
+          description: "PHP-FPM is using {{ $value | humanizePercentage }} of max_children on {{ $labels.instance }}. Consider increasing max_children."
+
+      - alert: PHPFPMMaxChildrenReached
+        expr: phpfpm_max_children_reached_total > 0
+        for: 1m
+        labels:
+          severity: critical
+          service: php-fpm
+        annotations:
+          summary: "PHP-FPM max children reached on {{ $labels.instance }}"
+          description: "PHP-FPM has reached max_children limit on {{ $labels.instance }}. Increase max_children immediately!"
+
+      - alert: PHPFPMSlowRequests
+        expr: rate(phpfpm_slow_requests_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: php-fpm
+        annotations:
+          summary: "PHP-FPM slow requests detected on {{ $labels.instance }}"
+          description: "PHP-FPM is experiencing {{ $value }} slow requests per second on {{ $labels.instance }}. Check application performance."
+
+      - alert: PHPFPMHighQueueLength
+        expr: phpfpm_listen_queue > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: php-fpm
+        annotations:
+          summary: "PHP-FPM high queue length on {{ $labels.instance }}"
+          description: "PHP-FPM has {{ $value }} queued requests on {{ $labels.instance }}. Increase pm.max_children or investigate slow requests."

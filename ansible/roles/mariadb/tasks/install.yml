@@ -1,0 +1,30 @@
+---
+# MariaDB Role - Installation Tasks
+
+- name: MariaDB | Install | Install from APT repository
+  when: mariadb_install_method == 'apt'
+  module_defaults:
+    ansible.builtin.apt:
+      state: present
+      update_cache: true
+  block:
+    - name: MariaDB | Install | Install APT dependencies
+      ansible.builtin.apt:
+        name: "{{ mariadb_apt_dependencies }}"
+      tags: [mariadb, packages]
+
+    - name: MariaDB | Install | Add MariaDB APT repository (DEB822)
+      ansible.builtin.deb822_repository:
+        name: mariadb
+        types: [deb]
+        uris: "https://mirror.23m.com/mariadb/repo/{{ mariadb_version }}/{{ mariadb_distribution }}"
+        suites: "{{ ansible_distribution_release }}"
+        components: [main]
+        signed_by: "{{ mariadb_gpg_key_url }}"
+        state: present
+      tags: [mariadb, packages]
+
+    - name: MariaDB | Install | Install MariaDB packages
+      ansible.builtin.apt:
+        name: "{{ mariadb_apt_packages }}"
+      tags: [mariadb, packages]

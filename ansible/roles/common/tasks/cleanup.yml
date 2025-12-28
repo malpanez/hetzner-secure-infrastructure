@@ -1,0 +1,12 @@
+---
+# Common Role - Cleanup Tasks
+
+- name: Common | Cleanup | Remove unnecessary packages
+  ansible.builtin.apt:
+    name:
+      - telnet
+      - rsh-client
+      - rsh-redone-client
+    state: absent
+    purge: true
+  tags: [common, security, cleanup]

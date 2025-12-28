@@ -2,6 +2,17 @@
 # OpenBao Role - Default Variables
 
 # ========================================
+# Installation Configuration
+# ========================================
+
+# APT dependencies
+openbao_apt_dependencies:
+  - unzip
+  - jq
+  - curl
+  - openssl
+
+# ========================================
 # OpenBao Configuration
 # ========================================
 

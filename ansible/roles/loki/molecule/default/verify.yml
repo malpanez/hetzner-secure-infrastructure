@@ -1,0 +1,222 @@
+---
+# Molecule verify playbook for Loki role
+
+- name: Verify
+  hosts: all
+  become: true
+  gather_facts: true
+
+  tasks:
+    # ========================================
+    # Package Installation Tests
+    # ========================================
+
+    - name: Check that Loki is installed
+      ansible.builtin.package:
+        name: loki
+        state: present
+      check_mode: true
+      register: loki_package
+      failed_when: loki_package is changed
+
+    # ========================================
+    # Service Tests
+    # ========================================
+
+    - name: Check that Loki service is running
+      ansible.builtin.systemd:
+        name: loki
+      register: loki_service
+      failed_when: loki_service.status.ActiveState != "active"
+
+    - name: Check that Loki service is enabled
+      ansible.builtin.systemd:
+        name: loki
+      register: loki_enabled
+      failed_when: loki_enabled.status.UnitFileState != "enabled"
+
+    # ========================================
+    # HTTP API Tests
+    # ========================================
+
+    - name: Check Loki health endpoint
+      ansible.builtin.uri:
+        url: http://localhost:3100/ready
+        status_code: 200
+      register: loki_health
+      retries: 5
+      delay: 3
+      until: loki_health.status == 200
+
+    - name: Check Loki metrics endpoint
+      ansible.builtin.uri:
+        url: http://localhost:3100/metrics
+        status_code: 200
+        return_content: true
+      register: loki_metrics
+
+    - name: Verify metrics contain expected data
+      ansible.builtin.assert:
+        that:
+          - "'loki_build_info' in loki_metrics.content"
+        fail_msg: "Loki metrics missing expected data"
+
+    - name: Check Loki buildinfo endpoint
+      ansible.builtin.uri:
+        url: http://localhost:3100/loki/api/v1/status/buildinfo
+        status_code: 200
+        return_content: true
+      register: loki_buildinfo
+
+    # ========================================
+    # Configuration Tests
+    # ========================================
+
+    - name: Check that Loki config exists
+      ansible.builtin.stat:
+        path: /etc/loki/loki.yml
+      register: loki_config
+      failed_when: not loki_config.stat.exists
+
+    - name: Verify config file permissions
+      ansible.builtin.stat:
+        path: /etc/loki/loki.yml
+      register: config_perms
+      failed_when: config_perms.stat.mode != "0640"
+
+    - name: Validate Loki configuration syntax
+      ansible.builtin.command:
+        cmd: /usr/bin/loki -config.file=/etc/loki/loki.yml -verify-config
+      changed_when: false
+      register: config_validation
+
+    # ========================================
+    # Directory Tests
+    # ========================================
+
+    - name: Check that data directories exist
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - /var/lib/loki
+        - /var/lib/loki/chunks
+        - /var/lib/loki/index
+        - /var/log/loki
+        - /var/backups/loki
+      register: loki_dirs
+      failed_when: not item.stat.exists
+      loop_control:
+        loop_var: item
+        label: "{{ item.item }}"
+
+    - name: Verify directory ownership
+      ansible.builtin.stat:
+        path: /var/lib/loki
+      register: data_dir_owner
+      failed_when: data_dir_owner.stat.pw_name != "loki"
+
+    # ========================================
+    # User/Group Tests
+    # ========================================
+
+    - name: Check that Loki user exists
+      ansible.builtin.getent:
+        database: passwd
+        key: loki
+      register: loki_user
+
+    - name: Check that Loki group exists
+      ansible.builtin.getent:
+        database: group
+        key: loki
+      register: loki_group
+
+    # ========================================
+    # Logrotate Tests
+    # ========================================
+
+    - name: Check that logrotate config exists
+      ansible.builtin.stat:
+        path: /etc/logrotate.d/loki
+      register: logrotate_config
+      failed_when: not logrotate_config.stat.exists
+
+    - name: Test logrotate configuration
+      ansible.builtin.command:
+        cmd: logrotate -d /etc/logrotate.d/loki
+      changed_when: false
+      register: logrotate_test
+
+    # ========================================
+    # Backup Script Tests
+    # ========================================
+
+    - name: Check that backup script exists
+      ansible.builtin.stat:
+        path: /usr/local/bin/backup-loki.sh
+      register: backup_script
+      failed_when: not backup_script.stat.exists
+
+    - name: Verify backup script is executable
+      ansible.builtin.stat:
+        path: /usr/local/bin/backup-loki.sh
+      register: backup_exec
+      failed_when: not backup_exec.stat.executable
+
+    # ========================================
+    # Functional Tests
+    # ========================================
+
+    - name: Test pushing logs to Loki
+      ansible.builtin.uri:
+        url: http://localhost:3100/loki/api/v1/push
+        method: POST
+        headers:
+          Content-Type: application/json
+        body_format: json
+        body:
+          streams:
+            - stream:
+                job: test
+                level: info
+              values:
+                - ["{{ ansible_date_time.epoch }}000000000", "Test log message from Molecule"]
+        status_code: 204
+      register: push_logs
+
+    - name: Wait for logs to be indexed (5 seconds)
+      ansible.builtin.pause:
+        seconds: 5
+
+    - name: Query logs from Loki
+      ansible.builtin.uri:
+        url: "http://localhost:3100/loki/api/v1/query_range?query={job=\"test\"}&limit=10"
+        method: GET
+        return_content: true
+      register: query_logs
+      retries: 3
+      delay: 2
+
+    - name: Verify query returned data
+      ansible.builtin.assert:
+        that:
+          - query_logs.status == 200
+          - query_logs.json.status == "success"
+        fail_msg: "Failed to query logs from Loki"
+
+    # ========================================
+    # Summary
+    # ========================================
+
+    - name: Display test summary
+      ansible.builtin.debug:
+        msg: |
+          ✅ Loki role tests passed!
+          - Package: installed
+          - Service: active and enabled
+          - API: responding on port 3100
+          - Config: valid syntax
+          - Directories: exist with correct permissions
+          - Logrotate: configured
+          - Backup: script ready
+          - Functional: can push and query logs

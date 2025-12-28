@@ -1,0 +1,30 @@
+---
+# Prometheus Role - Installation Tasks
+
+- name: Prometheus | Install | Install from APT repository
+  when: prometheus_install_method == 'apt'
+  module_defaults:
+    ansible.builtin.apt:
+      state: present
+      update_cache: true
+  block:
+    - name: Prometheus | Install | Install APT dependencies
+      ansible.builtin.apt:
+        name: "{{ prometheus_apt_dependencies }}"
+      tags: [prometheus, packages]
+
+    - name: Prometheus | Install | Add Prometheus APT repository (DEB822)
+      ansible.builtin.deb822_repository:
+        name: prometheus
+        types: [deb]
+        uris: https://s3.amazonaws.com/deb.robustperception.io/debian
+        suites: stable
+        components: [main]
+        signed_by: "{{ prometheus_gpg_key_url }}"
+        state: present
+      tags: [prometheus, packages]
+
+    - name: Prometheus | Install | Install prometheus
+      ansible.builtin.apt:
+        name: "prometheus"
+      tags: [prometheus, packages]

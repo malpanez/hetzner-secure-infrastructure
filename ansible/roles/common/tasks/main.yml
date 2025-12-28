@@ -1,132 +1,18 @@
 ---
-# Common role - Basic system configuration
+# Common Role - Main Tasks (Orchestrator)
 
-- name: Set hostname
-  ansible.builtin.hostname:
-    name: "{{ inventory_hostname }}"
-  tags: hostname
+- name: Common | Main | Include system configuration tasks
+  ansible.builtin.import_tasks: system.yml
+  tags: [common, system]
 
-- name: Set timezone
-  community.general.timezone:
-    name: "{{ system_timezone }}"
-  tags: timezone
+- name: Common | Main | Include package management tasks
+  ansible.builtin.import_tasks: packages.yml
+  tags: [common, packages]
 
-- name: Set locale
-  community.general.locale_gen:
-    name: "{{ system_locale }}"
-    state: present
-  tags: locale
+- name: Common | Main | Include user management tasks
+  ansible.builtin.import_tasks: users.yml
+  tags: [common, users]
 
-- name: Update all packages
-  ansible.builtin.apt:
-    upgrade: dist
-    update_cache: true
-    autoremove: true
-    autoclean: true
-  tags: [updates, packages]
-- name: Install essential packages
-  ansible.builtin.apt:
-    name: "{{ required_packages }}"
-    state: present
-  tags: packages
-
-- name: Install additional security tools
-  ansible.builtin.apt:
-    name:
-      - apt-transport-https
-      - ca-certificates
-      - gnupg
-      - software-properties-common
-      - sudo
-      - rsyslog
-      - logrotate
-      - cron
-    state: present
-  tags: packages
-
-- name: Configure NTP
-  block:
-    - name: Install systemd-timesyncd
-      ansible.builtin.apt:
-        name: systemd-timesyncd
-        state: present
-
-    - name: Configure NTP servers
-      ansible.builtin.template:
-        src: timesyncd.conf.j2
-        dest: /etc/systemd/timesyncd.conf
-        owner: root
-        group: root
-        mode: "0644"
-      notify: restart timesyncd
-
-    - name: Enable and start timesyncd
-      ansible.builtin.systemd:
-        name: systemd-timesyncd
-        enabled: true
-        state: started
-  when: ntp_enabled | default(true)
-  tags: ntp
-
-- name: Configure log rotation
-  ansible.builtin.template:
-    src: logrotate.conf.j2
-    dest: /etc/logrotate.d/custom
-    owner: root
-    group: root
-    mode: "0644"
-  tags: logging
-
-- name: Ensure admin user exists
-  ansible.builtin.user:
-    name: "{{ admin_username }}"
-    groups: "{{ admin_groups }}"
-    shell: /bin/bash
-    create_home: true
-    append: true
-  tags: user
-
-- name: Create .ssh directory for admin user
-  ansible.builtin.file:
-    path: /home/{{ admin_username }}/.ssh
-    state: directory
-    owner: "{{ admin_username }}"
-    group: "{{ admin_username }}"
-    mode: "0700"
-  tags: user
-
-- name: Set up sudoers for admin user
-  ansible.builtin.template:
-    src: sudoers.j2
-    dest: /etc/sudoers.d/{{ admin_username }}
-    owner: root
-    group: root
-    mode: "0440"
-    validate: visudo -cf %s
-  tags: sudo
-
-- name: Disable root account password
-  ansible.builtin.user:
-    name: root
-    password: "!"
-  tags: security
-
-- name: Remove unnecessary packages
-  ansible.builtin.apt:
-    name:
-      - telnet
-      - rsh-client
-      - rsh-redone-client
-    state: absent
-    purge: true
-  tags: [security, cleanup]
-- name: Check if reboot is required
-  ansible.builtin.stat:
-    path: /var/run/reboot-required
-  register: reboot_required_file
-  tags: always
-
-- name: Set reboot fact
-  ansible.builtin.set_fact:
-    ansible_reboot_required: "{{ reboot_required_file.stat.exists }}"
-  tags: always
+- name: Common | Main | Include cleanup tasks
+  ansible.builtin.import_tasks: cleanup.yml
+  tags: [common, cleanup]

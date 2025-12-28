@@ -1,0 +1,10 @@
+---
+# Fail2ban Role - Service Management Tasks
+
+- name: Fail2Ban | Service | Enable and start Fail2ban
+  ansible.builtin.systemd:
+    name: fail2ban
+    enabled: true
+    state: started
+    daemon_reload: true
+  tags: [fail2ban, service]

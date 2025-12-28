@@ -1,0 +1,30 @@
+---
+# Grafana Role - Installation Tasks
+
+- name: Grafana | Install | Install from APT repository
+  when: grafana_install_method == 'apt'
+  module_defaults:
+    ansible.builtin.apt:
+      state: present
+      update_cache: true
+  block:
+    - name: Grafana | Install | Install APT dependencies
+      ansible.builtin.apt:
+        name: "{{ grafana_apt_dependencies }}"
+      tags: [grafana, packages]
+
+    - name: Grafana | Install | Add Grafana APT repository (DEB822)
+      ansible.builtin.deb822_repository:
+        name: grafana
+        types: [deb]
+        uris: https://apt.grafana.com
+        suites: stable
+        components: [main]
+        signed_by: "{{ grafana_gpg_key_url }}"
+        state: present
+      tags: [grafana, packages]
+
+    - name: Grafana | Install | Install Grafana
+      ansible.builtin.apt:
+        name: "grafana"
+      tags: [grafana, packages]

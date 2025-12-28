@@ -1,0 +1,68 @@
+---
+# ========================================
+# Package Dependencies
+# ========================================
+
+promtail_apt_dependencies:
+  - apt-transport-https
+  - software-properties-common
+  - wget
+  - gpg
+
+# GPG Key Configuration
+promtail_gpg_key_url: https://apt.grafana.com/gpg.key
+
+# Promtail Role - Default Variables
+
+# Installation
+promtail_version: "3.3.2"
+promtail_install_method: "apt"  # apt or binary
+
+# User and Group
+promtail_user: "promtail"
+promtail_group: "promtail"
+
+# Directories
+promtail_config_dir: "/etc/promtail"
+promtail_positions_dir: "/var/lib/promtail"
+promtail_log_dir: "/var/log/promtail"
+
+# Loki connection
+promtail_loki_url: "http://localhost:3100/loki/api/v1/push"
+promtail_loki_batch_wait: "1s"
+promtail_loki_batch_size: 1048576  # 1MB
+
+# Server
+promtail_http_listen_port: 9080
+promtail_grpc_listen_port: 0  # Disabled
+
+# Log sources to scrape
+promtail_scrape_nginx: true
+promtail_scrape_php: true
+promtail_scrape_mariadb: true
+promtail_scrape_wordpress: true
+promtail_scrape_syslog: true
+promtail_scrape_auth: true
+promtail_scrape_fail2ban: true
+
+# Paths
+promtail_nginx_access_log: "/var/log/nginx/access.log"
+promtail_nginx_error_log: "/var/log/nginx/error.log"
+promtail_php_fpm_log: "/var/log/php*.*.fpm.log"
+promtail_mariadb_error_log: "/var/log/mysql/error.log"
+promtail_mariadb_slow_log: "/var/log/mysql/slow.log"
+promtail_wordpress_debug_log: "/var/www/html/wp-content/debug.log"
+promtail_syslog: "/var/log/syslog"
+promtail_auth_log: "/var/log/auth.log"
+promtail_fail2ban_log: "/var/log/fail2ban.log"
+
+# Logrotate
+promtail_logrotate_enabled: true
+promtail_logrotate_size: "50M"
+promtail_logrotate_rotate: 7
+promtail_logrotate_compress: true
+
+# Firewall
+promtail_firewall_allowed_ips:
+  - "127.0.0.1"
+  - "::1"

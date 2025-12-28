@@ -1,0 +1,38 @@
+[Unit]
+Description=Promtail log shipping agent
+Documentation=https://grafana.com/docs/loki/latest/clients/promtail/
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User={{ promtail_user }}
+Group={{ promtail_group }}
+
+ExecStart=/usr/bin/promtail \
+  -config.file={{ promtail_config_dir }}/promtail.yml
+
+ExecReload=/bin/kill -HUP $MAINPID
+
+Restart=on-failure
+RestartSec=5s
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths={{ promtail_positions_dir }} {{ promtail_log_dir }}
+ReadOnlyPaths=/var/log
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=4096
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=promtail
+
+[Install]
+WantedBy=multi-user.target

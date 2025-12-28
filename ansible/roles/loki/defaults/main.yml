@@ -1,0 +1,81 @@
+---
+# Loki Role - Default Variables
+
+# ========================================
+# Package Dependencies
+# ========================================
+
+loki_apt_dependencies:
+  - apt-transport-https
+  - software-properties-common
+  - wget
+  - gpg
+
+# Installation
+loki_version: "3.3.2"
+loki_install_method: "apt"  # apt or binary
+
+# User and Group
+loki_user: "loki"
+loki_group: "loki"
+
+# Directories
+loki_config_dir: "/etc/loki"
+loki_data_dir: "/var/lib/loki"
+loki_log_dir: "/var/log/loki"
+loki_backup_dir: "/var/backups/loki"
+
+# GPG Key Configuration (shared with Grafana repo)
+loki_gpg_key_url: https://apt.grafana.com/gpg.key
+
+# Network
+loki_http_listen_port: 3100
+loki_grpc_listen_port: 9096
+
+# Retention (how long to keep logs)
+loki_retention_period: "720h"  # 30 days (30*24h) - balanced between storage and usefulness
+loki_max_look_back_period: "0s"  # Unlimited query lookback
+# Alternative retention periods:
+# - 7 days: "168h" (minimal, ~140-210 MB)
+# - 30 days: "720h" (recommended, ~600-900 MB)
+# - 90 days: "2160h" (extended, ~1.8-2.7 GB)
+
+# Limits
+loki_ingestion_rate_mb: 4  # MB/s per tenant
+loki_ingestion_burst_size_mb: 6  # MB burst per tenant
+loki_max_query_series: 500  # Max series per query
+loki_max_query_parallelism: 32
+loki_reject_old_samples: true
+loki_reject_old_samples_max_age: "720h"  # Match retention_period
+
+# Storage
+loki_storage_type: "filesystem"  # filesystem or s3/gcs
+loki_chunk_idle_period: "1h"
+loki_chunk_retain_period: "30s"
+loki_max_chunk_age: "1h"
+
+# Compactor (cleanup old data)
+loki_compactor_working_directory: "{{ loki_data_dir }}/compactor"
+loki_compactor_shared_store: "filesystem"
+loki_compactor_retention_enabled: true
+loki_compactor_retention_delete_delay: "2h"
+
+# Logrotate
+loki_logrotate_enabled: true
+loki_logrotate_size: "100M"
+loki_logrotate_rotate: 7  # Keep 7 old logs
+loki_logrotate_compress: true
+
+# Backup
+loki_backup_enabled: true
+loki_backup_schedule: "0 3 * * *"  # Daily at 3 AM
+loki_backup_retention_days: 7
+
+# Firewall
+loki_firewall_allowed_ips:
+  - "127.0.0.1"  # localhost
+  - "::1"        # localhost IPv6
+
+# Feature flags
+loki_enable_ruler: false  # Alerting rules (requires Prometheus)
+loki_enable_table_manager: true

@@ -1,0 +1,26 @@
+---
+# Molecule converge playbook for Promtail role
+
+- name: Converge
+  hosts: all
+  become: true
+
+  pre_tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Create test log files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: touch
+        mode: '0644'
+      loop:
+        - /var/log/nginx/access.log
+        - /var/log/nginx/error.log
+        - /var/log/syslog
+        - /var/log/auth.log
+
+  roles:
+    - role: promtail

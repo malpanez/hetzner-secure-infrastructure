@@ -1,0 +1,56 @@
+---
+# Firewall Role - Default Variables
+# All variables prefixed with 'firewall_' following Ansible Best Practices
+
+# ========================================
+# Installation Configuration
+# ========================================
+
+# APT packages
+firewall_apt_packages:
+  - ufw
+
+# ========================================
+# Deployment Control
+# ========================================
+
+firewall_enabled: true
+
+# ========================================
+# UFW Default Policies
+# ========================================
+
+firewall_default_incoming_policy: deny
+firewall_default_outgoing_policy: allow
+
+# ========================================
+# UFW Allowed Ports
+# ========================================
+
+firewall_allowed_ports:
+  - rule: allow
+    port: "22"
+    proto: tcp
+    comment: "SSH"
+  - rule: allow
+    port: "80"
+    proto: tcp
+    comment: "HTTP"
+  - rule: allow
+    port: "443"
+    proto: tcp
+    comment: "HTTPS"
+
+# ========================================
+# UFW Rate Limiting
+# ========================================
+
+firewall_rate_limit_ssh: true
+firewall_rate_limit_attempts: 6
+firewall_rate_limit_seconds: 60
+
+# ========================================
+# UFW Logging
+# ========================================
+
+firewall_logging: "on"  # on, off, low, medium, high, full

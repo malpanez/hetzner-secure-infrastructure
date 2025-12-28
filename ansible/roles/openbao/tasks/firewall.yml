@@ -1,0 +1,13 @@
+---
+# OpenBao Role - Firewall Configuration Tasks
+
+- name: OpenBao | Firewall | Configure UFW firewall for OpenBao
+  community.general.ufw:
+    rule: allow
+    port: "8200"
+    proto: tcp
+    from_ip: "{{ item }}"
+    comment: OpenBao API
+  loop: "{{ openbao_firewall_allowed_ips }}"
+  when: openbao_firewall_enabled
+  tags: [openbao, firewall]

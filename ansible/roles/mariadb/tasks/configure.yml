@@ -1,0 +1,80 @@
+---
+# MariaDB Role - Configuration Tasks
+
+- name: MariaDB | Configure | Deploy MariaDB server configuration
+  ansible.builtin.template:
+    src: my.cnf.j2
+    dest: /etc/mysql/mariadb.conf.d/99-custom.cnf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart mariadb
+  tags: [mariadb, config]
+
+- name: MariaDB | Configure | Create WordPress databases
+  community.mysql.mysql_db:
+    name: "{{ item.name }}"
+    encoding: "{{ item.encoding }}"
+    collation: "{{ item.collation }}"
+    state: present
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+  loop: "{{ mariadb_databases }}"
+  tags: [mariadb, database]
+
+- name: MariaDB | Configure | Create WordPress database users
+  community.mysql.mysql_user:
+    name: "{{ item.name }}"
+    password: "{{ item.password }}"
+    priv: "{{ item.priv }}"
+    host: "{{ item.host }}"
+    state: present
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+  loop: "{{ mariadb_users }}"
+  no_log: true
+  tags: [mariadb, users]
+
+- name: MariaDB | Configure | Create exporter user for monitoring
+  community.mysql.mysql_user:
+    name: "{{ mariadb_exporter_user }}"
+    password: "{{ mariadb_exporter_password }}"
+    priv: "*.*:PROCESS,REPLICATION CLIENT,SELECT"
+    host: "localhost"
+    state: present
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+  when: mariadb_mysqld_exporter_enabled
+  no_log: true
+  tags: [mariadb, monitoring]
+
+- name: MariaDB | Configure | Create backup directory
+  ansible.builtin.file:
+    path: "{{ mariadb_backup_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+  when: mariadb_backup_enabled
+  tags: [mariadb, backup]
+
+- name: MariaDB | Configure | Deploy backup script
+  ansible.builtin.template:
+    src: backup-mariadb.sh.j2
+    dest: /usr/local/bin/backup-mariadb.sh
+    owner: root
+    group: root
+    mode: "0750"
+  when: mariadb_backup_enabled
+  tags: [mariadb, backup]
+
+- name: MariaDB | Configure | Create backup cron job
+  ansible.builtin.cron:
+    name: MariaDB backup
+    minute: "{{ mariadb_backup_schedule.split()[0] }}"
+    hour: "{{ mariadb_backup_schedule.split()[1] }}"
+    day: "{{ mariadb_backup_schedule.split()[2] }}"
+    month: "{{ mariadb_backup_schedule.split()[3] }}"
+    weekday: "{{ mariadb_backup_schedule.split()[4] }}"
+    user: root
+    job: /usr/local/bin/backup-mariadb.sh >> /var/log/mariadb-backup.log 2>&1
+    state: present
+  when: mariadb_backup_enabled
+  tags: [mariadb, backup]

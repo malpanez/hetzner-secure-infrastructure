@@ -1,0 +1,22 @@
+---
+# MariaDB Role - Main Tasks (Orchestrator)
+
+- name: MariaDB | Main | Include installation tasks
+  ansible.builtin.import_tasks: install.yml
+  tags: [mariadb, install]
+
+- name: MariaDB | Main | Include service tasks
+  ansible.builtin.import_tasks: service.yml
+  tags: [mariadb, service]
+
+- name: MariaDB | Main | Include security tasks
+  ansible.builtin.import_tasks: secure.yml
+  tags: [mariadb, secure]
+
+- name: MariaDB | Main | Include configuration tasks
+  ansible.builtin.import_tasks: configure.yml
+  tags: [mariadb, config]
+
+- name: MariaDB | Main | Include validation tasks
+  ansible.builtin.import_tasks: validate.yml
+  tags: [mariadb, validate]

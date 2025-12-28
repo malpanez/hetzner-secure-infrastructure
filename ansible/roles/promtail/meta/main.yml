@@ -1,0 +1,25 @@
+---
+# Promtail Role - Metadata
+
+galaxy_info:
+  role_name: promtail
+  author: hetzner-secure-infrastructure
+  description: Deploy and configure Grafana Promtail for log shipping
+  license: MIT
+  min_ansible_version: "2.12"
+
+  platforms:
+    - name: Debian
+      versions:
+        - bookworm
+        - trixie
+
+  galaxy_tags:
+    - monitoring
+    - logging
+    - promtail
+    - grafana
+    - loki
+    - observability
+
+dependencies: []

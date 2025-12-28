@@ -1,0 +1,47 @@
+---
+# Loki Role - Installation Tasks
+
+- name: Loki | Install | Create Loki group
+  ansible.builtin.group:
+    name: "{{ loki_group }}"
+    state: present
+    system: true
+  tags: [loki, user]
+
+- name: Loki | Install | Create Loki user
+  ansible.builtin.user:
+    name: "{{ loki_user }}"
+    group: "{{ loki_group }}"
+    system: true
+    shell: /usr/sbin/nologin
+    home: "{{ loki_data_dir }}"
+    createhome: false
+  tags: [loki, user]
+
+- name: Loki | Install | Install from APT repository
+  when: loki_install_method == 'apt'
+  module_defaults:
+    ansible.builtin.apt:
+      state: present
+      update_cache: true
+  block:
+    - name: Loki | Install | Install APT dependencies
+      ansible.builtin.apt:
+        name: "{{ loki_apt_dependencies }}"
+      tags: [loki, packages]
+
+    - name: Loki | Install | Add Grafana APT repository (DEB822)
+      ansible.builtin.deb822_repository:
+        name: grafana
+        types: [deb]
+        uris: https://apt.grafana.com
+        suites: stable
+        components: [main]
+        signed_by: "{{ loki_gpg_key_url }}"
+        state: present
+      tags: [loki, packages]
+
+    - name: Loki | Install | Install Loki
+      ansible.builtin.apt:
+        name: "loki"
+      tags: [loki, packages]

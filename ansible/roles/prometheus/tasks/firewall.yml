@@ -1,0 +1,13 @@
+---
+# Prometheus Role - Firewall Configuration Tasks
+
+- name: Prometheus | Firewall | Allow Prometheus port in firewall
+  community.general.ufw:
+    rule: allow
+    port: "{{ prometheus_port }}"
+    proto: tcp
+    src: "{{ item }}"
+    comment: Prometheus Web UI
+  loop: "{{ prometheus_firewall_allowed_ips }}"
+  when: firewall_enabled | default(true)
+  tags: [prometheus, firewall]

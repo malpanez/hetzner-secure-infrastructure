@@ -210,7 +210,7 @@ ssh-keygen -t ed25519 -C "hetzner-servers-only" -f ~/.ssh/hetzner_ed25519
 flowchart TD
     A[Elegir Usuario] --> B{Ofuscación?}
     B -->|Máxima seguridad| C[Usuario aleatorio<br/>ej: svc_prod_47x]
-    B -->|Balance| D[Usuario personal<br/>ej: miguel]
+    B -->|Balance| D[Usuario personal<br/>ej: malpanez]
     B -->|Simple| E[Usuario común<br/>ej: admin]
 
     C --> C1[✓ Más difícil adivinar<br/>✗ Difícil de recordar]
@@ -221,7 +221,7 @@ flowchart TD
     style D1 fill:#e1ffe1
 ```
 
-**Recomendación: Usar tu nombre `miguel` (o variante)**
+**Recomendación: Usar tu nombre `malpanez` (o variante)**
 
 **Razones:**
 1. ✅ **No es obvio** - No es `root`, `admin`, `administrator`, `user`
@@ -238,9 +238,8 @@ flowchart TD
 - ❌ `ubuntu` / `debian` - Nombres por defecto
 
 **Usuarios OK:**
-- ✅ `miguel` - Tu nombre (RECOMENDADO)
-- ✅ `malpanez` - Tu username
-- ✅ `miguel_admin` - Variante
+- ✅ `malpanez` - No obvio, fácil de recordar (RECOMENDADO)
+- ✅ `malpanez_admin` - Variante
 - ✅ Nombre aleatorio: `svc_adm_92x` (si quieres máxima ofuscación)
 
 #### ¿Ofuscar el puerto SSH a 2222?
@@ -302,7 +301,7 @@ wordpress-prod:
 
 ```bash
 # Conectar después
-ssh -p 2222 miguel@tudominio.com
+ssh -p 2222 malpanez@tudominio.com
 ```
 
 #### Configuración Final Recomendada
@@ -311,7 +310,7 @@ ssh -p 2222 miguel@tudominio.com
 
 ```hcl
 # terraform/environments/production/terraform.tfvars
-admin_username = "miguel"          # Tu nombre, fácil de recordar
+admin_username = "malpanez"        # No obvio, fácil de recordar
 ssh_port       = 22               # Puerto estándar (RECOMENDADO)
 # ssh_port     = 2222             # Descomenta si quieres ofuscar
 
@@ -324,7 +323,7 @@ ssh_allowed_ips = ["TU.IP/32"]   # CRÍTICO: Solo tu IP
 # Para facilitar conexión
 Host hetzner-prod
     HostName tudominio.com
-    User miguel
+    User malpanez
     Port 22                                    # o 2222 si cambiaste
     IdentityFile ~/.ssh/id_ed25519           # Tu clave existente
     IdentitiesOnly yes
@@ -429,18 +428,23 @@ gantt
 
 **Necesitas tener disponibles ANTES del deployment:**
 
-| Paso | Concepto | Dónde | Cuándo | Costo | Método de Pago |
-|------|----------|-------|--------|-------|----------------|
-| **1** | **LearnDash License** | [learndash.com/pricing](https://www.learndash.com/pricing/) | **ANTES de terraform** | $199 USD | Tarjeta/PayPal |
-| **2** | **Hetzner Cloud** | [console.hetzner.cloud](https://console.hetzner.cloud) | Durante `terraform apply` | €5.39 | Tarjeta/PayPal/Transferencia |
-| **3** | **Dominio** | Ya lo tienes en GoDaddy | N/A | €0 (gratis) | Ya pagado |
-| **4** | **Cloudflare** | [dash.cloudflare.com](https://dash.cloudflare.com) | Durante DNS setup | €0 (gratis) | N/A |
-| | **TOTAL INICIAL** | | | **~$210 / €191** | |
+| Paso | Concepto | Dónde | Cuándo | Costo | Obligatorio |
+|------|----------|-------|--------|-------|-------------|
+| **1** | **LearnDash License** | [learndash.com/pricing](https://www.learndash.com/pricing/) | **ANTES de terraform** | $199 USD | ✅ SÍ |
+| **2** | **Hetzner Cloud** | [console.hetzner.cloud](https://console.hetzner.cloud) | Durante `terraform apply` | €5.39 | ✅ SÍ |
+| **3** | **Transferir dominio a Cloudflare** | [dash.cloudflare.com](https://dash.cloudflare.com) | Durante/después deployment | €9-10 | ⚠️ RECOMENDADO |
+| **4** | **Cloudflare DNS/CDN/SSL** | [dash.cloudflare.com](https://dash.cloudflare.com) | Durante DNS setup | €0 (gratis) | ✅ SÍ |
+| | **TOTAL MÍNIMO** | | | **~$210 / €191** | Sin transferencia |
+| | **TOTAL RECOMENDADO** | | | **~$220 / €200** | Con transferencia dominio |
 
 **IMPORTANTE:**
-- ✅ **Dominio:** Ya lo tienes - NO necesitas pagar nada extra, solo cambiar nameservers (gratis)
-- ✅ **Cloudflare:** Plan Free es suficiente - 100% gratis
-- ✅ **SSL:** Gratis - Cloudflare lo provee automáticamente
+- ✅ **Dominio en GoDaddy:** Ya lo tienes - NO necesitas pagar nada extra
+- ⚠️ **Transferir a Cloudflare:** RECOMENDADO - €9-10 (incluye +1 año renovación)
+  - NO es un fee, es renovación anticipada
+  - Se añade a tu tiempo restante (ejemplo: expira Jun 2025 → nueva expiración Jun 2026)
+  - Ahorro futuro: €9/año vs €12/año en GoDaddy
+  - Puedes hacerlo ahora o después del deployment
+- ✅ **Cloudflare DNS/CDN/SSL:** Plan Free es suficiente - 100% gratis
 - ❌ **Volume extra:** OPCIONAL - No es obligatorio, explicación abajo
 
 #### ¿Qué Plugins se Instalan Automáticamente?
@@ -569,12 +573,12 @@ pie title Distribución de Costos Mensuales (Configuración MÍNIMA)
 
 ### Costos Anuales Recurrentes
 
-| Componente | Descripción | Costo |
-|-----------|-------------|-------|
-| **Dominio GoDaddy** | Renovación anual (.com) | €10-15/año |
-| **LearnDash License** | Plugin LMS - RENOVACIÓN | $199/año (~€186) |
-| **SSL Certificate** | Gratis con Cloudflare | €0 |
-| **SUBTOTAL ANUAL** | | **~€196-201** |
+| Componente | Descripción | Costo | Notas |
+|-----------|-------------|-------|-------|
+| **Dominio** | Renovación anual (.com) | €9-12/año | €9 si transfieres a Cloudflare, €12 en GoDaddy |
+| **LearnDash License** | Plugin LMS - RENOVACIÓN | $199/año (~€186) | OBLIGATORIO |
+| **SSL Certificate** | Gratis con Cloudflare | €0 | Incluido |
+| **SUBTOTAL ANUAL** | | **~€195-198** | |
 
 ### 💵 Resumen de Costos Total
 
@@ -706,7 +710,7 @@ export TF_VAR_hcloud_token="${HCLOUD_TOKEN}"
 
 # SSH Configuration
 export TF_VAR_ssh_public_key="$(cat ~/.ssh/hetzner_ed25519.pub)"
-export TF_VAR_admin_username="miguel"
+export TF_VAR_admin_username="malpanez"
 
 # Tu IP pública para SSH (CRÍTICO PARA SEGURIDAD)
 export TF_VAR_ssh_allowed_ips='["TU.IP.PUBLICA.AQUI/32"]'
@@ -790,7 +794,7 @@ server_type  = "cx22"  # 2 vCPU, 4GB RAM
 location     = "nbg1"  # Nuremberg (o "fsn1", "hel1")
 
 # Usuario admin (mismo que en .env)
-admin_username = "miguel"
+admin_username = "malpanez"
 
 # SSH Configuration
 ssh_port = 22  # Cambiar a puerto no estándar si deseas (ej: 2222)
@@ -927,19 +931,190 @@ Cloud-init configura el servidor inicial. Verificar progreso:
 SERVER_IP=$(terraform output -raw server_ip)
 
 # Esperar ~3-5 minutos y luego verificar
-ssh -i ~/.ssh/hetzner_ed25519 miguel@${SERVER_IP} \
+ssh -i ~/.ssh/hetzner_ed25519 malpanez@${SERVER_IP} \
   'cat /var/log/cloud-init-status.log'
 
 # Debe mostrar: "Cloud-init completed"
 
 # Ver log completo si hay problemas
-ssh -i ~/.ssh/hetzner_ed25519 miguel@${SERVER_IP} \
+ssh -i ~/.ssh/hetzner_ed25519 malpanez@${SERVER_IP} \
   'tail -100 /var/log/cloud-init-output.log'
 ```
 
 ### Paso 3.1: Configurar DNS en Cloudflare (OBLIGATORIO)
 
-**⚠️ IMPORTANTE: Terraform NO gestiona DNS automáticamente. Debes configurar DNS manualmente en Cloudflare.**
+**Tienes 2 opciones:**
+
+#### OPCIÓN A: DNS Automático con Terraform (RECOMENDADO ✅)
+
+Terraform gestiona DNS automáticamente usando el módulo Cloudflare integrado.
+
+**Ventajas:**
+- ✅ DNS records creados automáticamente
+- ✅ Reglas WAF para WordPress (bloqueo xmlrpc.php, wp-config.php)
+- ✅ Configuración SSL/TLS automática (Full strict, TLS 1.2+)
+- ✅ Rate limiting en wp-login.php (5 intentos/min)
+- ✅ Caching optimizado para WordPress
+- ✅ Protección contra ataques comunes (XSS, path traversal)
+- ✅ Infrastructure as Code (versionado en Git)
+
+**Paso 1: Migrar dominio a Cloudflare**
+
+1. Ir a https://dash.cloudflare.com
+2. Click "Add a Site"
+3. Introducir tu dominio: `tudominio.com`
+4. Seleccionar plan **Free** (suficiente para todo)
+5. Cloudflare te dará 2 nameservers:
+   ```
+   Ejemplo:
+   alex.ns.cloudflare.com
+   june.ns.cloudflare.com
+   ```
+
+**En GoDaddy:**
+1. Ir a https://account.godaddy.com
+2. My Products → Domains → tudominio.com
+3. Settings → Manage DNS → Nameservers
+4. Cambiar a "Custom"
+5. Introducir los 2 nameservers de Cloudflare
+6. Guardar
+7. **Esperar 2-48 horas** (normalmente 2-6 horas para propagación)
+
+**Paso 2: Obtener API Token de Cloudflare (CRÍTICO)**
+
+⚠️ **IMPORTANTE:** NO uses la "Global API Key" (antigua). Necesitas crear un "API Token" específico con permisos limitados.
+
+**Pasos EXACTOS (seguir al pie de la letra):**
+
+1. **Ir directamente a:** https://dash.cloudflare.com/profile/api-tokens
+   - O en el dashboard: Click tu email (arriba derecha) → My Profile → API Tokens
+
+2. Click botón azul **"Create Token"** (NO "View Global API Key")
+
+3. Buscar el template **"Edit zone DNS"** en la lista
+   - Descripción: "Edit DNS records for a specific zone"
+   - Click **"Use template"**
+
+4. **Configurar permisos:**
+
+   **Permissions:** (ya vienen configuradas correctamente)
+   - Zone → DNS → Edit
+   - Zone → Zone → Read
+   - Zone → Zone Settings → Read
+
+   **Zone Resources:** (IMPORTANTE - cambiar esto)
+   - Cambiar de "All zones" a:
+   - **Include** → **Specific zone** → Seleccionar **tu dominio exacto** del dropdown
+   - Ejemplo: `tudominio.com`
+
+   **Account Resources:** (opcional, dejar como está)
+   - Include → All accounts (está bien así)
+
+   **Client IP Address Filtering:** (opcional, dejar vacío)
+   - O añade tu IP si quieres más seguridad
+
+   **TTL:** (tiempo de vida del token)
+   - Dejar en "Forever" (recomendado para producción)
+   - O poner fecha futura si quieres rotación
+
+5. Click **"Continue to summary"**
+
+6. Revisar resumen:
+   - Permissions: Zone.DNS Edit, Zone.Zone Read
+   - Zone Resources: Includes tudominio.com
+   - ✅ Si todo correcto, click **"Create Token"**
+
+7. **PANTALLA CRÍTICA:**
+   - Se muestra el token UNA SOLA VEZ
+   - Empieza con: `cloudflare_token_XXXXXXXXXXXXXXXXXXXXXXXX`
+   - **COPIAR AHORA** y guardar en gestor de contraseñas
+   - NO cierres esta ventana hasta haber guardado el token
+
+8. **Verificar que funciona:**
+   ```bash
+   # Test del token (RECOMENDADO)
+   curl -X GET "https://api.cloudflare.com/client/v4/user/tokens/verify" \
+     -H "Authorization: Bearer TU_TOKEN_AQUI" \
+     -H "Content-Type:application/json"
+
+   # Debe retornar:
+   # {"result":{"id":"...","status":"active"},"success":true}
+   ```
+
+9. Click **"View"** si necesitas ver qué permisos tiene (pero NO puedes ver el token de nuevo)
+
+**Errores comunes:**
+- ❌ Usar "Global API Key" en lugar de "API Token" → Terraform fallará
+- ❌ No especificar "Specific zone" → Terraform puede afectar otros dominios
+- ❌ Copiar mal el token (espacios, saltos de línea) → Authentication failed
+
+**Paso 3: Configurar Terraform**
+
+```bash
+# Añadir Cloudflare token a .env
+nano .env
+
+# Añadir estas líneas:
+export CLOUDFLARE_API_TOKEN="tu-token-cloudflare-aqui"
+export TF_VAR_cloudflare_api_token="${CLOUDFLARE_API_TOKEN}"
+
+# Cargar variables
+source .env
+
+# Editar terraform.tfvars
+nano terraform/environments/production/terraform.tfvars
+```
+
+**Añadir a terraform.tfvars:**
+```hcl
+# DNS Configuration
+domain              = "tudominio.com"
+enable_cloudflare   = true  # Habilita gestión automática de DNS
+```
+
+**Paso 4: Terraform crea DNS automáticamente**
+
+```bash
+cd terraform/environments/production
+
+# Ver qué se va a crear
+terraform plan
+
+# Aplicar configuración
+terraform apply
+```
+
+Terraform creará automáticamente:
+- ✅ Registro A: `@` (root) → IP del servidor (proxied)
+- ✅ Registro A: `www` → CNAME al root (proxied)
+- ✅ Registro AAAA: IPv6 si disponible (proxied)
+- ✅ Firewall Rules: Block XML-RPC, wp-config.php, ataques comunes
+- ✅ Rate Limiting: 5 intentos/min en wp-login.php
+- ✅ SSL/TLS: Full (strict), TLS 1.2+, Always HTTPS
+- ✅ Page Rules: Cache static assets, bypass admin
+- ✅ Security Settings: Bot management, HSTS, email obfuscation
+
+**Paso 5: Verificar DNS**
+
+```bash
+# Verificar que DNS resuelve
+dig tudominio.com +short
+# Debe mostrar IP de Cloudflare (si proxy on) o IP del servidor
+
+dig www.tudominio.com +short
+# Debe mostrar la misma IP
+
+# Ver outputs de Terraform
+terraform output
+```
+
+**✅ DNS configurado! Continuar con Ansible.**
+
+---
+
+#### OPCIÓN B: DNS Manual en Cloudflare (Si no usas Terraform automation)
+
+Si prefieres configurar DNS manualmente o no quieres usar el módulo Cloudflare:
 
 ```mermaid
 flowchart TD
@@ -962,56 +1137,34 @@ flowchart TD
     style L fill:#e1ffe1
 ```
 
-**Paso 1: Migrar dominio de GoDaddy a Cloudflare (si aún no lo has hecho)**
+**Paso 1: Migrar dominio a Cloudflare**
 
-1. Ir a https://dash.cloudflare.com
-2. Click "Add a Site"
-3. Introducir tu dominio: `tudominio.com`
-4. Seleccionar plan **Free** (suficiente)
-5. Cloudflare escaneará registros DNS existentes
-6. Cloudflare te dará 2 nameservers:
-   ```
-   Ejemplo:
-   alex.ns.cloudflare.com
-   june.ns.cloudflare.com
-   ```
+(Mismo proceso que Opción A - Pasos 1 del anterior)
 
-**Paso 2: Cambiar nameservers en GoDaddy**
-
-1. Ir a https://account.godaddy.com
-2. My Products → Domains → tudominio.com
-3. Settings → Manage DNS → Nameservers
-4. Cambiar a "Custom"
-5. Introducir los 2 nameservers de Cloudflare
-6. Guardar
-7. **Esperar 2-48 horas** (normalmente 2-6 horas)
-
-**Paso 3: Crear registros DNS en Cloudflare**
-
-Una vez que la migración esté completa:
+**Paso 2: Obtener IP del servidor**
 
 ```bash
-# Obtener IP del servidor de Terraform
 cd terraform/environments/production
 SERVER_IP=$(terraform output -raw server_ip)
 echo "IP del servidor: ${SERVER_IP}"
 # Anota esta IP
 ```
 
+**Paso 3: Crear registros DNS manualmente**
+
 En Cloudflare Dashboard → DNS → Records:
 
 | Tipo | Nombre | Contenido | Proxy | TTL | Notas |
 |------|--------|-----------|-------|-----|-------|
-| A | @ | `${SERVER_IP}` | ✅ Proxied | Auto | WordPress root |
-| A | www | `${SERVER_IP}` | ✅ Proxied | Auto | WordPress www |
-| A | monitoring | `${SERVER_IP}` | ❌ DNS only | Auto | Grafana (NO proxy) |
-| AAAA | @ | - | - | - | Dejar vacío (no IPv6) |
+| A | @ | `TU.IP.SERVIDOR` | ✅ Proxied | Auto | WordPress root |
+| A | www | `TU.IP.SERVIDOR` | ✅ Proxied | Auto | WordPress www |
+| A | monitoring | `TU.IP.SERVIDOR` | ❌ DNS only | Auto | Grafana (sin proxy) |
 
 **IMPORTANTE sobre Proxy:**
-- ✅ **WordPress (@, www): PROXIED** - Cloudflare cachea y protege
-- ❌ **Grafana (monitoring): DNS ONLY** - No proxy, acceso directo
+- ✅ **WordPress (@, www): PROXIED** - Cloudflare cachea y protege con CDN
+- ❌ **Grafana (monitoring): DNS ONLY** - Acceso directo sin proxy
 
-**Paso 4: Configurar SSL/TLS en Cloudflare**
+**Paso 4: Configurar SSL/TLS manualmente**
 
 Cloudflare Dashboard → SSL/TLS:
 
@@ -1022,16 +1175,29 @@ Cloudflare Dashboard → SSL/TLS:
    - Always Use HTTPS: **On**
    - Automatic HTTPS Rewrites: **On**
    - Minimum TLS Version: **TLS 1.2**
+   - TLS 1.3: **On**
 
 3. **Origin Server:**
-   - Create Certificate (opcional, Nginx usará Let's Encrypt)
+   - (Opcional - Nginx usará Let's Encrypt)
 
-**Paso 5: Verificar DNS**
+**Paso 5: Configurar seguridad básica (MANUAL)**
+
+Cloudflare Dashboard → Security → WAF:
+
+1. **Crear regla para bloquear XML-RPC:**
+   - Expression: `(http.request.uri.path eq "/xmlrpc.php")`
+   - Action: Block
+
+2. **Crear regla para rate limit wp-login:**
+   - Expression: `(http.request.uri.path contains "/wp-login.php")`
+   - Action: Challenge (CAPTCHA)
+
+**Paso 6: Verificar DNS**
 
 ```bash
-# Verificar que DNS resuelve correctamente
+# Verificar resolución DNS
 dig tudominio.com +short
-# Debe mostrar la IP de Cloudflare (si proxy está on) o tu servidor IP
+# Debe mostrar IP de Cloudflare (si proxy on)
 
 dig monitoring.tudominio.com +short
 # Debe mostrar tu SERVER_IP directamente
@@ -1121,7 +1287,7 @@ grafana_domain: "monitoring.tudominio.com"
 prometheus_retention: "30d"
 
 # SSH config
-ansible_user: miguel
+ansible_user: malpanez
 ansible_ssh_private_key_file: ~/.ssh/id_ed25519
 ansible_python_interpreter: /usr/bin/python3
 ```
@@ -1153,7 +1319,7 @@ all:
       hosts:
         wordpress-prod:
           ansible_host: TU.IP.DEL.SERVIDOR  # De terraform output
-          ansible_user: miguel
+          ansible_user: malpanez
           ansible_ssh_private_key_file: ~/.ssh/id_ed25519
           ansible_python_interpreter: /usr/bin/python3
 
@@ -1431,7 +1597,7 @@ Después del deployment, verificar Nginx:
 
 ```bash
 # Conectar al servidor
-ssh miguel@tudominio.com
+ssh malpanez@tudominio.com
 
 # Ver virtual hosts activos
 sudo nginx -T | grep server_name
@@ -1651,7 +1817,7 @@ graph TD
 
 ```bash
 # Conectar al servidor
-ssh miguel@tudominio.com
+ssh malpanez@tudominio.com
 
 # Generar código QR TOTP
 google-authenticator
@@ -1673,7 +1839,7 @@ google-authenticator
 
 ```bash
 # Si tienes YubiKey, registrarla
-ssh miguel@tudominio.com
+ssh malpanez@tudominio.com
 
 # Crear directorio si no existe
 mkdir -p ~/.ssh
@@ -1766,7 +1932,7 @@ ping -c 2 ${SERVER_IP} &>/dev/null && echo "✓ Ping OK" || echo "✗ Ping FAIL"
 
 # 2. SSH
 echo "[2/8] Verificando SSH..."
-ssh -o ConnectTimeout=5 miguel@${SERVER_IP} 'echo "✓ SSH OK"' || echo "✗ SSH FAIL"
+ssh -o ConnectTimeout=5 malpanez@${SERVER_IP} 'echo "✓ SSH OK"' || echo "✗ SSH FAIL"
 
 # 3. HTTP/HTTPS
 echo "[3/8] Verificando Web..."
@@ -1783,7 +1949,7 @@ echo | openssl s_client -connect ${DOMAIN}:443 -servername ${DOMAIN} 2>/dev/null
 
 # 6. Servicios en el servidor
 echo "[6/8] Verificando servicios..."
-ssh miguel@${SERVER_IP} '
+ssh malpanez@${SERVER_IP} '
   systemctl is-active --quiet nginx && echo "✓ Nginx activo" || echo "✗ Nginx inactivo"
   systemctl is-active --quiet mariadb && echo "✓ MariaDB activo" || echo "✗ MariaDB inactivo"
   systemctl is-active --quiet php8.2-fpm && echo "✓ PHP-FPM activo" || echo "✗ PHP-FPM inactivo"
@@ -1793,12 +1959,12 @@ ssh miguel@${SERVER_IP} '
 
 # 7. Firewall
 echo "[7/8] Verificando firewall..."
-ssh miguel@${SERVER_IP} 'sudo ufw status | grep -q "Status: active"' && \
+ssh malpanez@${SERVER_IP} 'sudo ufw status | grep -q "Status: active"' && \
   echo "✓ UFW activo" || echo "✗ UFW inactivo"
 
 # 8. Fail2ban
 echo "[8/8] Verificando Fail2ban..."
-ssh miguel@${SERVER_IP} 'sudo fail2ban-client status | grep -q "Number of jail"' && \
+ssh malpanez@${SERVER_IP} 'sudo fail2ban-client status | grep -q "Number of jail"' && \
   echo "✓ Fail2ban activo" || echo "✗ Fail2ban inactivo"
 
 echo "=== Verificación completa ==="
@@ -1819,7 +1985,7 @@ echo "=== Verificación completa ==="
 
 ```bash
 # Conectar al servidor
-ssh miguel@tudominio.com
+ssh malpanez@tudominio.com
 
 # 1. Verificar auditd
 sudo auditctl -l | wc -l
@@ -2029,13 +2195,13 @@ ansible-playbook -i ansible/inventory/production/hosts.yml \
   ansible/playbooks/site.yml --ask-vault-pass
 
 # Verificar servicios
-ssh miguel@tudominio.com 'systemctl status nginx mariadb php8.2-fpm'
+ssh malpanez@tudominio.com 'systemctl status nginx mariadb php8.2-fpm'
 
 # Ver logs
-ssh miguel@tudominio.com 'sudo tail -f /var/log/nginx/error.log'
+ssh malpanez@tudominio.com 'sudo tail -f /var/log/nginx/error.log'
 
 # Backup manual
-ssh miguel@tudominio.com 'sudo /usr/local/bin/backup.sh'
+ssh malpanez@tudominio.com 'sudo /usr/local/bin/backup.sh'
 
 # Actualizar configuración
 ansible-playbook -i ansible/inventory/production/hosts.yml \

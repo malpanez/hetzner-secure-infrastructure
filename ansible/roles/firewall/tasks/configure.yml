@@ -1,0 +1,16 @@
+---
+# Firewall Role - Configuration Tasks
+
+- name: Firewall | Configure | Set UFW default policies
+  community.general.ufw:
+    direction: "{{ item.direction }}"
+    policy: "{{ item.policy }}"
+  loop:
+    - { direction: incoming, policy: "{{ firewall_default_incoming_policy }}" }
+    - { direction: outgoing, policy: "{{ firewall_default_outgoing_policy }}" }
+  tags: [firewall, policy]
+
+- name: Firewall | Configure | Enable UFW logging
+  community.general.ufw:
+    logging: "{{ firewall_logging }}"
+  tags: [firewall, logging]

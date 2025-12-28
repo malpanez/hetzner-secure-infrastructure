@@ -1,0 +1,36 @@
+---
+# Common Role - User Management Tasks
+
+- name: Common | Users | Ensure admin user exists
+  ansible.builtin.user:
+    name: "{{ admin_username }}"
+    groups: "{{ admin_groups }}"
+    shell: /bin/bash
+    create_home: true
+    append: true
+  tags: [common, user]
+
+- name: Common | Users | Create .ssh directory for admin user
+  ansible.builtin.file:
+    path: /home/{{ admin_username }}/.ssh
+    state: directory
+    owner: "{{ admin_username }}"
+    group: "{{ admin_username }}"
+    mode: "0700"
+  tags: [common, user]
+
+- name: Common | Users | Set up sudoers for admin user
+  ansible.builtin.template:
+    src: sudoers.j2
+    dest: /etc/sudoers.d/{{ admin_username }}
+    owner: root
+    group: root
+    mode: "0440"
+    validate: visudo -cf %s
+  tags: [common, sudo]
+
+- name: Common | Users | Disable root account password
+  ansible.builtin.user:
+    name: root
+    password: "!"
+  tags: [common, security]

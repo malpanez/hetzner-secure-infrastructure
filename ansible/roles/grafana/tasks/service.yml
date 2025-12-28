@@ -1,0 +1,10 @@
+---
+# Grafana Role - Service Management Tasks
+
+- name: Grafana | Service | Enable and start Grafana service
+  ansible.builtin.systemd:
+    name: grafana-server
+    enabled: true
+    state: started
+    daemon_reload: true
+  tags: [grafana, service]

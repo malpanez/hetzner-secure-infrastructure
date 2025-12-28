@@ -5,25 +5,25 @@
 # WordPress Configuration
 # ========================================
 
-wordpress_domain: example.com
-wordpress_root: /var/www/{{ wordpress_domain }}
-wordpress_user: www-data
-wordpress_group: www-data
+nginx_wordpress_domain: example.com
+nginx_wordpress_root: /var/www/{{ nginx_wordpress_domain }}
+nginx_wordpress_user: www-data
+nginx_wordpress_group: www-data
 
 # ========================================
 # PHP Configuration
 # ========================================
 
-php_version: "8.3" # Latest PHP version for WordPress
-php_fpm_socket: /run/php/php{{ php_version }}-fpm.sock
+nginx_wordpress_php_version: "8.3" # Latest PHP version for WordPress
+nginx_wordpress_php_fpm_socket: /run/php/php{{ nginx_wordpress_php_version }}-fpm.sock
 
 # PHP memory limits (recommended for WordPress)
-php_memory_limit: 256M
-php_max_execution_time: "300"
-php_max_input_time: "300"
-php_upload_max_filesize: 100M
-php_post_max_size: 100M
-php_max_input_vars: "5000" # Tutor LMS may need higher
+nginx_wordpress_php_memory_limit: 256M
+nginx_wordpress_php_max_execution_time: "300"
+nginx_wordpress_php_max_input_time: "300"
+nginx_wordpress_php_upload_max_filesize: 100M
+nginx_wordpress_php_post_max_size: 100M
+nginx_wordpress_php_max_input_vars: "5000" # Tutor LMS may need higher
 
 # ========================================
 # Nginx Configuration
@@ -69,8 +69,8 @@ nginx_brotli_comp_level: 6
 # ========================================
 
 nginx_ssl_enabled: true
-nginx_ssl_certificate: /etc/letsencrypt/live/{{ wordpress_domain }}/fullchain.pem
-nginx_ssl_certificate_key: /etc/letsencrypt/live/{{ wordpress_domain }}/privkey.pem
+nginx_ssl_certificate: /etc/letsencrypt/live/{{ nginx_wordpress_domain }}/fullchain.pem
+nginx_ssl_certificate_key: /etc/letsencrypt/live/{{ nginx_wordpress_domain }}/privkey.pem
 nginx_ssl_protocols: TLSv1.2 TLSv1.3
 nginx_ssl_ciphers: ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384
 nginx_ssl_prefer_server_ciphers: "off" # Modern browsers prefer client cipher order
@@ -117,13 +117,13 @@ nginx_rate_limit_nodelay: false
 # Cloudflare Integration
 # ========================================
 
-cloudflare_enabled: true
+nginx_wordpress_cloudflare_enabled: true
 # Real IP from Cloudflare headers
 nginx_real_ip_header: CF-Connecting-IP
 nginx_real_ip_recursive: "on"
 
 # Cloudflare IP ranges (updated regularly)
-cloudflare_ipv4_ranges:
+nginx_wordpress_cloudflare_ipv4_ranges:
   - 173.245.48.0/20
   - 103.21.244.0/22
   - 103.22.200.0/22
@@ -140,7 +140,7 @@ cloudflare_ipv4_ranges:
   - 172.64.0.0/13
   - 131.0.72.0/22
 
-cloudflare_ipv6_ranges:
+nginx_wordpress_cloudflare_ipv6_ranges:
   - 2400:cb00::/32
   - 2606:4700::/32
   - 2803:f800::/32
@@ -153,8 +153,8 @@ cloudflare_ipv6_ranges:
 # Logging
 # ========================================
 
-nginx_access_log: /var/log/nginx/{{ wordpress_domain }}_access.log
-nginx_error_log: /var/log/nginx/{{ wordpress_domain }}_error.log
+nginx_access_log: /var/log/nginx/{{ nginx_wordpress_domain }}_access.log
+nginx_error_log: /var/log/nginx/{{ nginx_wordpress_domain }}_error.log
 nginx_log_format: |
   '$remote_addr - $remote_user [$time_local] "$request" '
   '$status $body_bytes_sent "$http_referer" '
@@ -167,7 +167,7 @@ nginx_log_format: |
 # ========================================
 
 # Block access to sensitive files
-wordpress_blocked_files:
+nginx_wordpress_blocked_files:
   - wp-config.php
   - readme.html
   - license.txt
@@ -176,26 +176,26 @@ wordpress_blocked_files:
   - .htaccess
 
 # Block access to sensitive directories
-wordpress_blocked_directories:
+nginx_wordpress_blocked_directories:
   - .git
   - .svn
   - .env
   - node_modules
 
 # WordPress multisite support
-wordpress_multisite_enabled: false
+nginx_wordpress_multisite_enabled: false
 
 # ========================================
 # Tutor LMS Specific
 # ========================================
 
-tutor_lms_enabled: true
+nginx_wordpress_tutor_lms_enabled: true
 
 # Protect course content (requires login)
-tutor_course_protection_enabled: true
+nginx_wordpress_tutor_course_protection_enabled: true
 
 # Increase timeouts for video uploads
-tutor_fastcgi_read_timeout: 300 # 5 minutes for large video uploads
+nginx_wordpress_tutor_fastcgi_read_timeout: 300 # 5 minutes for large video uploads
 
 # ========================================
 # Performance Tuning

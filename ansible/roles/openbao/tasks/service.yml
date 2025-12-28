@@ -1,0 +1,20 @@
+---
+# OpenBao Role - Service Management Tasks
+
+- name: OpenBao | Service | Deploy OpenBao systemd service
+  ansible.builtin.template:
+    src: openbao.service.j2
+    dest: /etc/systemd/system/openbao.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart openbao
+  tags: [openbao, systemd]
+
+- name: OpenBao | Service | Enable and start OpenBao service
+  ansible.builtin.systemd:
+    name: openbao
+    enabled: true
+    state: started
+    daemon_reload: true
+  tags: [openbao, service]

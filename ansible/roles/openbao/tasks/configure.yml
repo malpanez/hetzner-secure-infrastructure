@@ -1,0 +1,57 @@
+---
+# OpenBao Role - Configuration Tasks
+
+- name: OpenBao | Configure | Generate self-signed TLS certificate
+  ansible.builtin.command: >
+    openssl req -x509 -newkey rsa:4096
+    -keyout {{ openbao_tls_key_file }}
+    -out {{ openbao_tls_cert_file }}
+    -days 365 -nodes
+    -subj "{{ openbao_tls_self_signed_subject }}"
+  args:
+    creates: "{{ openbao_tls_cert_file }}"
+  when: openbao_tls_enabled and openbao_tls_self_signed
+  tags: [openbao, tls]
+
+- name: OpenBao | Configure | Set TLS certificate permissions
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: "{{ openbao_user }}"
+    group: "{{ openbao_group }}"
+    mode: "0600"
+  loop:
+    - "{{ openbao_tls_cert_file }}"
+    - "{{ openbao_tls_key_file }}"
+  when: openbao_tls_enabled
+  tags: [openbao, tls]
+
+- name: OpenBao | Configure | Deploy OpenBao configuration
+  ansible.builtin.template:
+    src: config.hcl.j2
+    dest: "{{ openbao_config_dir }}/config.hcl"
+    owner: "{{ openbao_user }}"
+    group: "{{ openbao_group }}"
+    mode: "0640"
+  notify: restart openbao
+  tags: [openbao, config]
+
+- name: OpenBao | Configure | Deploy backup script
+  ansible.builtin.template:
+    src: backup-openbao.sh.j2
+    dest: /usr/local/bin/backup-openbao.sh
+    owner: root
+    group: root
+    mode: "0750"
+  when: openbao_backup_enabled
+  tags: [openbao, backup]
+
+- name: OpenBao | Configure | Configure backup cron job
+  ansible.builtin.cron:
+    name: OpenBao backup
+    minute: "0"
+    hour: "2"
+    job: /usr/local/bin/backup-openbao.sh >> /var/log/openbao/backup.log 2>&1
+    user: root
+    state: present
+  when: openbao_backup_enabled
+  tags: [openbao, backup]

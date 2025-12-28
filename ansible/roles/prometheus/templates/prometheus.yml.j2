@@ -52,6 +52,81 @@ scrape_configs:
           environment: 'production'
 {% endif %}
 
+{% if prometheus_scrape_nginx_exporter %}
+  # Nginx Exporter - Web server metrics
+  - job_name: 'nginx-exporter'
+    static_configs:
+      - targets: ['localhost:{{ prometheus_nginx_exporter_port }}']
+        labels:
+          instance: '{{ inventory_hostname }}'
+          service: 'nginx'
+{% endif %}
+
+{% if prometheus_scrape_phpfpm_exporter %}
+  # PHP-FPM Exporter - PHP process metrics
+  - job_name: 'phpfpm-exporter'
+    static_configs:
+      - targets: ['localhost:{{ prometheus_phpfpm_exporter_port }}']
+        labels:
+          instance: '{{ inventory_hostname }}'
+          service: 'php-fpm'
+{% endif %}
+
+{% if prometheus_scrape_mariadb_exporter %}
+  # MariaDB Exporter - Database metrics
+  - job_name: 'mariadb-exporter'
+    static_configs:
+      - targets: ['localhost:{{ prometheus_mariadb_exporter_port }}']
+        labels:
+          instance: '{{ inventory_hostname }}'
+          service: 'mariadb'
+{% endif %}
+
+{% if prometheus_scrape_valkey_exporter %}
+  # Valkey Exporter - Cache metrics
+  - job_name: 'valkey-exporter'
+    static_configs:
+      - targets: ['localhost:{{ prometheus_valkey_exporter_port }}']
+        labels:
+          instance: '{{ inventory_hostname }}'
+          service: 'valkey'
+{% endif %}
+
+{% if prometheus_scrape_blackbox_exporter %}
+  # Blackbox Exporter - SSL certificate expiry monitoring
+  - job_name: 'blackbox-ssl'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - https://{{ domain_name }}
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: localhost:{{ prometheus_blackbox_exporter_port }}
+
+  # Blackbox Exporter - HTTP endpoint monitoring
+  - job_name: 'blackbox-http'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - https://{{ domain_name }}/wp-login.php
+          - https://{{ domain_name }}/wp-admin/
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: localhost:{{ prometheus_blackbox_exporter_port }}
+{% endif %}
+
 {% if prometheus_static_jobs | length > 0 %}
   # Custom static job configurations
 {% for job in prometheus_static_jobs %}

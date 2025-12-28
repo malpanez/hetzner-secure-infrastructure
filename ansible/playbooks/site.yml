@@ -139,6 +139,14 @@
       tags: [monitoring, prometheus]
       when: deploy_monitoring | default(true) | bool
 
+    - role: loki
+      tags: [monitoring, loki, logging]
+      when: deploy_loki | default(true) | bool
+
+    - role: promtail
+      tags: [monitoring, promtail, logging]
+      when: deploy_promtail | default(true) | bool
+
     - role: grafana
       tags: [monitoring, grafana]
       when: deploy_monitoring | default(true) | bool
@@ -152,11 +160,22 @@
           ========================================
 
           Prometheus: http://{{ ansible_host }}:{{ prometheus_port }}
+          Loki: http://{{ ansible_host }}:3100
           Grafana: http://{{ ansible_host }}:{{ grafana_port }}
 
           Default credentials:
           - Username: admin
           - Password: {{ grafana_admin_password }}
+
+          Grafana Data Sources:
+          - Prometheus (metrics)
+          - Loki (logs)
+
+          Dashboards:
+          - Node Exporter Full
+          - Prometheus Stats
+          - Loki Logs Dashboard
+          - Nginx Loki Dashboard
 
           ========================================
       when: deploy_monitoring | default(true) | bool

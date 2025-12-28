@@ -1,0 +1,16 @@
+---
+# Firewall Role - Firewall Rules Tasks
+
+- name: Firewall | Rules | Configure UFW allowed ports
+  community.general.ufw:
+    rule: "{{ item.rule }}"
+    port: "{{ item.port }}"
+    proto: "{{ item.proto }}"
+    comment: "{{ item.comment | default(omit) }}"
+  loop: "{{ firewall_allowed_ports }}"
+  tags: [firewall, rules]
+
+- name: Firewall | Rules | Enable UFW
+  community.general.ufw:
+    state: enabled
+  tags: [firewall, enable]

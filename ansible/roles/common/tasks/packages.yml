@@ -1,0 +1,32 @@
+---
+# Common Role - Package Management Tasks
+
+- name: Common | Packages | Update all packages
+  ansible.builtin.apt:
+    upgrade: dist
+    update_cache: true
+    autoremove: true
+    autoclean: true
+  tags: [common, updates, packages]
+
+- name: Common | Packages | Install essential packages
+  ansible.builtin.apt:
+    name: "{{ required_packages }}"
+    state: present
+    update_cache: true
+  tags: [common, packages]
+
+- name: Common | Packages | Install additional security tools
+  ansible.builtin.apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - gnupg
+      - software-properties-common
+      - sudo
+      - rsyslog
+      - logrotate
+      - cron
+    state: present
+    update_cache: true
+  tags: [common, packages]

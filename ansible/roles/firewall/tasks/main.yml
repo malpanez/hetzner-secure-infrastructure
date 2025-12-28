@@ -1,31 +1,28 @@
 ---
-# Firewall Role - UFW Configuration
+# Firewall Role - Main Tasks (Orchestrator)
 
-- name: Install UFW
-  ansible.builtin.apt:
-    name: ufw
-    state: present
-  tags: packages
+- name: Firewall | Main | Check if deployment is enabled
+  ansible.builtin.debug:
+    msg: "Firewall deployment: {{ firewall_enabled | default(true) }}"
+  tags: [firewall]
 
-- name: Set UFW default policies
-  community.general.ufw:
-    direction: "{{ item.direction }}"
-    policy: "{{ item.policy }}"
-  loop:
-    - { direction: incoming, policy: "{{ ufw_default_incoming_policy }}" }
-    - { direction: outgoing, policy: "{{ ufw_default_outgoing_policy }}" }
-  tags: policy
+- name: Firewall | Main | Skip deployment if not enabled
+  ansible.builtin.meta: end_play
+  when: firewall_enabled is defined and not firewall_enabled
+  tags: [firewall]
 
-- name: Configure UFW allowed ports
-  community.general.ufw:
-    rule: "{{ item.rule }}"
-    port: "{{ item.port }}"
-    proto: "{{ item.proto }}"
-    comment: "{{ item.comment | default(omit) }}"
-  loop: "{{ ufw_allowed_ports }}"
-  tags: rules
+- name: Firewall | Main | Include installation tasks
+  ansible.builtin.import_tasks: install.yml
+  tags: [firewall, install]
 
-- name: Enable UFW
-  community.general.ufw:
-    state: enabled
-  tags: enable
+- name: Firewall | Main | Include configuration tasks
+  ansible.builtin.import_tasks: configure.yml
+  tags: [firewall, config]
+
+- name: Firewall | Main | Include firewall rules tasks
+  ansible.builtin.import_tasks: rules.yml
+  tags: [firewall, rules]
+
+- name: Firewall | Main | Include validation tasks
+  ansible.builtin.import_tasks: validate.yml
+  tags: [firewall, validate]

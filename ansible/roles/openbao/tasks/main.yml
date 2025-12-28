@@ -1,210 +1,36 @@
 ---
-# OpenBao Role - Main Tasks
+# OpenBao Role - Main Tasks (Orchestrator)
 
-- name: Check if deployment is enabled
+- name: OpenBao | Main | Check if deployment is enabled
   ansible.builtin.debug:
     msg: "OpenBao deployment: {{ deploy_openbao | default(true) }}"
   tags: [openbao]
-- name: Skip OpenBao deployment if not enabled
+
+- name: OpenBao | Main | Skip OpenBao deployment if not enabled
   ansible.builtin.meta: end_play
   when: deploy_openbao is defined and not deploy_openbao
   tags: [openbao]
-- name: Include OS-specific variables
+
+- name: OpenBao | Main | Include OS-specific variables
   ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
   tags: [openbao]
-- name: Install dependencies
-  ansible.builtin.apt:
-    name:
-      - unzip
-      - jq
-      - curl
-      - openssl
-    state: present
-    update_cache: true
-  tags: [openbao, packages]
-- name: Create OpenBao system group
-  ansible.builtin.group:
-    name: "{{ openbao_group }}"
-    system: true
-    state: present
-  tags: [openbao, users]
-- name: Create OpenBao system user
-  ansible.builtin.user:
-    name: "{{ openbao_user }}"
-    group: "{{ openbao_group }}"
-    system: true
-    shell: /bin/false
-    home: "{{ openbao_data_dir }}"
-    createhome: false
-    state: present
-  tags: [openbao, users]
-- name: Create OpenBao directories
-  ansible.builtin.file:
-    path: "{{ item }}"
-    state: directory
-    owner: "{{ openbao_user }}"
-    group: "{{ openbao_group }}"
-    mode: "0750"
-  loop:
-    - "{{ openbao_config_dir }}"
-    - "{{ openbao_data_dir }}"
-    - "{{ openbao_tls_dir }}"
-    - "{{ openbao_log_dir }}"
-    - "{{ openbao_backup_dir }}"
-  tags: [openbao, directories]
-- name: Check if OpenBao binary exists
-  ansible.builtin.stat:
-    path: "{{ openbao_install_dir }}/bao"
-  register: openbao_binary
+
+- name: OpenBao | Main | Include installation tasks
+  ansible.builtin.import_tasks: install.yml
   tags: [openbao, install]
-- name: Download OpenBao binary
-  ansible.builtin.get_url:
-    url: https://github.com/openbao/openbao/releases/download/v{{ openbao_version }}/bao_{{ openbao_version }}_linux_amd64.zip
-    dest: /tmp/openbao_{{ openbao_version }}.zip
-    mode: "0644"
-  when: not openbao_binary.stat.exists
-  tags: [openbao, install]
-- name: Extract OpenBao binary
-  ansible.builtin.unarchive:
-    src: /tmp/openbao_{{ openbao_version }}.zip
-    dest: "{{ openbao_install_dir }}"
-    remote_src: true
-    creates: "{{ openbao_install_dir }}/bao"
-  when: not openbao_binary.stat.exists
-  tags: [openbao, install]
-- name: Set OpenBao binary permissions
-  ansible.builtin.file:
-    path: "{{ openbao_install_dir }}/bao"
-    owner: root
-    group: root
-    mode: "0755"
-  tags: [openbao, install]
-- name: Set OpenBao binary capabilities
-  community.general.capabilities:
-    path: "{{ openbao_install_dir }}/bao"
-    capability: cap_ipc_lock=+ep
-    state: present
-  when: not openbao_disable_mlock
-  tags: [openbao, install]
-- name: Generate self-signed TLS certificate
-  ansible.builtin.command: >
-    openssl req -x509 -newkey rsa:4096
-    -keyout {{ openbao_tls_key_file }}
-    -out {{ openbao_tls_cert_file }}
-    -days 365 -nodes
-    -subj "{{ openbao_tls_self_signed_subject }}"
-  args:
-    creates: "{{ openbao_tls_cert_file }}"
-  when: openbao_tls_enabled and openbao_tls_self_signed
-  tags: [openbao, tls]
-- name: Set TLS certificate permissions
-  ansible.builtin.file:
-    path: "{{ item }}"
-    owner: "{{ openbao_user }}"
-    group: "{{ openbao_group }}"
-    mode: "0600"
-  loop:
-    - "{{ openbao_tls_cert_file }}"
-    - "{{ openbao_tls_key_file }}"
-  when: openbao_tls_enabled
-  tags: [openbao, tls]
-- name: Deploy OpenBao configuration
-  ansible.builtin.template:
-    src: config.hcl.j2
-    dest: "{{ openbao_config_dir }}/config.hcl"
-    owner: "{{ openbao_user }}"
-    group: "{{ openbao_group }}"
-    mode: "0640"
-  notify: restart openbao
+
+- name: OpenBao | Main | Include configuration tasks
+  ansible.builtin.import_tasks: configure.yml
   tags: [openbao, config]
-- name: Deploy OpenBao systemd service
-  ansible.builtin.template:
-    src: openbao.service.j2
-    dest: /etc/systemd/system/openbao.service
-    owner: root
-    group: root
-    mode: "0644"
-  notify: restart openbao
-  tags: [openbao, systemd]
-- name: Enable and start OpenBao service
-  ansible.builtin.systemd:
-    name: openbao
-    enabled: true
-    state: started
-    daemon_reload: true
+
+- name: OpenBao | Main | Include service tasks
+  ansible.builtin.import_tasks: service.yml
   tags: [openbao, service]
-- name: Configure UFW firewall for OpenBao
-  community.general.ufw:
-    rule: allow
-    port: "8200"
-    proto: tcp
-    from_ip: "{{ item }}"
-    comment: OpenBao API
-  loop: "{{ openbao_firewall_allowed_ips }}"
-  when: openbao_firewall_enabled
+
+- name: OpenBao | Main | Include firewall tasks
+  ansible.builtin.import_tasks: firewall.yml
   tags: [openbao, firewall]
-- name: Wait for OpenBao to start
-  ansible.builtin.wait_for:
-    port: 8200
-    delay: 5
-    timeout: 60
-  tags: [openbao, service]
-- name: Deploy backup script
-  ansible.builtin.template:
-    src: backup-openbao.sh.j2
-    dest: /usr/local/bin/backup-openbao.sh
-    owner: root
-    group: root
-    mode: "0750"
-  when: openbao_backup_enabled
-  tags: [openbao, backup]
-- name: Configure backup cron job
-  ansible.builtin.cron:
-    name: OpenBao backup
-    minute: "0"
-    hour: "2"
-    job: /usr/local/bin/backup-openbao.sh >> /var/log/openbao/backup.log 2>&1
-    user: root
-    state: present
-  when: openbao_backup_enabled
-  tags: [openbao, backup]
-- name: Display post-installation instructions
-  ansible.builtin.debug:
-    msg: |
-      ========================================
-      OpenBao Installation Complete
-      ========================================
 
-      OpenBao is running at: {{ openbao_api_addr }}
-
-      NEXT STEPS (Run manually):
-
-      1. Export environment variables:
-         export VAULT_ADDR='{{ openbao_api_addr }}'
-         {% if openbao_tls_self_signed %}export VAULT_SKIP_VERIFY=1{% endif %}
-
-      2. Initialize OpenBao:
-         bao operator init -key-shares={{ openbao_key_shares }} -key-threshold={{ openbao_key_threshold }}
-
-      3. CRITICAL: Save the unseal keys and root token securely!
-         Store in password manager or encrypted offline backup.
-
-      4. Unseal OpenBao (requires {{ openbao_key_threshold }} keys):
-         bao operator unseal <key1>
-         bao operator unseal <key2>
-         bao operator unseal <key3>
-
-      5. Login with root token:
-         bao login <root-token>
-
-      6. Enable secrets engines:
-         bao secrets enable -path=secret kv-v2
-         bao secrets enable database
-
-      7. Enable audit logging:
-         bao audit enable file file_path={{ openbao_audit_path }}
-
-      8. Create policies and tokens for applications
-
-      ========================================
-  tags: [openbao, info]
+- name: OpenBao | Main | Include validation tasks
+  ansible.builtin.import_tasks: validate.yml
+  tags: [openbao, validate]

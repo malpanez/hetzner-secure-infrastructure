@@ -1,0 +1,50 @@
+---
+# OpenBao Role - Validation Tasks
+
+- name: OpenBao | Validate | Wait for OpenBao to start
+  ansible.builtin.wait_for:
+    port: 8200
+    delay: 5
+    timeout: 60
+  tags: [openbao, validate]
+
+- name: OpenBao | Validate | Display post-installation instructions
+  ansible.builtin.debug:
+    msg: |
+      ========================================
+      OpenBao Installation Complete
+      ========================================
+
+      OpenBao is running at: {{ openbao_api_addr }}
+
+      NEXT STEPS (Run manually):
+
+      1. Export environment variables:
+         export VAULT_ADDR='{{ openbao_api_addr }}'
+         {% if openbao_tls_self_signed %}export VAULT_SKIP_VERIFY=1{% endif %}
+
+      2. Initialize OpenBao:
+         bao operator init -key-shares={{ openbao_key_shares }} -key-threshold={{ openbao_key_threshold }}
+
+      3. CRITICAL: Save the unseal keys and root token securely!
+         Store in password manager or encrypted offline backup.
+
+      4. Unseal OpenBao (requires {{ openbao_key_threshold }} keys):
+         bao operator unseal <key1>
+         bao operator unseal <key2>
+         bao operator unseal <key3>
+
+      5. Login with root token:
+         bao login <root-token>
+
+      6. Enable secrets engines:
+         bao secrets enable -path=secret kv-v2
+         bao secrets enable database
+
+      7. Enable audit logging:
+         bao audit enable file file_path={{ openbao_audit_path }}
+
+      8. Create policies and tokens for applications
+
+      ========================================
+  tags: [openbao, info]

@@ -1,0 +1,12 @@
+---
+# Firewall Role - Validation Tasks
+
+- name: Firewall | Validate | Display firewall status
+  ansible.builtin.debug:
+    msg: |
+      Firewall (UFW) configured successfully!
+      - Default incoming: {{ firewall_default_incoming_policy }}
+      - Default outgoing: {{ firewall_default_outgoing_policy }}
+      - Logging: {{ firewall_logging }}
+      - Allowed ports: {{ firewall_allowed_ports | length }}
+  tags: [firewall, info]

@@ -2,6 +2,16 @@
 # Grafana Role - Default Variables
 
 # ========================================
+# Package Dependencies
+# ========================================
+
+grafana_apt_dependencies:
+  - apt-transport-https
+  - software-properties-common
+  - wget
+  - gpg
+
+# ========================================
 # Version and Installation
 # ========================================
 
@@ -13,6 +23,9 @@ grafana_config_dir: /etc/grafana
 grafana_data_dir: /var/lib/grafana
 grafana_log_dir: /var/log/grafana
 grafana_plugins_dir: /var/lib/grafana/plugins
+
+# GPG Key URL
+grafana_gpg_key_url: https://apt.grafana.com/gpg.key
 
 # ========================================
 # Network Configuration
@@ -82,6 +95,19 @@ grafana_datasources:
       timeInterval: 15s
       queryTimeout: 60s
       httpMethod: POST
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://localhost:3100
+    is_default: false
+    editable: true
+    json_data:
+      maxLines: 1000
+      derivedFields:
+        - datasourceUid: Prometheus
+          matcherRegex: "traceID=(\\w+)"
+          name: TraceID
+          url: "$${__value.raw}"
 
 # ========================================
 # Dashboards
@@ -97,6 +123,14 @@ grafana_default_dashboards:
     enabled: true
     dashboard_id: 3662
     dashboard_revision: 2
+  - name: loki-logs-dashboard
+    enabled: true
+    dashboard_id: 13639
+    dashboard_revision: 2
+  - name: nginx-loki-dashboard
+    enabled: true
+    dashboard_id: 12559
+    dashboard_revision: 7
 
 # Custom dashboard directories
 grafana_dashboards_dir: "{{ grafana_data_dir }}/dashboards"

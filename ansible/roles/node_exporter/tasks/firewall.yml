@@ -1,0 +1,13 @@
+---
+# Node Exporter Role - Firewall Configuration Tasks
+
+- name: Node Exporter | Firewall | Allow Node Exporter port
+  community.general.ufw:
+    rule: allow
+    port: "{{ node_exporter_port }}"
+    proto: tcp
+    src: "{{ item }}"
+    comment: Node Exporter metrics
+  loop: "{{ node_exporter_firewall_allowed_ips }}"
+  when: firewall_enabled | default(true)
+  tags: [node-exporter, firewall]

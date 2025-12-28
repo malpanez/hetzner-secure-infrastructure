@@ -3,11 +3,30 @@
 # Optimized for WordPress + LearnDash
 
 # ========================================
+# Installation Configuration
+# ========================================
+
+# APT packages
+mariadb_apt_dependencies:
+  - software-properties-common
+  - dirmngr
+  - apt-transport-https
+  - ca-certificates
+
+mariadb_apt_packages:
+  - mariadb-server
+  - mariadb-client
+  - python3-pymysql
+
+mariadb_gpg_key_url: "https://mariadb.org/mariadb_release_signing_key.asc"
+
+# ========================================
 # Version
 # ========================================
 
 mariadb_version: "10.11"  # Latest LTS
 mariadb_distribution: "debian"
+mariadb_install_method: "apt"
 
 # ========================================
 # Basic Configuration
@@ -21,15 +40,20 @@ mariadb_port: 3306
 # WordPress Database
 # ========================================
 
+# WordPress database configuration
+mariadb_wordpress_db_name: wordpress
+mariadb_wordpress_db_user: wordpress
+mariadb_wordpress_db_password: "{{ vault_mariadb_wordpress_db_password }}"
+
 mariadb_databases:
-  - name: "{{ wordpress_db_name | default('wordpress') }}"
+  - name: "{{ mariadb_wordpress_db_name }}"
     encoding: utf8mb4
     collation: utf8mb4_unicode_ci
 
 mariadb_users:
-  - name: "{{ wordpress_db_user | default('wordpress') }}"
-    password: "{{ wordpress_db_password | default(vault_wordpress_db_password) }}"
-    priv: "{{ wordpress_db_name | default('wordpress') }}.*:ALL"
+  - name: "{{ mariadb_wordpress_db_user }}"
+    password: "{{ mariadb_wordpress_db_password }}"
+    priv: "{{ mariadb_wordpress_db_name }}.*:ALL"
     host: "localhost"
 
 # ========================================

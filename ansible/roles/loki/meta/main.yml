@@ -1,0 +1,24 @@
+---
+# Loki Role - Metadata
+
+galaxy_info:
+  role_name: loki
+  author: hetzner-secure-infrastructure
+  description: Deploy and configure Grafana Loki for log aggregation
+  license: MIT
+  min_ansible_version: "2.12"
+
+  platforms:
+    - name: Debian
+      versions:
+        - bookworm
+        - trixie
+
+  galaxy_tags:
+    - monitoring
+    - logging
+    - loki
+    - grafana
+    - observability
+
+dependencies: []

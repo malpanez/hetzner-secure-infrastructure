@@ -1,0 +1,33 @@
+---
+# Grafana Role - Validation Tasks
+
+- name: Grafana | Validate | Wait for Grafana to be ready
+  ansible.builtin.uri:
+    url: http://localhost:{{ grafana_port }}/api/health
+    status_code: 200
+  register: result
+  until: result.status == 200
+  retries: 12
+  delay: 5
+  tags: [grafana, validate]
+
+- name: Grafana | Validate | Get Grafana version
+  ansible.builtin.uri:
+    url: http://localhost:{{ grafana_port }}/api/health
+    method: GET
+    return_content: true
+  register: grafana_health
+  tags: [grafana, validate]
+
+- name: Grafana | Validate | Display Grafana status
+  ansible.builtin.debug:
+    msg: |
+      Grafana deployed successfully!
+      - Web UI: http://{{ ansible_host }}:{{ grafana_port }}
+      - Username: {{ grafana_admin_user }}
+      - Password: {{ grafana_admin_password }}
+      - Config: {{ grafana_config_dir }}/grafana.ini
+      - Data: {{ grafana_data_dir }}
+      - Datasources: {{ grafana_datasources | length }} configured
+      - Dashboards: {{ grafana_default_dashboards | selectattr('enabled', 'equalto', true) | list | length }} provisioned
+  tags: [grafana, info]

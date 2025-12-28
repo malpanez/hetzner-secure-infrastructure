@@ -8,13 +8,21 @@
 1. **LearnDash:** $199 USD → Comprar en https://learndash.com/pricing/
 2. **Hetzner Cloud:** €5.39/mes → Se cobra automáticamente cuando creas el servidor
 
-**TOTAL: ~$210 USD para empezar**
+**TOTAL MÍNIMO: ~$210 USD para empezar**
+
+### OPCIONAL pero RECOMENDADO
+3. **Transferir dominio a Cloudflare:** €9-10 (incluye +1 año renovación)
+   - **AHORRO REAL:** GoDaddy cobra €21.99/año vs Cloudflare €9/año
+   - **Ahorro anual: ~€13/año**
+   - Todo en un proveedor
+   - Puedes hacerlo ahora o después
+
+**TOTAL RECOMENDADO: ~$220 USD si transfieres dominio**
 
 ### NO necesitas pagar
-- ❌ Cloudflare (gratis)
+- ❌ Cloudflare DNS/CDN/SSL (gratis)
 - ❌ SSL/Certificados (gratis)
 - ❌ WordPress Core (gratis)
-- ❌ Tu dominio (ya lo tienes)
 
 ---
 
@@ -70,7 +78,7 @@ nano .env
 export HCLOUD_TOKEN="pega-aqui-tu-token-de-hetzner"
 export TF_VAR_hcloud_token="${HCLOUD_TOKEN}"
 export TF_VAR_ssh_public_key="$(cat ~/.ssh/id_ed25519.pub)"
-export TF_VAR_admin_username="miguel"
+export TF_VAR_admin_username="malpanez"
 export TF_VAR_ssh_allowed_ips='["TU.IP.AQUI/32"]'
 ```
 
@@ -122,7 +130,7 @@ nano terraform/environments/production/terraform.tfvars
 
 ```hcl
 server_name     = "wordpress-prod"
-admin_username  = "miguel"
+admin_username  = "malpanez"
 ssh_allowed_ips = ["TU.IP.AQUI/32"]  # Usar tu IP real
 allow_http      = true
 allow_https     = true
@@ -161,36 +169,92 @@ terraform output server_ip
 
 ## 4️⃣ Configurar DNS en Cloudflare
 
-### OPCIÓN A: DNS Automático con Terraform (RECOMENDADO ✅)
+**Tienes 2 opciones: Solo DNS o Migración completa del dominio**
 
-**Terraform gestiona DNS automáticamente por ti.**
+### OPCIÓN A: Transferir Dominio a Cloudflare (RECOMENDADO ✅)
 
-**Paso 1: Migrar dominio a Cloudflare**
+**Migrar el dominio completo de GoDaddy → Cloudflare**
 
-1. Ir a https://dash.cloudflare.com
-2. Click "Add a Site"
-3. Escribir tu dominio
-4. Elegir plan **Free**
-5. Cloudflare te da 2 nameservers
+**¿Por qué transferir y no solo DNS?**
+- ✅ Renovación más barata (Cloudflare cobra al costo, sin markup)
+- ✅ Todo en un proveedor (dominio + DNS + CDN + SSL)
+- ✅ Si haces upgrade a Cloudflare Pro, todo está integrado
+- ✅ API unificada (Terraform gestiona todo)
+- ✅ Menos puntos de fallo
+- ⏱️ Tarda más: 5-7 días (vs 2-6 horas solo nameservers)
 
-**En GoDaddy:**
+**Paso 1: Preparar dominio en GoDaddy**
+
 1. Ir a https://account.godaddy.com
 2. My Products → Domains → tu dominio
-3. Manage DNS → Nameservers → Custom
-4. Pegar los 2 nameservers de Cloudflare
-5. Guardar
+3. Click "Manage"
+4. **Desbloquear dominio:**
+   - Settings → Domain Lock → OFF
+5. **Obtener código de autorización:**
+   - Settings → Transfer Domain → Get Authorization Code
+   - **COPIAR** el código (lo necesitarás en Cloudflare)
 
-**⏱️ Esperar: 2-6 horas**
+**Paso 2: Iniciar transferencia en Cloudflare**
 
-**Paso 2: Obtener API Token de Cloudflare**
+1. Ir a https://dash.cloudflare.com
+2. Click "Domain Registration" → "Transfer Domains"
+3. Introducir tu dominio
+4. Introducir el Authorization Code de GoDaddy
+5. **Pagar transferencia:** ~€9-10
+   - ⚠️ NO es un fee de transferencia
+   - Es el pago por +1 año de renovación
+   - Se AÑADE a tu tiempo restante en GoDaddy
+   - Ejemplo: Si expira en Jun 2025 → nueva expiración Jun 2026
+6. Confirmar pago
+7. Aprobar email de confirmación que llega a tu email registrado
 
-1. Cloudflare Dashboard → My Profile → API Tokens
-2. Click "Create Token"
-3. Usar template "Edit zone DNS"
-4. Zone Resources: Include → Specific zone → tu dominio
-5. **COPIAR** el token
+**⏱️ Esperar: 5-7 días para transferencia completa**
 
-**Paso 3: Configurar Terraform**
+**💰 Costo total de transferencia:**
+- Pago único: ~€9-10 (renovación por 1 año)
+- No hay fees ocultos
+- **Renovaciones futuras: €9/año en Cloudflare vs €21.99/año en GoDaddy**
+- **AHORRO: ~€13/año**
+
+**Paso 3: Mientras tanto, configurar DNS temporalmente**
+
+Mientras se completa la transferencia (5-7 días), puedes:
+- Cambiar nameservers a Cloudflare (2-6 horas) para empezar a usar DNS
+- O esperar a que termine la transferencia
+
+**Paso 4: Obtener API Token de Cloudflare (CRÍTICO)**
+
+⚠️ **IMPORTANTE:** NO uses la "Global API Key", necesitas crear un "API Token" específico.
+
+**Pasos EXACTOS:**
+
+1. Ir a https://dash.cloudflare.com/profile/api-tokens
+2. Click botón azul **"Create Token"**
+3. Buscar template **"Edit zone DNS"** → Click "Use template"
+4. En **"Zone Resources":**
+   - Cambiar de "All zones" a:
+   - **Include** → **Specific zone** → Seleccionar **tu dominio** del dropdown
+5. En **"Account Resources":**
+   - Dejar como está (opcional)
+6. **TTL:** Dejar en "Forever" (o poner fecha futura)
+7. Click **"Continue to summary"**
+8. Click **"Create Token"**
+9. **COPIAR el token AHORA** (solo se muestra UNA vez)
+   - Empieza con algo como: `cloudflare_token_XXXXXXXXXXXXX`
+10. **GUARDAR** el token en lugar seguro
+
+**✅ Verificar que el token funciona:**
+
+```bash
+# Test del token (opcional pero recomendado)
+curl -X GET "https://api.cloudflare.com/client/v4/user/tokens/verify" \
+  -H "Authorization: Bearer TU_TOKEN_AQUI" \
+  -H "Content-Type:application/json"
+
+# Debe retornar: "status":"active"
+```
+
+**Paso 5: Configurar Terraform**
 
 ```bash
 # Añadir a .env
@@ -204,10 +268,11 @@ nano terraform/environments/production/terraform.tfvars
 
 **Añadir estas líneas:**
 ```hcl
-enable_cloudflare = true
+domain              = "tudominio.com"
+enable_cloudflare   = true
 ```
 
-**Paso 4: Terraform crea DNS automáticamente**
+**Paso 6: Terraform crea DNS automáticamente**
 
 ```bash
 terraform apply
@@ -219,11 +284,39 @@ terraform apply
 # - Rate limiting en login
 ```
 
-**✅ Listo! DNS configurado automáticamente**
+**✅ Listo! Dominio transferido y DNS configurado automáticamente**
 
 ---
 
-### OPCIÓN B: DNS Manual (Si no usas Cloudflare automation)
+### OPCIÓN B: Solo Cambiar Nameservers (Más rápido pero menos recomendado)
+
+**El dominio queda en GoDaddy, solo DNS en Cloudflare**
+
+**Paso 1: Añadir sitio en Cloudflare**
+
+1. Ir a https://dash.cloudflare.com
+2. Click "Add a Site"
+3. Escribir tu dominio
+4. Elegir plan **Free**
+5. Cloudflare te da 2 nameservers
+
+**Paso 2: En GoDaddy cambiar nameservers**
+
+1. Ir a https://account.godaddy.com
+2. My Products → Domains → tu dominio
+3. Manage DNS → Nameservers → Custom
+4. Pegar los 2 nameservers de Cloudflare
+5. Guardar
+
+**⏱️ Esperar: 2-6 horas**
+
+**Paso 3: Configurar Terraform (mismo proceso que Opción A)**
+
+(Ver pasos 4-6 de Opción A arriba)
+
+---
+
+### OPCIÓN C: DNS Manual (Sin Terraform, sin transferencia)
 
 **En Cloudflare → DNS → Records:**
 
@@ -270,7 +363,7 @@ wordpress_admin_email: "admin@tudominio.com"
 wordpress_db_name: "wordpress_prod"
 wordpress_db_user: "wordpress"
 grafana_domain: "monitoring.tudominio.com"
-ansible_user: miguel
+ansible_user: malpanez
 ansible_ssh_private_key_file: ~/.ssh/id_ed25519
 ```
 
@@ -296,7 +389,7 @@ all:
       hosts:
         wordpress-prod:
           ansible_host: 203.0.113.42  # TU IP AQUI
-          ansible_user: miguel
+          ansible_user: malpanez
           ansible_ssh_private_key_file: ~/.ssh/id_ed25519
       vars:
         wordpress_domain: "tudominio.com"
@@ -349,7 +442,7 @@ https://monitoring.tudominio.com
 
 ### SSH al servidor
 ```bash
-ssh miguel@tudominio.com
+ssh malpanez@tudominio.com
 ```
 **Debe conectar** y pedir TOTP (código Google Authenticator)
 
@@ -394,17 +487,25 @@ ssh miguel@tudominio.com
 ## 💰 Resumen de Gastos
 
 ### Hoy (para empezar)
-- LearnDash: $199 USD
-- Hetzner mes 1: €5.39
-- **TOTAL: ~$210 USD**
+| Concepto | Costo | Obligatorio |
+|----------|-------|-------------|
+| LearnDash | $199 USD | ✅ SÍ |
+| Hetzner mes 1 | €5.39 | ✅ SÍ |
+| Transferir dominio a Cloudflare | €9-10 | ⚠️ RECOMENDADO |
+| **TOTAL MÍNIMO** | **~$210 USD** | Si NO transfieres |
+| **TOTAL RECOMENDADO** | **~$220 USD** | Si transfieres dominio |
 
 ### Cada mes
-- Hetzner: €5.39/mes
+- Hetzner CX22: €5.39/mes
 
-### Cada año
-- LearnDash renovación: $199 USD
-- Dominio renovación: ~€12
-- **TOTAL: ~€77/año**
+### Cada año (renovaciones)
+| Concepto | Si dominio en GoDaddy | Si dominio en Cloudflare |
+|----------|----------------------|-------------------------|
+| LearnDash | $199 USD | $199 USD |
+| Dominio | **€21.99/año** | **€9/año** |
+| **TOTAL/AÑO** | **~€86/año** | **~€74/año** |
+
+**💡 Ahorro con Cloudflare:** **~€13/año** (más integración y simplicidad)
 
 ---
 
@@ -416,8 +517,8 @@ ssh miguel@tudominio.com
 - ✅ La misma clave funciona para GitHub + Codeberg + Hetzner
 
 ### Usuario
-- ✅ Usar `miguel` (tu nombre)
-- ❌ NO usar `admin`, `root`, `administrator`
+- ✅ Usar `malpanez` (no obvio, fácil de recordar)
+- ❌ NO usar `admin`, `root`, `administrator`, `miguel`
 
 ### Puerto SSH
 - ✅ Mantener puerto 22 (estándar)
