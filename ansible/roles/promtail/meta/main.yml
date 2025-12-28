@@ -11,8 +11,7 @@ galaxy_info:
   platforms:
     - name: Debian
       versions:
-        - bookworm
-        - trixie
+        - all
 
   galaxy_tags:
     - monitoring

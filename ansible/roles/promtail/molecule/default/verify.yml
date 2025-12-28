@@ -173,6 +173,7 @@
         path: /var/log/syslog
         line: "{{ ansible_date_time.iso8601 }} test-host promtail-test[12345]: Test log message from Molecule"
         create: true
+        mode: '0644'
 
     - name: Wait for Promtail to process log (5 seconds)
       ansible.builtin.pause:

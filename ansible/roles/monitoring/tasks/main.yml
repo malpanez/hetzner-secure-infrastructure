@@ -2,20 +2,20 @@
 # Monitoring Role - Logging and monitoring setup
 
 - name: Ensure rsyslog is installed and running
-  apt:
+  ansible.builtin.apt:
     name: rsyslog
     state: present
   tags: packages
 
 - name: Start and enable rsyslog
-  systemd:
+  ansible.builtin.systemd:
     name: rsyslog
-    enabled: yes
+    enabled: true
     state: started
   tags: service
 
 - name: Configure log rotation
-  template:
+  ansible.builtin.template:
     src: logrotate-security.j2
     dest: /etc/logrotate.d/security
     owner: root
@@ -24,7 +24,7 @@
   tags: logrotate
 
 - name: Create monitoring scripts directory
-  file:
+  ansible.builtin.file:
     path: /usr/local/bin/monitoring
     state: directory
     owner: root
@@ -33,7 +33,7 @@
   tags: scripts
 
 - name: Deploy security monitoring script
-  template:
+  ansible.builtin.template:
     src: security-check.sh.j2
     dest: /usr/local/bin/security-check
     owner: root
