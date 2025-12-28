@@ -1,14 +1,21 @@
 ---
 # Fail2ban Role - Main Tasks (Orchestrator)
 
+- name: Fail2Ban | Main | Load OS-specific variables
+  ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
+  tags: [fail2ban, always]
+
 - name: Fail2Ban | Main | Include installation tasks
   ansible.builtin.import_tasks: install.yml
+  when: fail2ban_enabled
   tags: [fail2ban, install]
 
 - name: Fail2Ban | Main | Include configuration tasks
   ansible.builtin.import_tasks: configure.yml
+  when: fail2ban_enabled
   tags: [fail2ban, config]
 
 - name: Fail2Ban | Main | Include service tasks
   ansible.builtin.import_tasks: service.yml
+  when: fail2ban_enabled
   tags: [fail2ban, service]

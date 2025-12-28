@@ -1,10 +1,6 @@
 ---
-# Fail2ban Role - Installation Tasks
+# Fail2ban Role - Installation Tasks (Multi-platform orchestrator)
 
-- name: Fail2Ban | Install | Install Fail2ban
-  when: ansible_os_family == 'Debian'
-  ansible.builtin.apt:
-    name: fail2ban
-    state: present
-    update_cache: true
-  tags: [fail2ban, packages]
+- name: Fail2Ban | Install | Include OS-specific installation tasks
+  ansible.builtin.include_tasks: "install-{{ ansible_os_family }}.yml"
+  tags: [fail2ban, install, packages]

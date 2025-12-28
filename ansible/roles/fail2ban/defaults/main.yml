@@ -1,0 +1,44 @@
+---
+# Fail2ban Role - Default Variables
+
+# ========================================
+# Feature Toggles
+# ========================================
+
+# Enable Fail2ban
+fail2ban_enabled: true
+
+# ========================================
+# Fail2ban Configuration
+# ========================================
+
+# Ban time in seconds (default: 10 minutes)
+fail2ban_bantime: 600
+
+# Find time window in seconds (default: 10 minutes)
+fail2ban_findtime: 600
+
+# Max retry attempts before ban
+fail2ban_maxretry: 5
+
+# Destination email for alerts
+fail2ban_destemail: root@localhost
+
+# Sender email
+fail2ban_sender: fail2ban@localhost
+
+# Action on ban (action_mw = mail with whois, action_mwl = mail with whois and logs)
+fail2ban_action: action_mw
+
+# ========================================
+# Jails Configuration
+# ========================================
+
+# Enable SSH jail
+fail2ban_ssh_enabled: true
+fail2ban_ssh_port: 22
+fail2ban_ssh_maxretry: 3
+fail2ban_ssh_bantime: 3600
+
+# Enable HTTP auth jail
+fail2ban_http_auth_enabled: false
