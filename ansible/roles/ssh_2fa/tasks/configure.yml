@@ -43,24 +43,44 @@
   notify: restart sshd
   tags: [ssh, 2fa, config]
 
-- name: SSH 2FA | Configure | Deploy PAM configuration for SSH with 2FA
+- name: SSH 2FA | Configure | Deploy PAM 2FA module for SSH
   ansible.builtin.template:
-    src: pam_sshd.j2
-    dest: /etc/pam.d/sshd
+    src: pam_sshd_2fa.j2
+    dest: /etc/pam.d/sshd-2fa
     owner: root
     group: root
     mode: '0644'
+  when: enable_2fa_ssh | default(true)
+  tags: [pam, 2fa]
+
+- name: SSH 2FA | Configure | Include 2FA in SSH PAM stack
+  ansible.builtin.lineinfile:
+    path: /etc/pam.d/sshd
+    regexp: '^@include\s+sshd-2fa'
+    line: '@include sshd-2fa'
+    insertafter: '^@include\s+common-auth'
+    state: present
     backup: true
   when: enable_2fa_ssh | default(true)
   tags: [pam, 2fa]
 
-- name: SSH 2FA | Configure | Deploy PAM configuration for sudo with 2FA
+- name: SSH 2FA | Configure | Deploy PAM 2FA module for sudo
   ansible.builtin.template:
-    src: pam_sudo.j2
-    dest: /etc/pam.d/sudo
+    src: pam_sudo_2fa.j2
+    dest: /etc/pam.d/sudo-2fa
     owner: root
     group: root
     mode: '0644'
+  when: enable_2fa_sudo | default(true)
+  tags: [pam, 2fa, sudo]
+
+- name: SSH 2FA | Configure | Include 2FA in sudo PAM stack
+  ansible.builtin.lineinfile:
+    path: /etc/pam.d/sudo
+    regexp: '^@include\s+sudo-2fa'
+    line: '@include sudo-2fa'
+    insertafter: '^@include\s+common-auth'
+    state: present
     backup: true
   when: enable_2fa_sudo | default(true)
   tags: [pam, 2fa, sudo]

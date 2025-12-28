@@ -1,0 +1,7 @@
+# PAM 2FA configuration for sudo
+# Managed by Ansible - ssh_2fa role
+# This file is included by /etc/pam.d/sudo
+
+# Require 2FA for sudo
+# nullok: allows users without 2FA setup to use sudo initially
+auth required pam_google_authenticator.so {{ pam_google_authenticator_options | default('nullok') }}
