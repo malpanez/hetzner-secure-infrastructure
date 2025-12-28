@@ -1,9 +1,13 @@
 ---
 # Grafana Role - Main Tasks (Orchestrator)
 
+- name: Grafana | Main | Load OS-specific variables
+  ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
+  tags: [grafana, always]
+
 - name: Grafana | Main | Check if deployment is enabled
   ansible.builtin.debug:
-    msg: "Grafana deployment: {{ deploy_grafana | default(true) }}"
+    msg: "Grafana deployment: {{ deploy_grafana | default(true) }} on {{ ansible_os_family }}"
   tags: [grafana]
 
 - name: Grafana | Main | Skip Grafana deployment if not enabled

@@ -2,6 +2,7 @@
 # Fail2ban Role - Installation Tasks
 
 - name: Fail2Ban | Install | Install Fail2ban
+  when: ansible_os_family == 'Debian'
   ansible.builtin.apt:
     name: fail2ban
     state: present

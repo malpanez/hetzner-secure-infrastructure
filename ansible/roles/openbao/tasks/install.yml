@@ -2,14 +2,13 @@
 # OpenBao Role - Installation Tasks
 
 - name: OpenBao | Install | Install APT dependencies
-  module_defaults:
-    ansible.builtin.apt:
-      state: present
-      update_cache: true
+  when: ansible_os_family == 'Debian'
   block:
     - name: OpenBao | Install | Install dependencies
       ansible.builtin.apt:
         name: "{{ openbao_apt_dependencies }}"
+        state: present
+        update_cache: true
       tags: [openbao, packages]
 
 - name: OpenBao | Install | Create OpenBao system group

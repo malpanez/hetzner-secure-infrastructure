@@ -19,17 +19,10 @@
   tags: [loki, user]
 
 - name: Loki | Install | Install from APT repository
-  when: loki_install_method == 'apt'
-  module_defaults:
-    ansible.builtin.apt:
-      state: present
-      update_cache: true
+  when:
+    - loki_install_method == 'apt'
+    - ansible_os_family == 'Debian'
   block:
-    - name: Loki | Install | Install APT dependencies
-      ansible.builtin.apt:
-        name: "{{ loki_apt_dependencies }}"
-      tags: [loki, packages]
-
     - name: Loki | Install | Add Grafana APT repository (DEB822)
       ansible.builtin.deb822_repository:
         name: grafana
@@ -41,7 +34,9 @@
         state: present
       tags: [loki, packages]
 
-    - name: Loki | Install | Install Loki
+    - name: Loki | Install | Install Loki and dependencies
       ansible.builtin.apt:
-        name: "loki"
+        name: "{{ loki_apt_dependencies + ['loki'] }}"
+        state: present
+        update_cache: true
       tags: [loki, packages]

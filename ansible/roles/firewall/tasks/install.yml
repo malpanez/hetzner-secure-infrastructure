@@ -2,12 +2,11 @@
 # Firewall Role - Installation Tasks
 
 - name: Firewall | Install | Install UFW
-  module_defaults:
-    ansible.builtin.apt:
-      state: present
-      update_cache: true
+  when: ansible_os_family == 'Debian'
   block:
     - name: Firewall | Install | Install UFW package
       ansible.builtin.apt:
         name: "{{ firewall_apt_packages }}"
+        state: present
+        update_cache: true
       tags: [firewall, packages]

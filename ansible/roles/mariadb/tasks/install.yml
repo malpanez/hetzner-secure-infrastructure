@@ -2,17 +2,10 @@
 # MariaDB Role - Installation Tasks
 
 - name: MariaDB | Install | Install from APT repository
-  when: mariadb_install_method == 'apt'
-  module_defaults:
-    ansible.builtin.apt:
-      state: present
-      update_cache: true
+  when:
+    - mariadb_install_method == 'apt'
+    - ansible_os_family == 'Debian'
   block:
-    - name: MariaDB | Install | Install APT dependencies
-      ansible.builtin.apt:
-        name: "{{ mariadb_apt_dependencies }}"
-      tags: [mariadb, packages]
-
     - name: MariaDB | Install | Add MariaDB APT repository (DEB822)
       ansible.builtin.deb822_repository:
         name: mariadb
@@ -24,7 +17,9 @@
         state: present
       tags: [mariadb, packages]
 
-    - name: MariaDB | Install | Install MariaDB packages
+    - name: MariaDB | Install | Install MariaDB and dependencies
       ansible.builtin.apt:
-        name: "{{ mariadb_apt_packages }}"
+        name: "{{ mariadb_apt_dependencies + mariadb_apt_packages }}"
+        state: present
+        update_cache: true
       tags: [mariadb, packages]
