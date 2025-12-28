@@ -39,7 +39,7 @@
     owner: root
     group: root
     mode: '0600'
-  when: enable_2fa_ssh | default(true)
+  when: ssh_2fa_enable_ssh | default(true)
   notify: restart sshd
   tags: [ssh, 2fa, config]
 
@@ -49,13 +49,13 @@
     type: auth
     control: required
     module_path: pam_google_authenticator.so
-    module_arguments: "{{ pam_google_authenticator_options | default('nullok forward_pass') }}"
+    module_arguments: "{{ ssh_2fa_pam_google_authenticator_ssh_options }}"
     state: after
     new_type: auth
     new_control: '[success=ok new_authtok_reqd=ok ignore=ignore default=bad]'
     new_module_path: pam_unix.so
     backup: true
-  when: enable_2fa_ssh | default(true)
+  when: ssh_2fa_enable_ssh | default(true)
   tags: [pam, 2fa]
 
 - name: SSH 2FA | Configure | Add Google Authenticator to sudo PAM
@@ -64,13 +64,13 @@
     type: auth
     control: required
     module_path: pam_google_authenticator.so
-    module_arguments: "{{ pam_google_authenticator_options | default('nullok') }}"
+    module_arguments: "{{ ssh_2fa_pam_google_authenticator_sudo_options }}"
     state: before
     new_type: auth
     new_control: include
     new_module_path: system-auth
     backup: true
-  when: enable_2fa_sudo | default(true)
+  when: ssh_2fa_enable_sudo | default(true)
   tags: [pam, 2fa, sudo]
 
 - name: SSH 2FA | Configure | Create SSH banner
@@ -80,10 +80,5 @@
     owner: root
     group: root
     mode: '0644'
-  when: ssh_banner_enabled | default(false)
+  when: ssh_2fa_banner_enabled | default(false)
   tags: [ssh, banner]
-
-- name: SSH 2FA | Configure | Test SSH configuration
-  ansible.builtin.command: sshd -t
-  changed_when: false
-  tags: [ssh, test, validate]

@@ -1,0 +1,55 @@
+---
+# SSH 2FA Role - Installation Tasks
+
+- name: SSH 2FA | Install | Install SSH and PAM packages
+  ansible.builtin.apt:
+    name:
+      - openssh-server
+      - libpam-google-authenticator
+      - libqrencode4
+      - qrencode
+    state: present
+    update_cache: true
+  tags: [ssh-2fa, packages]
+
+- name: SSH 2FA | Install | Deploy 2FA setup script for Yubikey
+  ansible.builtin.copy:
+    src: setup-2fa-yubikey.sh
+    dest: /usr/local/bin/setup-2fa-yubikey.sh
+    owner: root
+    group: root
+    mode: '0755'
+  tags: [ssh-2fa, scripts, 2fa]
+
+- name: SSH 2FA | Install | Generate strong SSH host keys
+  block:
+    - name: SSH 2FA | Install | Remove weak SSH host keys
+      ansible.builtin.file:
+        path: /etc/ssh/{{ item }}
+        state: absent
+      loop:
+        - ssh_host_dsa_key
+        - ssh_host_dsa_key.pub
+        - ssh_host_ecdsa_key
+        - ssh_host_ecdsa_key.pub
+
+    - name: SSH 2FA | Install | Generate Ed25519 host key
+      ansible.builtin.command: ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N ""
+      args:
+        creates: /etc/ssh/ssh_host_ed25519_key
+
+    - name: SSH 2FA | Install | Generate RSA 4096 host key
+      ansible.builtin.command: ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key -N ""
+      args:
+        creates: /etc/ssh/ssh_host_rsa_key
+
+    - name: SSH 2FA | Install | Set permissions on SSH host keys
+      ansible.builtin.file:
+        path: /etc/ssh/{{ item }}
+        owner: root
+        group: root
+        mode: '0600'
+      loop:
+        - ssh_host_ed25519_key
+        - ssh_host_rsa_key
+  tags: [ssh-2fa, ssh, keys]

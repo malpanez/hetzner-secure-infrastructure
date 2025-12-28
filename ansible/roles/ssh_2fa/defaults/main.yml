@@ -1,0 +1,112 @@
+---
+# SSH 2FA Role - Default Variables
+
+# ========================================
+# Feature Toggles
+# ========================================
+
+# Enable 2FA for SSH
+ssh_2fa_enable_ssh: true
+
+# Enable 2FA for sudo
+ssh_2fa_enable_sudo: true
+
+# Enable custom SSH banner
+ssh_2fa_banner_enabled: false
+
+# ========================================
+# SSH Configuration
+# ========================================
+
+# SSH port (default: 22)
+ssh_2fa_port: 22
+
+# SSH address family (inet, inet6, any)
+ssh_2fa_address_family: inet
+
+# Allow root login (yes, no, prohibit-password, forced-commands-only)
+ssh_2fa_permit_root_login: "prohibit-password"
+
+# Allow password authentication
+ssh_2fa_password_authentication: "no"
+
+# Challenge response authentication (required for 2FA)
+ssh_2fa_challenge_response_authentication: "yes"
+
+# PubkeyAuthentication
+ssh_2fa_pubkey_authentication: "yes"
+
+# Authentication methods
+ssh_2fa_auth_methods: "publickey,keyboard-interactive"
+
+# Maximum authentication attempts
+ssh_2fa_max_auth_tries: 3
+
+# Maximum sessions per connection
+ssh_2fa_max_sessions: 10
+
+# Client alive interval (seconds)
+ssh_2fa_client_alive_interval: 300
+
+# Client alive count max
+ssh_2fa_client_alive_count_max: 2
+
+# Login grace time (seconds)
+ssh_2fa_login_grace_time: 60
+
+# ========================================
+# Cryptographic Configuration
+# ========================================
+
+# SSH Ciphers (only strong algorithms)
+ssh_2fa_ciphers:
+  - chacha20-poly1305@openssh.com
+  - aes256-gcm@openssh.com
+  - aes128-gcm@openssh.com
+  - aes256-ctr
+  - aes192-ctr
+  - aes128-ctr
+
+# MAC algorithms
+ssh_2fa_macs:
+  - hmac-sha2-512-etm@openssh.com
+  - hmac-sha2-256-etm@openssh.com
+  - hmac-sha2-512
+  - hmac-sha2-256
+
+# Key exchange algorithms
+ssh_2fa_kex_algorithms:
+  - curve25519-sha256
+  - curve25519-sha256@libssh.org
+  - diffie-hellman-group16-sha512
+  - diffie-hellman-group18-sha512
+  - diffie-hellman-group-exchange-sha256
+
+# Host key algorithms
+ssh_2fa_host_key_algorithms:
+  - ssh-ed25519
+  - rsa-sha2-512
+  - rsa-sha2-256
+
+# ========================================
+# PAM Configuration
+# ========================================
+
+# Google Authenticator options for SSH
+ssh_2fa_pam_google_authenticator_ssh_options: "nullok forward_pass"
+
+# Google Authenticator options for sudo
+ssh_2fa_pam_google_authenticator_sudo_options: "nullok"
+
+# ========================================
+# Banner Configuration
+# ========================================
+
+# Banner text
+ssh_2fa_banner_text: |
+  ******************************************************************
+  * WARNING: Unauthorized access to this system is forbidden and  *
+  * will be prosecuted by law. By accessing this system, you      *
+  * agree that your actions may be monitored if unauthorized      *
+  * usage is suspected.                                           *
+  ******************************************************************

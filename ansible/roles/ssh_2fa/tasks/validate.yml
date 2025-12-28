@@ -1,0 +1,7 @@
+---
+# SSH 2FA Role - Validation Tasks
+
+- name: SSH 2FA | Validate | Test SSH configuration
+  ansible.builtin.command: sshd -t
+  changed_when: false
+  tags: [ssh-2fa, ssh, test, validate]

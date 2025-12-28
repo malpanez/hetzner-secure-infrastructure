@@ -1,0 +1,9 @@
+---
+# SSH 2FA Role - Service Tasks
+
+- name: SSH 2FA | Service | Ensure SSH service is enabled and running
+  ansible.builtin.systemd:
+    name: sshd
+    enabled: true
+    state: started
+  tags: [ssh-2fa, ssh, service]

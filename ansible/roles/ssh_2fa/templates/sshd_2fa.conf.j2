@@ -4,13 +4,13 @@
 
 # Enable keyboard-interactive for 2FA
 KbdInteractiveAuthentication yes
-ChallengeResponseAuthentication yes
+ChallengeResponseAuthentication {{ ssh_2fa_challenge_response_authentication }}
 
 # Enable PAM for 2FA integration
 UsePAM yes
 
 # Require both publickey AND keyboard-interactive (2FA)
-AuthenticationMethods {{ ssh_authentication_methods | default('publickey,keyboard-interactive') }}
+AuthenticationMethods {{ ssh_2fa_auth_methods }}
 
 # Allow publickey authentication
-PubkeyAuthentication yes
+PubkeyAuthentication {{ ssh_2fa_pubkey_authentication }}
