@@ -1,0 +1,21 @@
+---
+galaxy_info:
+  role_name: firewall
+  author: hetzner-secure-infrastructure
+  description: UFW firewall configuration for Debian servers
+  license: MIT
+  min_ansible_version: "2.12"
+
+  platforms:
+    - name: Debian
+      versions:
+        - all
+
+  galaxy_tags:
+    - firewall
+    - ufw
+    - security
+    - iptables
+    - network
+
+dependencies: []

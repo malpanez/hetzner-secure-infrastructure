@@ -1,0 +1,19 @@
+---
+# Prometheus Role - Debian/Ubuntu Specific Variables
+
+# Package Dependencies for Debian-based systems
+prometheus_apt_dependencies:
+  - apt-transport-https
+  - software-properties-common
+  - wget
+  - gpg
+
+# GPG Key URL for Debian repository
+prometheus_gpg_key_url: https://s3.amazonaws.com/deb.robustperception.io/41EFC99D.gpg
+
+# Installation method for Debian systems
+prometheus_install_method: apt
+
+# System paths (Debian standard)
+prometheus_config_dir: /etc/prometheus
+prometheus_data_dir: /var/lib/prometheus

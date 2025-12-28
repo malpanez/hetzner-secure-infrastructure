@@ -1,0 +1,22 @@
+---
+galaxy_info:
+  role_name: openbao
+  author: hetzner-secure-infrastructure
+  description: OpenBao secrets management deployment and configuration
+  license: MIT
+  min_ansible_version: "2.12"
+
+  platforms:
+    - name: Debian
+      versions:
+        - all
+
+  galaxy_tags:
+    - openbao
+    - vault
+    - secrets
+    - hashicorp
+    - security
+    - encryption
+
+dependencies: []

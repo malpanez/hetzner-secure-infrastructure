@@ -1,5 +1,5 @@
 ---
-# Loki Role - Installation Tasks
+# Loki Role - Installation Tasks (Multi-platform orchestrator)
 
 - name: Loki | Install | Create Loki group
   ansible.builtin.group:
@@ -18,25 +18,7 @@
     createhome: false
   tags: [loki, user]
 
-- name: Loki | Install | Install from APT repository
-  when:
-    - loki_install_method == 'apt'
-    - ansible_os_family == 'Debian'
-  block:
-    - name: Loki | Install | Add Grafana APT repository (DEB822)
-      ansible.builtin.deb822_repository:
-        name: grafana
-        types: [deb]
-        uris: https://apt.grafana.com
-        suites: stable
-        components: [main]
-        signed_by: "{{ loki_gpg_key_url }}"
-        state: present
-      tags: [loki, packages]
-
-    - name: Loki | Install | Install Loki and dependencies
-      ansible.builtin.apt:
-        name: "{{ loki_apt_dependencies + ['loki'] }}"
-        state: present
-        update_cache: true
-      tags: [loki, packages]
+- name: Loki | Install | Include OS-specific installation tasks
+  ansible.builtin.include_tasks: "install-{{ ansible_os_family }}.yml"
+  when: loki_install_method in ['apt', 'yum', 'dnf']
+  tags: [loki, install, packages]

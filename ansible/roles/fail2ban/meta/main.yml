@@ -1,0 +1,22 @@
+---
+galaxy_info:
+  role_name: fail2ban
+  author: hetzner-secure-infrastructure
+  description: Fail2ban intrusion detection and prevention system
+  license: MIT
+  min_ansible_version: "2.12"
+
+  platforms:
+    - name: Debian
+      versions:
+        - all
+
+  galaxy_tags:
+    - fail2ban
+    - security
+    - ids
+    - ips
+    - intrusion
+    - detection
+
+dependencies: []

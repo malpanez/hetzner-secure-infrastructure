@@ -1,25 +1,7 @@
 ---
-# MariaDB Role - Installation Tasks
+# MariaDB Role - Installation Tasks (Multi-platform orchestrator)
 
-- name: MariaDB | Install | Install from APT repository
-  when:
-    - mariadb_install_method == 'apt'
-    - ansible_os_family == 'Debian'
-  block:
-    - name: MariaDB | Install | Add MariaDB APT repository (DEB822)
-      ansible.builtin.deb822_repository:
-        name: mariadb
-        types: [deb]
-        uris: "https://mirror.23m.com/mariadb/repo/{{ mariadb_version }}/{{ mariadb_distribution }}"
-        suites: "{{ ansible_distribution_release }}"
-        components: [main]
-        signed_by: "{{ mariadb_gpg_key_url }}"
-        state: present
-      tags: [mariadb, packages]
-
-    - name: MariaDB | Install | Install MariaDB and dependencies
-      ansible.builtin.apt:
-        name: "{{ mariadb_apt_dependencies + mariadb_apt_packages }}"
-        state: present
-        update_cache: true
-      tags: [mariadb, packages]
+- name: MariaDB | Install | Include OS-specific installation tasks
+  ansible.builtin.include_tasks: "install-{{ ansible_os_family }}.yml"
+  when: mariadb_install_method in ['apt', 'yum', 'dnf']
+  tags: [mariadb, install, packages]

@@ -1,9 +1,13 @@
 ---
 # Prometheus Role - Main Tasks (Orchestrator)
 
+- name: Prometheus | Main | Load OS-specific variables
+  ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
+  tags: [prometheus, always]
+
 - name: Prometheus | Main | Check if deployment is enabled
   ansible.builtin.debug:
-    msg: "Prometheus deployment: {{ deploy_prometheus | default(true) }}"
+    msg: "Prometheus deployment: {{ deploy_prometheus | default(true) }} on {{ ansible_os_family }}"
   tags: [prometheus]
 
 - name: Prometheus | Main | Skip Prometheus deployment if not enabled

@@ -1,0 +1,20 @@
+---
+# Promtail Role - Debian/Ubuntu Specific Variables
+
+# Package Dependencies for Debian-based systems
+promtail_apt_dependencies:
+  - apt-transport-https
+  - software-properties-common
+  - wget
+  - gpg
+
+# GPG Key URL for Debian repository
+promtail_gpg_key_url: https://apt.grafana.com/gpg.key
+
+# Installation method for Debian systems
+promtail_install_method: apt
+
+# System paths (Debian standard)
+promtail_config_dir: /etc/promtail
+promtail_positions_dir: /var/lib/promtail
+promtail_log_dir: /var/log/promtail

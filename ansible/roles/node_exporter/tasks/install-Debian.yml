@@ -1,0 +1,20 @@
+---
+# Node Exporter Role - Debian/Ubuntu Installation Tasks
+
+- name: Node Exporter | Install | Add Prometheus APT repository (DEB822)
+  ansible.builtin.deb822_repository:
+    name: prometheus
+    types: [deb]
+    uris: https://s3.amazonaws.com/deb.robustperception.io/debian
+    suites: stable
+    components: [main]
+    signed_by: "{{ node_exporter_gpg_key_url }}"
+    state: present
+  tags: [node-exporter, packages]
+
+- name: Node Exporter | Install | Install Node Exporter and dependencies
+  ansible.builtin.apt:
+    name: "{{ node_exporter_apt_dependencies + ['prometheus-node-exporter'] }}"
+    state: present
+    update_cache: true
+  tags: [node-exporter, packages]

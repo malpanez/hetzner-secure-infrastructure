@@ -1,5 +1,5 @@
 ---
-# Promtail Role - Installation Tasks
+# Promtail Role - Installation Tasks (Multi-platform orchestrator)
 
 - name: Promtail | Install | Create Promtail group
   ansible.builtin.group:
@@ -25,25 +25,7 @@
     append: true
   tags: [promtail, user]
 
-- name: Promtail | Install | Install from APT repository
-  when:
-    - promtail_install_method == 'apt'
-    - ansible_os_family == 'Debian'
-  block:
-    - name: Promtail | Install | Add Grafana APT repository (DEB822)
-      ansible.builtin.deb822_repository:
-        name: grafana
-        types: [deb]
-        uris: https://apt.grafana.com
-        suites: stable
-        components: [main]
-        signed_by: "{{ promtail_gpg_key_url }}"
-        state: present
-      tags: [promtail, packages]
-
-    - name: Promtail | Install | Install Promtail and dependencies
-      ansible.builtin.apt:
-        name: "{{ promtail_apt_dependencies + ['promtail'] }}"
-        state: present
-        update_cache: true
-      tags: [promtail, packages]
+- name: Promtail | Install | Include OS-specific installation tasks
+  ansible.builtin.include_tasks: "install-{{ ansible_os_family }}.yml"
+  when: promtail_install_method in ['apt', 'yum', 'dnf']
+  tags: [promtail, install, packages]

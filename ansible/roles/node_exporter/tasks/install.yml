@@ -1,25 +1,7 @@
 ---
-# Node Exporter Role - Installation Tasks
+# Node Exporter Role - Installation Tasks (Multi-platform orchestrator)
 
-- name: Node Exporter | Install | Install from APT repository
-  when:
-    - node_exporter_install_method == 'apt'
-    - ansible_os_family == 'Debian'
-  block:
-    - name: Node Exporter | Install | Add Prometheus APT repository (DEB822)
-      ansible.builtin.deb822_repository:
-        name: prometheus
-        types: [deb]
-        uris: https://s3.amazonaws.com/deb.robustperception.io/debian
-        suites: stable
-        components: [main]
-        signed_by: "{{ node_exporter_gpg_key_url }}"
-        state: present
-      tags: [node-exporter, packages]
-
-    - name: Node Exporter | Install | Install Node Exporter and dependencies
-      ansible.builtin.apt:
-        name: "{{ node_exporter_apt_dependencies + ['prometheus-node-exporter'] }}"
-        state: present
-        update_cache: true
-      tags: [node-exporter, packages]
+- name: Node Exporter | Install | Include OS-specific installation tasks
+  ansible.builtin.include_tasks: "install-{{ ansible_os_family }}.yml"
+  when: node_exporter_install_method in ['apt', 'yum', 'dnf']
+  tags: [node-exporter, install, packages]

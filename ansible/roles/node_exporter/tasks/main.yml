@@ -2,9 +2,13 @@
 # Node Exporter Role - Main Tasks (Orchestrator)
 # Migrated to use official Prometheus Community APT repository (DEB822 format)
 
+- name: Node Exporter | Main | Load OS-specific variables
+  ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
+  tags: [node-exporter, always]
+
 - name: Node Exporter | Main | Check if deployment is enabled
   ansible.builtin.debug:
-    msg: "Node Exporter deployment: {{ node_exporter_enabled | default(true) }}"
+    msg: "Node Exporter deployment: {{ node_exporter_enabled | default(true) }} on {{ ansible_os_family }}"
   tags: [node-exporter]
 
 - name: Node Exporter | Main | Skip deployment if not enabled
