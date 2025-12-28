@@ -1,0 +1,24 @@
+---
+# AppArmor Role - Debian/Ubuntu Specific Variables
+
+# Package names
+apparmor_packages:
+  - apparmor
+  - apparmor-profiles
+  - apparmor-profiles-extra
+  - apparmor-utils
+
+# Optional packages
+apparmor_notify_package: apparmor-notify
+
+# Service name
+apparmor_service_name: apparmor
+
+# GRUB configuration file
+apparmor_grub_config_file: /etc/default/grub
+
+# Commands
+apparmor_parser_command: apparmor_parser
+apparmor_status_command: aa-status
+apparmor_enforce_command: aa-enforce
+apparmor_complain_command: aa-complain

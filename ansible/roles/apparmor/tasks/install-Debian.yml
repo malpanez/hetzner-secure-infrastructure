@@ -1,0 +1,16 @@
+---
+# AppArmor Role - Debian/Ubuntu Installation Tasks
+
+- name: AppArmor | Install | Install AppArmor packages
+  ansible.builtin.apt:
+    name: "{{ apparmor_packages }}"
+    state: present
+    update_cache: true
+  tags: [apparmor, packages]
+
+- name: AppArmor | Install | Install AppArmor notify for desktop
+  ansible.builtin.apt:
+    name: "{{ apparmor_notify_package }}"
+    state: present
+  when: apparmor_notify_enabled
+  tags: [apparmor, packages]

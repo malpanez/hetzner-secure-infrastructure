@@ -1,118 +1,26 @@
 ---
-# AppArmor Role - Mandatory Access Control
+# AppArmor Role - Main Tasks (Orchestrator)
 
-- name: Install AppArmor packages
-  ansible.builtin.apt:
-    name:
-      - apparmor
-      - apparmor-utils
-      - apparmor-profiles
-      - apparmor-profiles-extra
-    state: present
-  tags: packages
+- name: AppArmor | Main | Load OS-specific variables
+  ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
+  tags: [apparmor, always]
 
-- name: Ensure AppArmor is enabled in GRUB
-  ansible.builtin.lineinfile:
-    path: /etc/default/grub
-    regexp: ^GRUB_CMDLINE_LINUX_DEFAULT=
-    line: GRUB_CMDLINE_LINUX_DEFAULT="quiet apparmor=1 security=apparmor"
-    state: present
-  notify:
-    - update grub
-    - reboot required
-  tags: grub
+- name: AppArmor | Main | Include installation tasks
+  ansible.builtin.import_tasks: install.yml
+  when: apparmor_enabled
+  tags: [apparmor, install]
 
-- name: Enable and start AppArmor service
-  ansible.builtin.systemd:
-    name: apparmor
-    enabled: true
-    state: started
-  tags: service
+- name: AppArmor | Main | Include service tasks
+  ansible.builtin.import_tasks: service.yml
+  when: apparmor_enabled
+  tags: [apparmor, service]
 
-- name: Create custom profiles directory
-  ansible.builtin.file:
-    path: /etc/apparmor.d/local
-    state: directory
-    owner: root
-    group: root
-    mode: "0755"
-  tags: profiles
+- name: AppArmor | Main | Include configuration tasks
+  ansible.builtin.import_tasks: configure.yml
+  when: apparmor_enabled
+  tags: [apparmor, config]
 
-- name: Deploy custom AppArmor profile for SSH
-  ansible.builtin.template:
-    src: apparmor.d/usr.sbin.sshd.j2
-    dest: /etc/apparmor.d/usr.sbin.sshd
-    owner: root
-    group: root
-    mode: "0644"
-  notify: reload apparmor profiles
-  tags: [profiles, ssh]
-- name: Deploy custom AppArmor profile for Fail2ban
-  ansible.builtin.template:
-    src: apparmor.d/usr.bin.fail2ban-server.j2
-    dest: /etc/apparmor.d/usr.bin.fail2ban-server
-    owner: root
-    group: root
-    mode: "0644"
-  notify: reload apparmor profiles
-  when: enable_fail2ban | default(true)
-  tags: [profiles, fail2ban]
-- name: Load AppArmor profiles
-  ansible.builtin.command: apparmor_parser -r /etc/apparmor.d/{{ item }}
-  loop:
-    - usr.sbin.sshd
-    - usr.bin.fail2ban-server
-  failed_when: false
-  changed_when: true
-  tags: profiles
-
-- name: Set AppArmor profiles to enforce mode
-  ansible.builtin.command: aa-enforce /etc/apparmor.d/{{ item }}
-  loop: "{{ apparmor_profiles }}"
-  when: apparmor_enforce_mode | default(true)
-  failed_when: false
-  changed_when: true
-  tags: [profiles, enforce]
-
-- name: Set AppArmor profiles to complain mode (testing)
-  ansible.builtin.command: aa-complain /etc/apparmor.d/{{ item }}
-  loop: "{{ apparmor_profiles }}"
-  when: not apparmor_enforce_mode | default(true)
-  failed_when: false
-  changed_when: true
-  tags: [profiles, complain]
-- name: Check AppArmor status
-  ansible.builtin.command: aa-status
-  register: apparmor_status
-  changed_when: false
-  tags: status
-
-- name: Display AppArmor status
-  ansible.builtin.debug:
-    var: apparmor_status.stdout_lines
-  tags: status
-
-- name: Install AppArmor notify for desktop (optional)
-  ansible.builtin.apt:
-    name: apparmor-notify
-    state: present
-  when: apparmor_notify_enabled | default(false)
-  tags: packages
-
-- name: Create AppArmor monitoring script
-  ansible.builtin.template:
-    src: aa-monitor.sh.j2
-    dest: /usr/local/bin/aa-monitor
-    owner: root
-    group: root
-    mode: "0755"
-  tags: monitoring
-
-- name: Configure AppArmor log rotation
-  ansible.builtin.template:
-    src: apparmor-logrotate.j2
-    dest: /etc/logrotate.d/apparmor
-    owner: root
-    group: root
-    mode: "0644"
-  tags: logging
+- name: AppArmor | Main | Include validation tasks
+  ansible.builtin.import_tasks: validate.yml
+  when: apparmor_enabled
+  tags: [apparmor, validate]

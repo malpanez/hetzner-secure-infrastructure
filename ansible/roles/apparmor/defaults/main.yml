@@ -1,0 +1,49 @@
+---
+# AppArmor Role - Default Variables
+
+# ========================================
+# Feature Toggles
+# ========================================
+
+# Enable/disable AppArmor deployment
+apparmor_enabled: true
+
+# Enable enforce mode (true) or complain mode (false)
+apparmor_enforce_mode: true
+
+# Enable Fail2ban profile
+apparmor_enable_fail2ban_profile: true
+
+# Enable desktop notifications (for workstations)
+apparmor_notify_enabled: false
+
+# ========================================
+# AppArmor Configuration
+# ========================================
+
+# List of profiles to enforce/complain
+apparmor_profiles:
+  - usr.sbin.sshd
+  - usr.bin.fail2ban-server
+
+# GRUB command line configuration
+apparmor_grub_cmdline: "quiet apparmor=1 security=apparmor"
+
+# ========================================
+# Directories
+# ========================================
+
+# Custom profiles directory
+apparmor_profiles_dir: /etc/apparmor.d
+apparmor_local_dir: /etc/apparmor.d/local
+
+# ========================================
+# Monitoring
+# ========================================
+
+# Enable AppArmor monitoring script
+apparmor_monitoring_enabled: true
+
+# Log rotation configuration
+apparmor_logrotate_enabled: true
+apparmor_log_retention_days: 30
