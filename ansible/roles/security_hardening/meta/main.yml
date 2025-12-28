@@ -1,0 +1,20 @@
+---
+galaxy_info:
+  role_name: security_hardening
+  author: hetzner-secure-infrastructure
+  description: Security hardening configurations for Debian servers
+  license: MIT
+  min_ansible_version: "2.12"
+
+  platforms:
+    - name: Debian
+      versions:
+        - all
+
+  galaxy_tags:
+    - security
+    - hardening
+    - debian
+    - system
+
+dependencies: []

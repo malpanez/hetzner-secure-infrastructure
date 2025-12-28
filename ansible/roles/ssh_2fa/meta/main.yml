@@ -1,0 +1,21 @@
+---
+galaxy_info:
+  role_name: ssh_2fa
+  author: hetzner-secure-infrastructure
+  description: SSH Two-Factor Authentication with Google Authenticator
+  license: MIT
+  min_ansible_version: "2.12"
+
+  platforms:
+    - name: Debian
+      versions:
+        - all
+
+  galaxy_tags:
+    - ssh
+    - security
+    - 2fa
+    - authentication
+    - totp
+
+dependencies: []

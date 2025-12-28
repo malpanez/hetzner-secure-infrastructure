@@ -54,7 +54,7 @@
   roles:
     - role: common
       tags: [common, base]
-    - role: security-hardening
+    - role: security_hardening
       tags: [security, hardening]
     - role: firewall
       tags: [security, firewall]
@@ -70,7 +70,7 @@
         - apparmor_enabled | default(true) | bool
         - ansible_distribution in ['Debian', 'Ubuntu']
 
-    - role: ssh-2fa
+    - role: ssh_2fa
       tags: [security, ssh, 2fa]
       when: ssh_2fa_enabled | default(true) | bool
 
@@ -205,7 +205,7 @@
   roles:
     - role: valkey
       tags: [wordpress, redis, cache, performance]
-    - role: nginx-wordpress
+    - role: nginx_wordpress
       tags: [wordpress, nginx, webserver]
 
   post_tasks:
