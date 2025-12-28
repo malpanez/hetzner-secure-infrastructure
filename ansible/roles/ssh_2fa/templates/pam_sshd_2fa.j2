@@ -1,8 +1,0 @@
-# PAM 2FA configuration for SSH
-# Managed by Ansible - ssh_2fa role
-# This file is included by /etc/pam.d/sshd
-
-# Google Authenticator (TOTP)
-# nullok: allows users without 2FA setup to login initially
-# forward_pass: forwards password to next auth module
-auth required pam_google_authenticator.so {{ pam_google_authenticator_options | default('nullok forward_pass') }}
