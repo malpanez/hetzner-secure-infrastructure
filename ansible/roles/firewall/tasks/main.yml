@@ -1,14 +1,18 @@
 ---
 # Firewall Role - Main Tasks (Orchestrator)
 
+- name: Firewall | Main | Load OS-specific variables
+  ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
+  tags: [firewall, always]
+
 - name: Firewall | Main | Check if deployment is enabled
   ansible.builtin.debug:
-    msg: "Firewall deployment: {{ firewall_enabled | default(true) }}"
+    msg: "Firewall deployment: {{ firewall_enabled }}"
   tags: [firewall]
 
 - name: Firewall | Main | Skip deployment if not enabled
   ansible.builtin.meta: end_play
-  when: firewall_enabled is defined and not firewall_enabled
+  when: not firewall_enabled
   tags: [firewall]
 
 - name: Firewall | Main | Include installation tasks

@@ -1,12 +1,6 @@
 ---
-# Firewall Role - Installation Tasks
+# Firewall Role - Installation Tasks (Multi-platform orchestrator)
 
-- name: Firewall | Install | Install UFW
-  when: ansible_os_family == 'Debian'
-  block:
-    - name: Firewall | Install | Install UFW package
-      ansible.builtin.apt:
-        name: "{{ firewall_apt_packages }}"
-        state: present
-        update_cache: true
-      tags: [firewall, packages]
+- name: Firewall | Install | Include OS-specific installation tasks
+  ansible.builtin.include_tasks: "install-{{ ansible_os_family }}.yml"
+  tags: [firewall, install, packages]
