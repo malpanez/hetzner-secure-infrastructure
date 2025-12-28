@@ -10,13 +10,13 @@
     mode: '0755'
   tags: [ssh, config]
 
-- name: SSH 2FA | Configure | Deploy minimal main sshd_config with Include directive
-  ansible.builtin.template:
-    src: sshd_config_main.j2
-    dest: /etc/ssh/sshd_config
-    owner: root
-    group: root
-    mode: '0600'
+- name: SSH 2FA | Configure | Ensure Include directive exists in sshd_config
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^Include /etc/ssh/sshd_config\.d/\*\.conf'
+    line: 'Include /etc/ssh/sshd_config.d/*.conf'
+    insertbefore: BOF
+    state: present
     validate: /usr/sbin/sshd -t -f %s
     backup: true
   notify: restart sshd
