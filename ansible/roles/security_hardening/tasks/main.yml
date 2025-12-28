@@ -3,14 +3,7 @@
 
 - name: Install security packages
   ansible.builtin.apt:
-    name:
-      - unattended-upgrades
-      - apt-listchanges
-      - needrestart
-      - debsums
-      - aide
-      - auditd
-      - audispd-plugins
+    name: "{{ security_hardening_packages }}"
     state: present
   tags: packages
 
@@ -22,7 +15,7 @@
     state: present
     reload: true
   loop: "{{ sysctl_config | dict2items }}"
-  when: kernel_hardening_enabled | default(true)
+  when: security_hardening_kernel_enabled | default(true)
   tags: sysctl
 
 - name: Deploy sysctl configuration file
@@ -42,7 +35,7 @@
     owner: root
     group: root
     mode: "0644"
-  when: unattended_upgrades_enabled | default(true)
+  when: security_hardening_unattended_upgrades_enabled | default(true)
   tags: auto-updates
 
 - name: Enable unattended-upgrades
@@ -52,7 +45,7 @@
     owner: root
     group: root
     mode: "0644"
-  when: unattended_upgrades_enabled | default(true)
+  when: security_hardening_unattended_upgrades_enabled | default(true)
   tags: auto-updates
 
 - name: Secure shared memory
@@ -101,7 +94,7 @@
     owner: root
     group: root
     mode: "0644"
-  when: disable_usb_storage | default(false)
+  when: security_hardening_disable_usb_storage | default(false)
   tags: [security, usb]
 - name: Configure login.defs
   ansible.builtin.lineinfile:
@@ -128,7 +121,7 @@
     - name: Add admin user to cron.allow
       ansible.builtin.lineinfile:
         path: /etc/cron.allow
-        line: "{{ admin_username }}"
+        line: "{{ security_hardening_admin_username }}"
         state: present
 
     - name: Remove cron.deny if exists
@@ -155,7 +148,7 @@
     owner: root
     group: root
     mode: "0640"
-  when: auditd_enabled | default(true)
+  when: security_hardening_auditd_enabled | default(true)
   notify: restart auditd
   tags: [security, auditd]
 
@@ -166,7 +159,7 @@
     owner: root
     group: root
     mode: "0640"
-  when: auditd_enabled | default(true)
+  when: security_hardening_auditd_enabled | default(true)
   notify: restart auditd
   tags: [security, auditd]
 
@@ -175,12 +168,12 @@
     name: auditd
     enabled: true
     state: started
-  when: auditd_enabled | default(true)
+  when: security_hardening_auditd_enabled | default(true)
   tags: [security, auditd]
 
 - name: Initialize AIDE database (this may take a while)
   ansible.builtin.shell: aideinit && mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db
   args:
     creates: /var/lib/aide/aide.db
-  when: aide_enabled | default(false)
+  when: security_hardening_aide_enabled | default(false)
   tags: [security, aide]

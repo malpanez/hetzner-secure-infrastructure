@@ -1,36 +1,51 @@
 ---
-# Security Hardening Role Variables
+# Security Hardening Role - Default Variables
+
+# ========================================
+# Feature Toggles
+# ========================================
 
 # Kernel hardening
-kernel_hardening_enabled: true
+security_hardening_kernel_enabled: true
 
 # Unattended upgrades
-unattended_upgrades_enabled: true
+security_hardening_unattended_upgrades_enabled: true
 
 # AIDE File Integrity Monitoring
-aide_enabled: false
+security_hardening_aide_enabled: false
 
 # Auditd Configuration
-auditd_enabled: true
-auditd_max_log_file: 8
-auditd_max_log_file_action: rotate
-auditd_num_logs: 5
-auditd_space_left: 75
-auditd_space_left_action: email
-auditd_admin_space_left: 50
-auditd_admin_space_left_action: suspend
-auditd_disk_full_action: suspend
-auditd_disk_error_action: suspend
-auditd_action_mail_acct: root
+security_hardening_auditd_enabled: true
 
-# USB storage
-disable_usb_storage: false
+# USB storage disable
+security_hardening_disable_usb_storage: false
 
-# Admin user
-admin_username: miguel
+# ========================================
+# Auditd Configuration
+# ========================================
 
-# Sysctl hardening configuration
-sysctl_config:
+security_hardening_auditd_max_log_file: 8
+security_hardening_auditd_max_log_file_action: rotate
+security_hardening_auditd_num_logs: 5
+security_hardening_auditd_space_left: 75
+security_hardening_auditd_space_left_action: email
+security_hardening_auditd_admin_space_left: 50
+security_hardening_auditd_admin_space_left_action: suspend
+security_hardening_auditd_disk_full_action: suspend
+security_hardening_auditd_disk_error_action: suspend
+security_hardening_auditd_action_mail_acct: root
+
+# ========================================
+# Admin Configuration
+# ========================================
+
+security_hardening_admin_username: malpanez
+
+# ========================================
+# Sysctl Hardening Configuration
+# ========================================
+
+security_hardening_sysctl_config:
   # Network security
   net.ipv4.conf.all.rp_filter: 1
   net.ipv4.conf.default.rp_filter: 1
@@ -55,3 +70,16 @@ sysctl_config:
   fs.protected_hardlinks: 1
   fs.protected_symlinks: 1
   fs.suid_dumpable: 0
+
+# ========================================
+# Package Configuration
+# ========================================
+
+security_hardening_packages:
+  - aide
+  - apt-listchanges
+  - audispd-plugins
+  - auditd
+  - debsums
+  - needrestart
+  - unattended-upgrades
