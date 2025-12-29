@@ -9,7 +9,7 @@ all:
         wordpress_servers:
           hosts:
             wordpress-test:
-              ansible_host: 192.168.56.10
+              ansible_host: 192.168.56.254
               ansible_user: vagrant
               ansible_ssh_private_key_file: .vagrant/machines/wordpress-aio/virtualbox/private_key
               ansible_python_interpreter: /usr/bin/python3

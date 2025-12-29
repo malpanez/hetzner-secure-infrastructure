@@ -60,14 +60,18 @@ choco install virtualbox
 
 ### Usar Vagrant
 ```powershell
-# Desde Windows PowerShell
+# Desde Windows PowerShell (NO desde WSL2)
 cd C:\path\to\hetzner-secure-infrastructure
 
 # Iniciar VM
 vagrant up wordpress-aio
 
-# Acceder
+# Acceder vía SSH
 vagrant ssh wordpress-aio
+
+# Acceder vía web
+# http://localhost:8888 (HTTP)
+# https://localhost:8889 (HTTPS)
 ```
 
 ## Opción 3: VPS de Prueba en Hetzner (Más realista)

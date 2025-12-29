@@ -2,12 +2,12 @@
 # vi: set ft=ruby :
 
 # Vagrant configuration for local testing
-# Simulates Hetzner Cloud environment with Debian 12
+# Simulates Hetzner Cloud environment with Debian 13
 
 Vagrant.configure("2") do |config|
-  # Use Debian 12 (Bookworm) - same as production
-  config.vm.box = "debian/bookworm64"
-  config.vm.box_version = ">= 12.0"
+  # Use Debian 13 (Trixie) - latest stable
+  config.vm.box = "debian/trixie64"
+  config.vm.box_version = ">= 13.0"
 
   # ===========================================
   # WordPress All-in-One Server (Recommended)
@@ -16,9 +16,9 @@ Vagrant.configure("2") do |config|
     wordpress.vm.hostname = "wordpress-test.local"
 
     # Network configuration
-    wordpress.vm.network "private_network", ip: "192.168.56.10"
-    wordpress.vm.network "forwarded_port", guest: 80, host: 8080, host_ip: "127.0.0.1"
-    wordpress.vm.network "forwarded_port", guest: 443, host: 8443, host_ip: "127.0.0.1"
+    wordpress.vm.network "private_network", ip: "192.168.56.254"
+    wordpress.vm.network "forwarded_port", guest: 80, host: 8888, host_ip: "127.0.0.1"
+    wordpress.vm.network "forwarded_port", guest: 443, host: 8889, host_ip: "127.0.0.1"
 
     # VM Resources
     wordpress.vm.provider "virtualbox" do |vb|
