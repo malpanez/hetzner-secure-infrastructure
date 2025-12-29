@@ -24,11 +24,12 @@ output "zone_status" {
   value       = data.cloudflare_zone.main.status
 }
 
-output "zone_verification_key" {
-  description = "Zone verification key"
-  value       = data.cloudflare_zone.main.verification_key
-  sensitive   = true
-}
+# Zone verification key - removed as attribute doesn't exist in current provider version
+# output "zone_verification_key" {
+#   description = "Zone verification key"
+#   value       = data.cloudflare_zone.main.verification_key
+#   sensitive   = true
+# }
 
 # ========================================
 # DNS Records

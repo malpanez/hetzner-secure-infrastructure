@@ -101,9 +101,9 @@ module "cloudflare" {
   server_ipv6 = module.production_server.server_ipv6
 
   # Security features (all available on Free plan)
-  enable_course_protection   = false  # Set true to require login for /courses/*
-  enable_rate_limiting       = true   # Free tier allows 1 rule
-  enable_custom_error_pages  = false  # Optional
-  enable_cloudflare_access   = false  # Requires paid plan
-  custom_error_page_url      = ""
+  enable_course_protection  = false # Set true to require login for /courses/*
+  enable_rate_limiting      = true  # Free tier allows 1 rule
+  enable_custom_error_pages = false # Optional
+  enable_cloudflare_access  = false # Requires paid plan
+  custom_error_page_url     = ""
 }

@@ -151,5 +151,5 @@ variable "cloudflare_api_token" {
 variable "enable_cloudflare" {
   description = "Enable Cloudflare DNS and security configuration"
   type        = bool
-  default     = false  # Set to true to enable automatic DNS management
+  default     = false # Set to true to enable automatic DNS management
 }

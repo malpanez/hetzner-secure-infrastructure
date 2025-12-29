@@ -102,10 +102,10 @@ resource "cloudflare_zone_settings_override" "security" {
     browser_cache_ttl        = 14400         # 4 hours
     cache_level              = "aggressive"  # Aggressive caching
 
-    # Bot Management
-    bot_management {
-      enable_js = true
-    }
+    # Bot Management - Requires Business plan or higher
+    # bot_management {
+    #   enable_js = true
+    # }
 
     # Security Headers
     security_header {
@@ -322,44 +322,3 @@ resource "cloudflare_access_application" "wp_admin" {
 # ========================================
 
 # Output zone information
-output "zone_id" {
-  description = "Cloudflare Zone ID"
-  value       = data.cloudflare_zone.main.id
-}
-
-output "zone_name" {
-  description = "Zone name"
-  value       = data.cloudflare_zone.main.name
-}
-
-output "name_servers" {
-  description = "Cloudflare nameservers for this zone"
-  value       = data.cloudflare_zone.main.name_servers
-}
-
-output "zone_status" {
-  description = "Zone status"
-  value       = data.cloudflare_zone.main.status
-}
-
-# Output DNS records
-output "root_record_hostname" {
-  description = "Root domain hostname"
-  value       = cloudflare_record.root.hostname
-}
-
-output "www_record_hostname" {
-  description = "WWW subdomain hostname"
-  value       = cloudflare_record.www.hostname
-}
-
-# Output security settings
-output "ssl_mode" {
-  description = "SSL/TLS mode"
-  value       = cloudflare_zone_settings_override.security.settings[0].ssl
-}
-
-output "security_level" {
-  description = "Security level"
-  value       = cloudflare_zone_settings_override.security.settings[0].security_level
-}
