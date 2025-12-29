@@ -1,0 +1,10 @@
+---
+# Monitoring Role - Debian/Ubuntu Installation Tasks
+
+- name: Monitoring | Install | Install rsyslog package
+  ansible.builtin.apt:
+    name: "{{ monitoring_rsyslog_package }}"
+    state: present
+    update_cache: true
+  when: monitoring_rsyslog_enabled
+  tags: [monitoring, packages]

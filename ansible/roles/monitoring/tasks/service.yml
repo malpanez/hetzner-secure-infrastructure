@@ -1,0 +1,10 @@
+---
+# Monitoring Role - Service Tasks
+
+- name: Monitoring | Service | Start and enable rsyslog
+  ansible.builtin.systemd:
+    name: "{{ monitoring_rsyslog_service }}"
+    enabled: true
+    state: started
+  when: monitoring_rsyslog_enabled
+  tags: [monitoring, service]

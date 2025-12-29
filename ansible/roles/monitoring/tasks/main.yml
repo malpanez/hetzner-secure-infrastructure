@@ -1,42 +1,21 @@
 ---
-# Monitoring Role - Logging and monitoring setup
+# Monitoring Role - Main Tasks (Orchestrator)
 
-- name: Ensure rsyslog is installed and running
-  ansible.builtin.apt:
-    name: rsyslog
-    state: present
-  tags: packages
+- name: Monitoring | Main | Load OS-specific variables
+  ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
+  tags: [monitoring, always]
 
-- name: Start and enable rsyslog
-  ansible.builtin.systemd:
-    name: rsyslog
-    enabled: true
-    state: started
-  tags: service
+- name: Monitoring | Main | Include installation tasks
+  ansible.builtin.import_tasks: install.yml
+  when: monitoring_enabled
+  tags: [monitoring, install]
 
-- name: Configure log rotation
-  ansible.builtin.template:
-    src: logrotate-security.j2
-    dest: /etc/logrotate.d/security
-    owner: root
-    group: root
-    mode: '0644'
-  tags: logrotate
+- name: Monitoring | Main | Include configuration tasks
+  ansible.builtin.import_tasks: configure.yml
+  when: monitoring_enabled
+  tags: [monitoring, config]
 
-- name: Create monitoring scripts directory
-  ansible.builtin.file:
-    path: /usr/local/bin/monitoring
-    state: directory
-    owner: root
-    group: root
-    mode: '0755'
-  tags: scripts
-
-- name: Deploy security monitoring script
-  ansible.builtin.template:
-    src: security-check.sh.j2
-    dest: /usr/local/bin/security-check
-    owner: root
-    group: root
-    mode: '0755'
-  tags: scripts
+- name: Monitoring | Main | Include service tasks
+  ansible.builtin.import_tasks: service.yml
+  when: monitoring_enabled
+  tags: [monitoring, service]

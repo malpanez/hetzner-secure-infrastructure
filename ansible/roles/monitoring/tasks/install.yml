@@ -1,0 +1,6 @@
+---
+# Monitoring Role - Installation Tasks (Multi-platform orchestrator)
+
+- name: Monitoring | Install | Include OS-specific installation tasks
+  ansible.builtin.include_tasks: "install-{{ ansible_os_family }}.yml"
+  tags: [monitoring, install, packages]

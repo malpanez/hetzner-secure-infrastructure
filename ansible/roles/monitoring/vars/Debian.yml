@@ -1,0 +1,8 @@
+---
+# Monitoring Role - Debian/Ubuntu Specific Variables
+
+# Package names
+monitoring_rsyslog_package: rsyslog
+
+# Service name
+monitoring_rsyslog_service: rsyslog
