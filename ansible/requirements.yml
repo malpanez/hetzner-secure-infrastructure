@@ -1,13 +1,39 @@
 ---
-# Ansible Collections Requirements
-# Install with: ansible-galaxy collection install -r requirements.yml
+# Ansible Galaxy Requirements
+# Install with: ansible-galaxy install -r requirements.yml
+
+# ============================================
+# Collections - Official Upstream Providers
+# ============================================
 
 collections:
+  # Grafana Official Collection
+  # Includes: grafana, loki, promtail, mimir, alloy
+  # Docs: https://github.com/grafana/grafana-ansible-collection
+  - name: grafana.grafana
+    source: https://galaxy.ansible.com
+
+  # Prometheus Community Collection
+  # Includes: prometheus, node_exporter, alertmanager, exporters
+  # Docs: https://prometheus-community.github.io/ansible/
+  - name: prometheus.prometheus
+    source: https://galaxy.ansible.com
+
+  # Community General Collection (for pamd, sysctl, etc)
   - name: community.general
-    version: ">=7.0.0"
-  
+    source: https://galaxy.ansible.com
+
+  # Ansible Posix Collection (for authorized_key, etc)
   - name: ansible.posix
-    version: ">=1.5.0"
-  
-  - name: hetzner.hcloud
-    version: ">=1.16.0"
+    source: https://galaxy.ansible.com
+
+# ============================================
+# Roles - Third Party Quality Roles
+# ============================================
+
+roles:
+  # MySQL/MariaDB - Jeff Geerlingguy's excellent role
+  # Works perfectly with MariaDB
+  # Docs: https://github.com/geerlingguy/ansible-role-mysql
+  - name: geerlingguy.mysql
+    src: geerlingguy.mysql

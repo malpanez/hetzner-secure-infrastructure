@@ -1,8 +1,0 @@
----
-- name: Verify
-  hosts: all
-  gather_facts: true
-  tasks:
-    - name: Role completed successfully
-      ansible.builtin.debug:
-        msg: "Role execution completed"

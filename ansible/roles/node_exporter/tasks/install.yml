@@ -1,7 +1,0 @@
----
-# Node Exporter Role - Installation Tasks (Multi-platform orchestrator)
-
-- name: Node Exporter | Install | Include OS-specific installation tasks
-  ansible.builtin.include_tasks: "install-{{ ansible_os_family }}.yml"
-  when: node_exporter_install_method in ['apt', 'yum', 'dnf']
-  tags: [node-exporter, install, packages]

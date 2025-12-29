@@ -20,8 +20,8 @@
     sysctl_set: true
     state: present
     reload: true
-  loop: "{{ sysctl_config | dict2items }}"
-  when: security_hardening_kernel_enabled | default(true)
+  loop: "{{ security_hardening_sysctl_config | dict2items }}"
+  when: security_hardening_kernel_enabled
   tags: sysctl
 
 - name: Deploy sysctl configuration file
@@ -91,16 +91,44 @@
     group: root
     mode: "0644"
   tags: [security, password]
+- name: Disable insecure filesystems
+  ansible.builtin.copy:
+    content: |
+      # Disable insecure/unused filesystems
+      # Managed by Ansible - security_hardening role
+      {% for fs in security_hardening_disabled_filesystems %}
+      install {{ fs }} /bin/true
+      {% endfor %}
+    dest: /etc/modprobe.d/disable-filesystems.conf
+    owner: root
+    group: root
+    mode: '0644'
+  tags: [security, modules, filesystems]
+
+- name: Disable insecure network protocols
+  ansible.builtin.copy:
+    content: |
+      # Disable insecure network protocols
+      # Managed by Ansible - security_hardening role
+      {% for proto in security_hardening_disabled_network_protocols %}
+      install {{ proto }} /bin/true
+      {% endfor %}
+    dest: /etc/modprobe.d/disable-network-protocols.conf
+    owner: root
+    group: root
+    mode: '0644'
+  tags: [security, modules, network]
+
 - name: Disable USB storage (optional)
   ansible.builtin.copy:
     content: |
       # Disable USB storage
-      blacklist usb-storage
+      install usb-storage /bin/true
     dest: /etc/modprobe.d/disable-usb-storage.conf
     owner: root
     group: root
-    mode: "0644"
-  when: security_hardening_disable_usb_storage | default(false)
+    mode: '0644'
+  when: security_hardening_disable_usb_storage
   tags: [security, usb]
 - name: Configure login.defs
   ansible.builtin.lineinfile:
@@ -183,3 +211,196 @@
     creates: /var/lib/aide/aide.db
   when: security_hardening_aide_enabled | default(false)
   tags: [security, aide]
+
+- name: Configure login banners
+  block:
+    - name: Set login banner for SSH
+      ansible.builtin.copy:
+        content: "{{ security_hardening_login_banner_text }}"
+        dest: /etc/issue.net
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Set login banner for local logins
+      ansible.builtin.copy:
+        content: "{{ security_hardening_login_banner_text }}"
+        dest: /etc/issue
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Remove MOTD (use static banner instead)
+      ansible.builtin.file:
+        path: /etc/motd
+        state: absent
+  when: security_hardening_login_banner_enabled
+  tags: [security, banner]
+
+- name: Enable process accounting
+  block:
+    - name: Install acct package
+      ansible.builtin.apt:
+        name: acct
+        state: present
+
+    - name: Enable and start acct service
+      ansible.builtin.systemd:
+        name: acct
+        enabled: true
+        state: started
+  when: security_hardening_process_accounting_enabled
+  tags: [security, accounting]
+
+- name: Restrict compiler access
+  block:
+    - name: Create compilers group
+      ansible.builtin.group:
+        name: compilers
+        state: present
+
+    - name: Restrict permissions on compilers
+      ansible.builtin.file:
+        path: "{{ item }}"
+        mode: "0750"
+        group: compilers
+      loop:
+        - /usr/bin/gcc
+        - /usr/bin/g++
+        - /usr/bin/cc
+        - /usr/bin/c++
+        - /usr/bin/make
+        - /usr/bin/as
+      failed_when: false
+  when: security_hardening_restrict_compilers
+  tags: [security, compilers]
+
+- name: Harden /tmp directory
+  block:
+    - name: Check if /tmp is a separate mount
+      ansible.builtin.command: mountpoint -q /tmp
+      register: tmp_mountpoint
+      failed_when: false
+      changed_when: false
+
+    - name: Create /tmp systemd mount unit
+      ansible.builtin.copy:
+        content: |
+          [Unit]
+          Description=Temporary Directory /tmp
+          ConditionPathIsSymbolicLink=!/tmp
+          DefaultDependencies=no
+          Conflicts=umount.target
+          Before=local-fs.target umount.target
+          After=swap.target
+
+          [Mount]
+          What=tmpfs
+          Where=/tmp
+          Type=tmpfs
+          Options=mode=1777,strictatime,noexec,nodev,nosuid,size=2G
+
+          [Install]
+          WantedBy=local-fs.target
+        dest: /etc/systemd/system/tmp.mount
+        owner: root
+        group: root
+        mode: "0644"
+      when: tmp_mountpoint.rc != 0
+
+    - name: Enable tmp.mount
+      ansible.builtin.systemd:
+        name: tmp.mount
+        enabled: true
+        daemon_reload: true
+      when: tmp_mountpoint.rc != 0
+  when: security_hardening_harden_tmp
+  tags: [security, filesystem, tmp]
+
+- name: Set strict permissions on critical directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    mode: "{{ item.mode }}"
+    owner: root
+    group: root
+    state: directory
+  loop:
+    - { path: /boot, mode: "0700" }
+    - { path: /etc/cron.d, mode: "0700" }
+    - { path: /etc/cron.daily, mode: "0700" }
+    - { path: /etc/cron.hourly, mode: "0700" }
+    - { path: /etc/cron.weekly, mode: "0700" }
+    - { path: /etc/cron.monthly, mode: "0700" }
+    - { path: /var/log/audit, mode: "0700" }
+  failed_when: false
+  tags: [security, permissions]
+
+- name: Configure at daemon restrictions
+  block:
+    - name: Create at.allow
+      ansible.builtin.file:
+        path: /etc/at.allow
+        state: touch
+        owner: root
+        group: root
+        mode: "0640"
+
+    - name: Add admin user to at.allow
+      ansible.builtin.lineinfile:
+        path: /etc/at.allow
+        line: "{{ security_hardening_admin_username }}"
+        state: present
+
+    - name: Remove at.deny if exists
+      ansible.builtin.file:
+        path: /etc/at.deny
+        state: absent
+  tags: [security, at]
+
+- name: Disable unnecessary services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: false
+    state: stopped
+  loop:
+    - avahi-daemon.service
+    - cups.service
+    - isc-dhcp-server.service
+    - isc-dhcp-server6.service
+    - rpcbind.service
+    - rsync.service
+  failed_when: false
+  tags: [security, services]
+
+- name: Configure stronger session timeouts
+  ansible.builtin.lineinfile:
+    path: /etc/profile.d/timeout.sh
+    line: "{{ item }}"
+    create: true
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - "# Managed by Ansible - security_hardening role"
+    - "TMOUT=900"
+    - "readonly TMOUT"
+    - "export TMOUT"
+  tags: [security, session]
+
+- name: Restrict su command to wheel group
+  ansible.builtin.lineinfile:
+    path: /etc/pam.d/su
+    line: "auth required pam_wheel.so use_uid"
+    insertafter: "^# auth\\s+required\\s+pam_wheel.so"
+  tags: [security, pam]
+
+- name: Set additional security limits
+  community.general.pam_limits:
+    domain: "{{ item.domain }}"
+    limit_type: "{{ item.limit_type }}"
+    limit_item: "{{ item.limit_item }}"
+    value: "{{ item.value }}"
+  loop:
+    - { domain: "*", limit_type: hard, limit_item: maxlogins, value: "10" }
+    - { domain: "*", limit_type: hard, limit_item: nproc, value: "1000" }
+  tags: [security, limits]

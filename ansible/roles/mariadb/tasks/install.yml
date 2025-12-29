@@ -1,7 +1,0 @@
----
-# MariaDB Role - Installation Tasks (Multi-platform orchestrator)
-
-- name: MariaDB | Install | Include OS-specific installation tasks
-  ansible.builtin.include_tasks: "install-{{ ansible_os_family }}.yml"
-  when: mariadb_install_method in ['apt', 'yum', 'dnf']
-  tags: [mariadb, install, packages]

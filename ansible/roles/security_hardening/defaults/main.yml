@@ -42,11 +42,44 @@ security_hardening_auditd_action_mail_acct: root
 security_hardening_admin_username: malpanez
 
 # ========================================
-# Sysctl Hardening Configuration
+# Login Banner Configuration
 # ========================================
 
+security_hardening_login_banner_enabled: true
+security_hardening_login_banner_text: |
+  ****************************************************************************
+  UNAUTHORIZED ACCESS TO THIS DEVICE IS PROHIBITED
+
+  This system is for authorized use only. By accessing and using this system,
+  you consent to monitoring and recording of all activities. Any unauthorized
+  access or use may subject you to criminal and/or civil penalties.
+
+  All activities on this system are logged and monitored.
+  ****************************************************************************
+
+# ========================================
+# Process Accounting
+# ========================================
+
+security_hardening_process_accounting_enabled: true
+
+# ========================================
+# Additional Hardening Features
+# ========================================
+
+# Restrict access to compilers
+security_hardening_restrict_compilers: true
+
+# Harden /tmp with separate mount options
+security_hardening_harden_tmp: true
+
+# ========================================
+# Sysctl Hardening Configuration
+# ========================================
+# Based on DevSec hardening framework + CIS benchmarks
+
 security_hardening_sysctl_config:
-  # Network security
+  # Network security - IPv4
   net.ipv4.conf.all.rp_filter: 1
   net.ipv4.conf.default.rp_filter: 1
   net.ipv4.conf.all.accept_redirects: 0
@@ -55,31 +88,74 @@ security_hardening_sysctl_config:
   net.ipv4.conf.default.secure_redirects: 0
   net.ipv4.conf.all.send_redirects: 0
   net.ipv4.conf.default.send_redirects: 0
+  net.ipv4.conf.all.accept_source_route: 0
+  net.ipv4.conf.default.accept_source_route: 0
+  net.ipv4.conf.all.log_martians: 1
+  net.ipv4.conf.default.log_martians: 1
   net.ipv4.icmp_echo_ignore_broadcasts: 1
   net.ipv4.icmp_ignore_bogus_error_responses: 1
   net.ipv4.tcp_syncookies: 1
+
+  # Network security - IPv6
   net.ipv6.conf.all.accept_redirects: 0
   net.ipv6.conf.default.accept_redirects: 0
+  net.ipv6.conf.all.accept_source_route: 0
+  net.ipv6.conf.default.accept_source_route: 0
+  net.ipv6.conf.all.accept_ra: 0
+  net.ipv6.conf.default.accept_ra: 0
 
   # Kernel hardening
   kernel.dmesg_restrict: 1
   kernel.kptr_restrict: 2
   kernel.yama.ptrace_scope: 1
+  kernel.kexec_load_disabled: 1
+  kernel.sysrq: 0
+  kernel.core_uses_pid: 1
 
   # File system hardening
   fs.protected_hardlinks: 1
   fs.protected_symlinks: 1
+  fs.protected_fifos: 1
+  fs.protected_regular: 2
   fs.suid_dumpable: 0
+
+# ========================================
+# Filesystem Module Blocking
+# ========================================
+# Disable unused/insecure filesystems
+
+security_hardening_disabled_filesystems:
+  - cramfs
+  - freevxfs
+  - jffs2
+  - hfs
+  - hfsplus
+  - squashfs
+  - udf
+  - vfat
+
+# ========================================
+# Network Protocol Blocking
+# ========================================
+# Disable insecure network protocols
+
+security_hardening_disabled_network_protocols:
+  - dccp
+  - sctp
+  - rds
+  - tipc
 
 # ========================================
 # Package Configuration
 # ========================================
 
 security_hardening_packages:
+  - acct
   - aide
   - apt-listchanges
   - audispd-plugins
   - auditd
   - debsums
+  - libpam-pwquality
   - needrestart
   - unattended-upgrades

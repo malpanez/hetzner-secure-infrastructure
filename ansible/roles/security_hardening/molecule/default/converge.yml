@@ -7,16 +7,20 @@
 
   pre_tasks:
     - name: Update apt cache
-      apt:
-        update_cache: yes
+      ansible.builtin.apt:
+        update_cache: true
         cache_valid_time: 3600
       when: ansible_os_family == 'Debian'
 
   roles:
-    - role: security-hardening
+    - role: security_hardening
       vars:
         # Test variables
-        security_auto_updates_enabled: true
-        security_aide_enabled: true
-        security_kernel_hardening_enabled: true
-        security_disable_uncommon_protocols: true
+        security_hardening_unattended_upgrades_enabled: true
+        security_hardening_aide_enabled: true
+        security_hardening_kernel_enabled: true
+        security_hardening_auditd_enabled: true
+        security_hardening_process_accounting_enabled: true
+        security_hardening_login_banner_enabled: true
+        security_hardening_restrict_compilers: true
+        security_hardening_harden_tmp: true
