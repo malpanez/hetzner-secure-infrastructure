@@ -1,293 +1,130 @@
 # Testing Guide
 
-**Last Updated**: 2025-12-27  
-**Status**: Production Ready ✅
+Guía para probar la infraestructura localmente antes de desplegar en producción.
 
-## Quick Start
+## Opción 1: Docker (Recomendado para WSL2)
 
+### Prerequisitos
 ```bash
-# Validate everything
-make validate
+# Verificar Docker
+docker --version
 
-# Run full CI locally (fast)
-SKIP_MOLECULE=true SKIP_TERRATEST=true make ci-fast
+# Instalar Ansible en WSL2 si no lo tienes
+sudo apt update
+sudo apt install -y ansible
 
-# Quick validation script
-./scripts/validate-all.sh
-```
-
-## Test Status
-
-### ✅ Passing Tests (100%)
-
-| Test | Status | Command |
-|------|--------|---------|
-| **Terraform Format** | ✅ PASS | `terraform fmt -check` |
-| **Terraform Validate** | ✅ PASS | `terraform validate` |
-| **Ansible Syntax** | ✅ PASS | `ansible-playbook --syntax-check` |
-| **Ansible Lint** | ✅ PASS | `ansible-lint` (0 errors, 0 warnings) |
-| **YAML Lint** | ✅ PASS | `yamllint` |
-
-### Code Quality Metrics
-
-- **Ansible Lint**: Production profile compliance (0 failures, 0 warnings)
-- **FQCN Compliance**: 100%
-- **Style Guide**: 100% compliant
-- **Security**: All handlers use proper modules
-
-## Testing Tools
-
-### Installed & Configured
-
-- **Terraform** 1.9.0
-- **Ansible** 2.16.3
-- **ansible-lint** (latest, production profile)
-- **yamllint**
-- **Molecule** 25.12.0 with Docker driver
-- **Go** 1.22.10 (for Terratest)
-- **Docker** 29.1.3 (running)
-
-### Terraform Testing
-
-```bash
-cd terraform/environments/production
-terraform fmt -check
-terraform validate
-```
-
-### Ansible Testing
-
-```bash
+# Instalar Galaxy dependencies
 cd ansible
-ansible-playbook playbooks/site.yml --syntax-check
-ansible-lint playbooks/site.yml
+ansible-galaxy install -r requirements.yml
 ```
 
-### Molecule Testing (Docker Required)
-
-**Status**: ✅ Fully Configured
-
-12 roles have Molecule configurations:
-
-**Run tests**:
-```bash
-cd ansible/roles/ROLE_NAME
-molecule test
-```
-
-All Molecule configs include proper ANSIBLE_ROLES_PATH resolution.
-- apparmor, fail2ban, firewall, grafana
-- mariadb, nginx-wordpress, node_exporter
-- openbao, prometheus, security-hardening
-- ssh-2fa, valkey
-
-
-### Integration Testing with Terratest
-
-**Requirements**:
-- Hetzner Cloud API token
-- Go 1.22+
-- ~5-10 minutes execution time
-- Minimal cost (~€0.01-0.10)
+### Testing Rápido con Docker
 
 ```bash
-export HCLOUD_TOKEN="your-token-here"
-cd terraform/test
-go test -v -timeout 30m
+# Crear contenedor Debian 12 para testing
+docker run -d --name wordpress-test \
+  --privileged \
+  -p 8080:80 \
+  -p 8443:443 \
+  debian:12 /sbin/init
+
+# Ejecutar playbook
+ansible-playbook -i ansible/inventory/docker.yml \
+  ansible/playbooks/site.yml \
+  --limit wordpress_servers
+
+# Acceder al contenedor
+docker exec -it wordpress-test bash
+
+# Ver WordPress
+http://localhost:8080
 ```
 
-**Test Coverage**:
-- Server creation and configuration
-- Networking setup
-- SSH connectivity
-- Service availability
+### Limpieza
+```bash
+docker stop wordpress-test
+docker rm wordpress-test
+```
 
-## Validation Scripts
+## Opción 2: Vagrant + VirtualBox (Windows)
 
-### Quick Validation (`./scripts/validate-all.sh`)
+**Nota**: Solo funciona desde Windows (no WSL2). Requiere VirtualBox instalado.
 
-**Runtime**: ~5 seconds  
-**Purpose**: Pre-commit checks
+### Instalar VirtualBox
+```powershell
+# Desde Windows PowerShell como Administrador
+choco install virtualbox
 
-Validates:
-- Terraform format & configuration
-- Ansible syntax
-- YAML structure
-- Markdown (if tool available)
-- Secrets (if gitleaks available)
+# O descargar de: https://www.virtualbox.org/
+```
 
-### Comprehensive Tests (`./scripts/run-tests.sh`)
+### Usar Vagrant
+```powershell
+# Desde Windows PowerShell
+cd C:\path\to\hetzner-secure-infrastructure
 
-**Runtime**: ~2-5 minutes  
-**Purpose**: Full CI simulation
+# Iniciar VM
+vagrant up wordpress-aio
 
-Features:
-- Dependency checking
-- Color-coded output
-- Progress tracking
-- Test result summary
-- Optional test skipping (SKIP_MOLECULE, SKIP_TERRATEST)
+# Acceder
+vagrant ssh wordpress-aio
+```
 
-## Make Targets
+## Opción 3: VPS de Prueba en Hetzner (Más realista)
+
+La opción más cercana a producción:
 
 ```bash
-make help              # Show all available commands
-make validate          # Run Terraform + Ansible validation
-make lint              # Run all linters
-make test              # Run all tests
-make ci                # Full CI pipeline
-make ci-fast           # Fast CI (skip slow tests)
+# Crear servidor CX22 en Hetzner Cloud (€5.83/mes)
+# Debian 12, 4GB RAM, 2 vCPU, 80GB SSD
+
+# Ejecutar playbook contra servidor real
+ansible-playbook -i ansible/inventory/staging.yml \
+  ansible/playbooks/site.yml
 ```
 
-## Pre-commit Hooks
-
-Install hooks to run validation automatically:
+## Verificación Básica
 
 ```bash
-pre-commit install
-pre-commit install --hook-type commit-msg
+# Verificar servicios
+sudo systemctl status nginx php8.2-fpm mysql valkey
+
+# Verificar plugins WordPress
+wp plugin list --path=/var/www/wordpress
+
+# Verificar seguridad
+sudo ufw status verbose
+sudo fail2ban-client status
 ```
 
-Run manually:
+## Checklist
 
-```bash
-pre-commit run --all-files
-```
+### WordPress (Básico)
+- [ ] WordPress carga
+- [ ] Login admin funciona
+- [ ] 8 plugins instalados
 
-## Continuous Integration
+### Seguridad
+- [ ] UFW activo
+- [ ] Fail2ban corriendo
+- [ ] AppArmor activo
+- [ ] Redis cache funciona
 
-### Woodpecker CI (Codeberg)
+## Plugins Instalados Automáticamente
 
-**File**: `.woodpecker/test.yml`  
-**Status**: Configured  
-**Cost**: FREE unlimited
+1. Wordfence - Security
+2. Sucuri Scanner - Security
+3. WP 2FA - 2FA
+4. UpdraftPlus - Backups
+5. Redis Cache - Performance
+6. Yoast SEO - SEO
+7. Enable Media Replace - Media
+8. WP Mail SMTP - Email
+9. Health Check - Monitoring
 
-Runs on:
-- Push to main
-- Pull requests
+## Recomendación
 
-### GitHub Actions
+**Para testing inicial**: Usa Docker en WSL2 (más rápido)
+**Para testing completo**: Usa VPS de Hetzner staging (más realista)
 
-**Files**: `.github/workflows/*.yml`  
-**Status**: Configured  
-**Cost**: 2,000 min/month free
-
-Jobs:
-- Terraform validation
-- Ansible validation + lint
-- CodeQL security analysis
-- Dependency review
-
-## ansible-lint Configuration
-
-**File**: `.ansible-lint`
-
-**Skip rules** (intentional):
-- `yaml[truthy]`: Allow yes/no values
-- `run-once`: Valid pattern for our playbooks
-- `key-order`: Not critical for functionality
-- `name[casing]`, `role-name`: Allow flexible naming
-
-**Warn list**:
-- `experimental`: New Ansible features
-- `ignore-errors`: Replaced with failed_when where possible
-- `no-changed-when`: Handlers have explicit changed_when
-
-## Recent Fixes (2025-12-27)
-
-### Lint Cleanup
-- **Before**: 321 violations
-- **After**: 0 violations
-- **Improvement**: 100%
-
-### Changes Made
-1. Renamed `node-exporter` → `node_exporter` (schema compliance)
-2. Added explicit file permissions to all backup tasks
-3. Replaced `systemctl` commands with systemd module
-4. Added `changed_when`/`failed_when` to all command tasks
-5. Updated ansible-lint skip rules for project needs
-
-### FQCN Compliance
-- Auto-fixed 215 violations
-- All modules now use fully qualified names
-- Example: `debug` → `ansible.builtin.debug`
-
-## Troubleshooting
-
-### Ansible Collection Warnings
-
-```
-WARNING: Collection community.general does not support Ansible version 2.16.3
-```
-
-**Status**: Harmless warnings, does not affect functionality  
-**Reason**: Collections built for older Ansible versions  
-**Action**: None required, syntax checks pass
-
-### Molecule Role Path Issues
-
-If Molecule can't find roles:
-
-```bash
-# Reset Molecule state
-cd ansible/roles/ROLE_NAME
-molecule destroy
-molecule reset
-```
-
-Or rely on ansible-lint which provides equivalent validation.
-
-### Terratest Requires Token
-
-```bash
-export HCLOUD_TOKEN="your-token-here"
-```
-
-Get token from: Hetzner Cloud Console → Security → API Tokens
-
-## CI/CD Pipeline Simulation
-
-```bash
-# Local simulation of CI pipeline
-make ci-fast
-
-# Full pipeline (includes slow tests)
-make ci
-```
-
-## Test Coverage Summary
-
-| Category | Coverage |
-|----------|----------|
-| Terraform | 100% |
-| Ansible Syntax | 100% |
-| Ansible Lint | 100% |
-| YAML | 100% |
-| Integration | Available (Terratest) |
-| End-to-End | Manual |
-
-## Production Deployment Checklist
-
-Before deploying to production:
-
-- [ ] All lint checks passing
-- [ ] Terraform plan reviewed
-- [ ] Ansible syntax validated
-- [ ] Security settings reviewed
-- [ ] Backup strategy confirmed
-- [ ] Monitoring configured
-- [ ] Secrets properly managed
-
-## Support
-
-Issues or questions:
-1. Check this guide
-2. Review `CONTRIBUTING.md`
-3. Check `SECURITY.md` for security issues
-4. Open issue on repository
-
----
-
-**Repository Status**: Production Ready  
-**Test Confidence**: ⭐⭐⭐⭐⭐ (5/5)  
-**Last Validation**: 2025-12-27
+VirtualBox requiere instalación en Windows y ejecutar Vagrant desde PowerShell.

@@ -1,0 +1,67 @@
+---
+# Vagrant Test Inventory
+# For local testing with VirtualBox VMs
+
+all:
+  children:
+    hetzner:
+      children:
+        wordpress_servers:
+          hosts:
+            wordpress-test:
+              ansible_host: 192.168.56.10
+              ansible_user: vagrant
+              ansible_ssh_private_key_file: .vagrant/machines/wordpress-aio/virtualbox/private_key
+              ansible_python_interpreter: /usr/bin/python3
+
+        monitoring_servers:
+          hosts:
+            monitoring-test:
+              ansible_host: 192.168.56.11
+              ansible_user: vagrant
+              ansible_ssh_private_key_file: .vagrant/machines/monitoring/virtualbox/private_key
+              ansible_python_interpreter: /usr/bin/python3
+
+        secrets_servers:
+          hosts:
+            openbao-test:
+              ansible_host: 192.168.56.12
+              ansible_user: vagrant
+              ansible_ssh_private_key_file: .vagrant/machines/openbao/virtualbox/private_key
+              ansible_python_interpreter: /usr/bin/python3
+
+        monitored_servers:
+          hosts:
+            wordpress-test:
+            monitoring-test:
+            openbao-test:
+
+  vars:
+    # Common variables for all test servers
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+    # WordPress configuration
+    wordpress_db_name: wordpress_test
+    wordpress_db_user: wp_test
+    wordpress_db_password: "test_password_change_me"
+    nginx_wordpress_server_name: wordpress-test.local
+    nginx_wordpress_admin_password: "admin_test_password"
+    nginx_wordpress_admin_email: "admin@wordpress-test.local"
+    nginx_wordpress_ssl_enabled: false  # No SSL in test environment
+
+    # Security settings (relaxed for testing)
+    security_hardening_aide_enabled: false  # Slow, disable for testing
+    security_hardening_disable_usb_storage: false
+    ssh_2fa_enabled: false  # Disable 2FA for easier testing
+
+    # Monitoring
+    deploy_monitoring: true
+    deploy_loki: true
+    deploy_promtail: true
+
+    # Feature flags
+    firewall_enabled: true
+    fail2ban_enabled: true
+    apparmor_enabled: true
+    deploy_mariadb: true
+    deploy_valkey: true

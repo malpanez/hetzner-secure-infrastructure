@@ -1,0 +1,36 @@
+---
+# Docker Test Inventory
+# For local testing with Docker containers in WSL2
+
+all:
+  children:
+    hetzner:
+      children:
+        wordpress_servers:
+          hosts:
+            wordpress-docker:
+              ansible_host: localhost
+              ansible_connection: docker
+              ansible_python_interpreter: /usr/bin/python3
+
+  vars:
+    # WordPress configuration
+    wordpress_db_name: wordpress_test
+    wordpress_db_user: wp_test
+    wordpress_db_password: "test_password_change_me"
+    nginx_wordpress_server_name: localhost
+    nginx_wordpress_admin_password: "admin_test_password"
+    nginx_wordpress_admin_email: "admin@test.local"
+    nginx_wordpress_ssl_enabled: false
+
+    # Relaxed security for testing
+    security_hardening_aide_enabled: false
+    security_hardening_restrict_compilers: false
+    ssh_2fa_enabled: false
+
+    # Feature flags
+    firewall_enabled: true
+    fail2ban_enabled: true
+    apparmor_enabled: false  # Docker containers don't have AppArmor
+    deploy_mariadb: true
+    deploy_valkey: true
