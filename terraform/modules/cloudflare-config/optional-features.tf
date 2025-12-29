@@ -2,29 +2,9 @@
 # Optional Features
 # ========================================
 
-# ========================================
-# Rate Limiting (Free tier allows 1 rule)
-# ========================================
-
-resource "cloudflare_rate_limit" "login_attempts" {
-  count   = var.enable_rate_limiting ? 1 : 0
-  zone_id = data.cloudflare_zone.main.id
-
-  threshold = 5  # 5 requests
-  period    = 60 # per 60 seconds
-  action {
-    mode    = "challenge" # CAPTCHA
-    timeout = 3600        # 1 hour ban
-  }
-
-  match {
-    request {
-      url_pattern = "${var.domain_name}/wp-login.php*"
-    }
-  }
-
-  description = "Rate limit WordPress login (5 attempts/min)"
-}
+# NOTE: Rate limiting for wp-login.php is handled by WAF ruleset in waf-rulesets.tf
+# The deprecated cloudflare_rate_limit resource has been removed.
+# See waf-rulesets.tf: cloudflare_ruleset.wordpress_security (rule 2) for login protection.
 
 # ========================================
 # Custom Error Pages (Optional)

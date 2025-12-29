@@ -129,18 +129,12 @@ output "page_rules_count" {
 }
 
 # ========================================
-# Rate Limiting
+# Rate Limiting (Handled by WAF Ruleset)
 # ========================================
 
-output "rate_limiting_enabled" {
-  description = "Whether rate limiting is enabled"
-  value       = var.enable_rate_limiting
-}
-
-output "rate_limit_threshold" {
-  description = "Rate limit threshold (requests per period)"
-  value       = var.enable_rate_limiting ? var.login_rate_limit_threshold : null
-}
+# NOTE: Rate limiting is now handled by cloudflare_ruleset in waf-rulesets.tf
+# The deprecated cloudflare_rate_limit resource has been removed.
+# Login protection is provided by WAF rule 2 (challenge action).
 
 # ========================================
 # Feature Status
@@ -169,7 +163,7 @@ output "configuration_summary" {
     security_level      = cloudflare_zone_settings_override.security.settings[0].security_level
     firewall_rulesets   = 1 + (var.enable_course_protection ? 1 : 0)
     page_rules          = 5
-    rate_limiting       = var.enable_rate_limiting
+    waf_login_protection = true  # Handled by WAF ruleset
     ipv6_enabled        = var.server_ipv6 != null
     http2_enabled       = true
     http3_enabled       = true

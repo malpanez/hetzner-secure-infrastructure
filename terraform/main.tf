@@ -24,7 +24,7 @@ provider "cloudflare" {
 
 # Production server
 module "production_server" {
-  source = "../../modules/hetzner-server"
+  source = "./modules/hetzner-server"
 
   server_name    = var.server_name
   server_type    = var.server_type
@@ -94,7 +94,7 @@ resource "local_file" "ssh_config" {
 # Cloudflare DNS and Security Configuration
 module "cloudflare" {
   count  = var.enable_cloudflare ? 1 : 0
-  source = "../../modules/cloudflare-config"
+  source = "./modules/cloudflare-config"
 
   domain_name = var.domain
   server_ipv4 = module.production_server.server_ipv4

@@ -54,11 +54,9 @@ variable "environment" {
 # Feature Toggles
 # ========================================
 
-variable "enable_rate_limiting" {
-  description = "Enable rate limiting for login pages (free tier: 1 rule)"
-  type        = bool
-  default     = true
-}
+# NOTE: Rate limiting is now handled by WAF ruleset (waf-rulesets.tf)
+# The deprecated cloudflare_rate_limit resource has been removed.
+# Login protection is always enabled via WAF rule 2 (challenge action).
 
 variable "enable_course_protection" {
   description = "Enable protection for Tutor LMS course content"
@@ -142,30 +140,12 @@ variable "edge_cache_ttl" {
 }
 
 # ========================================
-# Rate Limiting Configuration
+# Rate Limiting Configuration (REMOVED)
 # ========================================
 
-variable "login_rate_limit_threshold" {
-  description = "Number of requests before rate limiting kicks in"
-  type        = number
-  default     = 5
-
-  validation {
-    condition     = var.login_rate_limit_threshold >= 1 && var.login_rate_limit_threshold <= 100
-    error_message = "Rate limit threshold must be between 1 and 100"
-  }
-}
-
-variable "login_rate_limit_period" {
-  description = "Period in seconds for rate limiting"
-  type        = number
-  default     = 60 # 1 minute
-
-  validation {
-    condition     = contains([10, 60, 120, 300, 600, 900, 3600], var.login_rate_limit_period)
-    error_message = "Rate limit period must be one of: 10, 60, 120, 300, 600, 900, 3600"
-  }
-}
+# NOTE: Rate limiting configuration variables have been removed.
+# Login protection is now handled by WAF ruleset in waf-rulesets.tf
+# See cloudflare_ruleset.wordpress_security (rule 2) for implementation.
 
 # ========================================
 # Custom Error Pages
