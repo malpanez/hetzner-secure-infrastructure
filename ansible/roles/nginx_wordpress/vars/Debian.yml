@@ -1,0 +1,40 @@
+---
+# Nginx WordPress Role - Debian/Ubuntu Specific Variables
+
+# Nginx packages
+nginx_wordpress_nginx_packages:
+  - nginx
+  - nginx-common
+
+# PHP packages
+nginx_wordpress_php_packages:
+  - "php{{ nginx_wordpress_php_version }}-fpm"
+  - "php{{ nginx_wordpress_php_version }}-mysql"
+  - "php{{ nginx_wordpress_php_version }}-curl"
+  - "php{{ nginx_wordpress_php_version }}-gd"
+  - "php{{ nginx_wordpress_php_version }}-mbstring"
+  - "php{{ nginx_wordpress_php_version }}-xml"
+  - "php{{ nginx_wordpress_php_version }}-xmlrpc"
+  - "php{{ nginx_wordpress_php_version }}-zip"
+  - "php{{ nginx_wordpress_php_version }}-imagick"
+
+# Additional tools
+nginx_wordpress_tools_packages:
+  - curl
+  - unzip
+  - wget
+
+# Service names
+nginx_wordpress_nginx_service: nginx
+nginx_wordpress_php_fpm_service: "php{{ nginx_wordpress_php_version }}-fpm"
+
+# Paths
+nginx_wordpress_nginx_config_dir: /etc/nginx
+nginx_wordpress_nginx_sites_available: /etc/nginx/sites-available
+nginx_wordpress_nginx_sites_enabled: /etc/nginx/sites-enabled
+nginx_wordpress_php_fpm_config_dir: "/etc/php/{{ nginx_wordpress_php_version }}/fpm"
+nginx_wordpress_php_fpm_pool_dir: "/etc/php/{{ nginx_wordpress_php_version }}/fpm/pool.d"
+
+# WP-CLI
+nginx_wordpress_wpcli_url: https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+nginx_wordpress_wpcli_path: /usr/local/bin/wp

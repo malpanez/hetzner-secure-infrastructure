@@ -1,0 +1,21 @@
+; PHP-FPM WordPress Pool Configuration
+; Managed by Ansible - nginx_wordpress role
+
+[wordpress]
+user = {{ nginx_wordpress_nginx_user }}
+group = {{ nginx_wordpress_nginx_group }}
+
+listen = /run/php/php{{ nginx_wordpress_php_version }}-fpm.sock
+listen.owner = {{ nginx_wordpress_nginx_user }}
+listen.group = {{ nginx_wordpress_nginx_group }}
+
+pm = dynamic
+pm.max_children = 5
+pm.start_servers = 2
+pm.min_spare_servers = 1
+pm.max_spare_servers = 3
+
+php_admin_value[memory_limit] = {{ nginx_wordpress_php_memory_limit }}
+php_admin_value[upload_max_filesize] = {{ nginx_wordpress_php_upload_max_filesize }}
+php_admin_value[post_max_size] = {{ nginx_wordpress_php_post_max_size }}
+php_admin_value[max_execution_time] = {{ nginx_wordpress_php_max_execution_time }}

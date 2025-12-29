@@ -1,0 +1,18 @@
+---
+# Nginx WordPress Role - Service Tasks
+
+- name: Nginx WordPress | Service | Enable and start Nginx service
+  ansible.builtin.systemd:
+    name: "{{ nginx_wordpress_nginx_service }}"
+    enabled: true
+    state: started
+  when: nginx_wordpress_install_nginx
+  tags: [nginx-wordpress, nginx, service]
+
+- name: Nginx WordPress | Service | Enable and start PHP-FPM service
+  ansible.builtin.systemd:
+    name: "{{ nginx_wordpress_php_fpm_service }}"
+    enabled: true
+    state: started
+  when: nginx_wordpress_install_php
+  tags: [nginx-wordpress, php, service]

@@ -1,0 +1,61 @@
+# Nginx WordPress Configuration
+# Managed by Ansible - nginx_wordpress role
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name {{ nginx_wordpress_server_name }} {{ nginx_wordpress_server_aliases | join(' ') }};
+
+{% if nginx_wordpress_ssl_enabled %}
+    # Redirect HTTP to HTTPS
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name {{ nginx_wordpress_server_name }} {{ nginx_wordpress_server_aliases | join(' ') }};
+
+    ssl_certificate {{ nginx_wordpress_ssl_cert_path }};
+    ssl_certificate_key {{ nginx_wordpress_ssl_key_path }};
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+{% endif %}
+
+    root {{ nginx_wordpress_web_root }};
+    index index.php index.html;
+
+    access_log /var/log/nginx/wordpress-access.log;
+    error_log /var/log/nginx/wordpress-error.log;
+
+    client_max_body_size {{ nginx_wordpress_php_upload_max_filesize }};
+
+    location / {
+        try_files $uri $uri/ /index.php?$args;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+
+    location ~ /\.ht {
+        deny all;
+    }
+
+    location = /favicon.ico {
+        log_not_found off;
+        access_log off;
+    }
+
+    location = /robots.txt {
+        log_not_found off;
+        access_log off;
+    }
+
+    location ~* \.(css|gif|ico|jpeg|jpg|js|png)$ {
+        expires max;
+        log_not_found off;
+    }
+}

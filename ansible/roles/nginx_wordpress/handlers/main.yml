@@ -3,21 +3,15 @@
 
 - name: reload nginx
   ansible.builtin.systemd:
-    name: nginx
+    name: "{{ nginx_wordpress_nginx_service }}"
     state: reloaded
-  tags: [nginx]
+
 - name: restart nginx
   ansible.builtin.systemd:
-    name: nginx
+    name: "{{ nginx_wordpress_nginx_service }}"
     state: restarted
-  tags: [nginx]
+
 - name: restart php-fpm
   ansible.builtin.systemd:
-    name: php{{ php_version }}-fpm
+    name: "{{ nginx_wordpress_php_fpm_service }}"
     state: restarted
-  tags: [php]
-- name: reload php-fpm
-  ansible.builtin.systemd:
-    name: php{{ php_version }}-fpm
-    state: reloaded
-  tags: [php]

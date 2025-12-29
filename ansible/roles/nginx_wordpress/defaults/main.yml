@@ -1,225 +1,73 @@
 ---
 # Nginx WordPress Role - Default Variables
+# NOTE: This role assumes MariaDB is already installed via the mariadb role
 
 # ========================================
-# WordPress Configuration
+# Feature Toggles
 # ========================================
 
-nginx_wordpress_domain: example.com
-nginx_wordpress_root: /var/www/{{ nginx_wordpress_domain }}
-nginx_wordpress_user: www-data
-nginx_wordpress_group: www-data
-
-# ========================================
-# PHP Configuration
-# ========================================
-
-nginx_wordpress_php_version: "8.3" # Latest PHP version for WordPress
-nginx_wordpress_php_fpm_socket: /run/php/php{{ nginx_wordpress_php_version }}-fpm.sock
-
-# PHP memory limits (recommended for WordPress)
-nginx_wordpress_php_memory_limit: 256M
-nginx_wordpress_php_max_execution_time: "300"
-nginx_wordpress_php_max_input_time: "300"
-nginx_wordpress_php_upload_max_filesize: 100M
-nginx_wordpress_php_post_max_size: 100M
-nginx_wordpress_php_max_input_vars: "5000" # Tutor LMS may need higher
+nginx_wordpress_enabled: true
+nginx_wordpress_install_nginx: true
+nginx_wordpress_install_php: true
+nginx_wordpress_install_wordpress: true
 
 # ========================================
 # Nginx Configuration
 # ========================================
 
-nginx_worker_processes: auto # Auto-detect CPU cores
-nginx_worker_connections: 2048
-nginx_keepalive_timeout: 65
-nginx_client_max_body_size: 100M # Large for course videos
+nginx_wordpress_server_name: example.com
+nginx_wordpress_server_aliases:
+  - www.example.com
 
-# FastCGI cache settings
-nginx_fastcgi_cache_enabled: true
-nginx_fastcgi_cache_path: /var/cache/nginx/fastcgi
-nginx_fastcgi_cache_size: 256m # 256 MB cache
-nginx_fastcgi_cache_inactive: 60m # Inactive items expire after 60 min
-nginx_fastcgi_cache_valid_200: 60m # Cache successful responses 60 min
-nginx_fastcgi_cache_valid_301: 1h # Cache redirects 1 hour
-nginx_fastcgi_cache_valid_404: 1m # Cache 404s briefly
+nginx_wordpress_web_root: /var/www/wordpress
+nginx_wordpress_nginx_user: www-data
+nginx_wordpress_nginx_group: www-data
 
-# Gzip compression
-nginx_gzip_enabled: true
-nginx_gzip_comp_level: 6
-nginx_gzip_types:
-  - text/plain
-  - text/css
-  - text/xml
-  - text/javascript
-  - application/json
-  - application/javascript
-  - application/xml+rss
-  - application/rss+xml
-  - font/truetype
-  - font/opentype
-  - application/vnd.ms-fontobject
-  - image/svg+xml
-
-# Brotli compression (if module available)
-nginx_brotli_enabled: true
-nginx_brotli_comp_level: 6
+# SSL/TLS
+nginx_wordpress_ssl_enabled: false  # Set to true when certs are configured
+nginx_wordpress_ssl_cert_path: /etc/ssl/certs/nginx-wordpress.crt
+nginx_wordpress_ssl_key_path: /etc/ssl/private/nginx-wordpress.key
 
 # ========================================
-# SSL/TLS Configuration
+# PHP Configuration
 # ========================================
 
-nginx_ssl_enabled: true
-nginx_ssl_certificate: /etc/letsencrypt/live/{{ nginx_wordpress_domain }}/fullchain.pem
-nginx_ssl_certificate_key: /etc/letsencrypt/live/{{ nginx_wordpress_domain }}/privkey.pem
-nginx_ssl_protocols: TLSv1.2 TLSv1.3
-nginx_ssl_ciphers: ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384
-nginx_ssl_prefer_server_ciphers: "off" # Modern browsers prefer client cipher order
-nginx_ssl_session_cache: shared:SSL:10m
-nginx_ssl_session_timeout: 1d
-nginx_ssl_stapling: true
-nginx_ssl_stapling_verify: true
-
-# HSTS (HTTP Strict Transport Security)
-nginx_hsts_enabled: true
-nginx_hsts_max_age: 31536000 # 1 year
-nginx_hsts_include_subdomains: true
-nginx_hsts_preload: true
+nginx_wordpress_php_version: "8.2"
+nginx_wordpress_php_max_execution_time: 300
+nginx_wordpress_php_memory_limit: 256M
+nginx_wordpress_php_upload_max_filesize: 64M
+nginx_wordpress_php_post_max_size: 64M
 
 # ========================================
-# Security Headers
+# WordPress Configuration
 # ========================================
+# Assumes MariaDB is installed and configured via mariadb role
 
-nginx_security_headers_enabled: true
+nginx_wordpress_version: latest
 
-nginx_security_headers:
-  X-Frame-Options: SAMEORIGIN # Prevent clickjacking
-  X-Content-Type-Options: nosniff # Prevent MIME sniffing
-  X-XSS-Protection: 1; mode=block # XSS protection (legacy)
-  Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: geolocation=(), microphone=(), camera=() # Restrict features
+# Database connection (assumes mariadb role created these)
+nginx_wordpress_db_name: wordpress
+nginx_wordpress_db_user: wordpress
+nginx_wordpress_db_password: ""  # MUST be set - should match mariadb role
+nginx_wordpress_db_host: localhost
 
-# Content Security Policy (relaxed for WordPress admin)
-nginx_csp_enabled: false # Disabled by default (can break WP admin)
-nginx_csp_policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';
+# WordPress security keys (generate with: https://api.wordpress.org/secret-key/1.1/salt/)
+nginx_wordpress_auth_key: ""
+nginx_wordpress_secure_auth_key: ""
+nginx_wordpress_logged_in_key: ""
+nginx_wordpress_nonce_key: ""
+nginx_wordpress_auth_salt: ""
+nginx_wordpress_secure_auth_salt: ""
+nginx_wordpress_logged_in_salt: ""
+nginx_wordpress_nonce_salt: ""
 
-# ========================================
-# Rate Limiting
-# ========================================
+# WordPress plugins to install
+nginx_wordpress_plugins:
+  - wordfence
+  - updraftplus
 
-nginx_rate_limit_enabled: true
-nginx_rate_limit_zone: wplogin
-nginx_rate_limit_size: 10m
-nginx_rate_limit_rate: 5r/m # 5 requests per minute for login
-nginx_rate_limit_burst: 10
-nginx_rate_limit_nodelay: false
-
-# ========================================
-# Cloudflare Integration
-# ========================================
-
-nginx_wordpress_cloudflare_enabled: true
-# Real IP from Cloudflare headers
-nginx_real_ip_header: CF-Connecting-IP
-nginx_real_ip_recursive: "on"
-
-# Cloudflare IP ranges (updated regularly)
-nginx_wordpress_cloudflare_ipv4_ranges:
-  - 173.245.48.0/20
-  - 103.21.244.0/22
-  - 103.22.200.0/22
-  - 103.31.4.0/22
-  - 141.101.64.0/18
-  - 108.162.192.0/18
-  - 190.93.240.0/20
-  - 188.114.96.0/20
-  - 197.234.240.0/22
-  - 198.41.128.0/17
-  - 162.158.0.0/15
-  - 104.16.0.0/13
-  - 104.24.0.0/14
-  - 172.64.0.0/13
-  - 131.0.72.0/22
-
-nginx_wordpress_cloudflare_ipv6_ranges:
-  - 2400:cb00::/32
-  - 2606:4700::/32
-  - 2803:f800::/32
-  - 2405:b500::/32
-  - 2405:8100::/32
-  - 2a06:98c0::/29
-  - 2c0f:f248::/32
-
-# ========================================
-# Logging
-# ========================================
-
-nginx_access_log: /var/log/nginx/{{ nginx_wordpress_domain }}_access.log
-nginx_error_log: /var/log/nginx/{{ nginx_wordpress_domain }}_error.log
-nginx_log_format: |
-  '$remote_addr - $remote_user [$time_local] "$request" '
-  '$status $body_bytes_sent "$http_referer" '
-  '"$http_user_agent" "$http_x_forwarded_for" '
-  'rt=$request_time uct="$upstream_connect_time" '
-  'uht="$upstream_header_time" urt="$upstream_response_time"'
-
-# ========================================
-# WordPress-Specific Settings
-# ========================================
-
-# Block access to sensitive files
-nginx_wordpress_blocked_files:
-  - wp-config.php
-  - readme.html
-  - license.txt
-  - wp-config-sample.php
-  - .user.ini
-  - .htaccess
-
-# Block access to sensitive directories
-nginx_wordpress_blocked_directories:
-  - .git
-  - .svn
-  - .env
-  - node_modules
-
-# WordPress multisite support
-nginx_wordpress_multisite_enabled: false
-
-# ========================================
-# Tutor LMS Specific
-# ========================================
-
-nginx_wordpress_tutor_lms_enabled: true
-
-# Protect course content (requires login)
-nginx_wordpress_tutor_course_protection_enabled: true
-
-# Increase timeouts for video uploads
-nginx_wordpress_tutor_fastcgi_read_timeout: 300 # 5 minutes for large video uploads
-
-# ========================================
-# Performance Tuning
-# ========================================
-
-# Open file cache (reduces disk I/O)
-nginx_open_file_cache_enabled: true
-nginx_open_file_cache_max: 2000
-nginx_open_file_cache_inactive: 20s
-nginx_open_file_cache_valid: 30s
-nginx_open_file_cache_min_uses: 2
-nginx_open_file_cache_errors: "on"
-
-# Sendfile optimization
-nginx_sendfile: "on"
-nginx_tcp_nopush: "on"
-nginx_tcp_nodelay: "on"
-
-# ========================================
-# Backup and Maintenance
-# ========================================
-
-# Maintenance mode page
-nginx_maintenance_page: /var/www/maintenance.html
-
-# Backup configuration
-nginx_backup_config: true
+# WordPress site info
+nginx_wordpress_site_title: "My WordPress Site"
+nginx_wordpress_admin_user: admin
+nginx_wordpress_admin_password: ""  # MUST be set
+nginx_wordpress_admin_email: admin@example.com

@@ -1,2 +1,21 @@
 ---
-# tasks file for nginx-wordpress
+# Nginx WordPress Role - Main Tasks (Orchestrator)
+
+- name: Nginx WordPress | Main | Load OS-specific variables
+  ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
+  tags: [nginx-wordpress, always]
+
+- name: Nginx WordPress | Main | Include installation tasks
+  ansible.builtin.import_tasks: install.yml
+  when: nginx_wordpress_enabled
+  tags: [nginx-wordpress, install]
+
+- name: Nginx WordPress | Main | Include configuration tasks
+  ansible.builtin.import_tasks: configure.yml
+  when: nginx_wordpress_enabled
+  tags: [nginx-wordpress, config]
+
+- name: Nginx WordPress | Main | Include service tasks
+  ansible.builtin.import_tasks: service.yml
+  when: nginx_wordpress_enabled
+  tags: [nginx-wordpress, service]
