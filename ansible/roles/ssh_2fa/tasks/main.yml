@@ -1,4 +1,9 @@
 ---
+
+- name: SSH 2FA | Main | Load OS-specific variables
+  ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
+  tags: [ssh-2fa, always]
+
 # SSH 2FA Role - Main Tasks (Orchestrator)
 
 - name: SSH 2FA | Main | Include installation tasks

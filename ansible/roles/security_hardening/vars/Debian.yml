@@ -1,0 +1,15 @@
+---
+# Security Hardening Role - Debian/Ubuntu Specific Variables
+
+# Sysctl configuration file
+security_hardening_sysctl_config_file: /etc/sysctl.d/99-security-hardening.conf
+
+# AIDE configuration
+security_hardening_aide_config_file: /etc/aide/aide.conf
+security_hardening_aide_db_path: /var/lib/aide/aide.db
+
+# Auditd package
+security_hardening_auditd_package: auditd
+
+# Unattended upgrades package
+security_hardening_unattended_upgrades_package: unattended-upgrades

@@ -1,0 +1,23 @@
+---
+# SSH 2FA Role - Debian/Ubuntu Specific Variables
+
+# Package names
+ssh_2fa_packages:
+  - libpam-google-authenticator
+  - libqrencode4
+  - openssh-server
+  - qrencode
+
+# SSH configuration files
+ssh_2fa_sshd_config_file: /etc/ssh/sshd_config
+ssh_2fa_sshd_config_dir: /etc/ssh/sshd_config.d
+
+# PAM configuration directory
+ssh_2fa_pam_dir: /etc/pam.d
+
+# SSH service name
+ssh_2fa_ssh_service: sshd
+
+# Commands
+ssh_2fa_sshd_test_command: "sshd -t"
+ssh_2fa_ssh_keygen_command: ssh-keygen
