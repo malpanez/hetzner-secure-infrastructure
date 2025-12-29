@@ -80,13 +80,13 @@ output "security_level" {
 }
 
 output "firewall_rules_count" {
-  description = "Number of active firewall rules"
-  value       = length([
-    cloudflare_firewall_rule.block_xmlrpc.id,
-    cloudflare_firewall_rule.rate_limit_login.id,
-    cloudflare_firewall_rule.block_wp_config.id,
-    cloudflare_firewall_rule.block_attacks.id,
-  ]) + (var.enable_course_protection ? 1 : 0)
+  description = "Number of active firewall rulesets"
+  value       = 1 + (var.enable_course_protection ? 1 : 0)
+}
+
+output "wordpress_security_ruleset_id" {
+  description = "ID of the WordPress security ruleset"
+  value       = cloudflare_ruleset.wordpress_security.id
 }
 
 # ========================================
@@ -167,12 +167,7 @@ output "configuration_summary" {
     zone_status         = data.cloudflare_zone.main.status
     ssl_mode            = cloudflare_zone_settings_override.security.settings[0].ssl
     security_level      = cloudflare_zone_settings_override.security.settings[0].security_level
-    firewall_rules      = length([
-      cloudflare_firewall_rule.block_xmlrpc.id,
-      cloudflare_firewall_rule.rate_limit_login.id,
-      cloudflare_firewall_rule.block_wp_config.id,
-      cloudflare_firewall_rule.block_attacks.id,
-    ]) + (var.enable_course_protection ? 1 : 0)
+    firewall_rulesets   = 1 + (var.enable_course_protection ? 1 : 0)
     page_rules          = 5
     rate_limiting       = var.enable_rate_limiting
     ipv6_enabled        = var.server_ipv6 != null
