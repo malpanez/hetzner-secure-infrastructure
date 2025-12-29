@@ -1,0 +1,170 @@
+---
+# Simplified WordPress-only Playbook for Testing
+# Skips monitoring and OpenBao to avoid missing dependencies
+
+# ========================================
+# Common Configuration (All Servers)
+# ========================================
+- name: Apply common security hardening to all servers
+  hosts: hetzner
+  become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Display deployment information
+      ansible.builtin.debug:
+        msg: |
+          ========================================
+          Deploying to: {{ inventory_hostname }}
+          Groups: {{ group_names | join(', ') }}
+          OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
+          IP: {{ ansible_default_ipv4.address | default('N/A') }}
+          ========================================
+      tags: [always]
+
+    - name: Update apt cache (Debian/Ubuntu)
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+      when: ansible_os_family == 'Debian'
+      tags: [always]
+
+    - name: Check OS compatibility
+      ansible.builtin.assert:
+        that:
+          - ansible_distribution in ['Debian', 'Ubuntu']
+          - ansible_distribution_major_version | int >= 11
+        fail_msg: This playbook requires Debian 11+ or Ubuntu 20.04+
+        success_msg: OS compatibility check passed
+      tags: [always]
+
+  roles:
+    - role: common
+      tags: [common, base]
+
+    - role: security_hardening
+      tags: [security, hardening]
+
+    - role: firewall
+      tags: [security, firewall]
+      when: firewall_enabled | default(true) | bool
+
+    - role: fail2ban
+      tags: [security, fail2ban]
+      when: fail2ban_enabled | default(true) | bool
+
+    - role: apparmor
+      tags: [security, apparmor]
+      when:
+        - apparmor_enabled | default(true) | bool
+        - ansible_distribution in ['Debian', 'Ubuntu']
+
+    - role: ssh_2fa
+      tags: [security, ssh, 2fa]
+      when: ssh_2fa_enabled | default(true) | bool
+
+  post_tasks:
+    - name: Flush handlers
+      ansible.builtin.meta: flush_handlers
+      tags: [always]
+
+# ========================================
+# WordPress Application Servers
+# ========================================
+- name: Deploy WordPress application stack
+  hosts: wordpress_servers
+  become: true
+  gather_facts: true
+
+  roles:
+    # Use Galaxy role for MariaDB
+    - role: geerlingguy.mysql
+      tags: [wordpress, database, mariadb]
+      vars:
+        mysql_databases:
+          - name: "{{ wordpress_db_name | default('wordpress') }}"
+            encoding: utf8mb4
+            collation: utf8mb4_unicode_ci
+        mysql_users:
+          - name: "{{ wordpress_db_user | default('wordpress') }}"
+            host: localhost
+            password: "{{ wordpress_db_password }}"
+            priv: "{{ wordpress_db_name | default('wordpress') }}.*:ALL"
+      when: deploy_mariadb | default(true) | bool
+
+    # Custom roles
+    - role: valkey
+      tags: [wordpress, redis, cache, performance]
+      when: deploy_valkey | default(true) | bool
+
+    - role: nginx_wordpress
+      tags: [wordpress, nginx, webserver]
+
+  post_tasks:
+    - name: Display WordPress deployment information
+      ansible.builtin.debug:
+        msg: |
+          ========================================
+          WordPress Stack Deployed
+          ========================================
+
+          Server: {{ inventory_hostname }}
+          Domain: {{ nginx_wordpress_server_name }}
+          Root: {{ nginx_wordpress_web_root | default('/var/www/wordpress') }}
+
+          Next steps:
+          1. Access WordPress: http://{{ nginx_wordpress_server_name }}
+          2. Complete installation via web interface
+          3. Install LearnDash manually (requires license)
+
+          Database Info:
+          - Database: {{ wordpress_db_name | default('wordpress') }}
+          - User: {{ wordpress_db_user | default('wordpress') }}
+
+          8 Essential Plugins Auto-Installed:
+          1. Wordfence (Security)
+          2. Sucuri Scanner (Security)
+          3. WP 2FA (Two-factor auth)
+          4. UpdraftPlus (Backups)
+          5. Redis Cache (Performance - backend only)
+          6. Yoast SEO (SEO)
+          7. Enable Media Replace (Media)
+          8. WP Mail SMTP (Email)
+          9. Health Check (Monitoring)
+
+          ========================================
+      tags: [wordpress, info]
+
+# ========================================
+# Final Validation
+# ========================================
+- name: Validate deployment
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Verify all servers are accessible
+      ansible.builtin.ping:
+      tags: [validate]
+
+    - name: Display deployment summary
+      ansible.builtin.debug:
+        msg: |
+          ========================================
+          🎉 WORDPRESS DEPLOYMENT COMPLETE
+          ========================================
+
+          Test the deployment:
+          - WordPress: http://localhost:8080 (if using Docker)
+          - SSH: docker exec -it wordpress-test bash
+
+          Security Features:
+          ✅ UFW Firewall
+          ✅ Fail2ban IDS
+          ✅ Kernel Hardening
+          ✅ Auto Security Updates
+
+          ========================================
+      run_once: true
+      tags: [validate, summary, always]
