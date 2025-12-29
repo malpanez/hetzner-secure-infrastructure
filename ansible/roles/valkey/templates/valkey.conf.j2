@@ -1,0 +1,38 @@
+# Valkey Configuration
+# Managed by Ansible - valkey role
+
+# Network
+bind {{ valkey_bind }}
+port {{ valkey_port }}
+protected-mode {{ valkey_protected_mode }}
+tcp-backlog {{ valkey_tcp_backlog }}
+timeout {{ valkey_timeout }}
+
+# General
+daemonize no
+supervised systemd
+pidfile {{ valkey_pid_file }}
+loglevel {{ valkey_loglevel }}
+logfile {{ valkey_log_file }}
+databases {{ valkey_databases }}
+
+# Security
+{% if valkey_requirepass %}
+requirepass {{ valkey_requirepass }}
+{% endif %}
+
+# Memory
+maxmemory {{ valkey_maxmemory }}
+maxmemory-policy {{ valkey_maxmemory_policy }}
+
+# Persistence
+{% if valkey_save_enabled %}
+{% for rule in valkey_save_rules %}
+save {{ rule }}
+{% endfor %}
+{% else %}
+save ""
+{% endif %}
+
+dir {{ valkey_data_dir }}
+appendonly {{ valkey_appendonly }}

@@ -1,0 +1,49 @@
+---
+# Valkey Role - Configuration Tasks
+
+- name: Valkey | Configure | Create Valkey directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ valkey_user }}"
+    group: "{{ valkey_group }}"
+    mode: '0750'
+  loop:
+    - "{{ valkey_config_dir }}"
+    - "{{ valkey_data_dir }}"
+    - "{{ valkey_log_dir }}"
+    - "{{ valkey_run_dir }}"
+  tags: [valkey, config, directories]
+
+- name: Valkey | Configure | Deploy Valkey configuration
+  ansible.builtin.template:
+    src: valkey.conf.j2
+    dest: "{{ valkey_config_file }}"
+    owner: "{{ valkey_user }}"
+    group: "{{ valkey_group }}"
+    mode: '0640'
+    validate: valkey-server %s --test-memory 0
+  notify: restart valkey
+  tags: [valkey, config]
+
+- name: Valkey | Configure | Configure system parameters
+  ansible.posix.sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_file: "{{ valkey_sysctl_config_file }}"
+    reload: true
+  loop:
+    - {name: 'vm.overcommit_memory', value: '1'}
+    - {name: 'net.core.somaxconn', value: '{{ valkey_tcp_backlog }}'}
+  when: valkey_overcommit_memory
+  tags: [valkey, config, sysctl]
+
+- name: Valkey | Configure | Disable transparent huge pages
+  ansible.builtin.lineinfile:
+    path: /etc/rc.local
+    line: 'echo never > /sys/kernel/mm/transparent_hugepage/enabled'
+    create: true
+    mode: '0755'
+  when: valkey_disable_thp
+  tags: [valkey, config, thp]

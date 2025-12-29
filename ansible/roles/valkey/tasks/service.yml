@@ -1,0 +1,10 @@
+---
+# Valkey Role - Service Tasks
+
+- name: Valkey | Service | Enable and start Valkey service
+  ansible.builtin.systemd:
+    name: "{{ valkey_service_name }}"
+    enabled: true
+    state: started
+    daemon_reload: true
+  tags: [valkey, service]

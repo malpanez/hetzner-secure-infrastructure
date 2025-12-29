@@ -1,2 +1,85 @@
 ---
-# defaults file for valkey
+# Valkey Role - Default Variables
+
+# ========================================
+# Feature Toggles
+# ========================================
+
+# Enable Valkey deployment
+valkey_enabled: true
+
+# ========================================
+# Valkey Configuration
+# ========================================
+
+# Valkey version (for repository)
+valkey_version: "7.2"
+
+# Bind address
+valkey_bind: 127.0.0.1
+
+# Port
+valkey_port: 6379
+
+# Protected mode
+valkey_protected_mode: "yes"
+
+# Require password
+valkey_requirepass: ""
+
+# Max memory
+valkey_maxmemory: 256mb
+
+# Max memory policy
+valkey_maxmemory_policy: allkeys-lru
+
+# Persistence
+valkey_save_enabled: true
+valkey_save_rules:
+  - "900 1"
+  - "300 10"
+  - "60 10000"
+
+# AOF persistence
+valkey_appendonly: "no"
+
+# Log level
+valkey_loglevel: notice
+
+# Databases
+valkey_databases: 16
+
+# Timeout
+valkey_timeout: 0
+
+# TCP backlog
+valkey_tcp_backlog: 511
+
+# ========================================
+# System Configuration
+# ========================================
+
+# Valkey user and group
+valkey_user: valkey
+valkey_group: valkey
+
+# Directories
+valkey_config_dir: /etc/valkey
+valkey_data_dir: /var/lib/valkey
+valkey_log_dir: /var/log/valkey
+valkey_run_dir: /var/run/valkey
+
+# Files
+valkey_config_file: /etc/valkey/valkey.conf
+valkey_log_file: /var/log/valkey/valkey.log
+valkey_pid_file: /var/run/valkey/valkey.pid
+
+# ========================================
+# Performance Tuning
+# ========================================
+
+# Disable transparent huge pages
+valkey_disable_thp: true
+
+# Set overcommit memory
+valkey_overcommit_memory: true

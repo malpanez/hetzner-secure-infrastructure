@@ -1,2 +1,8 @@
 ---
-# handlers file for valkey
+# Valkey Role - Handlers
+
+- name: restart valkey
+  ansible.builtin.systemd:
+    name: "{{ valkey_service_name }}"
+    state: restarted
+    daemon_reload: true

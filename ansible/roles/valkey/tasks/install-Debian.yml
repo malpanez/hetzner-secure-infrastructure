@@ -1,0 +1,27 @@
+---
+# Valkey Role - Debian/Ubuntu Installation Tasks
+
+- name: Valkey | Install | Add Valkey APT repository key
+  ansible.builtin.get_url:
+    url: "{{ valkey_gpg_key_url }}"
+    dest: /usr/share/keyrings/valkey-archive-keyring.gpg
+    mode: '0644'
+  tags: [valkey, repository]
+
+- name: Valkey | Install | Add Valkey APT repository (DEB822)
+  ansible.builtin.deb822_repository:
+    name: valkey
+    types: [deb]
+    uris: "{{ valkey_apt_repository_url }}"
+    suites: "{{ valkey_apt_repository_suite }}"
+    components: [main]
+    signed_by: /usr/share/keyrings/valkey-archive-keyring.gpg
+    state: present
+  tags: [valkey, repository]
+
+- name: Valkey | Install | Install Valkey package
+  ansible.builtin.apt:
+    name: "{{ valkey_package }}"
+    state: present
+    update_cache: true
+  tags: [valkey, packages]

@@ -1,2 +1,26 @@
 ---
-# tasks file for valkey
+# Valkey Role - Main Tasks (Orchestrator)
+
+- name: Valkey | Main | Load OS-specific variables
+  ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
+  tags: [valkey, always]
+
+- name: Valkey | Main | Include installation tasks
+  ansible.builtin.import_tasks: install.yml
+  when: valkey_enabled
+  tags: [valkey, install]
+
+- name: Valkey | Main | Include configuration tasks
+  ansible.builtin.import_tasks: configure.yml
+  when: valkey_enabled
+  tags: [valkey, config]
+
+- name: Valkey | Main | Include service tasks
+  ansible.builtin.import_tasks: service.yml
+  when: valkey_enabled
+  tags: [valkey, service]
+
+- name: Valkey | Main | Include validation tasks
+  ansible.builtin.import_tasks: validate.yml
+  when: valkey_enabled
+  tags: [valkey, validate]
