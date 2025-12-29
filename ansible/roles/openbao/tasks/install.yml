@@ -1,15 +1,9 @@
 ---
-# OpenBao Role - Installation Tasks
+# OpenBao Role - Installation Tasks (Multi-platform orchestrator)
 
-- name: OpenBao | Install | Install APT dependencies
-  when: ansible_os_family == 'Debian'
-  block:
-    - name: OpenBao | Install | Install dependencies
-      ansible.builtin.apt:
-        name: "{{ openbao_apt_dependencies }}"
-        state: present
-        update_cache: true
-      tags: [openbao, packages]
+- name: OpenBao | Install | Include OS-specific dependency installation
+  ansible.builtin.include_tasks: "install-{{ ansible_os_family }}.yml"
+  tags: [openbao, install, packages]
 
 - name: OpenBao | Install | Create OpenBao system group
   ansible.builtin.group:
@@ -35,7 +29,7 @@
     state: directory
     owner: "{{ openbao_user }}"
     group: "{{ openbao_group }}"
-    mode: "0750"
+    mode: '0750'
   loop:
     - "{{ openbao_config_dir }}"
     - "{{ openbao_data_dir }}"
@@ -46,38 +40,38 @@
 
 - name: OpenBao | Install | Check if OpenBao binary exists
   ansible.builtin.stat:
-    path: "{{ openbao_install_dir }}/bao"
+    path: "{{ openbao_binary_path }}"
   register: openbao_binary
   tags: [openbao, binary]
 
 - name: OpenBao | Install | Download OpenBao binary
   ansible.builtin.get_url:
-    url: https://github.com/openbao/openbao/releases/download/v{{ openbao_version }}/bao_{{ openbao_version }}_linux_amd64.zip
-    dest: /tmp/openbao_{{ openbao_version }}.zip
-    mode: "0644"
+    url: "{{ openbao_download_base_url }}/{{ openbao_binary_zip }}"
+    dest: "/tmp/openbao_{{ openbao_version }}.zip"
+    mode: '0644'
   when: not openbao_binary.stat.exists
   tags: [openbao, binary]
 
 - name: OpenBao | Install | Extract OpenBao binary
   ansible.builtin.unarchive:
-    src: /tmp/openbao_{{ openbao_version }}.zip
+    src: "/tmp/openbao_{{ openbao_version }}.zip"
     dest: "{{ openbao_install_dir }}"
     remote_src: true
-    creates: "{{ openbao_install_dir }}/bao"
+    creates: "{{ openbao_binary_path }}"
   when: not openbao_binary.stat.exists
   tags: [openbao, binary]
 
 - name: OpenBao | Install | Set OpenBao binary permissions
   ansible.builtin.file:
-    path: "{{ openbao_install_dir }}/bao"
+    path: "{{ openbao_binary_path }}"
     owner: root
     group: root
-    mode: "0755"
+    mode: '0755'
   tags: [openbao, binary]
 
 - name: OpenBao | Install | Set OpenBao binary capabilities
   community.general.capabilities:
-    path: "{{ openbao_install_dir }}/bao"
+    path: "{{ openbao_binary_path }}"
     capability: cap_ipc_lock=+ep
     state: present
   when: not openbao_disable_mlock

@@ -1,0 +1,21 @@
+---
+# OpenBao Role - Debian/Ubuntu Specific Variables
+
+# APT dependencies
+openbao_apt_dependencies:
+  - ca-certificates
+  - curl
+  - jq
+  - openssl
+  - unzip
+
+# OpenBao download configuration
+openbao_download_base_url: "https://github.com/openbao/openbao/releases/download/v{{ openbao_version }}"
+openbao_binary_zip: "bao_{{ openbao_version }}_linux_amd64.zip"
+
+# System paths
+openbao_binary_path: "{{ openbao_install_dir }}/bao"
+
+# Service configuration
+openbao_service_name: openbao
+openbao_systemd_dir: /etc/systemd/system

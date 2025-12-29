@@ -1,0 +1,9 @@
+---
+# OpenBao Role - Debian/Ubuntu Installation Tasks
+
+- name: OpenBao | Install | Install APT dependencies
+  ansible.builtin.apt:
+    name: "{{ openbao_apt_dependencies }}"
+    state: present
+    update_cache: true
+  tags: [openbao, packages]
