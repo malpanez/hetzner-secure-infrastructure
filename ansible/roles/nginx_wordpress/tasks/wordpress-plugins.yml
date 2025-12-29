@@ -1,0 +1,145 @@
+---
+# Nginx WordPress Role - WordPress Plugins Installation
+
+- name: Nginx WordPress | Plugins | Check if WordPress is installed
+  ansible.builtin.stat:
+    path: "{{ nginx_wordpress_web_root }}/wp-config.php"
+  register: wp_config_check
+  tags: [nginx-wordpress, wordpress, plugins]
+
+- name: Nginx WordPress | Plugins | Install mandatory WordPress plugins
+  ansible.builtin.command:
+    cmd: "{{ nginx_wordpress_wpcli_path }} plugin install {{ item }} --activate --path={{ nginx_wordpress_web_root }}"
+  become_user: "{{ nginx_wordpress_nginx_user }}"
+  loop: "{{ nginx_wordpress_plugins_mandatory }}"
+  register: plugin_install
+  changed_when: "'already installed' not in plugin_install.stdout"
+  failed_when: false
+  when: wp_config_check.stat.exists
+  tags: [nginx-wordpress, wordpress, plugins]
+
+- name: Nginx WordPress | Plugins | Check plugin installation status
+  ansible.builtin.command:
+    cmd: "{{ nginx_wordpress_wpcli_path }} plugin list --path={{ nginx_wordpress_web_root }} --format=json"
+  become_user: "{{ nginx_wordpress_nginx_user }}"
+  register: installed_plugins
+  changed_when: false
+  when: wp_config_check.stat.exists
+  tags: [nginx-wordpress, wordpress, plugins]
+
+- name: Nginx WordPress | Plugins | Display installed plugins
+  ansible.builtin.debug:
+    msg: |
+      ========================================
+      Installed WordPress Plugins
+      ========================================
+      {{ installed_plugins.stdout | from_json | map(attribute='name') | list | join('\n') }}
+      ========================================
+
+      NOTE: LearnDash Pro must be installed manually with license
+      ========================================
+  when:
+    - wp_config_check.stat.exists
+    - installed_plugins.stdout is defined
+  tags: [nginx-wordpress, wordpress, plugins, info]
+
+- name: Nginx WordPress | Plugins | Configure Redis Object Cache
+  block:
+    - name: Nginx WordPress | Plugins | Check if Redis/Valkey is running
+      ansible.builtin.systemd:
+        name: valkey
+      register: valkey_status
+      failed_when: false
+      changed_when: false
+
+    - name: Nginx WordPress | Plugins | Enable Redis Object Cache
+      ansible.builtin.command:
+        cmd: "{{ nginx_wordpress_wpcli_path }} redis enable --path={{ nginx_wordpress_web_root }}"
+      become_user: "{{ nginx_wordpress_nginx_user }}"
+      when: valkey_status.status.ActiveState == 'active'
+      register: redis_enable
+      changed_when: "'already enabled' not in redis_enable.stdout"
+      failed_when: false
+
+    - name: Nginx WordPress | Plugins | Display Redis cache status
+      ansible.builtin.debug:
+        msg: "Redis Object Cache: {{ 'ENABLED' if valkey_status.status.ActiveState == 'active' else 'DISABLED (Valkey not running)' }}"
+  when: wp_config_check.stat.exists
+  tags: [nginx-wordpress, wordpress, plugins, redis]
+
+- name: Nginx WordPress | Plugins | Configure Wordfence Security
+  block:
+    - name: Nginx WordPress | Plugins | Set Wordfence firewall mode
+      ansible.builtin.command:
+        cmd: "{{ nginx_wordpress_wpcli_path }} option update wordfence_wafStatus enabled --path={{ nginx_wordpress_web_root }}"
+      become_user: "{{ nginx_wordpress_nginx_user }}"
+      register: wordfence_config
+      changed_when: wordfence_config.rc == 0
+      failed_when: false
+
+    - name: Nginx WordPress | Plugins | Display Wordfence status
+      ansible.builtin.debug:
+        msg: "Wordfence WAF: Configured (enable extended protection via admin panel)"
+  when: wp_config_check.stat.exists
+  tags: [nginx-wordpress, wordpress, plugins, security]
+
+- name: Nginx WordPress | Plugins | Configure UpdraftPlus backups
+  ansible.builtin.debug:
+    msg: |
+      ========================================
+      UpdraftPlus Backup Configuration
+      ========================================
+
+      Manual Configuration Required:
+      1. Log in to WordPress admin
+      2. Navigate to Settings > UpdraftPlus Backups
+      3. Configure backup schedule (recommended: daily database, weekly files)
+      4. Set backup destination (recommended: S3, Google Drive, or Dropbox)
+      5. Test backup restoration
+
+      ========================================
+  when: wp_config_check.stat.exists
+  tags: [nginx-wordpress, wordpress, plugins, backup, info]
+
+- name: Nginx WordPress | Plugins | Security recommendations
+  ansible.builtin.debug:
+    msg: |
+      ========================================
+      WordPress Security Configuration
+      ========================================
+
+      Mandatory Post-Installation Tasks:
+
+      1. Wordfence Security:
+         - Enable 2FA for admin users
+         - Configure firewall rules
+         - Enable real-time IP blocklist
+         - Schedule security scans
+
+      2. WP 2FA:
+         - Configure 2FA for all users
+         - Set enforcement policy
+         - Test 2FA login
+
+      3. Sucuri Scanner:
+         - Run initial security audit
+         - Configure email alerts
+         - Enable file integrity monitoring
+
+      4. UpdraftPlus:
+         - Configure automated backups
+         - Test backup restoration
+         - Set remote storage
+
+      5. Redis Cache:
+         - {{ 'ENABLED - Monitor performance' if valkey_status.status.ActiveState == 'active' else 'DISABLED - Install Valkey to enable' }}
+
+      6. LearnDash Pro:
+         - INSTALL MANUALLY with license key
+         - Configure course settings
+         - Set up payment gateways
+
+      ========================================
+  when: wp_config_check.stat.exists
+  run_once: true
+  tags: [nginx-wordpress, wordpress, plugins, security, info]

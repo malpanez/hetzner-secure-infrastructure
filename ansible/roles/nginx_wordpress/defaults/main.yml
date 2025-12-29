@@ -61,10 +61,43 @@ nginx_wordpress_secure_auth_salt: ""
 nginx_wordpress_logged_in_salt: ""
 nginx_wordpress_nonce_salt: ""
 
-# WordPress plugins to install
-nginx_wordpress_plugins:
-  - wordfence
-  - updraftplus
+# ========================================
+# WordPress Plugins
+# ========================================
+
+# Mandatory plugins (installed automatically)
+# Note: Cloudflare handles caching, minification, and CDN
+nginx_wordpress_plugins_mandatory:
+  # Security
+  - wordfence                    # Security & firewall (server-side protection)
+  - sucuri-scanner               # Security hardening & monitoring
+  - wp-2fa                       # Two-factor authentication
+
+  # Backups
+  - updraftplus                  # Automated backups with cloud storage
+
+  # Performance (Backend only - Cloudflare handles frontend)
+  - redis-cache                  # Object cache for database queries (requires Valkey)
+
+  # SEO
+  - wordpress-seo               # Yoast SEO (metadata, sitemaps, structured data)
+
+  # Media & Content
+  - enable-media-replace        # Replace media files preserving URLs
+
+  # Admin & Maintenance
+  - wp-mail-smtp               # Reliable transactional email delivery
+  - health-check               # Site health & environment monitoring
+
+# Optional plugins (install manually or set to true)
+nginx_wordpress_plugins_optional:
+  - contact-form-7             # Contact forms
+  - elementor                  # Page builder
+  - woocommerce               # E-commerce (if needed)
+
+# LMS Plugin (install manually - requires license)
+# LearnDash Pro - Commercial plugin, must be installed manually
+nginx_wordpress_lms_plugin_manual: learndash  # Reminder: Install manually with license
 
 # WordPress site info
 nginx_wordpress_site_title: "My WordPress Site"
