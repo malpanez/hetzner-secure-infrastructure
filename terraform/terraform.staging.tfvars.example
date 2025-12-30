@@ -19,21 +19,35 @@ server_name    = "staging-wordpress"
 admin_username = "malpanez"
 environment    = "staging"
 
-# Recommended: ARM medium (40% cheaper than x86 large, same RAM)
-architecture = "arm"     # Options: "x86" (AMD EPYC) or "arm" (Ampere Altra)
-server_size  = "medium"  # Options: "small", "medium", "large", "xlarge"
-                         # → Auto-selects: cax21 (4 vCPU, 8GB RAM, €8.30/mo)
-location     = "fsn1"    # Falkenstein (ARM available here)
+# Recommended: x86 cost-optimized (CX23 - cheapest overall!)
+architecture = "x86"    # Options: "x86" (cost), "x86_perf" (AMD EPYC), "arm" (Ampere)
+server_size  = "small"  # Options: "small", "medium", "large", "xlarge"
+                        # → Auto-selects: cx23 (2 vCPU, 4GB RAM, €3.68/mo)
+location     = "nbg1"   # Nuremberg (CX available, limited stock!)
 
-# Alternative: x86 if you prefer compatibility
-# architecture = "x86"
-# server_size  = "large"   # cpx31: 4 vCPU, 8GB RAM, €13.90/mo
-# location     = "nbg1"    # Nuremberg
+# Alternative: ARM small (10% more expensive but better availability)
+# architecture = "arm"
+# server_size  = "small"   # cax11: 2 vCPU, 4GB RAM, €4.05/mo
+# location     = "fsn1"    # Falkenstein (ARM always available)
 
-# Cost comparison:
-# ARM medium (cax21):  €8.30/mo  = €99.60/year
-# x86 large (cpx31):   €13.90/mo = €166.80/year
-# Savings with ARM:    €5.60/mo  = €67.20/year (40% cheaper!)
+# Alternative: ARM medium for more power
+# architecture = "arm"
+# server_size  = "medium"  # cax21: 4 vCPU, 8GB RAM, €7.37/mo
+# location     = "fsn1"
+
+# Alternative: x86 performance (AMD EPYC guaranteed)
+# architecture = "x86_perf"
+# server_size  = "small"   # cpx22: 2 vCPU, 4GB RAM, 80GB disk, €7.37/mo
+# location     = "nbg1"
+
+# Cost comparison (real prices 2024-12-30):
+# x86 cost-opt (cx23):  €3.68/mo  = €44.16/year  ⭐ CHEAPEST (limited stock!)
+# ARM small (cax11):    €4.05/mo  = €48.60/year  ⭐ BEST AVAILABILITY
+# ARM medium (cax21):   €7.37/mo  = €88.44/year
+# x86 perf (cpx22):     €7.37/mo  = €88.44/year
+# x86 perf (cpx32):     €12.90/mo = €154.80/year
+#
+# Best choice: CX23 if available, otherwise CAX11 (only €0.37/mo more)
 
 # ============================================================================
 # Network & Firewall
@@ -82,30 +96,49 @@ labels = {
 
 # ============================================================================
 # Server Size Reference (Auto-selected based on architecture + server_size)
+# Prices updated: 2024-12-30 from Hetzner Cloud Console
 # ============================================================================
 #
-# x86 (AMD EPYC) - Available in ALL locations:
-# ┌────────┬──────────┬──────┬──────┬────────┬───────────┐
-# │ Size   │ Type     │ vCPU │ RAM  │ Disk   │ Price/mo  │
-# ├────────┼──────────┼──────┼──────┼────────┼───────────┤
-# │ small  │ cpx11    │ 2    │ 2GB  │ 40GB   │ €4.50     │
-# │ medium │ cpx21    │ 3    │ 4GB  │ 80GB   │ €8.50     │
-# │ large  │ cpx31    │ 4    │ 8GB  │ 160GB  │ €13.90    │
-# │ xlarge │ cpx41    │ 8    │ 16GB │ 240GB  │ €26.90    │
-# └────────┴──────────┴──────┴──────┴────────┴───────────┘
-#
-# ARM (Ampere Altra) - Only in: fsn1, hel1, ash:
+# x86 Cost-Optimized - CX series (architecture="x86"):
+# Limited availability, older hardware (Intel/AMD mix), but CHEAPEST!
 # ┌────────┬──────────┬──────┬──────┬────────┬───────────┬────────────┐
-# │ Size   │ Type     │ vCPU │ RAM  │ Disk   │ Price/mo  │ Savings    │
+# │ Size   │ Type     │ vCPU │ RAM  │ Disk   │ Price/mo  │ vs CAX11   │
 # ├────────┼──────────┼──────┼──────┼────────┼───────────┼────────────┤
-# │ small  │ cax11    │ 2    │ 4GB  │ 40GB   │ €4.15     │ €0.35 (8%) │
-# │ medium │ cax21    │ 4    │ 8GB  │ 80GB   │ €8.30     │ €5.60 (40%)│ ⭐
-# │ large  │ cax31    │ 8    │ 16GB │ 160GB  │ €16.60    │ €10.30     │
-# │ xlarge │ cax41    │ 16   │ 32GB │ 320GB  │ €33.20    │ €20.60     │
+# │ small  │ cx23     │ 2    │ 4GB  │ 40GB   │ €3.68  ⭐ │ -€0.37/mo  │
+# │ medium │ cx33     │ 4    │ 8GB  │ 80GB   │ €6.14     │ -€1.23/mo  │
+# │ large  │ cx43     │ 8    │ 16GB │ 160GB  │ €11.06    │ -€3.69/mo  │
+# │ xlarge │ cx53     │ 16   │ 32GB │ 320GB  │ €20.90    │ -€8.61/mo  │
 # └────────┴──────────┴──────┴──────┴────────┴───────────┴────────────┘
 #
-# 💡 Tips:
-#   - ARM "small" has DOUBLE RAM vs x86 (4GB vs 2GB)
-#   - ARM "medium" saves 40% vs x86 "large" (same RAM, more CPU!)
-#   - For staging: ARM medium @ fsn1 is sweet spot (€8.30/mo)
-#   - For production: x86 large @ nbg1 for reliability (€13.90/mo)
+# ARM (Ampere Altra) - CAX series (architecture="arm"):
+# Best availability, modern ARM64 CPUs, great price/performance
+# ┌────────┬──────────┬──────┬──────┬────────┬───────────┬────────────┐
+# │ Size   │ Type     │ vCPU │ RAM  │ Disk   │ Price/mo  │ vs CX      │
+# ├────────┼──────────┼──────┼──────┼────────┼───────────┼────────────┤
+# │ small  │ cax11    │ 2    │ 4GB  │ 40GB   │ €4.05     │ +€0.37/mo  │
+# │ medium │ cax21    │ 4    │ 8GB  │ 80GB   │ €7.37     │ +€1.23/mo  │
+# │ large  │ cax31    │ 8    │ 16GB │ 160GB  │ €14.75    │ +€3.69/mo  │
+# │ xlarge │ cax41    │ 16   │ 32GB │ 320GB  │ €29.51    │ +€8.61/mo  │
+# └────────┴──────────┴──────┴──────┴────────┴───────────┴────────────┘
+#
+# x86 Performance - CPX series (architecture="x86_perf"):
+# Guaranteed AMD EPYC CPUs, NVMe storage, best single-core performance
+# ┌────────┬──────────┬──────┬──────┬────────┬───────────┬────────────┐
+# │ Size   │ Type     │ vCPU │ RAM  │ Disk   │ Price/mo  │ vs CX      │
+# ├────────┼──────────┼──────┼──────┼────────┼───────────┼────────────┤
+# │ small  │ cpx22    │ 2    │ 4GB  │ 80GB   │ €7.37     │ +€3.69/mo  │
+# │ medium │ cpx32    │ 4    │ 8GB  │ 160GB  │ €12.90    │ +€6.76/mo  │
+# │ large  │ cpx42    │ 8    │ 16GB │ 320GB  │ €23.97    │ +€12.91/mo │
+# │ xlarge │ cpx52    │ 12   │ 24GB │ 480GB  │ €34.43    │ +€13.53/mo │
+# └────────┴──────────┴──────┴──────┴────────┴───────────┴────────────┘
+#
+# 💡 Recommendations:
+#   - Staging (budget): CX23 @ €3.68/mo (if available, limited stock!)
+#   - Staging (reliable): CAX11 @ €4.05/mo (always available, ARM64)
+#   - Production (small): CAX21 @ €7.37/mo (4 vCPU, ARM64)
+#   - Production (reliable): CPX32 @ €12.90/mo (AMD EPYC guaranteed)
+#
+# 💰 Staging yearly costs:
+#   - CX23:  €44.16/year (CHEAPEST, but may not be available)
+#   - CAX11: €48.60/year (best price + guaranteed availability)
+#   - CPX22: €88.44/year (overpaying 82% vs CAX11 for same specs!)

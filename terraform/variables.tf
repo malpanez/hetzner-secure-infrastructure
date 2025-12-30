@@ -15,13 +15,13 @@ variable "server_name" {
 # ============================================================================
 
 variable "architecture" {
-  description = "CPU architecture: x86 (AMD EPYC) or arm (Ampere Altra)"
+  description = "CPU architecture: x86 (Intel/AMD), x86_perf (AMD EPYC), or arm (Ampere Altra)"
   type        = string
   default     = "x86"
 
   validation {
-    condition     = contains(["x86", "arm"], var.architecture)
-    error_message = "Architecture must be either 'x86' or 'arm'"
+    condition     = contains(["x86", "x86_perf", "arm"], var.architecture)
+    error_message = "Architecture must be one of: x86 (cost-optimized), x86_perf (performance), arm (Ampere)"
   }
 }
 

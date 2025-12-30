@@ -7,20 +7,33 @@ locals {
   # This allows automatic selection based on architecture + size
   # or manual override via server_type variable
   #
-  # Note: CX series (cx11, cx21, etc.) is DEPRECATED by Hetzner
-  # Use CPX (x86) or CAX (ARM) series only
+  # Three series available:
+  # - CX: Cost-Optimized (Intel/AMD, older gen, limited availability)
+  # - CPX: Regular Performance (AMD EPYC, newer gen)
+  # - CAX: ARM (Ampere Altra, best price/performance)
+  #
+  # Prices updated 2024-12-30 from Hetzner Cloud Console
   server_type_map = {
     x86 = {
-      small  = "cpx11" # 2 vCPU, 2GB RAM, 40GB NVMe, €4.50/mo
-      medium = "cpx21" # 3 vCPU, 4GB RAM, 80GB NVMe, €8.50/mo
-      large  = "cpx31" # 4 vCPU, 8GB RAM, 160GB NVMe, €13.90/mo
-      xlarge = "cpx41" # 8 vCPU, 16GB RAM, 240GB NVMe, €26.90/mo
+      # CX series - Cost-Optimized (Intel/AMD mix, limited availability)
+      small  = "cx23" # 2 vCPU, 4GB RAM, 40GB, €3.68/mo (CHEAPEST x86!)
+      medium = "cx33" # 4 vCPU, 8GB RAM, 80GB, €6.14/mo
+      large  = "cx43" # 8 vCPU, 16GB RAM, 160GB, €11.06/mo
+      xlarge = "cx53" # 16 vCPU, 32GB RAM, 320GB, €20.90/mo
+    }
+    x86_perf = {
+      # CPX series - Regular Performance (AMD EPYC dedicated)
+      small  = "cpx22" # 2 vCPU, 4GB RAM, 80GB NVMe, €7.37/mo
+      medium = "cpx32" # 4 vCPU, 8GB RAM, 160GB NVMe, €12.90/mo
+      large  = "cpx42" # 8 vCPU, 16GB RAM, 320GB NVMe, €23.97/mo
+      xlarge = "cpx52" # 12 vCPU, 24GB RAM, 480GB NVMe, €34.43/mo
     }
     arm = {
-      small  = "cax11" # 2 vCPU, 4GB RAM, 40GB NVMe, €4.15/mo (DOUBLE RAM vs CPX11!)
-      medium = "cax21" # 4 vCPU, 8GB RAM, 80GB NVMe, €8.30/mo (40% cheaper than CPX31!)
-      large  = "cax31" # 8 vCPU, 16GB RAM, 160GB NVMe, €16.60/mo
-      xlarge = "cax41" # 16 vCPU, 32GB RAM, 320GB NVMe, €33.20/mo
+      # CAX series - ARM (Ampere Altra)
+      small  = "cax11" # 2 vCPU, 4GB RAM, 40GB NVMe, €4.05/mo
+      medium = "cax21" # 4 vCPU, 8GB RAM, 80GB NVMe, €7.37/mo
+      large  = "cax31" # 8 vCPU, 16GB RAM, 160GB NVMe, €14.75/mo
+      xlarge = "cax41" # 16 vCPU, 32GB RAM, 320GB NVMe, €29.51/mo
     }
   }
 
@@ -41,29 +54,48 @@ locals {
   )
 
   # Server specs lookup (for documentation/outputs)
+  # Prices updated 2024-12-30 from Hetzner Cloud Console
   server_specs = {
-    # x86 (AMD EPYC)
-    cpx11 = { cpu = 2, ram = 2, disk = 40, price = 4.50 }
-    cpx21 = { cpu = 3, ram = 4, disk = 80, price = 8.50 }
-    cpx31 = { cpu = 4, ram = 8, disk = 160, price = 13.90 }
-    cpx41 = { cpu = 8, ram = 16, disk = 240, price = 26.90 }
+    # x86 Cost-Optimized - CX series (Intel/AMD mix, limited availability)
+    cx23 = { cpu = 2, ram = 4, disk = 40, price = 3.68 }
+    cx33 = { cpu = 4, ram = 8, disk = 80, price = 6.14 }
+    cx43 = { cpu = 8, ram = 16, disk = 160, price = 11.06 }
+    cx53 = { cpu = 16, ram = 32, disk = 320, price = 20.90 }
 
-    # ARM (Ampere Altra)
-    cax11 = { cpu = 2, ram = 4, disk = 40, price = 4.15 }
-    cax21 = { cpu = 4, ram = 8, disk = 80, price = 8.30 }
-    cax31 = { cpu = 8, ram = 16, disk = 160, price = 16.60 }
-    cax41 = { cpu = 16, ram = 32, disk = 320, price = 33.20 }
+    # x86 Regular Performance - CPX series (AMD EPYC dedicated)
+    cpx22 = { cpu = 2, ram = 4, disk = 80, price = 7.37 }
+    cpx32 = { cpu = 4, ram = 8, disk = 160, price = 12.90 }
+    cpx42 = { cpu = 8, ram = 16, disk = 320, price = 23.97 }
+    cpx52 = { cpu = 12, ram = 24, disk = 480, price = 34.43 }
+    cpx62 = { cpu = 16, ram = 32, disk = 640, price = 47.34 }
+
+    # ARM - CAX series (Ampere Altra)
+    cax11 = { cpu = 2, ram = 4, disk = 40, price = 4.05 }
+    cax21 = { cpu = 4, ram = 8, disk = 80, price = 7.37 }
+    cax31 = { cpu = 8, ram = 16, disk = 160, price = 14.75 }
+    cax41 = { cpu = 16, ram = 32, disk = 320, price = 29.51 }
   }
 
   selected_specs = local.server_specs[local.final_server_type]
 
-  # Cost savings comparison (ARM vs equivalent x86)
-  cost_comparison = var.architecture == "arm" ? {
-    arm_monthly    = local.selected_specs.price
-    x86_equivalent = var.server_size == "small" ? 4.50 : var.server_size == "medium" ? 13.90 : var.server_size == "large" ? 26.90 : 53.80
-    monthly_saving = var.server_size == "small" ? 0.35 : var.server_size == "medium" ? 5.60 : var.server_size == "large" ? 10.30 : 20.60
-    yearly_saving  = var.server_size == "small" ? 4.20 : var.server_size == "medium" ? 67.20 : var.server_size == "large" ? 123.60 : 247.20
-  } : null
+  # Cost savings comparison (shows cheapest alternative)
+  # Updated 2024-12-30 with real Hetzner prices
+  cost_comparison = var.architecture != "arm" ? null : {
+    # Current selection
+    arm_monthly = local.selected_specs.price
+
+    # Comparison with CX (cheapest x86)
+    cx_equivalent     = var.server_size == "small" ? 3.68 : var.server_size == "medium" ? 6.14 : var.server_size == "large" ? 11.06 : 20.90
+    cx_monthly_diff   = var.server_size == "small" ? 0.37 : var.server_size == "medium" ? 1.23 : var.server_size == "large" ? 3.69 : 8.61
+    cx_yearly_diff    = var.server_size == "small" ? 4.44 : var.server_size == "medium" ? 14.76 : var.server_size == "large" ? 44.28 : 103.32
+    cx_percent_diff   = var.server_size == "small" ? 10 : var.server_size == "medium" ? 20 : var.server_size == "large" ? 33 : 41
+
+    # Comparison with CPX (performance x86)
+    cpx_equivalent    = var.server_size == "small" ? 7.37 : var.server_size == "medium" ? 12.90 : var.server_size == "large" ? 23.97 : 34.43
+    cpx_monthly_diff  = var.server_size == "small" ? 3.32 : var.server_size == "medium" ? 5.53 : var.server_size == "large" ? 9.22 : 4.92
+    cpx_yearly_diff   = var.server_size == "small" ? 39.84 : var.server_size == "medium" ? 66.36 : var.server_size == "large" ? 110.64 : 59.04
+    cpx_percent_diff  = var.server_size == "small" ? 45 : var.server_size == "medium" ? 43 : var.server_size == "large" ? 38 : 14
+  }
 }
 
 # Validation: Error if ARM selected with incompatible location
