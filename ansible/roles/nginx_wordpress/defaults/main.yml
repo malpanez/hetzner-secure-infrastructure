@@ -38,6 +38,19 @@ nginx_wordpress_php_memory_limit: 256M
 nginx_wordpress_php_upload_max_filesize: 64M
 nginx_wordpress_php_post_max_size: 64M
 
+# PHP-FPM Performance Tuning (for 2 vCPU, 4GB RAM - CX23)
+# Each PHP-FPM process uses ~50-80MB RAM on average
+# Formula: (Total RAM - System - MySQL - Nginx - Redis) / PHP process size
+# (4096MB - 300MB - 512MB - 50MB - 50MB) / 75MB ≈ 41 max children
+# Conservative: 30 max_children to leave headroom for traffic spikes
+nginx_wordpress_php_fpm_pm: dynamic
+nginx_wordpress_php_fpm_max_children: 30
+nginx_wordpress_php_fpm_start_servers: 8
+nginx_wordpress_php_fpm_min_spare_servers: 4
+nginx_wordpress_php_fpm_max_spare_servers: 12
+nginx_wordpress_php_fpm_max_requests: 500
+nginx_wordpress_php_fpm_process_idle_timeout: 10s
+
 # ========================================
 # WordPress Configuration
 # ========================================

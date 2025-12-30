@@ -1,8 +1,8 @@
 ---
 - name: reload apparmor profiles
-  ansible.builtin.systemd:
-    name: apparmor
-    state: reloaded
+  ansible.builtin.command: systemctl reload-or-restart apparmor
+  changed_when: true
+  failed_when: false
 
 - name: update grub
   ansible.builtin.command: update-grub

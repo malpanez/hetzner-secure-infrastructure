@@ -10,6 +10,7 @@
       - qrencode
     state: present
     update_cache: true
+    cache_valid_time: 3600
   tags: [ssh-2fa, packages]
 
 - name: SSH 2FA | Install | Deploy 2FA setup script for Yubikey

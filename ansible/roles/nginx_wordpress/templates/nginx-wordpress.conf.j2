@@ -1,6 +1,12 @@
 # Nginx WordPress Configuration
 # Managed by Ansible - nginx_wordpress role
 
+# FastCGI cache configuration
+fastcgi_cache_path /var/cache/nginx/wordpress levels=1:2 keys_zone=wordpress:100m inactive=60m max_size=512m;
+fastcgi_cache_key "$scheme$request_method$host$request_uri";
+fastcgi_cache_use_stale error timeout invalid_header http_500;
+fastcgi_ignore_headers Cache-Control Expires Set-Cookie;
+
 {% if nginx_wordpress_ssl_enabled %}
 # HTTP to HTTPS redirect
 server {
@@ -31,6 +37,18 @@ server {
 
     client_max_body_size {{ nginx_wordpress_php_upload_max_filesize }};
 
+    # Performance optimizations
+    keepalive_timeout 65;
+    keepalive_requests 100;
+
+    # Gzip compression
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types text/plain text/css text/xml text/javascript application/json application/javascript application/xml+rss application/atom+xml image/svg+xml;
+    gzip_disable "msie6";
+
     location / {
         try_files $uri $uri/ /index.php?$args;
     }
@@ -39,6 +57,45 @@ server {
         include snippets/fastcgi-php.conf;
         fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-fpm.sock;
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+
+        # FastCGI cache settings
+        fastcgi_cache wordpress;
+        fastcgi_cache_valid 200 60m;
+        fastcgi_cache_valid 404 10m;
+        fastcgi_cache_bypass $no_cache;
+        fastcgi_no_cache $no_cache;
+
+        # FastCGI performance
+        fastcgi_buffer_size 128k;
+        fastcgi_buffers 256 16k;
+        fastcgi_busy_buffers_size 256k;
+        fastcgi_temp_file_write_size 256k;
+        fastcgi_read_timeout 300;
+
+        add_header X-FastCGI-Cache $upstream_cache_status;
+    }
+
+    # Cache bypass conditions
+    set $no_cache 0;
+
+    # Don't cache POST requests
+    if ($request_method = POST) {
+        set $no_cache 1;
+    }
+
+    # Don't cache URLs with query strings
+    if ($query_string != "") {
+        set $no_cache 1;
+    }
+
+    # Don't cache WordPress admin, login, or specific pages
+    if ($request_uri ~* "/wp-admin/|/wp-login.php|/xmlrpc.php|wp-.*.php|/feed/|index.php|sitemap(_index)?.xml") {
+        set $no_cache 1;
+    }
+
+    # Don't cache logged in users or recent commenters
+    if ($http_cookie ~* "comment_author|wordpress_[a-f0-9]+|wp-postpass|wordpress_no_cache|wordpress_logged_in") {
+        set $no_cache 1;
     }
 
     location ~ /\.ht {
@@ -75,6 +132,18 @@ server {
 
     client_max_body_size {{ nginx_wordpress_php_upload_max_filesize }};
 
+    # Performance optimizations
+    keepalive_timeout 65;
+    keepalive_requests 100;
+
+    # Gzip compression
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types text/plain text/css text/xml text/javascript application/json application/javascript application/xml+rss application/atom+xml image/svg+xml;
+    gzip_disable "msie6";
+
     location / {
         try_files $uri $uri/ /index.php?$args;
     }
@@ -83,6 +152,45 @@ server {
         include snippets/fastcgi-php.conf;
         fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-fpm.sock;
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+
+        # FastCGI cache settings
+        fastcgi_cache wordpress;
+        fastcgi_cache_valid 200 60m;
+        fastcgi_cache_valid 404 10m;
+        fastcgi_cache_bypass $no_cache;
+        fastcgi_no_cache $no_cache;
+
+        # FastCGI performance
+        fastcgi_buffer_size 128k;
+        fastcgi_buffers 256 16k;
+        fastcgi_busy_buffers_size 256k;
+        fastcgi_temp_file_write_size 256k;
+        fastcgi_read_timeout 300;
+
+        add_header X-FastCGI-Cache $upstream_cache_status;
+    }
+
+    # Cache bypass conditions
+    set $no_cache 0;
+
+    # Don't cache POST requests
+    if ($request_method = POST) {
+        set $no_cache 1;
+    }
+
+    # Don't cache URLs with query strings
+    if ($query_string != "") {
+        set $no_cache 1;
+    }
+
+    # Don't cache WordPress admin, login, or specific pages
+    if ($request_uri ~* "/wp-admin/|/wp-login.php|/xmlrpc.php|wp-.*.php|/feed/|index.php|sitemap(_index)?.xml") {
+        set $no_cache 1;
+    }
+
+    # Don't cache logged in users or recent commenters
+    if ($http_cookie ~* "comment_author|wordpress_[a-f0-9]+|wp-postpass|wordpress_no_cache|wordpress_logged_in") {
+        set $no_cache 1;
     }
 
     location ~ /\.ht {

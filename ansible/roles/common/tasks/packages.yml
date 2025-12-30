@@ -5,6 +5,7 @@
   ansible.builtin.apt:
     upgrade: dist
     update_cache: true
+    cache_valid_time: 3600
     autoremove: true
     autoclean: true
   when: common_perform_dist_upgrade
@@ -15,6 +16,7 @@
     name: "{{ common_required_packages }}"
     state: present
     update_cache: true
+    cache_valid_time: 3600
   tags: [common, packages]
 
 - name: Common | Packages | Install additional security tools
@@ -22,4 +24,5 @@
     name: "{{ common_security_packages }}"
     state: present
     update_cache: true
+    cache_valid_time: 3600
   tags: [common, packages]

@@ -8,6 +8,7 @@
     name: valkey
     state: present
     update_cache: true
+    cache_valid_time: 3600
   tags: [valkey, packages]
 
 - name: Valkey | Install | Install valkey-redis-compat (Ubuntu only)

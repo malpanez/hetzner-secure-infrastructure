@@ -59,10 +59,32 @@
   tags: [valkey, config, sysctl]
 
 - name: Valkey | Configure | Disable transparent huge pages
-  ansible.builtin.lineinfile:
-    path: /etc/rc.local
-    line: 'echo never > /sys/kernel/mm/transparent_hugepage/enabled'
-    create: true
-    mode: '0755'
+  block:
+    - name: Valkey | Configure | Create THP disable service
+      ansible.builtin.copy:
+        content: |
+          [Unit]
+          Description=Disable Transparent Huge Pages for Valkey
+          DefaultDependencies=no
+          After=sysinit.target local-fs.target
+          Before=valkey-server.service
+
+          [Service]
+          Type=oneshot
+          ExecStart=/bin/sh -c 'echo never > /sys/kernel/mm/transparent_hugepage/enabled'
+
+          [Install]
+          WantedBy=multi-user.target
+        dest: /etc/systemd/system/disable-thp.service
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Valkey | Configure | Enable THP disable service
+      ansible.builtin.systemd:
+        name: disable-thp
+        enabled: true
+        daemon_reload: true
+        state: started
   when: valkey_disable_thp
   tags: [valkey, config, thp]

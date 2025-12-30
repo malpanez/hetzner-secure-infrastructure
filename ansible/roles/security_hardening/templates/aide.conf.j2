@@ -1,0 +1,85 @@
+# AIDE Configuration File
+# Managed by Ansible - security_hardening role
+# Advanced Intrusion Detection Environment
+
+# Database locations (AIDE v0.19+)
+database_in=file:/var/lib/aide/aide.db
+database_out=file:/var/lib/aide/aide.db.new
+database_new=file:/var/lib/aide/aide.db.new
+
+# Report format
+report_url=stdout
+
+# Rule definitions
+# p:  permissions
+# i:  inode
+# n:  number of links
+# u:  user
+# g:  group
+# s:  size
+# b:  block count
+# m:  mtime (modification time)
+# a:  atime (access time)
+# c:  ctime (change time)
+# S:  check for growing size
+# acl: access control list
+# selinux: SELinux security context
+# xattrs: extended attributes
+# sha256/sha512: cryptographic checksums
+
+# Frequently Modified Files (only permissions and ownership)
+Norm = p+u+g+i+n+acl+selinux+xattrs
+
+# Logs and Databases (check for growing files)
+Log = p+u+g+i+n+acl+selinux+xattrs+growing
+
+# Config Files (full integrity check)
+ConfFiles = p+i+n+u+g+s+b+m+c+md5+sha256+acl+selinux+xattrs
+
+# Binaries (full integrity check with checksums)
+Binaries = p+i+n+u+g+s+b+m+c+md5+sha256+sha512+acl+selinux+xattrs
+
+# Critical system directories
+/boot           Binaries
+/lib            Binaries
+/lib64          Binaries
+/usr/lib        Binaries
+/usr/lib64      Binaries
+
+# System binaries
+/bin            Binaries
+/sbin           Binaries
+/usr/bin        Binaries
+/usr/sbin       Binaries
+/usr/local/bin  Binaries
+/usr/local/sbin Binaries
+
+# Configuration files
+/etc            ConfFiles
+!/etc/mtab$
+!/etc/.*~
+!/etc/aide/aide.db
+!/etc/aide/aide.db.new
+
+# Variable data (monitor for changes but allow growth)
+/var/log        Log
+/var/spool      Norm
+
+# Exclude certain directories
+!/proc
+!/sys
+!/dev
+!/run
+!/tmp
+!/var/tmp
+!/var/cache
+!/var/backups
+!/root/.ansible
+!/root/.cache
+!/home/*/\.cache
+!/var/lib/aide/aide.db
+!/var/lib/aide/aide.db.new
+
+# WordPress specific exclusions (if applicable)
+!/var/www/html/wp-content/cache
+!/var/www/html/wp-content/uploads

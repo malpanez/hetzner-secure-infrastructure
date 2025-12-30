@@ -9,11 +9,13 @@ listen = /run/php/php{{ nginx_wordpress_php_version }}-fpm.sock
 listen.owner = {{ nginx_wordpress_nginx_user }}
 listen.group = {{ nginx_wordpress_nginx_group }}
 
-pm = dynamic
-pm.max_children = 5
-pm.start_servers = 2
-pm.min_spare_servers = 1
-pm.max_spare_servers = 3
+pm = {{ nginx_wordpress_php_fpm_pm }}
+pm.max_children = {{ nginx_wordpress_php_fpm_max_children }}
+pm.start_servers = {{ nginx_wordpress_php_fpm_start_servers }}
+pm.min_spare_servers = {{ nginx_wordpress_php_fpm_min_spare_servers }}
+pm.max_spare_servers = {{ nginx_wordpress_php_fpm_max_spare_servers }}
+pm.max_requests = {{ nginx_wordpress_php_fpm_max_requests }}
+pm.process_idle_timeout = {{ nginx_wordpress_php_fpm_process_idle_timeout }}
 
 php_admin_value[memory_limit] = {{ nginx_wordpress_php_memory_limit }}
 php_admin_value[upload_max_filesize] = {{ nginx_wordpress_php_upload_max_filesize }}

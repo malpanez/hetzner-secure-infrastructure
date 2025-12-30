@@ -47,15 +47,30 @@ security_hardening_admin_username: malpanez
 
 security_hardening_login_banner_enabled: true
 security_hardening_login_banner_text: |
-  ****************************************************************************
-  UNAUTHORIZED ACCESS TO THIS DEVICE IS PROHIBITED
-
-  This system is for authorized use only. By accessing and using this system,
-  you consent to monitoring and recording of all activities. Any unauthorized
-  access or use may subject you to criminal and/or civil penalties.
-
-  All activities on this system are logged and monitored.
-  ****************************************************************************
+  ################################################################################
+  #                                                                              #
+  #                        AUTHORIZED ACCESS ONLY                                #
+  #                                                                              #
+  ################################################################################
+  #                                                                              #
+  #  This system is the property of Two Minds Trading Infrastructure.           #
+  #                                                                              #
+  #  NOTICE TO USERS:                                                            #
+  #                                                                              #
+  #  • Unauthorized access to this system is strictly prohibited and may be      #
+  #    prosecuted under applicable computer fraud and abuse laws.                #
+  #                                                                              #
+  #  • All activities on this system are monitored and logged. By accessing      #
+  #    this system, you consent to such monitoring and logging.                  #
+  #                                                                              #
+  #  • Any unauthorized use, access attempts, or suspicious activities will      #
+  #    be reported to the appropriate authorities.                               #
+  #                                                                              #
+  #  • Users must comply with all applicable security policies and procedures.   #
+  #                                                                              #
+  #  If you are not an authorized user, disconnect immediately.                  #
+  #                                                                              #
+  ################################################################################
 
 # ========================================
 # Process Accounting

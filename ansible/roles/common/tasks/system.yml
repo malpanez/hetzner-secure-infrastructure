@@ -1,6 +1,15 @@
 ---
 # Common Role - System Configuration Tasks
 
+- name: Common | System | Create Ansible temporary directory
+  ansible.builtin.file:
+    path: /root/.ansible/tmp
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+  tags: [common, system]
+
 - name: Common | System | Set hostname
   ansible.builtin.hostname:
     name: "{{ inventory_hostname }}"
@@ -24,6 +33,7 @@
         name: "{{ common_ntp_package }}"
         state: present
         update_cache: true
+        cache_valid_time: 3600
 
     - name: Common | System | Configure NTP servers
       ansible.builtin.template:

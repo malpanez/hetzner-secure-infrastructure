@@ -7,34 +7,24 @@
 
 # Security Hardening Role
 
-- name: Install security packages
+- name: Security Hardening | Packages | Install security packages
   ansible.builtin.apt:
     name: "{{ security_hardening_packages }}"
     state: present
   tags: packages
 
-- name: Configure sysctl parameters
-  ansible.posix.sysctl:
-    name: "{{ item.key }}"
-    value: "{{ item.value }}"
-    sysctl_set: true
-    state: present
-    reload: true
-  loop: "{{ security_hardening_sysctl_config | dict2items }}"
-  when: security_hardening_kernel_enabled
-  tags: sysctl
-
-- name: Deploy sysctl configuration file
+- name: Security Hardening | Sysctl | Deploy configuration file
   ansible.builtin.template:
     src: 99-hardening.conf.j2
     dest: /etc/sysctl.d/99-hardening.conf
     owner: root
     group: root
     mode: "0644"
+  when: security_hardening_kernel_enabled
   notify: reload sysctl
   tags: sysctl
 
-- name: Configure unattended-upgrades
+- name: Security Hardening | Auto-Updates | Configure unattended-upgrades
   ansible.builtin.template:
     src: 50unattended-upgrades.j2
     dest: /etc/apt/apt.conf.d/50unattended-upgrades
@@ -44,7 +34,7 @@
   when: security_hardening_unattended_upgrades_enabled | default(true)
   tags: auto-updates
 
-- name: Enable unattended-upgrades
+- name: Security Hardening | Auto-Updates | Enable unattended-upgrades
   ansible.builtin.template:
     src: 20auto-upgrades.j2
     dest: /etc/apt/apt.conf.d/20auto-upgrades
@@ -54,23 +44,23 @@
   when: security_hardening_unattended_upgrades_enabled | default(true)
   tags: auto-updates
 
-- name: Secure shared memory
+- name: Security Hardening | Filesystem | Secure shared memory
   ansible.builtin.lineinfile:
     path: /etc/fstab
     line: tmpfs /run/shm tmpfs defaults,noexec,nosuid 0 0
     state: present
   tags: filesystem
 
-- name: Disable core dumps
+- name: Security Hardening | Core Dumps | Disable core dumps
   block:
-    - name: Disable core dumps via limits
+    - name: Security Hardening | Core Dumps | Disable via limits
       community.general.pam_limits:
         domain: "*"
         limit_type: hard
         limit_item: core
         value: "0"
 
-    - name: Disable core dumps via sysctl
+    - name: Security Hardening | Core Dumps | Disable via sysctl
       ansible.posix.sysctl:
         name: fs.suid_dumpable
         value: "0"
@@ -78,12 +68,12 @@
         reload: true
   tags: security
 
-- name: Configure password quality requirements
+- name: Security Hardening | Password | Configure quality requirements
   ansible.builtin.apt:
     name: libpam-pwquality
     state: present
   tags: [security, password]
-- name: Set password quality policy
+- name: Security Hardening | Password | Set quality policy
   ansible.builtin.template:
     src: pwquality.conf.j2
     dest: /etc/security/pwquality.conf
@@ -91,7 +81,7 @@
     group: root
     mode: "0644"
   tags: [security, password]
-- name: Disable insecure filesystems
+- name: Security Hardening | Modules | Disable insecure filesystems
   ansible.builtin.copy:
     content: |
       # Disable insecure/unused filesystems
@@ -105,7 +95,7 @@
     mode: '0644'
   tags: [security, modules, filesystems]
 
-- name: Disable insecure network protocols
+- name: Security Hardening | Modules | Disable insecure network protocols
   ansible.builtin.copy:
     content: |
       # Disable insecure network protocols
@@ -119,7 +109,7 @@
     mode: '0644'
   tags: [security, modules, network]
 
-- name: Disable USB storage (optional)
+- name: Security Hardening | USB | Disable USB storage
   ansible.builtin.copy:
     content: |
       # Disable USB storage
@@ -130,7 +120,7 @@
     mode: '0644'
   when: security_hardening_disable_usb_storage
   tags: [security, usb]
-- name: Configure login.defs
+- name: Security Hardening | Login | Configure login.defs
   ansible.builtin.lineinfile:
     path: /etc/login.defs
     regexp: "{{ item.regexp }}"
@@ -142,9 +132,9 @@
     - { regexp: ^PASS_WARN_AGE, line: PASS_WARN_AGE   7 }
     - { regexp: ^UMASK, line: UMASK           027 }
   tags: [security, password]
-- name: Restrict cron to authorized users
+- name: Security Hardening | Cron | Restrict to authorized users
   block:
-    - name: Create cron.allow
+    - name: Security Hardening | Cron | Create cron.allow
       ansible.builtin.file:
         path: /etc/cron.allow
         state: touch
@@ -152,18 +142,18 @@
         group: root
         mode: "0640"
 
-    - name: Add admin user to cron.allow
+    - name: Security Hardening | Cron | Add admin user to cron.allow
       ansible.builtin.lineinfile:
         path: /etc/cron.allow
         line: "{{ security_hardening_admin_username }}"
         state: present
 
-    - name: Remove cron.deny if exists
+    - name: Security Hardening | Cron | Remove cron.deny if exists
       ansible.builtin.file:
         path: /etc/cron.deny
         state: absent
   tags: [security, cron]
-- name: Set permissions on sensitive files
+- name: Security Hardening | Permissions | Set permissions on sensitive files
   ansible.builtin.file:
     path: "{{ item }}"
     mode: "0600"
@@ -175,7 +165,7 @@
   failed_when: false
   tags: permissions
 
-- name: Configure auditd
+- name: Security Hardening | Auditd | Configure auditd
   ansible.builtin.template:
     src: auditd.conf.j2
     dest: /etc/audit/auditd.conf
@@ -186,7 +176,7 @@
   notify: restart auditd
   tags: [security, auditd]
 
-- name: Deploy audit rules
+- name: Security Hardening | Auditd | Deploy audit rules
   ansible.builtin.template:
     src: audit.rules.j2
     dest: /etc/audit/rules.d/hardening.rules
@@ -197,7 +187,7 @@
   notify: restart auditd
   tags: [security, auditd]
 
-- name: Enable and start auditd service
+- name: Security Hardening | Auditd | Enable and start service
   ansible.builtin.systemd:
     name: auditd
     enabled: true
@@ -205,16 +195,53 @@
   when: security_hardening_auditd_enabled | default(true)
   tags: [security, auditd]
 
-- name: Initialize AIDE database (this may take a while)
-  ansible.builtin.shell: aideinit && mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db
-  args:
-    creates: /var/lib/aide/aide.db
+- name: Security Hardening | AIDE | Configure file integrity monitoring
+  block:
+    - name: Security Hardening | AIDE | Create configuration directory
+      ansible.builtin.file:
+        path: /etc/aide
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Security Hardening | AIDE | Create database directory
+      ansible.builtin.file:
+        path: /var/lib/aide
+        state: directory
+        owner: root
+        group: root
+        mode: "0700"
+
+    - name: Security Hardening | AIDE | Create log directory
+      ansible.builtin.file:
+        path: /var/log/aide
+        state: directory
+        owner: root
+        group: root
+        mode: "0750"
+
+    - name: Security Hardening | AIDE | Deploy configuration
+      ansible.builtin.template:
+        src: aide.conf.j2
+        dest: /etc/aide/aide.conf
+        owner: root
+        group: root
+        mode: "0600"
+
+    - name: Security Hardening | AIDE | Initialize database in background (async)
+      ansible.builtin.shell: aide --config=/etc/aide/aide.conf --init && mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db
+      args:
+        creates: /var/lib/aide/aide.db
+      async: 1800  # 30 minutes timeout
+      poll: 0      # Don't wait, run in background
+      register: aide_init_job
   when: security_hardening_aide_enabled | default(false)
   tags: [security, aide]
 
-- name: Configure login banners
+- name: Security Hardening | Banners | Configure login banners
   block:
-    - name: Set login banner for SSH
+    - name: Security Hardening | Banners | Set login banner for SSH
       ansible.builtin.copy:
         content: "{{ security_hardening_login_banner_text }}"
         dest: /etc/issue.net
@@ -222,7 +249,7 @@
         group: root
         mode: "0644"
 
-    - name: Set login banner for local logins
+    - name: Security Hardening | Banners | Set login banner for local logins
       ansible.builtin.copy:
         content: "{{ security_hardening_login_banner_text }}"
         dest: /etc/issue
@@ -230,21 +257,36 @@
         group: root
         mode: "0644"
 
-    - name: Remove MOTD (use static banner instead)
+    - name: Security Hardening | Banners | Disable default Ubuntu MOTD scripts
       ansible.builtin.file:
-        path: /etc/motd
-        state: absent
+        path: "{{ item }}"
+        mode: "0644"
+      loop:
+        - /etc/update-motd.d/10-help-text
+        - /etc/update-motd.d/50-motd-news
+        - /etc/update-motd.d/88-esm-announce
+        - /etc/update-motd.d/91-contract-ua-esm-status
+        - /etc/update-motd.d/95-hwe-eol
+      failed_when: false
+
+    - name: Security Hardening | Banners | Create dynamic MOTD script
+      ansible.builtin.template:
+        src: motd.sh.j2
+        dest: /etc/update-motd.d/99-custom-info
+        owner: root
+        group: root
+        mode: "0755"
   when: security_hardening_login_banner_enabled
   tags: [security, banner]
 
-- name: Enable process accounting
+- name: Security Hardening | Accounting | Enable process accounting
   block:
-    - name: Install acct package
+    - name: Security Hardening | Accounting | Install acct package
       ansible.builtin.apt:
         name: acct
         state: present
 
-    - name: Enable and start acct service
+    - name: Security Hardening | Accounting | Enable and start acct service
       ansible.builtin.systemd:
         name: acct
         enabled: true
@@ -252,14 +294,14 @@
   when: security_hardening_process_accounting_enabled
   tags: [security, accounting]
 
-- name: Restrict compiler access
+- name: Security Hardening | Compilers | Restrict compiler access
   block:
-    - name: Create compilers group
+    - name: Security Hardening | Compilers | Create compilers group
       ansible.builtin.group:
         name: compilers
         state: present
 
-    - name: Restrict permissions on compilers
+    - name: Security Hardening | Compilers | Restrict permissions on compilers
       ansible.builtin.file:
         path: "{{ item }}"
         mode: "0750"
@@ -275,15 +317,15 @@
   when: security_hardening_restrict_compilers
   tags: [security, compilers]
 
-- name: Harden /tmp directory
+- name: Security Hardening | Filesystem | Harden /tmp directory
   block:
-    - name: Check if /tmp is a separate mount
+    - name: Security Hardening | Filesystem | Check if /tmp is separate mount
       ansible.builtin.command: mountpoint -q /tmp
       register: tmp_mountpoint
       failed_when: false
       changed_when: false
 
-    - name: Create /tmp systemd mount unit
+    - name: Security Hardening | Filesystem | Create /tmp systemd mount unit
       ansible.builtin.copy:
         content: |
           [Unit]
@@ -308,7 +350,7 @@
         mode: "0644"
       when: tmp_mountpoint.rc != 0
 
-    - name: Enable tmp.mount
+    - name: Security Hardening | Filesystem | Enable tmp.mount
       ansible.builtin.systemd:
         name: tmp.mount
         enabled: true
@@ -317,7 +359,7 @@
   when: security_hardening_harden_tmp
   tags: [security, filesystem, tmp]
 
-- name: Set strict permissions on critical directories
+- name: Security Hardening | Permissions | Set strict permissions on critical directories
   ansible.builtin.file:
     path: "{{ item.path }}"
     mode: "{{ item.mode }}"
@@ -335,9 +377,9 @@
   failed_when: false
   tags: [security, permissions]
 
-- name: Configure at daemon restrictions
+- name: Security Hardening | At Daemon | Configure restrictions
   block:
-    - name: Create at.allow
+    - name: Security Hardening | At Daemon | Create at.allow
       ansible.builtin.file:
         path: /etc/at.allow
         state: touch
@@ -345,19 +387,19 @@
         group: root
         mode: "0640"
 
-    - name: Add admin user to at.allow
+    - name: Security Hardening | At Daemon | Add admin user to at.allow
       ansible.builtin.lineinfile:
         path: /etc/at.allow
         line: "{{ security_hardening_admin_username }}"
         state: present
 
-    - name: Remove at.deny if exists
+    - name: Security Hardening | At Daemon | Remove at.deny if exists
       ansible.builtin.file:
         path: /etc/at.deny
         state: absent
   tags: [security, at]
 
-- name: Disable unnecessary services
+- name: Security Hardening | Services | Disable unnecessary services
   ansible.builtin.systemd:
     name: "{{ item }}"
     enabled: false
@@ -372,7 +414,7 @@
   failed_when: false
   tags: [security, services]
 
-- name: Configure stronger session timeouts
+- name: Security Hardening | Session | Configure stronger timeouts
   ansible.builtin.lineinfile:
     path: /etc/profile.d/timeout.sh
     line: "{{ item }}"
@@ -387,14 +429,14 @@
     - "export TMOUT"
   tags: [security, session]
 
-- name: Restrict su command to wheel group
+- name: Security Hardening | PAM | Restrict su command to wheel group
   ansible.builtin.lineinfile:
     path: /etc/pam.d/su
     line: "auth required pam_wheel.so use_uid"
     insertafter: "^# auth\\s+required\\s+pam_wheel.so"
   tags: [security, pam]
 
-- name: Set additional security limits
+- name: Security Hardening | Limits | Set additional security limits
   community.general.pam_limits:
     domain: "{{ item.domain }}"
     limit_type: "{{ item.limit_type }}"
@@ -404,3 +446,28 @@
     - { domain: "*", limit_type: hard, limit_item: maxlogins, value: "10" }
     - { domain: "*", limit_type: hard, limit_item: nproc, value: "1000" }
   tags: [security, limits]
+
+# ============================================================================
+# AIDE Async Status Check (runs at the end of playbook)
+# ============================================================================
+
+- name: Security Hardening | AIDE | Check initialization status
+  ansible.builtin.async_status:
+    jid: "{{ aide_init_job.ansible_job_id }}"
+  register: aide_result
+  until: aide_result.finished
+  retries: 60     # Wait up to 10 minutes (60 * 10s)
+  delay: 10       # Check every 10 seconds
+  when:
+    - security_hardening_aide_enabled | default(false)
+    - aide_init_job.ansible_job_id is defined
+  tags: [security, aide]
+
+- name: Security Hardening | AIDE | Display initialization result
+  ansible.builtin.debug:
+    msg: "AIDE database initialized successfully: {{ aide_result.stdout | default('No output') }}"
+  when:
+    - security_hardening_aide_enabled | default(false)
+    - aide_result is defined
+    - aide_result.finished | default(false)
+  tags: [security, aide]

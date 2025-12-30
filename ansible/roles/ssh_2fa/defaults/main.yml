@@ -12,7 +12,7 @@ ssh_2fa_enable_ssh: true
 ssh_2fa_enable_sudo: true
 
 # Enable custom SSH banner
-ssh_2fa_banner_enabled: false
+ssh_2fa_banner_enabled: true
 
 # ========================================
 # SSH Configuration
@@ -102,11 +102,23 @@ ssh_2fa_pam_google_authenticator_sudo_options: "nullok"
 # Banner Configuration
 # ========================================
 
-# Banner text
+# SSH Pre-Authentication Banner
 ssh_2fa_banner_text: |
-  ******************************************************************
-  * WARNING: Unauthorized access to this system is forbidden and  *
-  * will be prosecuted by law. By accessing this system, you      *
-  * agree that your actions may be monitored if unauthorized      *
-  * usage is suspected.                                           *
-  ******************************************************************
+  ################################################################################
+  #                                                                              #
+  #                   SSH ACCESS - AUTHENTICATION REQUIRED                       #
+  #                                                                              #
+  ################################################################################
+  #                                                                              #
+  #  System:     Two Minds Trading Infrastructure                                #
+  #  Access:     Authorized Personnel Only                                       #
+  #  Security:   Multi-Factor Authentication Enforced                            #
+  #                                                                              #
+  #  WARNING:                                                                    #
+  #  • Unauthorized access attempts are logged and will be prosecuted            #
+  #  • All SSH sessions are monitored and recorded                               #
+  #  • Failed authentication attempts trigger security alerts                    #
+  #                                                                              #
+  #  Disconnect now if you are not an authorized user.                           #
+  #                                                                              #
+  ################################################################################

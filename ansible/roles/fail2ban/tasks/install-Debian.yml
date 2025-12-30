@@ -6,4 +6,5 @@
     name: "{{ fail2ban_package }}"
     state: present
     update_cache: true
+    cache_valid_time: 3600
   tags: [fail2ban, packages]

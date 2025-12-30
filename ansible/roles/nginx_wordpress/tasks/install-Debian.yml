@@ -6,6 +6,7 @@
     name: "{{ nginx_wordpress_nginx_packages }}"
     state: present
     update_cache: true
+    cache_valid_time: 3600
   when: nginx_wordpress_install_nginx
   tags: [nginx-wordpress, nginx, packages]
 
@@ -14,6 +15,7 @@
     name: "{{ nginx_wordpress_php_packages }}"
     state: present
     update_cache: true
+    cache_valid_time: 3600
   when: nginx_wordpress_install_php
   tags: [nginx-wordpress, php, packages]
 
@@ -22,6 +24,7 @@
     name: "{{ nginx_wordpress_tools_packages }}"
     state: present
     update_cache: true
+    cache_valid_time: 3600
   tags: [nginx-wordpress, packages]
 
 - name: Nginx WordPress | Install | Download WP-CLI

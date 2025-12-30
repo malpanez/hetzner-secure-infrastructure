@@ -9,16 +9,16 @@ listen.group = {{ wordpress_group }}
 listen.mode = 0660
 
 ; Process manager settings
-pm = dynamic
-pm.max_children = 20  ; Max PHP processes (adjust based on RAM)
-pm.start_servers = 4
-pm.min_spare_servers = 2
-pm.max_spare_servers = 6
-pm.max_requests = 500  ; Restart after 500 requests (prevent memory leaks)
+pm = {{ nginx_wordpress_php_fpm_pm }}
+pm.max_children = {{ nginx_wordpress_php_fpm_max_children }}
+pm.start_servers = {{ nginx_wordpress_php_fpm_start_servers }}
+pm.min_spare_servers = {{ nginx_wordpress_php_fpm_min_spare_servers }}
+pm.max_spare_servers = {{ nginx_wordpress_php_fpm_max_spare_servers }}
+pm.max_requests = {{ nginx_wordpress_php_fpm_max_requests }}
 
 ; Performance tuning
-pm.process_idle_timeout = 10s
-request_terminate_timeout = {{ php_max_execution_time }}s
+pm.process_idle_timeout = {{ nginx_wordpress_php_fpm_process_idle_timeout }}
+request_terminate_timeout = {{ nginx_wordpress_php_max_execution_time }}s
 
 ; Status page for monitoring
 pm.status_path = /php-fpm-status

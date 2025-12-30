@@ -6,5 +6,6 @@
     name: "{{ monitoring_rsyslog_package }}"
     state: present
     update_cache: true
+    cache_valid_time: 3600
   when: monitoring_rsyslog_enabled
   tags: [monitoring, packages]
