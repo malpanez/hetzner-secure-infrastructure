@@ -11,21 +11,21 @@ log_group = adm
 priority_boost = 4
 flush = INCREMENTAL_ASYNC
 freq = 50
-max_log_file = {{ auditd_max_log_file }}
-num_logs = {{ auditd_num_logs }}
-max_log_file_action = {{ auditd_max_log_file_action }}
+max_log_file = {{ security_hardening_auditd_max_log_file }}
+num_logs = {{ security_hardening_auditd_num_logs }}
+max_log_file_action = {{ security_hardening_auditd_max_log_file_action }}
 
 # Space management
-space_left = {{ auditd_space_left }}
-space_left_action = {{ auditd_space_left_action }}
+space_left = {{ security_hardening_auditd_space_left }}
+space_left_action = {{ security_hardening_auditd_space_left_action }}
 verify_email = yes
-action_mail_acct = {{ auditd_action_mail_acct }}
-admin_space_left = {{ auditd_admin_space_left }}
-admin_space_left_action = {{ auditd_admin_space_left_action }}
+action_mail_acct = {{ security_hardening_auditd_action_mail_acct }}
+admin_space_left = {{ security_hardening_auditd_admin_space_left }}
+admin_space_left_action = {{ security_hardening_auditd_admin_space_left_action }}
 
 # Disk full actions
-disk_full_action = {{ auditd_disk_full_action }}
-disk_error_action = {{ auditd_disk_error_action }}
+disk_full_action = {{ security_hardening_auditd_disk_full_action }}
+disk_error_action = {{ security_hardening_auditd_disk_error_action }}
 
 # Use auditd's built-in network client
 use_libwrap = yes

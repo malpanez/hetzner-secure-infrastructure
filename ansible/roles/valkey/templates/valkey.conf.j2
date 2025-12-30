@@ -4,7 +4,7 @@
 # Network
 bind {{ valkey_bind }}
 port {{ valkey_port }}
-protected-mode {{ valkey_protected_mode }}
+protected-mode {{ valkey_protected_mode | bool | ternary('yes', 'no') }}
 tcp-backlog {{ valkey_tcp_backlog }}
 timeout {{ valkey_timeout }}
 
@@ -35,4 +35,4 @@ save ""
 {% endif %}
 
 dir {{ valkey_data_dir }}
-appendonly {{ valkey_appendonly }}
+appendonly {{ valkey_appendonly | bool | ternary('yes', 'no') }}

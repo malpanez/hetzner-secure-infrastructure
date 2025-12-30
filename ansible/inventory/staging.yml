@@ -1,0 +1,17 @@
+all:
+  children:
+    hetzner:
+      children:
+        staging:
+          hosts:
+            staging-wordpress:
+              ansible_host: 46.224.156.140
+              ansible_user: malpanez
+              ansible_ssh_private_key_file: ~/.ssh/github_ed25519
+
+    wordpress_servers:
+      hosts:
+        staging-wordpress:
+          ansible_host: 46.224.156.140
+          ansible_user: malpanez
+          ansible_ssh_private_key_file: ~/.ssh/github_ed25519

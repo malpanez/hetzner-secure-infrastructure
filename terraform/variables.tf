@@ -123,9 +123,19 @@ variable "reverse_dns_ptr" {
 }
 
 variable "domain" {
-  description = "Domain for reverse DNS"
+  description = "Domain for reverse DNS and Cloudflare"
   type        = string
-  default     = "homelabforge.dev"
+  default     = "twomindstrading.com"
+}
+
+variable "environment" {
+  description = "Environment (production, staging, development)"
+  type        = string
+  default     = "production"
+  validation {
+    condition     = contains(["production", "staging", "development"], var.environment)
+    error_message = "Environment must be one of: production, staging, development"
+  }
 }
 
 variable "prevent_destroy" {

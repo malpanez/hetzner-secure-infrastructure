@@ -70,39 +70,42 @@ resource "hcloud_firewall" "server_firewall" {
   name   = local.firewall_name
   labels = local.common_labels
   
-  # SSH (limited)
+  # SSH (limited to specific IPs)
   rule {
-    direction = "in"
-    protocol  = "tcp"
-    port      = var.ssh_port
-    source_ips = var.ssh_allowed_ips
+    direction   = "in"
+    protocol    = "tcp"
+    port        = var.ssh_port
+    source_ips  = var.ssh_allowed_ips
+    description = "SSH access for remote server management"
   }
   
-  # HTTP
+  # HTTP (public web traffic)
   dynamic "rule" {
     for_each = var.allow_http ? [1] : []
     content {
-      direction = "in"
-      protocol  = "tcp"
-      port      = "80"
-      source_ips = [
+      direction   = "in"
+      protocol    = "tcp"
+      port        = "80"
+      source_ips  = [
         "0.0.0.0/0",
         "::/0"
       ]
+      description = "HTTP access for web traffic"
     }
   }
   
-  # HTTPS
+  # HTTPS (secure web traffic)
   dynamic "rule" {
     for_each = var.allow_https ? [1] : []
     content {
-      direction = "in"
-      protocol  = "tcp"
-      port      = "443"
-      source_ips = [
+      direction   = "in"
+      protocol    = "tcp"
+      port        = "443"
+      source_ips  = [
         "0.0.0.0/0",
         "::/0"
       ]
+      description = "HTTPS access for secure web traffic"
     }
   }
   
@@ -117,14 +120,15 @@ resource "hcloud_firewall" "server_firewall" {
     }
   }
   
-  # ICMP (ping)
+  # ICMP (network diagnostics)
   rule {
-    direction = "in"
-    protocol  = "icmp"
-    source_ips = [
+    direction   = "in"
+    protocol    = "icmp"
+    source_ips  = [
       "0.0.0.0/0",
       "::/0"
     ]
+    description = "ICMP for ping and network diagnostics"
   }
 }
 

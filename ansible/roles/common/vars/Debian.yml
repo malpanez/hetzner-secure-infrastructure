@@ -12,3 +12,18 @@ common_ntp_service: systemd-timesyncd
 
 # Timezone data package
 common_timezone_package: tzdata
+
+# Essential packages for Debian (software-properties-common not needed)
+common_required_packages:
+  - apt-transport-https
+  - build-essential
+  - ca-certificates
+  - curl
+  - git
+  - gnupg
+  - htop
+  - net-tools
+  - sudo
+  - unzip
+  - vim
+  - wget

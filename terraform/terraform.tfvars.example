@@ -4,13 +4,14 @@ hcloud_token = "YOUR_HCLOUD_TOKEN_HERE"
 
 # SSH Public Key (Yubikey FIDO2)
 # Get with: cat ~/.ssh/id_ed25519_sk.pub
-ssh_public_key = "sk-ssh-ed25519@openssh.com AAAA... miguel@hetzner"
+ssh_public_key = "sk-ssh-ed25519@openssh.com AAAA... malpanez@hetzner"
 
 # Server Configuration
 server_name    = "prod-server-01"
 server_type    = "cx22"  # 2 vCPU, 4GB RAM, 40GB SSD
 location       = "nbg1"  # Nuremberg (or: fsn1, hel1, ash, hil)
-admin_username = "miguel"
+admin_username = "malpanez"
+environment    = "production"  # Environment: production, staging, or development
 
 # SSH Access
 ssh_port = 22
@@ -39,8 +40,8 @@ enable_floating_ip = false
 
 # DNS (optional)
 reverse_dns_enabled = false
-domain              = "homelabforge.dev"
-# reverse_dns_ptr   = "prod-server-01.homelabforge.dev"
+domain              = "twomindstrading.com"
+# reverse_dns_ptr   = "prod-server-01.twomindstrading.com"
 
 # Protection
 prevent_destroy = true
@@ -48,5 +49,5 @@ prevent_destroy = true
 # Labels
 labels = {
   project = "secure-infrastructure"
-  owner   = "miguel"
+  owner   = "malpanez"
 }

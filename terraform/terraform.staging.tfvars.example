@@ -1,0 +1,42 @@
+# Hetzner Staging Environment
+# For testing Ansible roles before production deployment
+# Cost: ~€5.83/month (can be destroyed after testing)
+
+# Hetzner Cloud API Token
+# Get from: https://console.hetzner.cloud/
+hcloud_token = "YOUR_HCLOUD_TOKEN_HERE"
+
+# SSH Public Key (Yubikey FIDO2)
+# Get with: cat ~/.ssh/id_ed25519_sk.pub
+ssh_public_key = "sk-ssh-ed25519@openssh.com AAAA... malpanez@hetzner"
+
+# Server Configuration
+server_name    = "staging-wordpress"
+server_type    = "cx22"  # 2 vCPU, 4GB RAM, 40GB SSD - same as production
+location       = "nbg1"  # Nuremberg
+admin_username = "malpanez"
+
+# SSH Access - Open for testing (restrict in production)
+ssh_port        = 22
+ssh_allowed_ips = ["0.0.0.0/0", "::/0"]
+
+# HTTP/HTTPS - Enable for WordPress testing
+allow_http  = true
+allow_https = true
+
+# No additional features for staging
+volume_size        = 0
+enable_floating_ip = false
+reverse_dns_enabled = false
+domain             = "twomindstrading.com"
+
+# Protection - Disabled for easy cleanup
+prevent_destroy = false
+
+# Labels
+labels = {
+  environment = "staging"
+  project     = "wordpress-lms"
+  owner       = "malpanez"
+  purpose     = "ansible-testing"
+}

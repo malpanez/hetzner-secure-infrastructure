@@ -32,7 +32,7 @@ nginx_wordpress_ssl_key_path: /etc/ssl/private/nginx-wordpress.key
 # PHP Configuration
 # ========================================
 
-nginx_wordpress_php_version: "8.2"
+nginx_wordpress_php_version: "8.4"  # Debian 13 has PHP 8.4
 nginx_wordpress_php_max_execution_time: 300
 nginx_wordpress_php_memory_limit: 256M
 nginx_wordpress_php_upload_max_filesize: 64M

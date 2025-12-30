@@ -20,11 +20,11 @@ resource "cloudflare_custom_pages" "error_1020" {
 }
 
 # ========================================
-# Cloudflare Access (Optional - Requires paid plan)
+# Cloudflare Zero Trust Access (Optional - Requires paid plan)
 # ========================================
 
-# Protect /wp-admin with Cloudflare Access (if enabled)
-resource "cloudflare_access_application" "wp_admin" {
+# Protect /wp-admin with Cloudflare Zero Trust Access (if enabled)
+resource "cloudflare_zero_trust_access_application" "wp_admin" {
   count                     = var.enable_cloudflare_access ? 1 : 0
   zone_id                   = data.cloudflare_zone.main.id
   name                      = "WordPress Admin"

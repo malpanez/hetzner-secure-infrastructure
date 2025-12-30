@@ -22,7 +22,7 @@ provider "cloudflare" {
   api_token = var.cloudflare_api_token
 }
 
-# Production server
+# Hetzner server (production/staging/development)
 module "production_server" {
   source = "./modules/hetzner-server"
 
@@ -31,7 +31,7 @@ module "production_server" {
   image          = var.image
   location       = var.location
   admin_username = var.admin_username
-  environment    = "production"
+  environment    = var.environment
 
   ssh_public_key  = var.ssh_public_key
   ssh_port        = var.ssh_port

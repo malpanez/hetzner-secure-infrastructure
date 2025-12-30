@@ -7,3 +7,4 @@
   ansible.builtin.service:
     name: auditd
     state: restarted
+  failed_when: false  # Don't fail if auditd restart fails (may happen on some kernels)

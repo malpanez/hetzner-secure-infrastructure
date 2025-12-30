@@ -13,13 +13,28 @@
   pre_tasks:
     - name: Display deployment information
       ansible.builtin.debug:
-        msg: |
-          ========================================
-          Deploying to: {{ inventory_hostname }}
-          Groups: {{ group_names | join(', ') }}
-          OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
-          IP: {{ ansible_default_ipv4.address | default('N/A') }}
-          ========================================
+        msg:
+          - "╔═══════════════════════════════════════════════════════════╗"
+          - "║         WORDPRESS DEPLOYMENT - STARTING                   ║"
+          - "╚═══════════════════════════════════════════════════════════╝"
+          - ""
+          - "📍 Target Host"
+          - "├─ Hostname:     {{ inventory_hostname }}"
+          - "├─ IP Address:   {{ ansible_default_ipv4.address | default('N/A') }}"
+          - "└─ Groups:       {{ group_names | join(', ') }}"
+          - ""
+          - "💻 System Information"
+          - "├─ OS:           {{ ansible_distribution }} {{ ansible_distribution_version }}"
+          - "├─ Kernel:       {{ ansible_kernel }}"
+          - "├─ Architecture: {{ ansible_architecture }}"
+          - "└─ CPUs:         {{ ansible_processor_vcpus }}"
+          - ""
+          - "🔧 Configuration"
+          - "├─ User:         {{ ansible_user }}"
+          - "├─ Python:       {{ ansible_python_version }}"
+          - "└─ SSH Port:     {{ ansible_port | default(22) }}"
+          - ""
+          - "═════════════════════════════════════════════════════════════"
       tags: [always]
 
     - name: Update apt cache (Debian/Ubuntu)
@@ -99,40 +114,49 @@
 
     - role: nginx_wordpress
       tags: [wordpress, nginx, webserver]
+      vars:
+        nginx_wordpress_db_password: "{{ wordpress_db_password }}"
+        nginx_wordpress_server_name: "_"  # Accept any hostname/IP
+        nginx_wordpress_server_aliases: []  # No aliases needed
+        nginx_wordpress_admin_password: "{{ wordpress_db_password }}"  # Temporary - should use separate vault variable
+        nginx_wordpress_admin_email: "admin@example.com"  # Default - should be changed in production
 
   post_tasks:
     - name: Display WordPress deployment information
       ansible.builtin.debug:
-        msg: |
-          ========================================
-          WordPress Stack Deployed
-          ========================================
-
-          Server: {{ inventory_hostname }}
-          Domain: {{ nginx_wordpress_server_name }}
-          Root: {{ nginx_wordpress_web_root | default('/var/www/wordpress') }}
-
-          Next steps:
-          1. Access WordPress: http://{{ nginx_wordpress_server_name }}
-          2. Complete installation via web interface
-          3. Install LearnDash manually (requires license)
-
-          Database Info:
-          - Database: {{ wordpress_db_name | default('wordpress') }}
-          - User: {{ wordpress_db_user | default('wordpress') }}
-
-          8 Essential Plugins Auto-Installed:
-          1. Wordfence (Security)
-          2. Sucuri Scanner (Security)
-          3. WP 2FA (Two-factor auth)
-          4. UpdraftPlus (Backups)
-          5. Redis Cache (Performance - backend only)
-          6. Yoast SEO (SEO)
-          7. Enable Media Replace (Media)
-          8. WP Mail SMTP (Email)
-          9. Health Check (Monitoring)
-
-          ========================================
+        msg:
+          - "========================================="
+          - "✅ WordPress Stack Deployed"
+          - "========================================="
+          - ""
+          - "Server Information:"
+          - "  • Hostname: {{ inventory_hostname }}"
+          - "  • IP Address: {{ ansible_host }}"
+          - "  • Domain: {{ nginx_wordpress_server_name }}"
+          - "  • Install Path: {{ nginx_wordpress_web_root | default('/var/www/wordpress') }}"
+          - ""
+          - "Database Information:"
+          - "  • Database: {{ wordpress_db_name | default('wordpress') }}"
+          - "  • User: {{ wordpress_db_user | default('wordpress') }}"
+          - ""
+          - "Installed Plugins (9):"
+          - "  1. Wordfence (Security)"
+          - "  2. Sucuri Scanner (Security)"
+          - "  3. WP 2FA (Two-factor auth)"
+          - "  4. UpdraftPlus (Backups)"
+          - "  5. Redis Cache (Performance - backend only)"
+          - "  6. Yoast SEO (SEO)"
+          - "  7. Enable Media Replace (Media)"
+          - "  8. WP Mail SMTP (Email)"
+          - "  9. Health Check (Monitoring)"
+          - ""
+          - "Next Steps:"
+          - "  1. Access WordPress: http://{{ ansible_host }}"
+          - "  2. WordPress is ready - login with admin credentials"
+          - "  3. Configure plugin settings (see security recommendations above)"
+          - "  4. Install LearnDash Pro manually (requires license)"
+          - ""
+          - "========================================="
       tags: [wordpress, info]
 
 # ========================================
@@ -150,21 +174,56 @@
 
     - name: Display deployment summary
       ansible.builtin.debug:
-        msg: |
-          ========================================
-          🎉 WORDPRESS DEPLOYMENT COMPLETE
-          ========================================
-
-          Test the deployment:
-          - WordPress: http://localhost:8080 (if using Docker)
-          - SSH: docker exec -it wordpress-test bash
-
-          Security Features:
-          ✅ UFW Firewall
-          ✅ Fail2ban IDS
-          ✅ Kernel Hardening
-          ✅ Auto Security Updates
-
-          ========================================
+        msg:
+          - "========================================="
+          - "🎉 WORDPRESS DEPLOYMENT COMPLETE"
+          - "========================================="
+          - ""
+          - "Access your WordPress site:"
+          - "  - URL: http://{{ hostvars[groups['wordpress_servers'][0]]['ansible_host'] }}"
+          - "  - Admin: http://{{ hostvars[groups['wordpress_servers'][0]]['ansible_host'] }}/wp-admin"
+          - ""
+          - "Server Details:"
+          - "  - Host: {{ hostvars[groups['wordpress_servers'][0]]['inventory_hostname'] }}"
+          - "  - IP: {{ hostvars[groups['wordpress_servers'][0]]['ansible_host'] }}"
+          - "  - SSH: ssh {{ hostvars[groups['wordpress_servers'][0]]['ansible_user'] }}@{{ hostvars[groups['wordpress_servers'][0]]['ansible_host'] }}"
+          - ""
+          - "WordPress Info:"
+          - "  - Admin User: admin"
+          - "  - Install Path: /var/www/wordpress"
+          - "  - Database: wordpress"
+          - ""
+          - "Security Features Enabled:"
+          - "  ✅ UFW Firewall (ports 22, 80, 443)"
+          - "  ✅ Fail2ban IDS"
+          - "  ✅ AppArmor (PHP-FPM, SSH, Fail2ban)"
+          - "  ✅ Kernel Hardening (sysctl)"
+          - "  ✅ Auto Security Updates"
+          - "  ✅ SSH 2FA with Yubikey Support"
+          - ""
+          - "Performance Features:"
+          - "  ✅ Valkey Object Cache (Redis-compatible)"
+          - "  ✅ PHP 8.4-FPM"
+          - "  ✅ Nginx Web Server"
+          - ""
+          - "Installed Plugins (9):"
+          - "  • Wordfence (Security)"
+          - "  • Sucuri Scanner (Security)"
+          - "  • WP 2FA (Two-factor auth)"
+          - "  • UpdraftPlus (Backups)"
+          - "  • Redis Cache (Performance)"
+          - "  • Yoast SEO (SEO)"
+          - "  • Enable Media Replace (Media)"
+          - "  • WP Mail SMTP (Email)"
+          - "  • Health Check (Monitoring)"
+          - ""
+          - "Next Steps:"
+          - "  1. Complete WordPress setup: http://{{ hostvars[groups['wordpress_servers'][0]]['ansible_host'] }}"
+          - "  2. Configure SSL/TLS certificates (Let's Encrypt recommended)"
+          - "  3. Configure plugin settings via WordPress admin"
+          - "  4. Set up UpdraftPlus backup schedule"
+          - "  5. Install LearnDash Pro manually (requires license)"
+          - ""
+          - "========================================="
       run_once: true
       tags: [validate, summary, always]

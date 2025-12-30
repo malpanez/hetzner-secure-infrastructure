@@ -1,27 +1,18 @@
 ---
 # Valkey Role - Debian/Ubuntu Installation Tasks
+# Source: https://valkey.io/topics/installation/
+# Valkey is available directly in Debian 13+ repositories, no external repository needed
 
-- name: Valkey | Install | Add Valkey APT repository key
-  ansible.builtin.get_url:
-    url: "{{ valkey_gpg_key_url }}"
-    dest: /usr/share/keyrings/valkey-archive-keyring.gpg
-    mode: '0644'
-  tags: [valkey, repository]
-
-- name: Valkey | Install | Add Valkey APT repository (DEB822)
-  ansible.builtin.deb822_repository:
-    name: valkey
-    types: [deb]
-    uris: "{{ valkey_apt_repository_url }}"
-    suites: "{{ valkey_apt_repository_suite }}"
-    components: [main]
-    signed_by: /usr/share/keyrings/valkey-archive-keyring.gpg
-    state: present
-  tags: [valkey, repository]
-
-- name: Valkey | Install | Install Valkey package
+- name: Valkey | Install | Install Valkey package from Debian repository
   ansible.builtin.apt:
-    name: "{{ valkey_package }}"
+    name: valkey
     state: present
     update_cache: true
+  tags: [valkey, packages]
+
+- name: Valkey | Install | Install valkey-redis-compat (Ubuntu only)
+  ansible.builtin.apt:
+    name: valkey-redis-compat  # Provides symlinks to redis-cli and other redis-* tools
+    state: present
+  when: ansible_distribution == "Ubuntu"
   tags: [valkey, packages]

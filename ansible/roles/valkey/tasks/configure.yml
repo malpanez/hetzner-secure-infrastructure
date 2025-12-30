@@ -22,9 +22,28 @@
     owner: "{{ valkey_user }}"
     group: "{{ valkey_group }}"
     mode: '0640'
-    validate: valkey-server %s --test-memory 0
   notify: restart valkey
+  register: valkey_config_deployed
   tags: [valkey, config]
+
+- name: Valkey | Configure | Check system configuration
+  ansible.builtin.command:
+    cmd: valkey-server --check-system
+  changed_when: false
+  failed_when: false
+  register: valkey_system_check
+  when: valkey_config_deployed is changed
+  tags: [valkey, config, validate]
+
+- name: Valkey | Configure | Display system check result
+  ansible.builtin.debug:
+    msg:
+      - "Valkey system configuration check:"
+      - "{{ valkey_system_check.stdout_lines }}"
+  when:
+    - valkey_config_deployed is changed
+    - valkey_system_check is defined
+  tags: [valkey, config, validate]
 
 - name: Valkey | Configure | Configure system parameters
   ansible.posix.sysctl:

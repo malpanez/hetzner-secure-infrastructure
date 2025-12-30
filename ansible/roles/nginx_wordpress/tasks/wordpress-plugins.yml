@@ -85,61 +85,61 @@
 
 - name: Nginx WordPress | Plugins | Configure UpdraftPlus backups
   ansible.builtin.debug:
-    msg: |
-      ========================================
-      UpdraftPlus Backup Configuration
-      ========================================
-
-      Manual Configuration Required:
-      1. Log in to WordPress admin
-      2. Navigate to Settings > UpdraftPlus Backups
-      3. Configure backup schedule (recommended: daily database, weekly files)
-      4. Set backup destination (recommended: S3, Google Drive, or Dropbox)
-      5. Test backup restoration
-
-      ========================================
+    msg:
+      - "========================================="
+      - "UpdraftPlus Backup Configuration"
+      - "========================================="
+      - ""
+      - "Manual Configuration Required:"
+      - "  1. Log in to WordPress admin"
+      - "  2. Navigate to Settings > UpdraftPlus Backups"
+      - "  3. Configure backup schedule (recommended: daily database, weekly files)"
+      - "  4. Set backup destination (recommended: S3, Google Drive, or Dropbox)"
+      - "  5. Test backup restoration"
+      - ""
+      - "========================================="
   when: wp_config_check.stat.exists
   tags: [nginx-wordpress, wordpress, plugins, backup, info]
 
 - name: Nginx WordPress | Plugins | Security recommendations
   ansible.builtin.debug:
-    msg: |
-      ========================================
-      WordPress Security Configuration
-      ========================================
-
-      Mandatory Post-Installation Tasks:
-
-      1. Wordfence Security:
-         - Enable 2FA for admin users
-         - Configure firewall rules
-         - Enable real-time IP blocklist
-         - Schedule security scans
-
-      2. WP 2FA:
-         - Configure 2FA for all users
-         - Set enforcement policy
-         - Test 2FA login
-
-      3. Sucuri Scanner:
-         - Run initial security audit
-         - Configure email alerts
-         - Enable file integrity monitoring
-
-      4. UpdraftPlus:
-         - Configure automated backups
-         - Test backup restoration
-         - Set remote storage
-
-      5. Redis Cache:
-         - {{ 'ENABLED - Monitor performance' if valkey_status.status.ActiveState == 'active' else 'DISABLED - Install Valkey to enable' }}
-
-      6. LearnDash Pro:
-         - INSTALL MANUALLY with license key
-         - Configure course settings
-         - Set up payment gateways
-
-      ========================================
+    msg:
+      - "========================================="
+      - "WordPress Security Configuration"
+      - "========================================="
+      - ""
+      - "Mandatory Post-Installation Tasks:"
+      - ""
+      - "1. Wordfence Security:"
+      - "   • Enable 2FA for admin users"
+      - "   • Configure firewall rules"
+      - "   • Enable real-time IP blocklist"
+      - "   • Schedule security scans"
+      - ""
+      - "2. WP 2FA:"
+      - "   • Configure 2FA for all users"
+      - "   • Set enforcement policy"
+      - "   • Test 2FA login"
+      - ""
+      - "3. Sucuri Scanner:"
+      - "   • Run initial security audit"
+      - "   • Configure email alerts"
+      - "   • Enable file integrity monitoring"
+      - ""
+      - "4. UpdraftPlus:"
+      - "   • Configure automated backups"
+      - "   • Test backup restoration"
+      - "   • Set remote storage"
+      - ""
+      - "5. Redis Cache:"
+      - "   • {{ 'ENABLED - Monitor performance' if valkey_status.status.ActiveState == 'active' else 'DISABLED - Install Valkey to enable' }}"
+      - ""
+      - "6. LearnDash Pro:"
+      - "   • INSTALL MANUALLY with license key"
+      - "   • Configure course settings"
+      - "   • Set up payment gateways"
+      - ""
+      - "========================================="
   when: wp_config_check.stat.exists
   run_once: true
   tags: [nginx-wordpress, wordpress, plugins, security, info]
