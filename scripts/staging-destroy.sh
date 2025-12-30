@@ -54,22 +54,41 @@ calculate_cost() {
         # Try to get server creation time
         CREATION_TIME=$(jq -r '.resources[]? | select(.type=="hcloud_server") | .instances[0].attributes.created' terraform.tfstate 2>/dev/null || echo "")
 
-        if [[ -n "$CREATION_TIME" ]]; then
-            # Calculate hours running
-            CREATED_EPOCH=$(date -d "$CREATION_TIME" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%S" "$CREATION_TIME" +%s 2>/dev/null || echo "0")
-            NOW_EPOCH=$(date +%s)
-            HOURS_RUNNING=$(( (NOW_EPOCH - CREATED_EPOCH) / 3600 ))
+        if [[ -n "$CREATION_TIME" && "$CREATION_TIME" != "null" ]]; then
+            # Calculate hours running - handle ISO 8601 format with timezone
+            # Remove timezone suffix for better compatibility
+            CLEAN_TIME=$(echo "$CREATION_TIME" | sed 's/\+.*//')
 
-            if [[ $HOURS_RUNNING -gt 0 ]]; then
-                COST=$(echo "scale=4; $HOURS_RUNNING * 0.008" | bc)
-                echo ""
-                echo "=========================================="
-                log_info "Resource Usage"
-                echo "=========================================="
-                echo "Running time:  ${HOURS_RUNNING} hours"
-                echo "Estimated cost: €${COST}"
-                echo "=========================================="
-                echo ""
+            # Try different date parsing methods
+            if date -d "$CREATION_TIME" +%s &>/dev/null; then
+                CREATED_EPOCH=$(date -d "$CREATION_TIME" +%s)
+            elif date -d "$CLEAN_TIME" +%s &>/dev/null; then
+                CREATED_EPOCH=$(date -d "$CLEAN_TIME" +%s)
+            else
+                log_warn "Could not parse creation time: $CREATION_TIME"
+                CREATED_EPOCH=0
+            fi
+
+            NOW_EPOCH=$(date +%s)
+
+            # Validate epoch is reasonable (after 2020-01-01)
+            if [[ $CREATED_EPOCH -gt 1577836800 && $CREATED_EPOCH -le $NOW_EPOCH ]]; then
+                HOURS_RUNNING=$(( (NOW_EPOCH - CREATED_EPOCH) / 3600 ))
+
+                # Sanity check - if more than 30 days, something is wrong
+                if [[ $HOURS_RUNNING -le 720 ]]; then
+                    COST=$(echo "scale=3; $HOURS_RUNNING * 0.008" | bc)
+                    echo ""
+                    echo "=========================================="
+                    log_info "Resource Usage"
+                    echo "=========================================="
+                    echo "Running time:  ${HOURS_RUNNING} hours"
+                    echo "Estimated cost: €${COST}"
+                    echo "=========================================="
+                    echo ""
+                else
+                    log_warn "Calculated runtime seems incorrect (${HOURS_RUNNING} hours)"
+                fi
             fi
         fi
     fi

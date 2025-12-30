@@ -1,0 +1,4 @@
+---
+# Staging-specific variables
+# Disable auditd on staging (has compatibility issues with some Debian 13 kernels)
+security_hardening_auditd_enabled: false
