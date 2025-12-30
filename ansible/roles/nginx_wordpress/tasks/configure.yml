@@ -19,6 +19,15 @@
     mode: '0700'
   tags: [nginx-wordpress, config, directories]
 
+- name: Nginx WordPress | Configure | Create FastCGI cache directory
+  ansible.builtin.file:
+    path: /var/cache/nginx/wordpress
+    state: directory
+    owner: "{{ nginx_wordpress_nginx_user }}"
+    group: "{{ nginx_wordpress_nginx_group }}"
+    mode: '0755'
+  tags: [nginx-wordpress, config, directories, cache]
+
 - name: Nginx WordPress | Configure | Deploy Nginx site configuration
   ansible.builtin.template:
     src: nginx-wordpress.conf.j2
@@ -55,6 +64,13 @@
     state: reloaded
   when: nginx_config_deployed is changed
   tags: [nginx-wordpress, nginx, config]
+
+- name: Nginx WordPress | Configure | Disable default PHP-FPM www pool
+  ansible.builtin.file:
+    path: "{{ nginx_wordpress_php_fpm_pool_dir }}/www.conf"
+    state: absent
+  register: www_pool_removed
+  tags: [nginx-wordpress, php, config]
 
 - name: Nginx WordPress | Configure | Deploy PHP-FPM pool configuration
   ansible.builtin.template:
@@ -119,3 +135,47 @@
     - nginx_wordpress_install_wordpress
     - wp_is_installed.rc != 0
   tags: [nginx-wordpress, wordpress]
+
+# ========================================
+# Nginx Reverse Proxy for Monitoring
+# ========================================
+
+- name: Nginx WordPress | Configure | Deploy Prometheus reverse proxy
+  ansible.builtin.template:
+    src: nginx-prometheus.conf.j2
+    dest: "{{ nginx_wordpress_nginx_sites_available }}/prometheus.conf"
+    owner: root
+    group: root
+    mode: '0644'
+  when: deploy_monitoring | default(false) | bool
+  notify: reload nginx
+  tags: [nginx-wordpress, nginx, monitoring, reverse-proxy]
+
+- name: Nginx WordPress | Configure | Enable Prometheus reverse proxy
+  ansible.builtin.file:
+    src: "{{ nginx_wordpress_nginx_sites_available }}/prometheus.conf"
+    dest: "{{ nginx_wordpress_nginx_sites_enabled }}/prometheus.conf"
+    state: link
+  when: deploy_monitoring | default(false) | bool
+  notify: reload nginx
+  tags: [nginx-wordpress, nginx, monitoring, reverse-proxy]
+
+- name: Nginx WordPress | Configure | Deploy Grafana reverse proxy
+  ansible.builtin.template:
+    src: nginx-grafana.conf.j2
+    dest: "{{ nginx_wordpress_nginx_sites_available }}/grafana.conf"
+    owner: root
+    group: root
+    mode: '0644'
+  when: deploy_monitoring | default(false) | bool
+  notify: reload nginx
+  tags: [nginx-wordpress, nginx, monitoring, reverse-proxy]
+
+- name: Nginx WordPress | Configure | Enable Grafana reverse proxy
+  ansible.builtin.file:
+    src: "{{ nginx_wordpress_nginx_sites_available }}/grafana.conf"
+    dest: "{{ nginx_wordpress_nginx_sites_enabled }}/grafana.conf"
+    state: link
+  when: deploy_monitoring | default(false) | bool
+  notify: reload nginx
+  tags: [nginx-wordpress, nginx, monitoring, reverse-proxy]

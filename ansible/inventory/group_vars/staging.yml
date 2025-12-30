@@ -1,4 +1,110 @@
 ---
 # Staging-specific variables
-# Disable auditd on staging (has compatibility issues with some Debian 13 kernels)
-security_hardening_auditd_enabled: false
+
+# Enable auditd for full testing (test compatibility with Debian 13 kernels)
+security_hardening_auditd_enabled: true
+
+# Enable AIDE for full testing (validates production readiness)
+security_hardening_aide_enabled: true
+
+# Disable 2FA on staging (not needed for testing, requires manual Google Authenticator setup)
+ssh_2fa_enable_ssh: false
+ssh_2fa_enable_sudo: false
+
+# ========================================
+# Firewall Configuration for Monitoring
+# ========================================
+
+firewall_allowed_ports:
+  # SSH restricted to user's IP only (security best practice)
+  - rule: allow
+    port: "22"
+    proto: tcp
+    from_ip: "37.228.206.5"
+    comment: "SSH from authorized IP only"
+  - rule: allow
+    port: "80"
+    proto: tcp
+    comment: "HTTP"
+  - rule: allow
+    port: "443"
+    proto: tcp
+    comment: "HTTPS"
+  # Monitoring ports - localhost only (accessed via Nginx reverse proxy)
+  # No external ports needed - Prometheus/Grafana accessible via subdomains
+
+# ========================================
+# Monitoring Configuration (All-in-One)
+# ========================================
+
+# Enable monitoring stack deployment
+deploy_monitoring: true
+deploy_loki: true
+deploy_promtail: true
+node_exporter_enabled: true
+
+# Prometheus configuration
+prometheus_version: latest
+prometheus_port: 9090
+prometheus_config_dir: /etc/prometheus
+prometheus_db_dir: /var/lib/prometheus
+prometheus_web_listen_address: "127.0.0.1:9090"  # Localhost only - accessed via Nginx
+prometheus_storage_retention: "15d"
+prometheus_storage_retention_size: "5GB"
+
+# Prometheus scrape targets configuration
+prometheus_targets:
+  node:
+    - targets:
+      - "localhost:9100"
+      labels:
+        instance: "{{ inventory_hostname }}"
+        job: node_exporter
+
+# Prometheus scrape configs (fixes self-monitoring)
+prometheus_scrape_configs:
+  - job_name: prometheus
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+        - "localhost:9090"  # Use localhost instead of hostname
+  - job_name: node
+    file_sd_configs:
+      - files:
+        - /etc/prometheus/file_sd/node.yml
+
+# Grafana configuration (using v6+ grafana_ini structure)
+grafana_version: latest
+grafana_ini:
+  paths:
+    logs: "/var/log/grafana"
+    data: "/var/lib/grafana"
+  server:
+    http_addr: "127.0.0.1"  # Localhost only - accessed via Nginx reverse proxy
+    http_port: 3000
+    protocol: http
+    domain: "staging-wordpress.example.com"
+    root_url: "https://grafana.staging-wordpress.example.com"
+  security:
+    admin_user: admin
+    admin_password: "{{ vault_grafana_admin_password | default('changeme123') }}"
+  users:
+    allow_sign_up: false
+    auto_assign_org_role: Viewer
+    default_theme: dark
+
+# Loki configuration
+loki_version: latest
+loki_http_listen_port: 3100
+
+# Promtail configuration
+promtail_version: latest
+promtail_loki_url: "http://localhost:3100"
+
+# Node Exporter configuration
+node_exporter_version: latest
+node_exporter_web_listen_address: "0.0.0.0:9100"
+node_exporter_enabled_collectors:
+  - systemd
+  - textfile:
+      directory: "{{ node_exporter_textfile_dir | default('/var/lib/node_exporter') }}"

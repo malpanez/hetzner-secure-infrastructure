@@ -165,6 +165,41 @@
       when: deploy_monitoring | default(true) | bool
 
   post_tasks:
+    # Ensure Prometheus file service discovery is properly configured
+    - name: Prometheus | Post-config | Ensure file_sd directory exists
+      ansible.builtin.file:
+        path: "{{ prometheus_config_dir | default('/etc/prometheus') }}/file_sd"
+        state: directory
+        owner: prometheus
+        group: prometheus
+        mode: '0755'
+      when: deploy_monitoring | default(true) | bool
+      tags: [monitoring, prometheus, post-config]
+
+    - name: Prometheus | Post-config | Create Node Exporter target file
+      ansible.builtin.copy:
+        dest: "{{ prometheus_config_dir | default('/etc/prometheus') }}/file_sd/node.yml"
+        owner: prometheus
+        group: prometheus
+        mode: '0644'
+        content: |
+          ---
+          - targets:
+            - localhost:9100
+            labels:
+              instance: "{{ inventory_hostname }}"
+              job: node_exporter
+      when: deploy_monitoring | default(true) | bool
+      notify: restart prometheus
+      tags: [monitoring, prometheus, post-config]
+
+    - name: Prometheus | Post-config | Restart Prometheus if config changed
+      ansible.builtin.systemd:
+        name: prometheus
+        state: restarted
+      when: deploy_monitoring | default(true) | bool
+      tags: [monitoring, prometheus, post-config]
+
     - name: Display monitoring information
       ansible.builtin.debug:
         msg: |
@@ -172,23 +207,25 @@
           Monitoring Stack Deployed
           ========================================
 
-          Prometheus: http://{{ ansible_host }}:{{ prometheus_port }}
-          Loki: http://{{ ansible_host }}:3100
-          Grafana: http://{{ ansible_host }}:{{ grafana_port }}
+          Prometheus: http://{{ ansible_host }}:{{ prometheus_port | default(9090) }}
+          Loki: http://{{ ansible_host }}:{{ loki_http_listen_port | default(3100) }}
+          Grafana: http://{{ ansible_host }}:{{ grafana_ini.server.http_port | default(3000) }}
 
           Default credentials:
-          - Username: admin
-          - Password: {{ grafana_admin_password }}
+          - Username: {{ grafana_ini.security.admin_user | default('admin') }}
+          - Password: {{ grafana_ini.security.admin_password | default('changeme123') }}
 
           Grafana Data Sources:
           - Prometheus (metrics)
           - Loki (logs)
 
           Dashboards:
-          - Node Exporter Full
-          - Prometheus Stats
-          - Loki Logs Dashboard
-          - Nginx Loki Dashboard
+          - Node Exporter Full (#1860)
+          - Prometheus Stats (#3662)
+
+          Access via Nginx reverse proxy:
+          - prometheus.{{ ansible_host }} → http://localhost:9090
+          - grafana.{{ ansible_host }} → http://localhost:3000
 
           ========================================
       when: deploy_monitoring | default(true) | bool
@@ -243,35 +280,24 @@
   post_tasks:
     - name: Display WordPress deployment information
       ansible.builtin.debug:
-        msg: |
+        msg: |-
           ========================================
           WordPress Stack Deployed
           ========================================
 
           Server: {{ inventory_hostname }}
-          Domain: {{ wordpress_domain }}
-          Root: {{ wordpress_root }}
+          IP: {{ ansible_host }}
+          URL: http://{{ ansible_host }}
+
+          WordPress already installed and configured!
+          Database: {{ wordpress_db_name | default('wordpress') }}
+          Admin User: {{ nginx_wordpress_admin_user | default('admin') }}
 
           Next steps:
-          1. Install SSL certificate:
-             ssh {{ ansible_user }}@{{ ansible_host }}
-             sudo certbot --nginx -d {{ wordpress_domain }} -d www.{{ wordpress_domain }}
-
-          2. Install WordPress:
-             cd /tmp
-             wget https://wordpress.org/latest.tar.gz
-             tar -xzf latest.tar.gz
-             sudo cp -r wordpress/* {{ wordpress_root }}/
-             sudo chown -R {{ wordpress_user }}:{{ wordpress_group }} {{ wordpress_root }}
-
-          3. Database already configured via geerlingguy.mysql role
-             Database: {{ wordpress_db_name | default('wordpress') }}
-             User: {{ wordpress_db_user | default('wordpress') }}
-
-          4. Complete installation:
-             Visit: https://{{ wordpress_domain }}/wp-admin/install.php
-
-          5. Install LearnDash or Tutor LMS for course functionality
+          1. Access WordPress: http://{{ ansible_host }}/wp-admin
+          2. Configure CloudFlare + SSL later
+          3. Configure security plugins (Wordfence, WP 2FA)
+          4. Install LearnDash Pro manually (requires license)
 
           ========================================
       tags: [wordpress, info]

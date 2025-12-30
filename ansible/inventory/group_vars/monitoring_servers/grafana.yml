@@ -1,110 +1,97 @@
 ---
-# Grafana Configuration
+# Grafana Configuration (v6+ compatible)
 # Visualization and dashboarding platform
+# Uses grafana_ini structure for grafana.grafana collection v6+
 
 # ========================================
-# Grafana Version
+# Grafana Version and Repository
 # ========================================
-grafana_version: "10.2.3"
+grafana_version: latest
+grafana_manage_repo: true  # Use official Debian/Ubuntu repository
 
 # ========================================
-# Grafana Connection
+# Grafana Configuration (grafana.ini structure)
 # ========================================
-grafana_listen_address: "0.0.0.0"
-grafana_port: 3000
-grafana_domain: "{{ ansible_host }}"
-grafana_root_url: "http://{{ grafana_domain }}:{{ grafana_port }}"
+grafana_ini:
+  # Paths
+  paths:
+    logs: "/var/log/grafana"
+    data: "/var/lib/grafana"
+    plugins: "/var/lib/grafana/plugins"
+
+  # Server settings
+  server:
+    http_addr: "0.0.0.0"  # Override in staging/production as needed
+    http_port: 3000
+    protocol: http
+    domain: "{{ ansible_host }}"
+    root_url: "http://{{ ansible_host }}:3000"
+
+  # Security
+  security:
+    admin_user: admin
+    admin_password: "{{ vault_grafana_admin_password }}"
+    disable_gravatar: true
+    cookie_secure: false  # Set to true if using HTTPS
+    cookie_samesite: lax
+    allow_embedding: false
+
+  # Database (SQLite by default)
+  database:
+    type: sqlite3
+    path: "/var/lib/grafana/grafana.db"
+
+  # User management
+  users:
+    allow_sign_up: false
+    auto_assign_org_role: Viewer
+    default_theme: dark
+
+  # Anonymous access
+  auth.anonymous:
+    enabled: false
+
+  # Logging
+  log:
+    mode: "console file"
+    level: info
 
 # ========================================
-# Grafana Admin
+# Grafana Data Sources (using provisioning)
 # ========================================
-grafana_admin_user: admin
-grafana_admin_password: "{{ vault_grafana_admin_password }}"
-grafana_admin_email: admin@localhost
+grafana_use_provisioning: true
+grafana_provisioning_synced: false
 
-# ========================================
-# Grafana Data Storage
-# ========================================
-grafana_data_dir: /var/lib/grafana
-grafana_logs_dir: /var/log/grafana
-grafana_plugins_dir: /var/lib/grafana/plugins
-
-# ========================================
-# Grafana Database
-# ========================================
-# Use SQLite for simplicity (can upgrade to MariaDB later)
-grafana_database_type: sqlite3
-grafana_database_path: /var/lib/grafana/grafana.db
-
-# For MariaDB (optional):
-# grafana_database_type: mysql
-# grafana_database_host: localhost:3306
-# grafana_database_name: grafana
-# grafana_database_user: grafana
-# grafana_database_password: "{{ vault_grafana_db_password }}"
-
-# ========================================
-# Grafana Security
-# ========================================
-grafana_disable_gravatar: true
-grafana_cookie_secure: false  # Set to true if using HTTPS
-grafana_cookie_samesite: lax
-grafana_allow_embedding: false
-
-# Anonymous access
-grafana_auth_anonymous_enabled: false
-
-# Firewall rules
-grafana_firewall_allowed_ips:
-  - 127.0.0.1/32
-  # Add your admin IP for web access
-  # - "203.0.113.50/32"
-
-# ========================================
-# Grafana Data Sources
-# ========================================
 grafana_datasources:
   - name: Prometheus
     type: prometheus
     access: proxy
-    url: "http://localhost:{{ prometheus_port }}"
+    url: "http://localhost:{{ prometheus_port | default(9090) }}"
     is_default: true
     editable: false
+    version: 1
+
+  - name: Loki
+    type: loki
+    access: proxy
+    url: "http://localhost:{{ loki_http_listen_port | default(3100) }}"
+    editable: false
+    version: 1
 
 # ========================================
-# Grafana Dashboards
+# Grafana Dashboards (using provisioning)
 # ========================================
 grafana_dashboards_enabled: true
-
-# Pre-configured dashboards (by ID from grafana.com)
-grafana_default_dashboards:
+grafana_dashboards:
   # Node Exporter Full (System metrics)
-  - name: node-exporter-full
-    enabled: true
-    dashboard_id: 1860
-    revision: 1
-    datasource: Prometheus
+  - dashboard_id: "1860"
+    revision_id: "37"
+    datasource: "Prometheus"
 
-  # Redis Dashboard (works with Valkey)
-  - name: valkey-dashboard
-    enabled: true
-    dashboard_id: 7362
-    revision: 1
-    datasource: Prometheus
-
-  # MySQL/MariaDB Dashboard
-  - name: mariadb-dashboard
-    enabled: true
-    dashboard_id: 7362
-    revision: 1
-    datasource: Prometheus
-
-  # Nginx Dashboard
-  - name: nginx-dashboard
-    enabled: false
-    dashboard_id: 12708
-    revision: 1
-    datasource: Prometheus
+  # Prometheus Stats
+  - dashboard_id: "3662"
+    revision_id: "2"
+    datasource: "Prometheus"
 
 # ========================================
 # Grafana Plugins
@@ -116,27 +103,17 @@ grafana_plugins:
 # ========================================
 # Grafana Alerting
 # ========================================
-grafana_alerting_enabled: false  # Enable later if needed
+# grafana_alerting_enabled: false  # Not used in v6+ (always enabled)
 
 # ========================================
 # Grafana SMTP (for email alerts)
 # ========================================
-grafana_smtp_enabled: false
-# grafana_smtp_host: smtp.gmail.com:587
-# grafana_smtp_user: alerts@example.com
-# grafana_smtp_password: "{{ vault_grafana_smtp_password }}"
-# grafana_smtp_from_address: alerts@example.com
-
-# ========================================
-# Grafana Backup
-# ========================================
-grafana_backup_enabled: true
-grafana_backup_schedule: "0 5 * * *"  # Daily at 5 AM
-grafana_backup_retention_days: 7
-grafana_backup_dir: /var/backups/grafana
-
-# ========================================
-# Grafana Logging
-# ========================================
-grafana_log_level: info
-grafana_log_mode: console file
+# grafana_smtp_enabled: false
+# Configured via grafana_ini.smtp section if needed:
+# grafana_ini:
+#   smtp:
+#     enabled: true
+#     host: "smtp.gmail.com:587"
+#     user: "alerts@example.com"
+#     password: "{{ vault_grafana_smtp_password }}"
+#     from_address: "alerts@example.com"

@@ -23,6 +23,12 @@ wordpress_db_password: "{{ vault_wordpress_db_password }}"
 wordpress_db_charset: utf8mb4
 wordpress_db_collate: utf8mb4_unicode_ci
 
+# nginx_wordpress role expects these variables
+nginx_wordpress_db_name: "{{ wordpress_db_name }}"
+nginx_wordpress_db_user: "{{ wordpress_db_user }}"
+nginx_wordpress_db_password: "{{ wordpress_db_password }}"
+nginx_wordpress_db_host: "{{ wordpress_db_host }}"
+
 # ========================================
 # WordPress Security
 # ========================================
