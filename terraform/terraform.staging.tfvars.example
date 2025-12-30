@@ -20,9 +20,10 @@ admin_username = "malpanez"
 environment    = "staging"
 
 # Recommended: ARM medium (40% cheaper than x86 large, same RAM)
-architecture = "arm"     # Ampere Altra ARM64
-server_size  = "medium"  # cax21: 4 vCPU, 8GB RAM, €8.30/mo
-location     = "fsn1"    # Falkenstein (ARM available)
+architecture = "arm"     # Options: "x86" (AMD EPYC) or "arm" (Ampere Altra)
+server_size  = "medium"  # Options: "small", "medium", "large", "xlarge"
+                         # → Auto-selects: cax21 (4 vCPU, 8GB RAM, €8.30/mo)
+location     = "fsn1"    # Falkenstein (ARM available here)
 
 # Alternative: x86 if you prefer compatibility
 # architecture = "x86"
@@ -78,3 +79,33 @@ labels = {
   environment = "staging"
   cost_center = "development"
 }
+
+# ============================================================================
+# Server Size Reference (Auto-selected based on architecture + server_size)
+# ============================================================================
+#
+# x86 (AMD EPYC) - Available in ALL locations:
+# ┌────────┬──────────┬──────┬──────┬────────┬───────────┐
+# │ Size   │ Type     │ vCPU │ RAM  │ Disk   │ Price/mo  │
+# ├────────┼──────────┼──────┼──────┼────────┼───────────┤
+# │ small  │ cpx11    │ 2    │ 2GB  │ 40GB   │ €4.50     │
+# │ medium │ cpx21    │ 3    │ 4GB  │ 80GB   │ €8.50     │
+# │ large  │ cpx31    │ 4    │ 8GB  │ 160GB  │ €13.90    │
+# │ xlarge │ cpx41    │ 8    │ 16GB │ 240GB  │ €26.90    │
+# └────────┴──────────┴──────┴──────┴────────┴───────────┘
+#
+# ARM (Ampere Altra) - Only in: fsn1, hel1, ash:
+# ┌────────┬──────────┬──────┬──────┬────────┬───────────┬────────────┐
+# │ Size   │ Type     │ vCPU │ RAM  │ Disk   │ Price/mo  │ Savings    │
+# ├────────┼──────────┼──────┼──────┼────────┼───────────┼────────────┤
+# │ small  │ cax11    │ 2    │ 4GB  │ 40GB   │ €4.15     │ €0.35 (8%) │
+# │ medium │ cax21    │ 4    │ 8GB  │ 80GB   │ €8.30     │ €5.60 (40%)│ ⭐
+# │ large  │ cax31    │ 8    │ 16GB │ 160GB  │ €16.60    │ €10.30     │
+# │ xlarge │ cax41    │ 16   │ 32GB │ 320GB  │ €33.20    │ €20.60     │
+# └────────┴──────────┴──────┴──────┴────────┴───────────┴────────────┘
+#
+# 💡 Tips:
+#   - ARM "small" has DOUBLE RAM vs x86 (4GB vs 2GB)
+#   - ARM "medium" saves 40% vs x86 "large" (same RAM, more CPU!)
+#   - For staging: ARM medium @ fsn1 is sweet spot (€8.30/mo)
+#   - For production: x86 large @ nbg1 for reliability (€13.90/mo)
