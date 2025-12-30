@@ -53,6 +53,7 @@ plan.out
 
 # Ansible galaxy roles downloaded
 ansible/roles/external/
+ansible/roles/geerlingguy.mysql/
 ansible/galaxy_roles/
 
 # Ansible vault password files
