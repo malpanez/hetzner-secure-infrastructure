@@ -27,7 +27,7 @@ module "production_server" {
   source = "./modules/hetzner-server"
 
   server_name    = var.server_name
-  server_type    = var.server_type
+  server_type    = local.final_server_type  # Uses architecture + size mapping
   image          = var.image
   location       = var.location
   admin_username = var.admin_username

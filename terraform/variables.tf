@@ -10,10 +10,36 @@ variable "server_name" {
   default     = "prod-server-01"
 }
 
-variable "server_type" {
-  description = "Server type"
+# ============================================================================
+# Server Architecture Selection (x86 vs ARM)
+# ============================================================================
+
+variable "architecture" {
+  description = "CPU architecture: x86 (AMD EPYC) or arm (Ampere Altra)"
   type        = string
-  default     = "cx22" # 2 vCPU, 4GB RAM
+  default     = "x86"
+
+  validation {
+    condition     = contains(["x86", "arm"], var.architecture)
+    error_message = "Architecture must be either 'x86' or 'arm'"
+  }
+}
+
+variable "server_size" {
+  description = "Server size tier: small, medium, large, xlarge"
+  type        = string
+  default     = "medium"
+
+  validation {
+    condition     = contains(["small", "medium", "large", "xlarge"], var.server_size)
+    error_message = "Server size must be one of: small, medium, large, xlarge"
+  }
+}
+
+variable "server_type" {
+  description = "Server type (override architecture+size auto-selection)"
+  type        = string
+  default     = ""  # Empty = use architecture + size mapping
 }
 
 variable "image" {
@@ -26,6 +52,17 @@ variable "location" {
   description = "Datacenter location"
   type        = string
   default     = "nbg1" # Nuremberg
+
+  validation {
+    condition = contains([
+      "fsn1",  # Falkenstein (x86 + ARM)
+      "nbg1",  # Nuremberg (x86 only)
+      "hel1",  # Helsinki (x86 + ARM)
+      "ash",   # Ashburn, US (x86 + ARM)
+      "hil"    # Hillsboro, US (x86 only)
+    ], var.location)
+    error_message = "Location must be one of: fsn1, nbg1, hel1, ash, hil"
+  }
 }
 
 variable "admin_username" {

@@ -8,10 +8,40 @@ ssh_public_key = "sk-ssh-ed25519@openssh.com AAAA... malpanez@hetzner"
 
 # Server Configuration
 server_name    = "prod-server-01"
-server_type    = "cx22"  # 2 vCPU, 4GB RAM, 40GB SSD
-location       = "nbg1"  # Nuremberg (or: fsn1, hel1, ash, hil)
 admin_username = "malpanez"
 environment    = "production"  # Environment: production, staging, or development
+
+# ============================================================================
+# Server Type Selection (Choose ONE method)
+# ============================================================================
+
+# Method 1: Auto-select by architecture + size (RECOMMENDED)
+architecture = "x86"     # Options: "x86" (AMD EPYC) or "arm" (Ampere Altra)
+server_size  = "medium"  # Options: "small", "medium", "large", "xlarge"
+location     = "nbg1"    # nbg1 (x86 only), fsn1 (both), hel1 (both), ash (both)
+
+# Method 2: Manual server type override (uncomment to use)
+# server_type = "cpx31"  # Overrides architecture + size
+# location    = "nbg1"
+
+# ============================================================================
+# Server Type Reference
+# ============================================================================
+# x86 (AMD EPYC) - Available in ALL locations:
+#   small  = cpx11  # 2 vCPU, 2GB RAM, €4.50/mo
+#   medium = cpx21  # 3 vCPU, 4GB RAM, €8.50/mo
+#   large  = cpx31  # 4 vCPU, 8GB RAM, €13.90/mo
+#   xlarge = cpx41  # 8 vCPU, 16GB RAM, €26.90/mo
+#
+# ARM (Ampere Altra) - Only in: fsn1, hel1, ash:
+#   small  = cax11  # 2 vCPU, 4GB RAM, €4.15/mo (8% cheaper)
+#   medium = cax21  # 4 vCPU, 8GB RAM, €8.30/mo (40% cheaper vs CPX31!)
+#   large  = cax31  # 8 vCPU, 16GB RAM, €16.60/mo
+#   xlarge = cax41  # 16 vCPU, 32GB RAM, €33.20/mo
+#
+# Recommendation for STAGING: architecture="arm", size="medium", location="fsn1"
+# Recommendation for PRODUCTION: architecture="x86", size="large", location="nbg1"
+# ============================================================================
 
 # SSH Access
 ssh_port = 22

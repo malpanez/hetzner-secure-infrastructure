@@ -1,42 +1,80 @@
-# Hetzner Staging Environment
-# For testing Ansible roles before production deployment
-# Cost: ~€5.83/month (can be destroyed after testing)
+# ============================================================================
+# Staging Environment Configuration
+# ============================================================================
+# Quick setup for testing WordPress deployment with cost savings
 
 # Hetzner Cloud API Token
-# Get from: https://console.hetzner.cloud/
-hcloud_token = "YOUR_HCLOUD_TOKEN_HERE"
+# Get from: https://console.hetzner.cloud/ → Select "Staging" project
+hcloud_token = "YOUR_STAGING_HCLOUD_TOKEN_HERE"
 
-# SSH Public Key (Yubikey FIDO2)
-# Get with: cat ~/.ssh/id_ed25519_sk.pub
-ssh_public_key = "sk-ssh-ed25519@openssh.com AAAA... malpanez@hetzner"
+# SSH Public Key
+# Get with: cat ~/.ssh/id_ed25519.pub
+ssh_public_key = "ssh-ed25519 AAAA... malpanez@staging"
 
-# Server Configuration
+# ============================================================================
+# Server Configuration - ARM for Cost Savings
+# ============================================================================
+
 server_name    = "staging-wordpress"
-server_type    = "cx22"  # 2 vCPU, 4GB RAM, 40GB SSD - same as production
-location       = "nbg1"  # Nuremberg
 admin_username = "malpanez"
+environment    = "staging"
 
-# SSH Access - Open for testing (restrict in production)
+# Recommended: ARM medium (40% cheaper than x86 large, same RAM)
+architecture = "arm"     # Ampere Altra ARM64
+server_size  = "medium"  # cax21: 4 vCPU, 8GB RAM, €8.30/mo
+location     = "fsn1"    # Falkenstein (ARM available)
+
+# Alternative: x86 if you prefer compatibility
+# architecture = "x86"
+# server_size  = "large"   # cpx31: 4 vCPU, 8GB RAM, €13.90/mo
+# location     = "nbg1"    # Nuremberg
+
+# Cost comparison:
+# ARM medium (cax21):  €8.30/mo  = €99.60/year
+# x86 large (cpx31):   €13.90/mo = €166.80/year
+# Savings with ARM:    €5.60/mo  = €67.20/year (40% cheaper!)
+
+# ============================================================================
+# Network & Firewall
+# ============================================================================
+
 ssh_port        = 22
-ssh_allowed_ips = ["0.0.0.0/0", "::/0"]
+ssh_allowed_ips = ["0.0.0.0/0", "::/0"]  # Allow from anywhere (staging only!)
 
-# HTTP/HTTPS - Enable for WordPress testing
-allow_http  = true
-allow_https = true
+# Enable web traffic
+allow_http  = true   # Port 80 (redirects to HTTPS)
+allow_https = true   # Port 443
 
-# No additional features for staging
-volume_size        = 0
-enable_floating_ip = false
+# ============================================================================
+# Backups & Protection
+# ============================================================================
+
+# Enable backups (adds 20% = ~€1.66/mo for ARM medium)
+# Disable for testing to save costs
+prevent_destroy = false  # Allow easy destroy for staging
+
+# ============================================================================
+# DNS & Domain (Configure after deployment)
+# ============================================================================
+
+domain              = "staging.twomindstrading.com"
 reverse_dns_enabled = false
-domain             = "twomindstrading.com"
 
-# Protection - Disabled for easy cleanup
-prevent_destroy = false
+# Cloudflare (configure after DNS migration)
+# cloudflare_api_token = "YOUR_CLOUDFLARE_TOKEN"
+# enable_cloudflare    = true
 
-# Labels
+# ============================================================================
+# Optional Features (Disabled for staging to save costs)
+# ============================================================================
+
+volume_size        = 0      # No additional volume
+enable_floating_ip = false  # No floating IP
+
+# Labels for organization
 labels = {
-  environment = "staging"
-  project     = "wordpress-lms"
+  project     = "wordpress-trading-academy"
   owner       = "malpanez"
-  purpose     = "ansible-testing"
+  environment = "staging"
+  cost_center = "development"
 }

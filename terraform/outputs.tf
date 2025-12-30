@@ -8,6 +8,36 @@ output "server_name" {
   value       = module.production_server.server_name
 }
 
+output "server_type" {
+  description = "Selected server type"
+  value       = local.final_server_type
+}
+
+output "architecture" {
+  description = "CPU architecture (x86 or arm)"
+  value       = var.architecture
+}
+
+output "server_size" {
+  description = "Server size tier"
+  value       = var.server_size
+}
+
+output "server_specs" {
+  description = "Server specifications"
+  value = {
+    cpu   = "${local.selected_specs.cpu} vCPUs"
+    ram   = "${local.selected_specs.ram} GB"
+    disk  = "${local.selected_specs.disk} GB NVMe"
+    price = "€${local.selected_specs.price}/month"
+  }
+}
+
+output "cost_savings" {
+  description = "Cost savings (if ARM selected)"
+  value       = local.cost_comparison
+}
+
 output "server_ipv4" {
   description = "Server IPv4 address"
   value       = module.production_server.server_ipv4
