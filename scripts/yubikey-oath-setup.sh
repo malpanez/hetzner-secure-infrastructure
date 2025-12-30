@@ -90,44 +90,36 @@ EOF
 detect_yubikey() {
     log_step "Detecting Yubikey..."
 
-    if ! lsusb | grep -qi yubico; then
-        log_error "Yubikey not detected via USB"
+    # Check if lsusb shows Yubikey (optional - not critical)
+    if lsusb | grep -qi yubico; then
+        log_info "Yubikey detected via USB ✓"
+        lsusb | grep -i yubico
+        echo ""
+    else
+        log_warn "lsusb doesn't show Yubikey, but will try ykman anyway..."
+        echo ""
+    fi
+
+    # The real test - can we communicate with Yubikey?
+    if ! ykman info 2>/dev/null; then
+        log_error "Cannot access Yubikey with ykman"
         echo ""
         echo "Please ensure:"
         echo "1. Yubikey is plugged into your Windows machine"
         echo "2. You ran in PowerShell (Admin):"
         echo "   usbipd attach --wsl --busid 4-2"
         echo ""
-        echo "Check with: usbipd list"
+        echo "If Yubikey is attached, try:"
+        echo "  sudo udevadm control --reload-rules"
+        echo "  sudo udevadm trigger"
+        echo ""
         exit 1
-    fi
-
-    log_info "Yubikey detected via USB ✓"
-    lsusb | grep -i yubico
-    echo ""
-
-    # Try to get Yubikey info
-    if ! ykman info 2>/dev/null; then
-        log_warn "Cannot read Yubikey info (permission issue?)"
-        log_info "Attempting to fix permissions..."
-
-        # Try to trigger udev again
-        sudo udevadm control --reload-rules
-        sudo udevadm trigger
-        sleep 2
-
-        if ! ykman info; then
-            log_error "Still cannot access Yubikey"
-            log_warn "You may need to:"
-            log_warn "1. Detach and reattach Yubikey (usbipd detach/attach)"
-            log_warn "2. Log out and back in (group membership)"
-            log_warn "3. Restart WSL (wsl --shutdown)"
-            exit 1
-        fi
     fi
 
     echo ""
     log_info "Yubikey accessible ✓"
+    ykman info
+    echo ""
 }
 
 # Configure OATH-TOTP
