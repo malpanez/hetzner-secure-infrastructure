@@ -4,10 +4,48 @@ variable "hcloud_token" {
   sensitive   = true
 }
 
-variable "server_name" {
-  description = "Name of the production server"
+# ============================================================================
+# Server Naming Convention: <env>-<country>-<type>-<number>
+# Examples: prod-de-wp-01, stag-de-wp-01, prod-fi-db-01
+# ============================================================================
+
+variable "environment" {
+  description = "Environment: dev, test, stag, prod"
   type        = string
-  default     = "prod-server-01"
+  default     = "prod"
+
+  validation {
+    condition     = contains(["dev", "test", "stag", "prod"], var.environment)
+    error_message = "Environment must be one of: dev, test, stag, prod"
+  }
+}
+
+variable "server_type_name" {
+  description = "Server type for naming: wp (WordPress), web, db, cache, lb, mon"
+  type        = string
+  default     = "wp"
+
+  validation {
+    condition     = contains(["wp", "web", "db", "cache", "lb", "mon"], var.server_type_name)
+    error_message = "Server type must be one of: wp, web, db, cache, lb, mon"
+  }
+}
+
+variable "instance_number" {
+  description = "Instance number (01, 02, 03, ...)"
+  type        = number
+  default     = 1
+
+  validation {
+    condition     = var.instance_number >= 1 && var.instance_number <= 99
+    error_message = "Instance number must be between 1 and 99"
+  }
+}
+
+variable "server_name" {
+  description = "Override auto-generated server name (leave empty to use naming convention)"
+  type        = string
+  default     = ""
 }
 
 # ============================================================================
@@ -163,16 +201,6 @@ variable "domain" {
   description = "Domain for reverse DNS and Cloudflare"
   type        = string
   default     = "twomindstrading.com"
-}
-
-variable "environment" {
-  description = "Environment (production, staging, development)"
-  type        = string
-  default     = "production"
-  validation {
-    condition     = contains(["production", "staging", "development"], var.environment)
-    error_message = "Environment must be one of: production, staging, development"
-  }
 }
 
 variable "prevent_destroy" {

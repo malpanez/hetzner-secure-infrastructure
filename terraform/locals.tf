@@ -3,6 +3,31 @@
 # ============================================================================
 
 locals {
+  # ============================================================================
+  # Server Naming Convention: <env>-<country>-<type>-<number>
+  # ============================================================================
+
+  # Map Hetzner location codes to country codes
+  location_to_country = {
+    nbg1 = "de" # Nuremberg, Germany
+    fsn1 = "de" # Falkenstein, Germany
+    hel1 = "fi" # Helsinki, Finland
+    ash  = "us" # Ashburn, USA
+  }
+
+  # Extract country code from location
+  country_code = local.location_to_country[var.location]
+
+  # Auto-generate server name if not provided
+  auto_generated_name = "${var.environment}-${local.country_code}-${var.server_type_name}-${format("%02d", var.instance_number)}"
+
+  # Use provided name or auto-generated
+  final_server_name = var.server_name != "" ? var.server_name : local.auto_generated_name
+
+  # ============================================================================
+  # Server Type Selection (Architecture + Size)
+  # ============================================================================
+
   # Server type mapping by architecture and size
   # This allows automatic selection based on architecture + size
   # or manual override via server_type variable
