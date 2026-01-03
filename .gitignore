@@ -378,7 +378,9 @@ API_KEY*
 
 # Log files
 *.log
-logs/
+logs/*
+!logs/.gitkeep
+!logs/latest.log
 *.out
 *.err
 

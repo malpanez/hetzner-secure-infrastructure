@@ -119,10 +119,18 @@ The infrastructure code has been fixed but NOT yet deployed. The Hetzner server 
 ### Phase 1: Deploy and Test Basic Functionality
 1. Review this status document
 2. Deploy infrastructure: `cd terraform && terraform apply`
-3. Run Ansible (user manually): `cd ansible && export HCLOUD_TOKEN="..." && ansible-playbook -u root playbooks/site.yml`
+3. Run Ansible with automatic logging:
+   ```bash
+   cd ansible
+   export HCLOUD_TOKEN="..."
+   ./deploy.sh -u root playbooks/site.yml
+   # Log will be saved to: logs/ansible-YYYYMMDD-HHMMSS.log
+   # Symlink created at: logs/latest.log
+   ```
 4. Verify SSH access works after deployment
 5. Check that reboot actually triggered (if kernel params changed)
 6. Verify AppArmor is in complain mode: `sudo aa-status`
+7. Review deployment log: `less ansible/logs/latest.log`
 
 ### Phase 2: Verify Services
 1. **WordPress**: Check HTTP access, verify admin login works
