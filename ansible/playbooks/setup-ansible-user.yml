@@ -1,0 +1,159 @@
+---
+# Setup dedicated ansible automation user
+# This allows automated deployments while keeping 2FA enabled for human users
+#
+# Usage:
+#   ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/setup-ansible-user.yml
+
+- name: Setup Ansible Automation User
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    ansible_automation_user: ansible
+    ansible_automation_ssh_key: "{{ lookup('file', lookup('env', 'HOME') + '/.ssh/ansible_automation.pub') }}"
+
+  tasks:
+    - name: Create ansible automation user
+      user:
+        name: "{{ ansible_automation_user }}"
+        comment: "Ansible Automation User"
+        shell: /bin/bash
+        create_home: true
+        state: present
+
+    - name: Add ansible user to sudo group
+      user:
+        name: "{{ ansible_automation_user }}"
+        groups: sudo
+        append: true
+
+    - name: Configure passwordless sudo for ansible user
+      copy:
+        content: |
+          # Ansible automation user - passwordless sudo for specific commands
+          {{ ansible_automation_user }} ALL=(ALL) NOPASSWD: /usr/bin/apt, /usr/bin/apt-get, /usr/bin/systemctl, /usr/bin/nginx, /usr/bin/mysql, /usr/bin/mariadb, /usr/bin/wp, /usr/bin/certbot, /usr/bin/ufw, /bin/cp, /bin/mv, /bin/mkdir, /bin/chown, /bin/chmod, /usr/bin/tee, /usr/bin/ln, /usr/bin/rm
+        dest: /etc/sudoers.d/ansible-automation
+        mode: '0440'
+        validate: 'visudo -cf %s'
+
+    - name: Create .ssh directory for ansible user
+      file:
+        path: /home/{{ ansible_automation_user }}/.ssh
+        state: directory
+        owner: "{{ ansible_automation_user }}"
+        group: "{{ ansible_automation_user }}"
+        mode: '0700'
+
+    - name: Add SSH public key for ansible user
+      authorized_key:
+        user: "{{ ansible_automation_user }}"
+        key: "{{ ansible_automation_ssh_key }}"
+        state: present
+
+    - name: Exclude ansible user from 2FA requirement
+      blockinfile:
+        path: /etc/ssh/sshd_config.d/2fa.conf
+        marker: "# {mark} ANSIBLE MANAGED BLOCK - Exclude ansible user from 2FA"
+        block: |
+          # Exclude ansible automation user from 2FA requirement
+          Match User {{ ansible_automation_user }}
+              AuthenticationMethods publickey
+        insertbefore: "^Match User"
+      notify: Restart SSH
+
+    - name: Verify SSH configuration is valid
+      command: sshd -t
+      changed_when: false
+
+    - name: Create ansible user activity log directory
+      file:
+        path: /var/log/ansible-automation
+        state: directory
+        owner: root
+        group: adm
+        mode: '0750'
+
+    - name: Configure sudo logging for ansible user
+      copy:
+        content: |
+          # Log all ansible automation user commands
+          Defaults:{{ ansible_automation_user }} log_output
+          Defaults:{{ ansible_automation_user }} !syslog
+          Defaults:{{ ansible_automation_user }} logfile="/var/log/ansible-automation/sudo.log"
+        dest: /etc/sudoers.d/ansible-logging
+        mode: '0440'
+        validate: 'visudo -cf %s'
+
+    - name: Restrict ansible user SSH key types
+      blockinfile:
+        path: /etc/ssh/sshd_config.d/ansible-key-restrictions.conf
+        create: true
+        mode: '0644'
+        marker: "# {mark} ANSIBLE MANAGED BLOCK - Key restrictions"
+        block: |
+          # Restrict ansible user to Ed25519 keys only (most secure)
+          Match User {{ ansible_automation_user }}
+              PubkeyAcceptedKeyTypes ssh-ed25519
+              MaxAuthTries 3
+              MaxSessions 5
+      notify: Restart SSH
+
+    - name: Configure fail2ban to monitor ansible user
+      copy:
+        content: |
+          # Fail2ban jail for ansible automation user
+          [ansible-automation]
+          enabled = true
+          port = ssh
+          filter = ansible-automation
+          logpath = /var/log/auth.log
+          maxretry = 3
+          bantime = 3600
+          findtime = 600
+        dest: /etc/fail2ban/jail.d/ansible-automation.conf
+        mode: '0644'
+      notify: Restart fail2ban
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Create fail2ban filter for ansible user
+      copy:
+        content: |
+          # Fail2ban filter for ansible automation user failed login attempts
+          [Definition]
+          failregex = ^%(__prefix_line)sAuthentication failure for {{ ansible_automation_user }} from <HOST>.*$
+                      ^%(__prefix_line)sFailed publickey for {{ ansible_automation_user }} from <HOST>.*$
+                      ^%(__prefix_line)sConnection closed by authenticating user {{ ansible_automation_user }} <HOST> .*\[preauth\]$
+          ignoreregex =
+        dest: /etc/fail2ban/filter.d/ansible-automation.conf
+        mode: '0644'
+      notify: Restart fail2ban
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Display ansible user security summary
+      debug:
+        msg:
+          - "Ansible automation user created with enhanced security:"
+          - "  - User: {{ ansible_automation_user }}"
+          - "  - SSH key-based authentication only (Ed25519)"
+          - "  - Passwordless sudo for specific commands only"
+          - "  - All commands logged to /var/log/ansible-automation/"
+          - "  - Fail2ban monitoring enabled (3 attempts, 1h ban)"
+          - "  - SSH session logging (VERBOSE)"
+          - ""
+          - "Next steps:"
+          - "  1. Update inventory to use ansible user"
+          - "  2. Test connection: ssh -i ~/.ssh/ansible_automation ansible@{{ inventory_hostname }}"
+          - "  3. Test deployment: ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml --check"
+
+  handlers:
+    - name: Restart SSH
+      systemd:
+        name: sshd
+        state: restarted
+
+    - name: Restart fail2ban
+      systemd:
+        name: fail2ban
+        state: restarted

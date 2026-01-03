@@ -28,9 +28,116 @@
     mode: '0755'
   tags: [nginx-wordpress, config, directories, cache]
 
-- name: Nginx WordPress | Configure | Deploy Nginx site configuration
+# ========================================
+# Deploy Modular Nginx Configuration
+# ========================================
+
+- name: Nginx WordPress | Configure | Deploy FastCGI cache config
   ansible.builtin.template:
-    src: nginx-wordpress.conf.j2
+    src: conf.d/fastcgi-cache.conf.j2
+    dest: /etc/nginx/conf.d/fastcgi-cache.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when: nginx_wordpress_enable_fastcgi_cache | default(true)
+  register: nginx_fastcgi_cache_deployed
+  tags: [nginx-wordpress, nginx, config, cache]
+
+- name: Nginx WordPress | Configure | Deploy rate limiting config
+  ansible.builtin.template:
+    src: conf.d/rate-limits.conf.j2
+    dest: /etc/nginx/conf.d/rate-limits.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when: nginx_wordpress_enable_rate_limiting | default(true)
+  register: nginx_rate_limits_deployed
+  tags: [nginx-wordpress, nginx, config, security]
+
+- name: Nginx WordPress | Configure | Deploy Cloudflare real IP config
+  ansible.builtin.template:
+    src: conf.d/cloudflare-real-ip.conf.j2
+    dest: /etc/nginx/conf.d/cloudflare-real-ip.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when: nginx_wordpress_cloudflare_enabled | default(true)
+  register: nginx_cloudflare_deployed
+  tags: [nginx-wordpress, nginx, config, cloudflare]
+
+- name: Nginx WordPress | Configure | Deploy security headers config
+  ansible.builtin.template:
+    src: conf.d/security-headers.conf.j2
+    dest: /etc/nginx/conf.d/security-headers.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when: nginx_wordpress_enable_security_headers | default(true)
+  register: nginx_security_headers_deployed
+  tags: [nginx-wordpress, nginx, config, security]
+
+- name: Nginx WordPress | Configure | Create snippets directory
+  ansible.builtin.file:
+    path: /etc/nginx/snippets
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags: [nginx-wordpress, nginx, config]
+
+- name: Nginx WordPress | Configure | Deploy WordPress cache bypass snippet
+  ansible.builtin.template:
+    src: snippets/wordpress-cache-bypass.conf.j2
+    dest: /etc/nginx/snippets/wordpress-cache-bypass.conf
+    owner: root
+    group: root
+    mode: '0644'
+  register: nginx_cache_bypass_deployed
+  tags: [nginx-wordpress, nginx, config, cache]
+
+- name: Nginx WordPress | Configure | Deploy WordPress security snippet
+  ansible.builtin.template:
+    src: snippets/wordpress-security.conf.j2
+    dest: /etc/nginx/snippets/wordpress-security.conf
+    owner: root
+    group: root
+    mode: '0644'
+  register: nginx_wp_security_deployed
+  tags: [nginx-wordpress, nginx, config, security]
+
+- name: Nginx WordPress | Configure | Deploy SSL parameters snippet
+  ansible.builtin.template:
+    src: snippets/ssl-params.conf.j2
+    dest: /etc/nginx/snippets/ssl-params.conf
+    owner: root
+    group: root
+    mode: '0644'
+  register: nginx_ssl_params_deployed
+  tags: [nginx-wordpress, nginx, config, ssl]
+
+- name: Nginx WordPress | Configure | Deploy gzip parameters snippet
+  ansible.builtin.template:
+    src: snippets/gzip-params.conf.j2
+    dest: /etc/nginx/snippets/gzip-params.conf
+    owner: root
+    group: root
+    mode: '0644'
+  register: nginx_gzip_params_deployed
+  tags: [nginx-wordpress, nginx, config, performance]
+
+- name: Nginx WordPress | Configure | Deploy static assets snippet
+  ansible.builtin.template:
+    src: snippets/static-assets.conf.j2
+    dest: /etc/nginx/snippets/static-assets.conf
+    owner: root
+    group: root
+    mode: '0644'
+  register: nginx_static_assets_deployed
+  tags: [nginx-wordpress, nginx, config, performance]
+
+- name: Nginx WordPress | Configure | Deploy modular WordPress site configuration
+  ansible.builtin.template:
+    src: sites-available/wordpress.conf.j2
     dest: "{{ nginx_wordpress_nginx_sites_available }}/wordpress.conf"
     owner: root
     group: root

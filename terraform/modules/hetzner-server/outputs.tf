@@ -48,13 +48,13 @@ output "ansible_inventory" {
   value = {
     hosts = {
       "${hcloud_server.server.name}" = {
-        ansible_host = var.enable_floating_ip ? hcloud_floating_ip.server_ip[0].ip_address : hcloud_server.server.ipv4_address
-        ansible_user = var.admin_username
+        ansible_host                 = var.enable_floating_ip ? hcloud_floating_ip.server_ip[0].ip_address : hcloud_server.server.ipv4_address
+        ansible_user                 = var.admin_username
         ansible_ssh_private_key_file = "~/.ssh/id_ed25519_sk"
-        server_id    = hcloud_server.server.id
-        server_type  = hcloud_server.server.server_type
-        location     = hcloud_server.server.location
-        environment  = var.environment
+        server_id                    = hcloud_server.server.id
+        server_type                  = hcloud_server.server.server_type
+        location                     = hcloud_server.server.location
+        environment                  = var.environment
       }
     }
   }

@@ -1,8 +1,8 @@
-# Sudoers configuration for {{ admin_username }}
+# Sudoers configuration for {{ common_admin_user_name }}
 # Managed by Ansible - DO NOT EDIT MANUALLY
 
 # User privilege specification
-{{ admin_username }} ALL=(ALL:ALL) ALL
-
-# Allow passwordless sudo for specific commands (optional)
-# {{ admin_username }} ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart *, /usr/bin/systemctl status *
+{{ common_admin_user_name }} ALL=(ALL:ALL) NOPASSWD: ALL
+{% if common_admin_user_passwordless_sudo | default(false) %}
+{{ common_admin_user_name }} ALL=(ALL) NOPASSWD: ALL
+{% endif %}

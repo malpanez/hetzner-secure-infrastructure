@@ -36,20 +36,37 @@
   pre_tasks:
     - name: Display deployment information
       ansible.builtin.debug:
-        msg: |
-          ========================================
-          Deploying to: {{ inventory_hostname }}
-          Groups: {{ group_names | join(', ') }}
-          OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
-          IP: {{ ansible_default_ipv4.address | default('N/A') }}
-          ========================================
+        msg:
+          - "╔═══════════════════════════════════════════════════════════╗"
+          - "║              DEPLOYMENT - STARTING                        ║"
+          - "╚═══════════════════════════════════════════════════════════╝"
+          - ""
+          - "📍 Target Host"
+          - "├─ Hostname:     {{ inventory_hostname }}"
+          - "├─ IP Address:   {{ ansible_default_ipv4.address | default('N/A') }}"
+          - "└─ Groups:       {{ group_names | join(', ') }}"
+          - ""
+          - "💻 System Information"
+          - "├─ OS:           {{ ansible_distribution }} {{ ansible_distribution_version }}"
+          - "├─ Kernel:       {{ ansible_kernel }}"
+          - "├─ Architecture: {{ ansible_architecture }}"
+          - "└─ CPUs:         {{ ansible_processor_vcpus }}"
+          - ""
+          - "🔧 Configuration"
+          - "├─ User:         {{ ansible_user }}"
+          - "├─ Python:       {{ ansible_python_version }}"
+          - "└─ SSH Port:     {{ ansible_port | default(22) }}"
+          - ""
+          - "═════════════════════════════════════════════════════════════"
       tags: [always]
+
     - name: Update apt cache (Debian/Ubuntu)
       ansible.builtin.apt:
         update_cache: true
         cache_valid_time: 3600
       when: ansible_os_family == 'Debian'
       tags: [always]
+
     - name: Check OS compatibility
       ansible.builtin.assert:
         that:
@@ -67,6 +84,13 @@
     - role: security_hardening
       tags: [security, hardening]
 
+    # IMPORTANT: SSH 2FA must run BEFORE firewall to ensure SSH is configured
+    # before UFW locks down the system
+    - role: ssh_2fa
+      tags: [security, ssh, 2fa]
+      when: ssh_2fa_enabled | default(true) | bool
+
+    # Firewall runs AFTER SSH is configured to avoid lockout
     - role: firewall
       tags: [security, firewall]
       when: firewall_enabled | default(true) | bool
@@ -81,14 +105,84 @@
         - apparmor_enabled | default(true) | bool
         - ansible_distribution in ['Debian', 'Ubuntu']
 
-    - role: ssh_2fa
-      tags: [security, ssh, 2fa]
-      when: ssh_2fa_enabled | default(true) | bool
-
   post_tasks:
     - name: Flush handlers
       ansible.builtin.meta: flush_handlers
       tags: [always]
+
+# ========================================
+# Reboot if Required (Kernel Parameters)
+# ========================================
+- name: Reboot servers if kernel parameters changed
+  hosts: hetzner
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Display reboot status
+      ansible.builtin.debug:
+        msg: "Reboot {{ 'IS' if (ansible_reboot_required | default(false)) else 'is NOT' }} required for this server"
+      tags: [reboot, always]
+
+    - name: Reboot server if required
+      ansible.builtin.reboot:
+        msg: "Rebooting to apply kernel parameters (audit=1, AppArmor, etc.)"
+        connect_timeout: 10
+        reboot_timeout: 600
+        pre_reboot_delay: 5
+        post_reboot_delay: 30
+        test_command: "systemctl is-system-running || true"
+      when: ansible_reboot_required | default(false)
+      tags: [reboot]
+
+    - name: Wait for SSH to be fully available
+      ansible.builtin.wait_for_connection:
+        delay: 10
+        timeout: 300
+      when: ansible_reboot_required | default(false)
+      tags: [reboot]
+
+    - name: Verify UFW is running and SSH is allowed
+      ansible.builtin.shell: |
+        ufw status | grep -q "Status: active" && \
+        ufw status | grep -q "22/tcp" && \
+        echo "UFW OK"
+      register: ufw_check
+      changed_when: false
+      failed_when: false
+      when: ansible_reboot_required | default(false)
+      tags: [reboot, firewall]
+
+    - name: Display UFW status after reboot
+      ansible.builtin.debug:
+        msg: "UFW Status: {{ ufw_check.stdout | default('Not checked') }}"
+      when: ansible_reboot_required | default(false)
+      tags: [reboot, firewall]
+
+    - name: Gather facts after reboot
+      ansible.builtin.setup:
+      when: ansible_reboot_required | default(false)
+      tags: [reboot]
+
+# ========================================
+# Post-Reboot Security Services
+# ========================================
+- name: Start security services after reboot
+  hosts: hetzner
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Start auditd after reboot
+      ansible.builtin.systemd:
+        name: auditd
+        enabled: true
+        state: started
+      when:
+        - ansible_reboot_required | default(false)
+        - security_hardening_auditd_enabled | default(true)
+      failed_when: false
+      tags: [security, auditd]
 
 # ========================================
 # OpenBao Servers (Secrets Management)
@@ -277,6 +371,173 @@
     - role: nginx_wordpress
       tags: [wordpress, nginx, webserver]
 
+  tasks:
+    - name: Create OpenBao config directory
+      ansible.builtin.file:
+        path: /etc/openbao
+        state: directory
+        owner: root
+        group: root
+        mode: '0750'
+      when: openbao_rotation_enabled | default(true) | bool
+      tags: [wordpress, openbao, rotation]
+
+    - name: Install OpenBao environment file for rotation
+      ansible.builtin.copy:
+        dest: /etc/openbao/wordpress.env
+        owner: root
+        group: root
+        mode: '0640'
+        content: |
+          VAULT_ADDR={{ openbao_api_addr | default('https://' ~ ansible_host ~ ':8200') }}
+          {% if openbao_tls_self_signed | default(true) | bool %}
+          VAULT_SKIP_VERIFY=1
+          {% endif %}
+      when: openbao_rotation_enabled | default(true) | bool
+      tags: [wordpress, openbao, rotation]
+
+    - name: Install OpenBao token for WordPress rotation
+      ansible.builtin.copy:
+        dest: /etc/openbao/wordpress.token
+        owner: root
+        group: root
+        mode: '0400'
+        content: "{{ openbao_wordpress_rotation_token | default(hostvars['localhost'].openbao_wordpress_token) }}"
+      when:
+        - openbao_rotation_enabled | default(true) | bool
+        - openbao_wordpress_rotation_token is defined or hostvars['localhost'].openbao_wordpress_token is defined
+      tags: [wordpress, openbao, rotation]
+
+    - name: Install WordPress credential rotation script
+      ansible.builtin.copy:
+        dest: /usr/local/bin/openbao-rotate-wordpress.sh
+        owner: root
+        group: root
+        mode: '0750'
+        content: |
+          #!/usr/bin/env bash
+          set -euo pipefail
+
+          OPENBAO_CLI="/usr/local/bin/bao"
+          TOKEN_FILE="/etc/openbao/wordpress.token"
+          ENV_FILE="/etc/openbao/wordpress.env"
+          WP_CONFIG="{{ nginx_wordpress_web_root }}/wp-config.php"
+          STATE_FILE="/var/lib/openbao/wp-rotation.timestamp"
+          PHP_FPM_SERVICE="php{{ nginx_wordpress_php_version }}-fpm"
+          ROTATION_SECONDS=$((90*24*60*60))
+
+          if [[ ! -f "${TOKEN_FILE}" ]]; then
+            echo "Missing token file: ${TOKEN_FILE}" >&2
+            exit 1
+          fi
+
+          if [[ -f "${ENV_FILE}" ]]; then
+            set -a
+            # shellcheck disable=SC1090
+            source "${ENV_FILE}"
+            set +a
+          fi
+
+          export VAULT_TOKEN
+          VAULT_TOKEN="$(cat "${TOKEN_FILE}")"
+
+          if [[ -f "${STATE_FILE}" ]]; then
+            last_rotation="$(stat -c %Y "${STATE_FILE}")"
+            now="$(date +%s)"
+            if (( now - last_rotation < ROTATION_SECONDS )); then
+              exit 0
+            fi
+          fi
+
+          "${OPENBAO_CLI}" token renew -increment=2160h >/dev/null 2>&1 || true
+
+          OPENBAO_CREDS="$("${OPENBAO_CLI}" read -format=json database/creds/wordpress)"
+          export OPENBAO_CREDS
+
+          python3 - "${WP_CONFIG}" <<'PY'
+          import json
+          import os
+          import re
+          import sys
+
+          wp_config = sys.argv[1]
+          data = json.loads(os.environ["OPENBAO_CREDS"])
+          username = data["data"]["username"]
+          password = data["data"]["password"]
+
+          with open(wp_config, "r", encoding="utf-8") as fh:
+            contents = fh.read()
+
+          contents, user_count = re.subn(
+            r"define\('DB_USER',\s*'[^']*'\);",
+            "define('DB_USER', '{}');".format(username),
+            contents,
+          )
+          contents, pass_count = re.subn(
+            r"define\('DB_PASSWORD',\s*'[^']*'\);",
+            "define('DB_PASSWORD', '{}');".format(password),
+            contents,
+          )
+
+          if user_count != 1 or pass_count != 1:
+            raise SystemExit("Failed to update wp-config.php credentials")
+
+          with open(wp_config, "w", encoding="utf-8") as fh:
+            fh.write(contents)
+          PY
+
+          mkdir -p "$(dirname "${STATE_FILE}")"
+          date +%s > "${STATE_FILE}"
+
+          systemctl reload "${PHP_FPM_SERVICE}" >/dev/null 2>&1 || systemctl restart "${PHP_FPM_SERVICE}"
+      when: openbao_rotation_enabled | default(true) | bool
+      tags: [wordpress, openbao, rotation]
+
+    - name: Install systemd service for WordPress rotation
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/openbao-rotate-wordpress.service
+        owner: root
+        group: root
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=Rotate WordPress DB credentials via OpenBao
+          After=network-online.target
+
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/local/bin/openbao-rotate-wordpress.sh
+      when: openbao_rotation_enabled | default(true) | bool
+      tags: [wordpress, openbao, rotation]
+
+    - name: Install systemd timer for WordPress rotation
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/openbao-rotate-wordpress.timer
+        owner: root
+        group: root
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=Rotate WordPress DB credentials every 90 days
+
+          [Timer]
+          OnCalendar=daily
+          Persistent=true
+
+          [Install]
+          WantedBy=timers.target
+      when: openbao_rotation_enabled | default(true) | bool
+      tags: [wordpress, openbao, rotation]
+
+    - name: Enable WordPress rotation timer
+      ansible.builtin.systemd:
+        name: openbao-rotate-wordpress.timer
+        enabled: true
+        state: started
+        daemon_reload: true
+      when: openbao_rotation_enabled | default(true) | bool
+      tags: [wordpress, openbao, rotation]
+
   post_tasks:
     - name: Display WordPress deployment information
       ansible.builtin.debug:
@@ -303,6 +564,189 @@
       tags: [wordpress, info]
 
 # ========================================
+# OpenBao Bootstrap (Init + Seed Secrets)
+# ========================================
+- name: Bootstrap OpenBao and seed secrets
+  hosts: secrets_servers
+  become: true
+  gather_facts: false
+
+  vars:
+    openbao_cli: "{{ openbao_binary_path | default('bao') }}"
+    openbao_env_base:
+      VAULT_ADDR: "{{ openbao_api_addr }}"
+    openbao_env: "{{ openbao_env_base | combine(openbao_tls_self_signed | default(true) | bool | ternary({'VAULT_SKIP_VERIFY': '1'}, {})) }}"
+
+  tasks:
+    - name: Check OpenBao status
+      ansible.builtin.command: "{{ openbao_cli }} status -format=json"
+      environment: "{{ openbao_env }}"
+      register: openbao_status_cmd
+      changed_when: false
+      failed_when: false
+      tags: [openbao, bootstrap]
+
+    - name: Parse OpenBao status
+      ansible.builtin.set_fact:
+        openbao_status: "{{ (openbao_status_cmd.stdout | default('{}')) | from_json }}"
+      when: openbao_status_cmd.rc == 0
+      tags: [openbao, bootstrap]
+
+    - name: Initialize OpenBao (first run only)
+      ansible.builtin.command: >-
+        {{ openbao_cli }} operator init
+        -format=json
+        -key-shares={{ openbao_key_shares }}
+        -key-threshold={{ openbao_key_threshold }}
+      environment: "{{ openbao_env }}"
+      register: openbao_init_cmd
+      changed_when: true
+      when: not ((openbao_status | default({})).initialized | default(false) | bool)
+      tags: [openbao, bootstrap]
+
+    - name: Capture OpenBao init output
+      ansible.builtin.set_fact:
+        openbao_init: "{{ (openbao_init_cmd.stdout | default('{}')) | from_json }}"
+        openbao_bootstrap_token: "{{ (openbao_init_cmd.stdout | from_json).root_token }}"
+      when:
+        - openbao_init_cmd is defined
+        - openbao_init_cmd is not skipped
+        - openbao_init_cmd.stdout is defined
+      tags: [openbao, bootstrap]
+
+    - name: Unseal OpenBao (using first threshold keys)
+      ansible.builtin.command: "{{ openbao_cli }} operator unseal {{ item }}"
+      environment: "{{ openbao_env }}"
+      loop: "{{ openbao_init.unseal_keys_b64[0:openbao_key_threshold] }}"
+      when: openbao_init is defined
+      no_log: true
+      tags: [openbao, bootstrap]
+
+    - name: Enable KV secrets engine (kv-v2)
+      ansible.builtin.command: "{{ openbao_cli }} secrets enable -path=secret kv-v2"
+      environment: "{{ openbao_env | combine({'VAULT_TOKEN': openbao_bootstrap_token}) }}"
+      register: openbao_kv_enable
+      changed_when: openbao_kv_enable.rc == 0
+      failed_when: false
+      when: openbao_bootstrap_token is defined
+      tags: [openbao, bootstrap]
+
+    - name: Seed WordPress database credentials in OpenBao
+      ansible.builtin.command: >-
+        {{ openbao_cli }} kv put secret/wordpress
+        db_name={{ wordpress_db_name | default('wordpress') }}
+        db_user={{ wordpress_db_user | default('wordpress') }}
+        db_password={{ wordpress_db_password }}
+      environment: "{{ openbao_env | combine({'VAULT_TOKEN': openbao_bootstrap_token}) }}"
+      when: openbao_bootstrap_token is defined
+      tags: [openbao, bootstrap]
+
+    - name: Seed MariaDB root password in OpenBao
+      ansible.builtin.command: >-
+        {{ openbao_cli }} kv put secret/mariadb
+        root_password={{ mariadb_root_password | default(vault_mariadb_root_password) }}
+      environment: "{{ openbao_env | combine({'VAULT_TOKEN': openbao_bootstrap_token}) }}"
+      when: openbao_bootstrap_token is defined
+      tags: [openbao, bootstrap]
+
+    - name: Enable database secrets engine
+      ansible.builtin.command: "{{ openbao_cli }} secrets enable database"
+      environment: "{{ openbao_env | combine({'VAULT_TOKEN': openbao_bootstrap_token}) }}"
+      register: openbao_db_enable
+      changed_when: openbao_db_enable.rc == 0
+      failed_when: false
+      when: openbao_bootstrap_token is defined
+      tags: [openbao, bootstrap]
+
+    - name: Create OpenBao database user in MariaDB
+      community.mysql.mysql_user:
+        name: openbao
+        password: "{{ openbao_mariadb_password | default(mariadb_root_password) }}"
+        priv: "*.*:ALL,GRANT"
+        host: "localhost"
+        state: present
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+      when: openbao_bootstrap_token is defined
+      tags: [openbao, bootstrap, mysql]
+
+    - name: Configure MariaDB database connection for OpenBao
+      ansible.builtin.command:
+        argv:
+          - "{{ openbao_cli }}"
+          - write
+          - database/config/wordpress
+          - "plugin_name=mysql-database-plugin"
+          - "allowed_roles=wordpress"
+          - "connection_url={{ openbao_db_connection_url }}"
+          - "username=openbao"
+          - "password={{ openbao_mariadb_password | default(mariadb_root_password) }}"
+      vars:
+        openbao_db_connection_url: "{{ '{{' }}username{{ '}}' }}:{{ '{{' }}password{{ '}}' }}@tcp({{ mariadb_bind_address | default('127.0.0.1') }}:{{ mariadb_port | default(3306) }})/"
+      environment: "{{ openbao_env | combine({'VAULT_TOKEN': openbao_bootstrap_token}) }}"
+      when: openbao_bootstrap_token is defined
+      tags: [openbao, bootstrap]
+
+    - name: Configure OpenBao role for WordPress DB credentials
+      ansible.builtin.command: >-
+        {{ openbao_cli }} write database/roles/wordpress
+        db_name=wordpress
+        creation_statements="CREATE USER '{{'{{'}}name{{'}}'}}'@'%' IDENTIFIED BY '{{'{{'}}password{{'}}'}}'; GRANT ALL PRIVILEGES ON {{ wordpress_db_name | default('wordpress') }}.* TO '{{'{{'}}name{{'}}'}}'@'%';"
+        default_ttl=2160h
+        max_ttl=2160h
+      environment: "{{ openbao_env | combine({'VAULT_TOKEN': openbao_bootstrap_token}) }}"
+      when: openbao_bootstrap_token is defined
+      tags: [openbao, bootstrap]
+
+    - name: Create OpenBao policy for WordPress credential rotation
+      ansible.builtin.shell: |
+        cat <<'EOF' | {{ openbao_cli }} policy write wordpress-rotator -
+        path "database/creds/wordpress" {
+          capabilities = ["read"]
+        }
+        path "auth/token/renew-self" {
+          capabilities = ["update"]
+        }
+        EOF
+      environment: "{{ openbao_env | combine({'VAULT_TOKEN': openbao_bootstrap_token}) }}"
+      when: openbao_bootstrap_token is defined
+      tags: [openbao, bootstrap]
+
+    - name: Create OpenBao token for WordPress rotation
+      ansible.builtin.command: >-
+        {{ openbao_cli }} token create -format=json -orphan -period=2160h -policy=wordpress-rotator
+      environment: "{{ openbao_env | combine({'VAULT_TOKEN': openbao_bootstrap_token}) }}"
+      register: openbao_wordpress_token_cmd
+      when: openbao_bootstrap_token is defined
+      tags: [openbao, bootstrap]
+
+    - name: Capture WordPress rotation token on controller
+      ansible.builtin.set_fact:
+        openbao_wordpress_token: "{{ (openbao_wordpress_token_cmd.stdout | from_json).auth.client_token }}"
+      delegate_to: localhost
+      run_once: true
+      when: openbao_wordpress_token_cmd is defined
+      tags: [openbao, bootstrap]
+
+    - name: Display OpenBao init keys and root token (copy once)
+      ansible.builtin.debug:
+        msg: "{{ openbao_init_message.split('\n') }}"
+      vars:
+        openbao_init_message: |
+          ========================================
+          🔐 OPENBAO INITIALIZED - COPY THESE NOW
+          ========================================
+          Unseal Keys:
+          {% for key in openbao_init.unseal_keys_b64 %}
+          - {{ key }}
+          {% endfor %}
+
+          Root Token:
+          - {{ openbao_init.root_token }}
+          ========================================
+      when: openbao_init is defined
+      tags: [openbao, bootstrap]
+
+# ========================================
 # Final Validation & Summary
 # ========================================
 - name: Validate complete deployment
@@ -321,13 +765,21 @@
       ansible.builtin.assert:
         that:
           - ansible_facts.services['ssh.service'].state == 'running'
-          - ansible_facts.services['ufw.service'].state == 'running' or not (firewall_enabled | default(true))
+          - not (firewall_enabled | default(true)) or (
+              (ansible_facts.services['ufw.service'] is defined) and
+              (
+                ansible_facts.services['ufw.service'].state in ['running', 'exited'] or
+                ansible_facts.services['ufw.service'].status == 'enabled'
+              )
+            )
         fail_msg: Critical services not running!
         success_msg: All critical services operational
       tags: [validate]
     - name: Display comprehensive deployment summary
       ansible.builtin.debug:
-        msg: |
+        msg: "{{ summary_message.split('\n') }}"
+      vars:
+        summary_message: |
           ========================================
           🎉 DEPLOYMENT COMPLETE
           ========================================
@@ -355,10 +807,18 @@
           {% endif %}
 
           Security Features Enabled:
-          {% if firewall_enabled | default(true) %}✅ UFW Firewall{% endif %}
-          {% if fail2ban_enabled | default(true) %}✅ Fail2ban IDS{% endif %}
-          {% if apparmor_enabled | default(true) %}✅ AppArmor MAC{% endif %}
-          {% if ssh_2fa_enabled | default(true) %}✅ SSH 2FA{% endif %}
+          {% if firewall_enabled | default(true) %}
+          ✅ UFW Firewall
+          {% endif %}
+          {% if fail2ban_enabled | default(true) %}
+          ✅ Fail2ban IDS
+          {% endif %}
+          {% if apparmor_enabled | default(true) %}
+          ✅ AppArmor MAC
+          {% endif %}
+          {% if ssh_2fa_enabled | default(true) %}
+          ✅ SSH 2FA
+          {% endif %}
           ✅ Kernel Hardening
           ✅ Auto Security Updates
 
@@ -379,18 +839,20 @@
   tasks:
     - name: Show post-deployment tasks
       ansible.builtin.debug:
-        msg: |
+        msg: "{{ checklist_message.split('\n') }}"
+      vars:
+        checklist_message: |
           ========================================
           📋 POST-DEPLOYMENT CHECKLIST
           ========================================
 
           ⚠️ CRITICAL - Test SSH Access:
-          {% for host in groups['hetzner'] %}
+          {% for host in groups.get('hetzner', []) %}
           ssh {{ hostvars[host]['ansible_user'] }}@{{ hostvars[host]['ansible_host'] }}
           {% endfor %}
 
           🔒 Security Verification:
-          {% for host in groups['hetzner'] %}
+          {% for host in groups.get('hetzner', []) %}
           On {{ host }}:
           - sudo aa-status              # AppArmor profiles
           - sudo ufw status verbose     # Firewall rules

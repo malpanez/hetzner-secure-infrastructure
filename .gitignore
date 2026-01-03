@@ -515,3 +515,4 @@ gitleaks-report.json
 # Allow configuration files
 !.editorconfig
 !.gitattributes
+terraform/.envrc

@@ -9,7 +9,9 @@
 apparmor_enabled: true
 
 # Enable enforce mode (true) or complain mode (false)
-apparmor_enforce_mode: true
+# IMPORTANT: Set to false (complain mode) to avoid blocking SSH
+# Complain mode logs violations but doesn't block them
+apparmor_enforce_mode: false
 
 # Enable Fail2ban profile
 apparmor_enable_fail2ban_profile: true

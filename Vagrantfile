@@ -1,6 +1,37 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+# ============================================================================
+# ⚠️  WARNING: THIS VAGRANTFILE DOES NOT WORK IN WSL2!
+# ============================================================================
+#
+# VirtualBox cannot run inside WSL2 due to nested virtualization limitations.
+# Hyper-V (required for WSL2) conflicts with VirtualBox on Windows.
+#
+# This file is kept for historical reference but is NOT actively maintained.
+#
+# FOR TESTING, USE INSTEAD:
+# ------------------------
+# Option 1 (RECOMMENDED): Hetzner Staging Server
+#   - See: TESTING_x86_vs_ARM.md
+#   - Most realistic environment
+#   - Cost: ~€0.006/hour (destroy after testing)
+#
+# Option 2: Docker (Quick tests only)
+#   - Works in WSL2
+#   - Not accurate for performance benchmarks
+#   - Good for Ansible role validation
+#
+# TO USE THIS VAGRANTFILE:
+# ------------------------
+# Must run from Windows PowerShell (NOT WSL2):
+#   PS C:\> cd path\to\project
+#   PS C:\> vagrant up wordpress-aio
+#
+# Last tested: December 2024 on Windows host (NOT WSL2)
+# Status: DEPRECATED for WSL2 users
+# ============================================================================
+
 # Vagrant configuration for local testing
 # Simulates Hetzner Cloud environment with Debian 13
 

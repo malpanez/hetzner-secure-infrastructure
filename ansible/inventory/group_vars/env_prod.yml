@@ -1,0 +1,11 @@
+---
+# Overrides for production environment (labels.environment = "prod")
+
+# Enforce SSH 2FA with explicit break-glass user
+ssh_2fa_enabled: true
+ssh_2fa_break_glass_enabled: true
+ssh_2fa_break_glass_users:
+  - malpanez
+
+# Disable auditd in production until audit=1 boot stability is confirmed
+security_hardening_auditd_enabled: false

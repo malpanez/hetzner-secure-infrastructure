@@ -13,6 +13,7 @@ locals {
     fsn1 = "de" # Falkenstein, Germany
     hel1 = "fi" # Helsinki, Finland
     ash  = "us" # Ashburn, USA
+    hil  = "us" # Hillsboro, USA
   }
 
   # Extract country code from location
@@ -64,13 +65,13 @@ locals {
 
   # Automatically select server type based on architecture + size
   # Unless user explicitly provided server_type override
-  auto_server_type = local.server_type_map[var.architecture][var.server_size]
+  auto_server_type  = local.server_type_map[var.architecture][var.server_size]
   final_server_type = var.server_type != "" ? var.server_type : local.auto_server_type
 
   # Location compatibility check
-  # ARM servers only available in: fsn1, hel1, ash
+  # ARM servers available in: fsn1, hel1, ash, nbg1
   # x86 servers available in all locations
-  arm_locations = ["fsn1", "hel1", "ash"]
+  arm_locations              = ["fsn1", "hel1", "ash", "nbg1"]
   is_arm_compatible_location = contains(local.arm_locations, var.location)
 
   # Validation: Warn if ARM selected but location doesn't support it
@@ -110,16 +111,16 @@ locals {
     arm_monthly = local.selected_specs.price
 
     # Comparison with CX (cheapest x86)
-    cx_equivalent     = var.server_size == "small" ? 3.68 : var.server_size == "medium" ? 6.14 : var.server_size == "large" ? 11.06 : 20.90
-    cx_monthly_diff   = var.server_size == "small" ? 0.37 : var.server_size == "medium" ? 1.23 : var.server_size == "large" ? 3.69 : 8.61
-    cx_yearly_diff    = var.server_size == "small" ? 4.44 : var.server_size == "medium" ? 14.76 : var.server_size == "large" ? 44.28 : 103.32
-    cx_percent_diff   = var.server_size == "small" ? 10 : var.server_size == "medium" ? 20 : var.server_size == "large" ? 33 : 41
+    cx_equivalent   = var.server_size == "small" ? 3.68 : var.server_size == "medium" ? 6.14 : var.server_size == "large" ? 11.06 : 20.90
+    cx_monthly_diff = var.server_size == "small" ? 0.37 : var.server_size == "medium" ? 1.23 : var.server_size == "large" ? 3.69 : 8.61
+    cx_yearly_diff  = var.server_size == "small" ? 4.44 : var.server_size == "medium" ? 14.76 : var.server_size == "large" ? 44.28 : 103.32
+    cx_percent_diff = var.server_size == "small" ? 10 : var.server_size == "medium" ? 20 : var.server_size == "large" ? 33 : 41
 
     # Comparison with CPX (performance x86)
-    cpx_equivalent    = var.server_size == "small" ? 7.37 : var.server_size == "medium" ? 12.90 : var.server_size == "large" ? 23.97 : 34.43
-    cpx_monthly_diff  = var.server_size == "small" ? 3.32 : var.server_size == "medium" ? 5.53 : var.server_size == "large" ? 9.22 : 4.92
-    cpx_yearly_diff   = var.server_size == "small" ? 39.84 : var.server_size == "medium" ? 66.36 : var.server_size == "large" ? 110.64 : 59.04
-    cpx_percent_diff  = var.server_size == "small" ? 45 : var.server_size == "medium" ? 43 : var.server_size == "large" ? 38 : 14
+    cpx_equivalent   = var.server_size == "small" ? 7.37 : var.server_size == "medium" ? 12.90 : var.server_size == "large" ? 23.97 : 34.43
+    cpx_monthly_diff = var.server_size == "small" ? 3.32 : var.server_size == "medium" ? 5.53 : var.server_size == "large" ? 9.22 : 4.92
+    cpx_yearly_diff  = var.server_size == "small" ? 39.84 : var.server_size == "medium" ? 66.36 : var.server_size == "large" ? 110.64 : 59.04
+    cpx_percent_diff = var.server_size == "small" ? 45 : var.server_size == "medium" ? 43 : var.server_size == "large" ? 38 : 14
   }
 }
 

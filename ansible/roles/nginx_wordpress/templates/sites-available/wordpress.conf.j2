@@ -1,0 +1,269 @@
+# ============================================================================
+# WordPress Site Configuration - MODULAR
+# ============================================================================
+# Managed by Ansible - nginx_wordpress role
+#
+# This is the main WordPress site configuration using modular includes.
+# Global settings are loaded from /etc/nginx/conf.d/ (FastCGI cache, rate limits)
+# Reusable snippets are included from /etc/nginx/snippets/
+#
+# Modular structure benefits:
+# - Clear separation of concerns (80 lines vs 460 lines monolithic)
+# - Reusable across multiple sites (WordPress, Grafana, Prometheus)
+# - Easy to enable/disable features (comment out includes)
+# - Simple maintenance (update one snippet, affects all sites)
+# ============================================================================
+
+{% if nginx_wordpress_ssl_enabled %}
+# ============================================================================
+# HTTP to HTTPS Redirect
+# ============================================================================
+server {
+    listen 80;
+    listen [::]:80;
+    server_name {{ nginx_wordpress_server_name }} {{ nginx_wordpress_server_aliases | join(' ') }};
+
+    # Redirect all HTTP traffic to HTTPS
+    return 301 https://$server_name$request_uri;
+}
+
+# ============================================================================
+# HTTPS Server (Main Configuration)
+# ============================================================================
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name {{ nginx_wordpress_server_name }} {{ nginx_wordpress_server_aliases | join(' ') }};
+
+    # Document root
+    root {{ nginx_wordpress_web_root }};
+    index index.php index.html;
+
+    # ========================================================================
+    # SSL Configuration
+    # ========================================================================
+    ssl_certificate {{ nginx_wordpress_ssl_cert_path }};
+    ssl_certificate_key {{ nginx_wordpress_ssl_key_path }};
+
+    # Include reusable SSL parameters (shared with Grafana, Prometheus)
+    include snippets/ssl-params.conf;
+
+    # ========================================================================
+    # Security Headers
+    # ========================================================================
+    {% if nginx_wordpress_enable_security_headers | default(true) %}
+    # Security headers (defined in conf.d/security-headers.conf)
+    add_header X-Frame-Options $x_frame_options always;
+    add_header X-Content-Type-Options $x_content_type_options always;
+    add_header X-XSS-Protection $x_xss_protection always;
+    add_header Referrer-Policy $referrer_policy always;
+    add_header Permissions-Policy $permissions_policy always;
+    add_header Content-Security-Policy $content_security_policy always;
+    {% endif %}
+
+    # ========================================================================
+    # Performance Optimizations
+    # ========================================================================
+    # File upload limits
+    client_max_body_size {{ nginx_wordpress_php_upload_max_filesize }};
+    client_body_buffer_size 256k;
+
+    # HTTP keepalive (reuse connections)
+    keepalive_timeout 65;
+    keepalive_requests 100;
+
+    # Include gzip compression settings (reusable)
+    include snippets/gzip-params.conf;
+
+    # ========================================================================
+    # Logging
+    # ========================================================================
+    access_log /var/log/nginx/wordpress-access.log;
+    error_log /var/log/nginx/wordpress-error.log;
+
+    # ========================================================================
+    # Cache Bypass Logic
+    # ========================================================================
+    # Sets $no_cache variable based on WordPress-specific rules
+    # (POST requests, logged-in users, admin pages, LearnDash courses, etc.)
+    include snippets/wordpress-cache-bypass.conf;
+
+    # ========================================================================
+    # Main WordPress Location
+    # ========================================================================
+    location / {
+        try_files $uri $uri/ /index.php?$args;
+    }
+
+    # ========================================================================
+    # PHP Processing with FastCGI Cache
+    # ========================================================================
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param SCRIPT_NAME $fastcgi_script_name;
+
+        {% if nginx_wordpress_enable_fastcgi_cache | default(true) %}
+        # FastCGI cache (configured in conf.d/fastcgi-cache.conf)
+        fastcgi_cache wordpress;
+        fastcgi_cache_valid 200 60m;
+        fastcgi_cache_valid 404 10m;
+        fastcgi_cache_bypass $no_cache;
+        fastcgi_no_cache $no_cache;
+        {% endif %}
+
+        # FastCGI buffers (optimized for LMS with large responses)
+        fastcgi_buffer_size 256k;
+        fastcgi_buffers 256 32k;
+        fastcgi_busy_buffers_size 512k;
+        fastcgi_temp_file_write_size 512k;
+        fastcgi_read_timeout 300;
+        fastcgi_send_timeout 300;
+
+        # Cache status headers (for debugging)
+        add_header X-FastCGI-Cache $upstream_cache_status;
+        add_header X-Cache-Bypass $no_cache;
+    }
+
+    {% if nginx_wordpress_enable_rate_limiting | default(true) %}
+    # ========================================================================
+    # Rate-Limited Endpoints
+    # ========================================================================
+    # WordPress Login - Strict rate limiting (5 req/min)
+    # Prevents brute force password attacks
+    location = /wp-login.php {
+        limit_req zone=login burst=3 nodelay;
+
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+
+        # Never cache login page
+        fastcgi_cache_bypass 1;
+        fastcgi_no_cache 1;
+    }
+
+    # WordPress REST API - Moderate rate limiting (60 req/min)
+    # Prevents API abuse and scraping
+    location ~ ^/wp-json/ {
+        limit_req zone=api burst=20 nodelay;
+
+        try_files $uri $uri/ /index.php?$args;
+
+        location ~ \.php$ {
+            include snippets/fastcgi-php.conf;
+            fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-fpm.sock;
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+
+            # Never cache API responses
+            fastcgi_cache_bypass 1;
+            fastcgi_no_cache 1;
+        }
+    }
+
+    # AJAX Admin (LearnDash progress tracking, etc.)
+    location = /wp-admin/admin-ajax.php {
+        limit_req zone=api burst=30 nodelay;
+
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+
+        # Never cache AJAX
+        fastcgi_cache_bypass 1;
+        fastcgi_no_cache 1;
+    }
+    {% endif %}
+
+    # ========================================================================
+    # Static Asset Caching
+    # ========================================================================
+    # Aggressive caching for images, CSS, JS, fonts, course materials
+    include snippets/static-assets.conf;
+
+    # ========================================================================
+    # WordPress Security Rules
+    # ========================================================================
+    # Block access to sensitive files (.git, wp-config.php, xmlrpc.php, etc.)
+    include snippets/wordpress-security.conf;
+}
+
+{% else %}
+# ============================================================================
+# HTTP Server (SSL Not Enabled)
+# ============================================================================
+server {
+    listen 80;
+    listen [::]:80;
+    server_name {{ nginx_wordpress_server_name }} {{ nginx_wordpress_server_aliases | join(' ') }};
+
+    root {{ nginx_wordpress_web_root }};
+    index index.php index.html;
+
+    access_log /var/log/nginx/wordpress-access.log;
+    error_log /var/log/nginx/wordpress-error.log;
+
+    # Performance settings
+    client_max_body_size {{ nginx_wordpress_php_upload_max_filesize }};
+    client_body_buffer_size 256k;
+    keepalive_timeout 65;
+    keepalive_requests 100;
+
+    # Gzip compression
+    include snippets/gzip-params.conf;
+
+    # Cache bypass logic
+    include snippets/wordpress-cache-bypass.conf;
+
+    # Basic security headers (no SSL-specific headers)
+    {% if nginx_wordpress_enable_security_headers | default(true) %}
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    {% endif %}
+
+    location / {
+        try_files $uri $uri/ /index.php?$args;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+
+        {% if nginx_wordpress_enable_fastcgi_cache | default(true) %}
+        fastcgi_cache wordpress;
+        fastcgi_cache_valid 200 60m;
+        fastcgi_cache_valid 404 10m;
+        fastcgi_cache_bypass $no_cache;
+        fastcgi_no_cache $no_cache;
+        {% endif %}
+
+        fastcgi_buffer_size 256k;
+        fastcgi_buffers 256 32k;
+        fastcgi_busy_buffers_size 512k;
+        fastcgi_temp_file_write_size 512k;
+        fastcgi_read_timeout 300;
+
+        add_header X-FastCGI-Cache $upstream_cache_status;
+    }
+
+    {% if nginx_wordpress_enable_rate_limiting | default(true) %}
+    # Rate limiting
+    location = /wp-login.php {
+        limit_req zone=login burst=3 nodelay;
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+    {% endif %}
+
+    # Static assets
+    include snippets/static-assets.conf;
+
+    # WordPress security
+    include snippets/wordpress-security.conf;
+}
+{% endif %}

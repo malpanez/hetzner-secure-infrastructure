@@ -1,0 +1,207 @@
+---
+# Setup OpenBao automatic secret rotation for WordPress database credentials
+#
+# Usage:
+#   ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/setup-openbao-rotation.yml
+
+- name: Setup OpenBao Automatic Secret Rotation
+  hosts: secrets_servers
+  become: true
+  gather_facts: true
+
+  vars:
+    openbao_db_password: "{{ vault_openbao_mariadb_password }}"
+    wordpress_db_name: wordpress
+
+  tasks:
+    - name: Install jq for JSON parsing
+      apt:
+        name: jq
+        state: present
+        update_cache: true
+
+    - name: Create secret rotation script
+      copy:
+        content: |
+          #!/bin/bash
+          # WordPress Database Secret Rotation Script
+          # Managed by Ansible - DO NOT EDIT MANUALLY
+
+          set -euo pipefail
+
+          # Configuration
+          OPENBAO_ADDR="http://127.0.0.1:8200"
+          LOG_FILE="/var/log/wordpress-secret-rotation.log"
+          WP_PATH="/var/www/wordpress"
+
+          # Logging function
+          log() {
+              echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_FILE"
+          }
+
+          # Error handling
+          error_exit() {
+              log "ERROR: $1"
+              exit 1
+          }
+
+          log "Starting WordPress database secret rotation"
+
+          # Check if OpenBao is running
+          if ! systemctl is-active --quiet openbao; then
+              error_exit "OpenBao service is not running"
+          fi
+
+          # Login to OpenBao (use token from file)
+          if [ ! -f /root/.openbao-token ]; then
+              error_exit "OpenBao token file not found at /root/.openbao-token"
+          fi
+
+          export OPENBAO_TOKEN=$(cat /root/.openbao-token)
+
+          # Fetch new database credentials from OpenBao
+          log "Fetching new database credentials from OpenBao"
+          CREDS=$(curl -s -H "X-Vault-Token: $OPENBAO_TOKEN" \
+                       "$OPENBAO_ADDR/v1/database/creds/wordpress-role" || error_exit "Failed to fetch credentials from OpenBao")
+
+          # Parse credentials
+          NEW_USER=$(echo "$CREDS" | jq -r '.data.username' || error_exit "Failed to parse username")
+          NEW_PASS=$(echo "$CREDS" | jq -r '.data.password' || error_exit "Failed to parse password")
+
+          if [ "$NEW_USER" == "null" ] || [ "$NEW_PASS" == "null" ]; then
+              error_exit "Invalid credentials received from OpenBao"
+          fi
+
+          log "New credentials generated: user=$NEW_USER"
+
+          # Update WordPress configuration
+          log "Updating wp-config.php with new credentials"
+          sudo -u www-data wp --path="$WP_PATH" config set DB_USER "$NEW_USER" --type=constant || error_exit "Failed to update DB_USER"
+          sudo -u www-data wp --path="$WP_PATH" config set DB_PASSWORD "$NEW_PASS" --type=constant || error_exit "Failed to update DB_PASSWORD"
+
+          # Test database connection
+          log "Testing database connection"
+          sudo -u www-data wp --path="$WP_PATH" db check || error_exit "Database connection test failed"
+
+          # Restart PHP-FPM to apply changes
+          log "Restarting PHP-FPM"
+          systemctl restart php8.4-fpm || error_exit "Failed to restart PHP-FPM"
+
+          # Wait for PHP-FPM to fully restart
+          sleep 2
+
+          # Verify WordPress can connect
+          log "Verifying WordPress database connectivity"
+          sudo -u www-data wp --path="$WP_PATH" db query "SELECT 1;" > /dev/null || error_exit "WordPress cannot connect to database"
+
+          log "WordPress database secret rotation completed successfully"
+          log "Old user credentials will expire in 24 hours"
+
+          # Clean up old users (optional - uncomment if you want automatic cleanup)
+          # log "Cleaning up expired database users"
+          # mysql -e "SELECT user FROM mysql.user WHERE user LIKE 'v-wordpress-%' AND Create_time < DATE_SUB(NOW(), INTERVAL 48 HOUR);" | tail -n +2 | xargs -I {} mysql -e "DROP USER IF EXISTS '{}'@'localhost';"
+
+          exit 0
+        dest: /usr/local/bin/rotate-wordpress-secrets.sh
+        mode: '0750'
+        owner: root
+        group: root
+
+    - name: Create systemd service for secret rotation
+      copy:
+        content: |
+          [Unit]
+          Description=Rotate WordPress Database Credentials
+          After=network.target openbao.service mariadb.service
+          Requires=openbao.service mariadb.service
+
+          [Service]
+          Type=oneshot
+          User=root
+          ExecStart=/usr/local/bin/rotate-wordpress-secrets.sh
+          StandardOutput=journal
+          StandardError=journal
+          SyslogIdentifier=wordpress-rotation
+
+          [Install]
+          WantedBy=multi-user.target
+        dest: /etc/systemd/system/wordpress-secret-rotate.service
+        mode: '0644'
+
+    - name: Create systemd timer for daily rotation
+      copy:
+        content: |
+          [Unit]
+          Description=Rotate WordPress secrets daily
+          Documentation=man:systemd.timer(5)
+
+          [Timer]
+          # Run daily at 3 AM
+          OnCalendar=daily
+          OnCalendar=*-*-* 03:00:00
+          Persistent=true
+          RandomizedDelaySec=300
+
+          [Install]
+          WantedBy=timers.target
+        dest: /etc/systemd/system/wordpress-secret-rotate.timer
+        mode: '0644'
+
+    - name: Create log file for rotation
+      file:
+        path: /var/log/wordpress-secret-rotation.log
+        state: touch
+        owner: root
+        group: root
+        mode: '0640'
+
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: true
+
+    - name: Enable secret rotation timer
+      systemd:
+        name: wordpress-secret-rotate.timer
+        enabled: true
+        state: started
+
+    - name: Display timer status
+      command: systemctl status wordpress-secret-rotate.timer --no-pager
+      register: timer_status
+      changed_when: false
+
+    - name: Show timer schedule
+      command: systemctl list-timers wordpress-secret-rotate.timer --no-pager
+      register: timer_schedule
+      changed_when: false
+
+    - name: Display results
+      debug:
+        msg:
+          - "Secret rotation timer installed successfully"
+          - "Timer status: {{ timer_status.stdout_lines }}"
+          - "Next rotation: {{ timer_schedule.stdout_lines }}"
+
+    - name: Create OpenBao token file (manual step required)
+      debug:
+        msg:
+          - "MANUAL STEP REQUIRED:"
+          - "1. SSH to the server: ssh -i ~/.ssh/github_ed25519 malpanez@{{ inventory_hostname }}"
+          - "2. Login to OpenBao: bao login -method=userpass username=admin"
+          - "3. Save token: echo $OPENBAO_TOKEN > /root/.openbao-token"
+          - "4. Set permissions: chmod 600 /root/.openbao-token"
+          - "5. Enable database secret engine: bao secrets enable database"
+          - "6. Configure MariaDB connection:"
+          - "   bao write database/config/mariadb \\"
+          - "     plugin_name=mysql-database-plugin \\"
+          - "     connection_url='{{username}}:{{password}}@tcp(127.0.0.1:3306)/' \\"
+          - "     allowed_roles='wordpress-role' \\"
+          - "     username='openbao' \\"
+          - "     password='{{ openbao_db_password }}'"
+          - "7. Create rotation role:"
+          - "   bao write database/roles/wordpress-role \\"
+          - "     db_name=mariadb \\"
+          - "     creation_statements=\"CREATE USER '{{name}}'@'localhost' IDENTIFIED BY '{{password}}'; GRANT ALL ON {{ wordpress_db_name }}.* TO '{{name}}'@'localhost';\" \\"
+          - "     default_ttl='24h' \\"
+          - "     max_ttl='720h'"
+          - "8. Test rotation: sudo /usr/local/bin/rotate-wordpress-secrets.sh"

@@ -43,6 +43,18 @@
   notify: restart sshd
   tags: [ssh, 2fa, config]
 
+- name: SSH 2FA | Configure | Add group check to SSH PAM (skip 2FA for ansible-automation)
+  ansible.builtin.lineinfile:
+    path: /etc/pam.d/sshd
+    line: "auth [success=1 default=ignore] pam_succeed_if.so quiet user ingroup ansible-automation"
+    insertafter: "@include common-auth"
+    state: present
+    backup: true
+  when:
+    - ssh_2fa_enable_ssh | default(true)
+    - ssh_2fa_break_glass_enabled | default(true)
+  tags: [pam, 2fa]
+
 - name: SSH 2FA | Configure | Add Google Authenticator to SSH PAM
   community.general.pamd:
     name: sshd

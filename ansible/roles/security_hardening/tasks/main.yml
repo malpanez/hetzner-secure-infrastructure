@@ -187,12 +187,48 @@
   notify: restart auditd
   tags: [security, auditd]
 
+- name: Security Hardening | Auditd | Check if kernel has audit enabled
+  ansible.builtin.command: grep -q 'audit=' /proc/cmdline
+  register: kernel_audit_check
+  failed_when: false
+  changed_when: false
+  tags: [security, auditd]
+
+- name: Security Hardening | Auditd | Enable audit in GRUB
+  ansible.builtin.lineinfile:
+    path: /etc/default/grub
+    regexp: '^GRUB_CMDLINE_LINUX_DEFAULT="(.*)"'
+    line: 'GRUB_CMDLINE_LINUX_DEFAULT="\1 audit=1"'
+    backrefs: true
+    backup: true
+  when:
+    - security_hardening_auditd_enabled | default(true)
+    - kernel_audit_check.rc != 0
+  register: grub_audit_enabled
+  tags: [security, auditd]
+
+- name: Security Hardening | Auditd | Update GRUB configuration
+  ansible.builtin.command: update-grub
+  when:
+    - grub_audit_enabled is changed
+  tags: [security, auditd]
+
+- name: Security Hardening | Auditd | Set reboot required fact
+  ansible.builtin.set_fact:
+    ansible_reboot_required: true
+    cacheable: true
+  when:
+    - grub_audit_enabled is changed
+  tags: [security, auditd]
+
 - name: Security Hardening | Auditd | Enable and start service
   ansible.builtin.systemd:
     name: auditd
     enabled: true
     state: started
-  when: security_hardening_auditd_enabled | default(true)
+  when:
+    - security_hardening_auditd_enabled | default(true)
+    - kernel_audit_check.rc == 0
   tags: [security, auditd]
 
 - name: Security Hardening | AIDE | Configure file integrity monitoring

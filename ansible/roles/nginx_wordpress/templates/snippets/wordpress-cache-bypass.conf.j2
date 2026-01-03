@@ -1,0 +1,75 @@
+# ============================================================================
+# WordPress Cache Bypass Logic
+# ============================================================================
+# Include this in server{} blocks that use FastCGI cache
+#
+# This snippet determines when to bypass the cache and serve fresh content.
+# Critical for WordPress: we must NOT cache logged-in users or dynamic content.
+#
+# Usage:
+#   fastcgi_cache_bypass $no_cache;
+#   fastcgi_no_cache $no_cache;
+# ============================================================================
+
+# Default: allow caching
+set $no_cache 0;
+
+# POST requests - never cache
+# POST = user submitting data (login, forms, comments)
+# Caching POST would cause serious security issues
+if ($request_method = POST) {
+    set $no_cache 1;
+}
+
+# Query strings - don't cache by default
+# Different query params = different content (e.g., ?page=2 vs ?page=3)
+if ($query_string != "") {
+    set $no_cache 1;
+}
+
+# EXCEPTION: Allow caching for tracking parameters
+# These URLs show identical content, only analytics differ:
+# /blog/post?utm_source=facebook
+# /blog/post?utm_source=twitter
+# /blog/post
+if ($query_string ~* "^utm_|^fbclid=|^gclid=|^ref=") {
+    set $no_cache 0;
+}
+
+# WordPress admin/login - never cache
+# These pages are user-specific and change with nonces
+if ($request_uri ~* "/wp-admin/|/wp-login\.php|/wp-register\.php") {
+    set $no_cache 1;
+}
+
+{% if nginx_wordpress_learndash_enabled | default(true) %}
+# LearnDash LMS - never cache user-specific content
+# Course pages show different content based on user progress
+# Quizzes show random questions and user-specific results
+if ($request_uri ~* "/courses/|/lessons/|/topics/|/quiz/|/my-courses/|/profile/|/groups/") {
+    set $no_cache 1;
+}
+{% endif %}
+
+{% if nginx_wordpress_woocommerce_enabled | default(false) %}
+# WooCommerce - never cache (if selling courses)
+# Cart, checkout, and account pages are highly user-specific
+if ($request_uri ~* "/cart/|/checkout/|/my-account/|/wc-api/") {
+    set $no_cache 1;
+}
+{% endif %}
+
+# WordPress cookies - don't cache logged-in users
+# wordpress_logged_in_* = user is logged in (sees admin bar, personalized content)
+# wp-postpass_* = user entered password for password-protected post
+if ($http_cookie ~* "wordpress_logged_in|wp-postpass|woocommerce_|edd_items_in_cart") {
+    set $no_cache 1;
+}
+
+{% if nginx_wordpress_learndash_enabled | default(true) %}
+# LearnDash cookies
+# LearnDash sets cookies for course progress tracking
+if ($http_cookie ~* "learndash_|sfwd-lms") {
+    set $no_cache 1;
+}
+{% endif %}

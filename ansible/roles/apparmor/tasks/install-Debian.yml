@@ -5,8 +5,7 @@
   ansible.builtin.apt:
     name: "{{ apparmor_packages }}"
     state: present
-    update_cache: true
-    cache_valid_time: 3600
+    update_cache: false
   tags: [apparmor, packages]
 
 - name: AppArmor | Install | Install AppArmor notify for desktop

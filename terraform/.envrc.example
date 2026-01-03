@@ -1,0 +1,22 @@
+# Terraform Cloud Local Execution - Environment Variables
+#
+# IMPORTANT: This file is an EXAMPLE. Create your own .envrc file (gitignored)
+#
+# Usage:
+#   1. Copy this file: cp .envrc.example .envrc
+#   2. Edit .envrc and add your actual tokens
+#   3. Load variables: source .envrc
+#   4. Run Terraform: terraform plan -var-file=terraform.prod.tfvars
+#
+# SECURITY NOTE:
+# - .envrc is in .gitignore (never committed)
+# - Tokens are also stored in Terraform Cloud (backup/team access)
+# - This is ONLY needed for local execution mode
+
+# Hetzner Cloud API Token (REQUIRED)
+# Get from: https://console.hetzner.cloud/ → Security → API Tokens
+export TF_VAR_hcloud_token="YOUR_HETZNER_TOKEN_HERE"
+
+# Cloudflare API Token (OPTIONAL - only if enable_cloudflare=true)
+# Get from: https://dash.cloudflare.com/profile/api-tokens
+export TF_VAR_cloudflare_api_token="YOUR_CLOUDFLARE_TOKEN_HERE"
