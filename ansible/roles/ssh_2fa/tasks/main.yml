@@ -6,6 +6,25 @@
 
 # SSH 2FA Role - Main Tasks (Orchestrator)
 
+# Detect OpenSSH version for logging and future compatibility checks
+- name: SSH 2FA | Preflight | Detect OpenSSH version
+  ansible.builtin.command: /usr/sbin/sshd -V
+  register: sshd_version_output
+  changed_when: false
+  failed_when: false
+  tags: [ssh-2fa, preflight]
+
+- name: SSH 2FA | Preflight | Extract and normalize SSH version
+  ansible.builtin.set_fact:
+    openssh_version: "{{ sshd_version_output.stderr | regex_search('OpenSSH_([0-9]+\\.[0-9]+)', '\\1') | first | default('unknown') }}"
+    cacheable: true
+  tags: [ssh-2fa, preflight]
+
+- name: SSH 2FA | Preflight | Display detected OpenSSH version
+  ansible.builtin.debug:
+    msg: "Detected OpenSSH version: {{ openssh_version }}"
+  tags: [ssh-2fa, preflight]
+
 - name: SSH 2FA | Main | Include installation tasks
   ansible.builtin.import_tasks: install.yml
   tags: [ssh-2fa, install]

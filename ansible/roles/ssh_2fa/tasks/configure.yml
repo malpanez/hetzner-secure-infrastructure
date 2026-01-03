@@ -29,6 +29,8 @@
     owner: root
     group: root
     mode: '0600'
+    validate: /usr/sbin/sshd -t -f %s
+    backup: yes
   notify: restart sshd
   tags: [ssh, config]
 
@@ -39,6 +41,8 @@
     owner: root
     group: root
     mode: '0600'
+    validate: /usr/sbin/sshd -t -f %s
+    backup: yes
   when: ssh_2fa_enable_ssh | default(true)
   notify: restart sshd
   tags: [ssh, 2fa, config]
