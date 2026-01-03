@@ -64,12 +64,16 @@
   when: ssh_2fa_enable_ssh | default(true)
   tags: [pam, 2fa, config]
 
-- name: SSH 2FA | Configure | Add @include directive to /etc/pam.d/sshd
-  ansible.builtin.lineinfile:
-    path: /etc/pam.d/sshd
-    line: "@include sshd-2fa"
-    insertafter: "@include common-auth"
-    state: present
+- name: SSH 2FA | Configure | Add @include directive to /etc/pam.d/sshd (using pamd module)
+  community.general.pamd:
+    name: sshd
+    type: auth
+    control: include
+    module_path: sshd-2fa
+    state: after
+    new_type: auth
+    new_control: include
+    new_module_path: common-auth
     backup: yes
   when: ssh_2fa_enable_ssh | default(true)
   tags: [pam, 2fa]
@@ -85,12 +89,16 @@
   when: ssh_2fa_enable_sudo | default(true)
   tags: [pam, 2fa, sudo, config]
 
-- name: SSH 2FA | Configure | Add @include directive to /etc/pam.d/sudo
-  ansible.builtin.lineinfile:
-    path: /etc/pam.d/sudo
-    line: "@include sudo-2fa"
-    insertbefore: "@include system-auth"
-    state: present
+- name: SSH 2FA | Configure | Add @include directive to /etc/pam.d/sudo (using pamd module)
+  community.general.pamd:
+    name: sudo
+    type: auth
+    control: include
+    module_path: sudo-2fa
+    state: before
+    new_type: auth
+    new_control: include
+    new_module_path: system-auth
     backup: yes
   when: ssh_2fa_enable_sudo | default(true)
   tags: [pam, 2fa, sudo]
