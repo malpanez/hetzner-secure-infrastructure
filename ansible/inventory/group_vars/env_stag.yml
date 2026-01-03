@@ -1,0 +1,15 @@
+---
+# Overrides for staging environment (labels.environment = "stag")
+
+# auditd fails on some Debian 13 kernels (especially ARM) - disable for staging
+security_hardening_auditd_enabled: false
+
+# Passwordless sudo for automation in staging
+common_admin_user_passwordless_sudo: true
+
+# SSH 2FA Configuration for staging
+# Enable 2FA with break-glass for Ansible automation
+ssh_2fa_enabled: true
+ssh_2fa_break_glass_enabled: true
+ssh_2fa_break_glass_users:
+  - malpanez  # Ansible user bypasses 2FA for automation

@@ -26,9 +26,6 @@ cluster_addr = "https://{{ openbao_cluster_address }}"
 # UI
 ui = {{ openbao_ui_enabled | lower }}
 
-# Disable mlock if using encrypted volume
-disable_mlock = {{ openbao_disable_mlock | lower }}
-
 # Logging
 log_level  = "{{ openbao_log_level }}"
 log_format = "{{ openbao_log_format }}"

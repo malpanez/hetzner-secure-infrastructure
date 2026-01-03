@@ -51,8 +51,8 @@ ssh_login_grace_time: 60
 # ========================================
 # 2FA Configuration
 # ========================================
-enable_2fa_ssh: true
-enable_2fa_sudo: true
+enable_2fa_ssh: false
+enable_2fa_sudo: false
 pam_google_authenticator_options: "nullok forward_pass"
 
 # ========================================

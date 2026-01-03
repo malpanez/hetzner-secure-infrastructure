@@ -20,6 +20,8 @@ keyed_groups:
 # Compose variables for Ansible
 compose:
   ansible_host: ipv4_address
+  # Use ansible automation user by default (no 2FA, key-based only)
+  # To use your personal account with 2FA, override with: -u malpanez --private-key ~/.ssh/github_ed25519
   ansible_user: malpanez
   ansible_ssh_private_key_file: ~/.ssh/github_ed25519
   server_type: server_type.name
@@ -30,6 +32,13 @@ groups:
   hetzner: true
   production: labels.environment == "production"
   staging: labels.environment == "staging"
+  wordpress_servers: true
+  secrets_servers: true
+  monitoring_servers: true
+  monitored_servers: true
   
 # Host variables
 hostvar_prefix: hcloud_
+
+# NOPASSWD sudo for admin user
+common_admin_user_passwordless_sudo: true

@@ -11,6 +11,14 @@ nginx_wordpress_install_nginx: true
 nginx_wordpress_install_php: true
 nginx_wordpress_install_wordpress: true
 
+# Modular Nginx Configuration Features
+nginx_wordpress_enable_fastcgi_cache: true       # FastCGI page caching (30x performance)
+nginx_wordpress_enable_rate_limiting: true       # Brute force & DDoS protection
+nginx_wordpress_cloudflare_enabled: true         # Cloudflare real IP detection
+nginx_wordpress_enable_security_headers: true    # CSP, X-Frame-Options, etc.
+nginx_wordpress_learndash_enabled: true          # LearnDash LMS optimizations
+nginx_wordpress_woocommerce_enabled: false       # WooCommerce cache bypass
+
 # ========================================
 # Nginx Configuration
 # ========================================
@@ -79,24 +87,18 @@ nginx_wordpress_nonce_salt: ""
 # ========================================
 
 # Mandatory plugins (installed automatically)
-# Note: Cloudflare handles caching, minification, and CDN
+# NOTE: Infrastructure handles most security/performance
+# - Cloudflare WAF: Security, rate limiting, bot protection
+# - Nginx FastCGI: Full page caching
+# - Valkey: Object/database caching
+# - Cloudflare: CDN, minification, compression
 nginx_wordpress_plugins_mandatory:
-  # Security
-  - wordfence                    # Security & firewall (server-side protection)
-  - sucuri-scanner               # Security hardening & monitoring
-  - wp-2fa                       # Two-factor authentication
+  # CRITICAL - Infrastructure Integration
+  - redis-cache                  # Valkey (Redis) object cache - REQUIRED
+  - nginx-helper                 # Purge FastCGI cache on updates - REQUIRED
 
-  # Backups
-  - updraftplus                  # Automated backups with cloud storage
-
-  # Performance (Backend only - Cloudflare handles frontend)
-  - redis-cache                  # Object cache for database queries (requires Valkey)
-
-  # SEO
-  - wordpress-seo               # Yoast SEO (metadata, sitemaps, structured data)
-
-  # Media & Content
-  - enable-media-replace        # Replace media files preserving URLs
+  # Optional - Cloudflare Integration
+  - cloudflare                   # Auto-purge Cloudflare cache (if using CF)
 
   # Admin & Maintenance
   - wp-mail-smtp               # Reliable transactional email delivery

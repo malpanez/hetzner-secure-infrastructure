@@ -119,7 +119,7 @@ output "browser_cache_ttl" {
 
 output "page_rules_count" {
   description = "Number of page rules configured"
-  value       = length([
+  value = length([
     cloudflare_page_rule.cache_static.id,
     cloudflare_page_rule.bypass_admin.id,
     cloudflare_page_rule.bypass_login.id,
@@ -157,16 +157,16 @@ output "cloudflare_access_enabled" {
 output "configuration_summary" {
   description = "Summary of Cloudflare configuration"
   value = {
-    zone_name           = data.cloudflare_zone.main.name
-    zone_status         = data.cloudflare_zone.main.status
-    ssl_mode            = cloudflare_zone_settings_override.security.settings[0].ssl
-    security_level      = cloudflare_zone_settings_override.security.settings[0].security_level
-    firewall_rulesets   = 1 + (var.enable_course_protection ? 1 : 0)
-    page_rules          = 5
-    waf_login_protection = true  # Handled by WAF ruleset
-    ipv6_enabled        = var.server_ipv6 != null
-    http2_enabled       = true
-    http3_enabled       = true
+    zone_name            = data.cloudflare_zone.main.name
+    zone_status          = data.cloudflare_zone.main.status
+    ssl_mode             = cloudflare_zone_settings_override.security.settings[0].ssl
+    security_level       = cloudflare_zone_settings_override.security.settings[0].security_level
+    firewall_rulesets    = 1 + (var.enable_course_protection ? 1 : 0)
+    page_rules           = 5
+    waf_login_protection = true # Handled by WAF ruleset
+    ipv6_enabled         = var.server_ipv6 != null
+    http2_enabled        = true
+    http3_enabled        = true
   }
 }
 
@@ -176,7 +176,7 @@ output "configuration_summary" {
 
 output "nameserver_instructions" {
   description = "Instructions for configuring nameservers at your registrar"
-  value = <<-EOT
+  value       = <<-EOT
     Configure these nameservers at your domain registrar (GoDaddy):
 
     ${join("\n    ", data.cloudflare_zone.main.name_servers)}

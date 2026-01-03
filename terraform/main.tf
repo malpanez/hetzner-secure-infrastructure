@@ -26,8 +26,8 @@ provider "cloudflare" {
 module "production_server" {
   source = "./modules/hetzner-server"
 
-  server_name    = local.final_server_name  # Auto-generated: <env>-<country>-<type>-<number>
-  server_type    = local.final_server_type  # Uses architecture + size mapping
+  server_name    = local.final_server_name # Auto-generated: <env>-<country>-<type>-<number>
+  server_type    = local.final_server_type # Uses architecture + size mapping
   image          = var.image
   location       = var.location
   admin_username = var.admin_username

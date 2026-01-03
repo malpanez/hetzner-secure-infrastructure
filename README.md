@@ -126,9 +126,22 @@ make test-molecule
 
 ## 📊 Architecture
 
-### Single Server (All-in-One)
+### x86 vs ARM Decision
 
-**Cost**: €9.40/month | **Capacity**: 100-200 students
+**Tested Performance** (CX23 x86): 3,114 req/s, 32ms latency, A+ grade
+
+| Option | Type | Cost (with IPv4) | Performance | Availability |
+|--------|------|------------------|-------------|--------------|
+| **CX23** (x86) | cx23 | €4.09/mo | Tested: 3,114 req/s | Limited stock |
+| **CAX11** (ARM) | cax11 | €4.59/mo | TBD (testing pending) | Always available |
+
+**Interesting**: CX23 x86 is now cheaper than CAX11 ARM (€0.50/mo difference)
+
+**See**: [docs/performance/X86_STAGING_BENCHMARK_WITH_MONITORING.md](docs/performance/X86_STAGING_BENCHMARK_WITH_MONITORING.md)
+
+### Production Architecture (Minimal - 1 Server)
+
+**Cost**: €4.09/month (x86) | **Capacity**: 2,000-3,000 req/s
 
 ```
 ┌─────────────────────────────────────┐
@@ -136,29 +149,34 @@ make test-molecule
 └─────────────────────────────────────┘
                  ↓
 ┌─────────────────────────────────────┐
-│ Hetzner cx21 (4GB RAM, 2 vCPU)     │
-│ ├── Nginx + FastCGI Cache           │
+│ Hetzner CX23 (4GB RAM, 2 vCPU)     │
 │ ├── WordPress + LearnDash           │
-│ ├── PHP 8.3 + OpCache               │
-│ ├── Valkey (object cache)           │
-│ ├── MariaDB 10.11                   │
-│ ├── Prometheus + Grafana            │
-│ └── OpenBao (secrets)               │
+│ ├── Nginx + FastCGI Cache           │
+│ ├── PHP 8.4-FPM + OpCache           │
+│ ├── MariaDB 11.4                    │
+│ ├── Valkey 8.0 (object cache)       │
+│ ├── Prometheus + Grafana + Loki     │
+│ ├── Node Exporter (metrics)         │
+│ └── Vault OSS (optional)            │
 └─────────────────────────────────────┘
 ```
 
-### Multi-Server (Separated)
+**Philosophy**: Start minimal, scale when revenue justifies it (after first 2-3 course sales).
 
-**Cost**: €28.20/month | **Capacity**: 500+ students
+### Future: Multi-Server (When Revenue Grows)
+
+**Cost**: €8.18/month | **Capacity**: 5,000+ req/s | **When**: After first €6,000 revenue
 
 ```
-┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-│  WordPress   │  │  Monitoring  │  │   OpenBao    │
-│  + Database  │  │  Prometheus  │  │   Secrets    │
-│   €9.40/mo   │  │   Grafana    │  │   Vault      │
-└──────────────┘  │   €9.40/mo   │  │   €9.40/mo   │
-                  └──────────────┘  └──────────────┘
+┌──────────────┐  ┌──────────────────────┐
+│  WordPress   │  │  Monitoring+Secrets  │
+│  + Database  │  │  Prometheus+Grafana  │
+│  CX23 €4.09  │  │  Vault OSS           │
+└──────────────┘  │  CX23 €4.09          │
+                  └──────────────────────┘
 ```
+
+**Why wait**: Current 1-server setup handles 2,000+ req/s. Separate when traffic or revenue justifies additional cost.
 
 ---
 
@@ -166,55 +184,97 @@ make test-molecule
 
 ```
 .
-├── terraform/           # Infrastructure provisioning
+├── terraform/                    # Infrastructure provisioning
 │   ├── environments/
-│   │   └── production/  # Production environment
-│   ├── modules/         # Reusable modules
-│   └── test/            # Terratest (Go)
+│   │   ├── staging/             # Staging environment (testing)
+│   │   └── production/          # Production environment
+│   └── modules/                 # Reusable Terraform modules
 │
-├── ansible/            # Configuration management
-│   ├── roles/          # 12 Ansible roles (all tested)
-│   ├── playbooks/      # Deployment playbooks
-│   └── inventory/      # Dynamic + static inventory
+├── ansible/                     # Configuration management
+│   ├── roles/                   # Ansible roles
+│   │   ├── common/              # Base system configuration
+│   │   ├── security_hardening/  # CIS hardening
+│   │   ├── firewall/            # UFW firewall
+│   │   ├── fail2ban/            # Intrusion prevention
+│   │   ├── apparmor/            # MAC security
+│   │   ├── ssh_2fa/             # SSH 2FA
+│   │   ├── nginx_wordpress/     # Nginx + WordPress
+│   │   ├── valkey/              # Redis cache
+│   │   ├── openbao/             # Secrets management
+│   │   └── monitoring/          # Prometheus + Grafana
+│   ├── playbooks/               # Orchestration playbooks
+│   └── inventory/               # Dynamic (hcloud) + static inventory
 │
-├── docs/               # Documentation
-│   ├── ARCHITECTURE_DECISIONS.md
-│   ├── DEPLOYMENT_GUIDE.md
-│   ├── CACHING_STACK.md
-│   ├── WORDPRESS_PLUGINS_ANALYSIS.md
-│   └── TESTING_AND_DR_STRATEGY.md
+├── docs/                        # Documentation
+│   ├── architecture/            # Architecture documentation
+│   │   └── SYSTEM_OVERVIEW.md   # Complete system architecture
+│   ├── guides/                  # Deployment & operation guides
+│   │   ├── DEPLOYMENT.md        # Complete deployment guide
+│   │   ├── TERRAFORM_CLOUD_MIGRATION.md  # Terraform Cloud setup
+│   │   ├── COMPLETE_TESTING_GUIDE.md     # Testing procedures
+│   │   └── NGINX_CONFIGURATION_EXPLAINED.md  # Nginx deep dive
+│   ├── performance/             # Performance benchmarks
+│   │   └── X86_STAGING_BENCHMARK_WITH_MONITORING.md
+│   ├── infrastructure/          # Infrastructure docs
+│   │   ├── CLOUDFLARE_SETUP.md
+│   │   ├── CACHING_STACK.md
+│   │   └── ARM_VS_X86_COMPARISON.md
+│   ├── security/                # Security documentation
+│   │   ├── SSH_KEY_STRATEGY.md
+│   │   └── BACKUP_RECOVERY.md
+│   └── reference/               # Reference documentation
+│       ├── WORDPRESS_PLUGINS_ANALYSIS.md
+│       └── TRADING_COURSE_WEBSITE_TEMPLATE.md
 │
-├── .woodpecker/        # Woodpecker CI (Codeberg)
-├── .github/            # GitHub Actions (optional)
-├── Makefile            # Test automation
-└── TESTING.md          # Testing guide
+├── scripts/                     # Automation scripts
+│   ├── validate-all.sh          # Run all validations
+│   └── run-tests.sh             # Run all tests
+│
+├── Makefile                     # Automation targets
+└── COMPLETE_TESTING_GUIDE.md    # Complete testing reference
 ```
 
 ---
 
 ## 🚀 Deployment
 
-### Option 1: Automated (Recommended)
+### Quick Start (Staging)
 
 ```bash
-export HCLOUD_TOKEN="your-hetzner-token"
-make deploy
-```
+# 1. Set environment variables
+export HCLOUD_TOKEN="your-hetzner-api-token"
 
-### Option 2: Manual
-
-```bash
-# 1. Provision with Terraform
-cd terraform/environments/production
+# 2. Deploy infrastructure
+cd terraform/environments/staging
 terraform init
 terraform apply
 
-# 2. Configure with Ansible
+# 3. Configure with Ansible (uses dynamic inventory)
 cd ../../ansible
-ansible-playbook -i inventory/hetzner.yml playbooks/site.yml
+ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml \
+  --ask-vault-pass
 ```
 
-**See**: [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)
+### Production Deployment (Terraform Cloud)
+
+**Recommended workflow for "set and forget" infrastructure:**
+
+1. **Set up Terraform Cloud** (one-time):
+   - Create free Terraform Cloud account
+   - Connect Codeberg repository
+   - Configure workspace variables
+   - See: [docs/guides/TERRAFORM_CLOUD_MIGRATION.md](docs/guides/TERRAFORM_CLOUD_MIGRATION.md)
+
+2. **Deploy infrastructure** (automated):
+   - Git push → Terraform Cloud auto-runs
+   - Review plan → Approve
+   - Infrastructure deployed automatically
+
+3. **Configure with Ansible** (manual when needed):
+   - Run from local machine 1-2 times/month
+   - Only when configuration changes needed
+
+**Complete guide**: [docs/guides/DEPLOYMENT.md](docs/guides/DEPLOYMENT.md)
 
 ---
 
@@ -269,13 +329,31 @@ make backup
 
 ## 📚 Documentation
 
-- [Architecture Decisions](docs/ARCHITECTURE_DECISIONS.md) - Why we chose each technology
-- [Deployment Guide](docs/DEPLOYMENT_GUIDE.md) - Step-by-step deployment
-- [Caching Stack](docs/CACHING_STACK.md) - 5-layer caching explained
-- [WordPress Plugins](docs/WORDPRESS_PLUGINS_ANALYSIS.md) - Minimal plugin strategy
-- [Testing & DR](docs/TESTING_AND_DR_STRATEGY.md) - Complete testing & recovery guide
-- [Testing Guide](TESTING.md) - How to run tests
-- [CI/CD](.github/CI_CD.md) - Continuous integration setup
+### Getting Started
+
+- **[DEPLOYMENT.md](docs/guides/DEPLOYMENT.md)** - Complete deployment guide (development → production)
+- **[TERRAFORM_CLOUD_MIGRATION.md](docs/guides/TERRAFORM_CLOUD_MIGRATION.md)** - Set up Terraform Cloud
+- **[COMPLETE_TESTING_GUIDE.md](docs/guides/COMPLETE_TESTING_GUIDE.md)** - Testing procedures
+
+### Architecture
+
+- **[SYSTEM_OVERVIEW.md](docs/architecture/SYSTEM_OVERVIEW.md)** - Complete system architecture
+- **[CACHING_STACK.md](docs/infrastructure/CACHING_STACK.md)** - 5-layer caching explained
+- **[ARM_VS_X86_COMPARISON.md](docs/infrastructure/ARM_VS_X86_COMPARISON.md)** - Architecture decision
+
+### Performance
+
+- **[X86_STAGING_BENCHMARK.md](docs/performance/X86_STAGING_BENCHMARK_WITH_MONITORING.md)** - Performance testing results
+
+### Configuration
+
+- **[NGINX_CONFIGURATION_EXPLAINED.md](docs/guides/NGINX_CONFIGURATION_EXPLAINED.md)** - Nginx deep dive
+- **[CLOUDFLARE_SETUP.md](docs/infrastructure/CLOUDFLARE_SETUP.md)** - DNS & CDN configuration
+
+### Reference
+
+- **[WORDPRESS_PLUGINS_ANALYSIS.md](docs/reference/WORDPRESS_PLUGINS_ANALYSIS.md)** - Plugin strategy
+- **[SSH_KEY_STRATEGY.md](docs/security/SSH_KEY_STRATEGY.md)** - SSH key management
 
 ---
 
@@ -326,22 +404,34 @@ Every push runs:
 
 ## 💰 Cost Breakdown
 
-### All-in-One (Recommended for start)
+**Pricing updated**: January 2026 ([Hetzner pricing](https://www.hetzner.com/cloud/pricing/))
 
-| Component | Cost |
-|-----------|------|
-| Hetzner cx21 | €9.40/month |
-| Cloudflare (Free) | €0/month |
-| **Total** | **€9.40/month** |
+### Minimal (Production - 1 Server)
 
-### Separated (Production scale)
+| Component | Type | Cost |
+|-----------|------|------|
+| All-in-One Server | CX23 (x86) | €4.09/month |
+| Cloudflare (Free) | - | €0/month |
+| **Total** | | **€4.09/month** |
 
-| Component | Cost |
-|-----------|------|
-| WordPress Server (cx21) | €9.40/month |
-| Monitoring Server (cx21) | €9.40/month |
-| OpenBao Server (cx21) | €9.40/month |
-| **Total** | **€28.20/month** |
+**Includes**: WordPress, MariaDB, Valkey, Nginx, Monitoring (Prometheus+Grafana+Loki), optional Vault OSS
+
+**Specs**: 2 vCPUs, 4 GB RAM, 40 GB NVMe SSD, 20 TB traffic
+**Capacity**: 2,000-3,000 req/s sustained
+**Good for**: Launch → First 100-200 students
+
+### Future: Separated (When Revenue Justifies)
+
+| Component | Type | Cost | When to Deploy |
+|-----------|------|------|----------------|
+| WordPress Server | CX23 (x86) | €4.09/month | Always |
+| Monitoring+Secrets Server | CX23 (x86) | €4.09/month | After first €6k revenue |
+| **Total** | | **€8.18/month** | |
+
+**Capacity**: 5,000+ req/s sustained
+**Good for**: 200-500 students
+
+**Scaling trigger**: When sustained traffic exceeds 1,500 req/s or after selling 2-3 courses at €3,000 each.
 
 ---
 

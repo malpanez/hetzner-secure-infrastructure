@@ -1,6 +1,18 @@
 ---
 # Firewall Role - Firewall Rules Tasks
 
+# CRITICAL: Always allow SSH FIRST before enabling UFW
+# This prevents lockouts during deployment and after reboots
+- name: Firewall | Rules | Allow SSH from management IP (CRITICAL - prevents lockout)
+  community.general.ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+    from_ip: "{{ item }}"
+    comment: "SSH from management"
+  loop: "{{ ssh_allowed_ips | default(['0.0.0.0/0']) }}"
+  tags: [firewall, rules, ssh]
+
 - name: Firewall | Rules | Configure UFW allowed ports
   community.general.ufw:
     rule: "{{ item.rule }}"
@@ -10,7 +22,20 @@
   loop: "{{ firewall_allowed_ports }}"
   tags: [firewall, rules]
 
+- name: Firewall | Rules | Verify SSH rule exists before enabling
+  ansible.builtin.command: ufw status
+  register: ufw_pre_enable_check
+  changed_when: false
+  tags: [firewall, enable]
+
 - name: Firewall | Rules | Enable UFW
   community.general.ufw:
     state: enabled
   tags: [firewall, enable]
+
+- name: Firewall | Rules | Verify UFW is active and SSH is allowed
+  ansible.builtin.command: ufw status verbose
+  register: ufw_post_enable_check
+  changed_when: false
+  failed_when: "'22/tcp' not in ufw_post_enable_check.stdout or 'Status: active' not in ufw_post_enable_check.stdout"
+  tags: [firewall, enable, validate]

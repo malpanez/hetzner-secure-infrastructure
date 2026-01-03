@@ -10,6 +10,16 @@ ChallengeResponseAuthentication {{ ssh_2fa_challenge_response_authentication }}
 UsePAM yes
 
 # Require both publickey AND keyboard-interactive (2FA)
+# Exception: break-glass users/group bypass 2FA
+{% if ssh_2fa_break_glass_enabled | default(true) %}
+{% if ssh_2fa_break_glass_users | default([]) | length > 0 %}
+Match User {{ ssh_2fa_break_glass_users | join(',') }}
+    AuthenticationMethods publickey
+{% endif %}
+Match Group ansible-automation
+    AuthenticationMethods publickey
+Match All
+{% endif %}
 AuthenticationMethods {{ ssh_2fa_auth_methods }}
 
 # Allow publickey authentication

@@ -1,0 +1,33 @@
+# ============================================================================
+# Rate Limiting Zones
+# ============================================================================
+# Managed by Ansible - nginx_wordpress role
+#
+# Rate limiting prevents:
+# - Brute force attacks (password guessing)
+# - DDoS attacks (overwhelming server)
+# - API abuse (scraping, bot attacks)
+#
+# These zones MUST be defined in the http{} block (loaded from conf.d/)
+# ============================================================================
+
+{% if nginx_wordpress_enable_rate_limiting | default(true) %}
+# Login rate limiting: 5 requests per minute
+# Prevents brute force password attacks
+# Example: Attacker tries 1000 passwords/min → blocked after 5 attempts
+limit_req_zone $binary_remote_addr zone=login:10m rate=5r/m;
+
+# API rate limiting: 60 requests per minute (1 per second)
+# Prevents API abuse and scraping
+# Used for: WordPress REST API, AJAX calls
+limit_req_zone $binary_remote_addr zone=api:10m rate=60r/m;
+
+# General rate limiting: 10 requests per second (600/minute)
+# Prevents general abuse while allowing normal browsing
+# Used for: Site-wide protection (optional)
+limit_req_zone $binary_remote_addr zone=general:10m rate=10r/s;
+
+# HTTP status code for rate-limited requests
+# 429 = "Too Many Requests" (standard rate limiting response)
+limit_req_status 429;
+{% endif %}

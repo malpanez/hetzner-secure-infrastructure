@@ -46,15 +46,15 @@
 
 - name: OpenBao | Install | Download OpenBao binary
   ansible.builtin.get_url:
-    url: "{{ openbao_download_base_url }}/{{ openbao_binary_zip }}"
-    dest: "/tmp/openbao_{{ openbao_version }}.zip"
+    url: "{{ openbao_download_base_url }}/{{ openbao_binary_archive }}"
+    dest: "/tmp/openbao_{{ openbao_version }}.tar.gz"
     mode: '0644'
   when: not openbao_binary.stat.exists
   tags: [openbao, binary]
 
 - name: OpenBao | Install | Extract OpenBao binary
   ansible.builtin.unarchive:
-    src: "/tmp/openbao_{{ openbao_version }}.zip"
+    src: "/tmp/openbao_{{ openbao_version }}.tar.gz"
     dest: "{{ openbao_install_dir }}"
     remote_src: true
     creates: "{{ openbao_binary_path }}"

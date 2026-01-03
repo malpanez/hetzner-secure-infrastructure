@@ -1,0 +1,459 @@
+# Nginx WordPress Configuration - OPTIMIZED
+# Managed by Ansible - nginx_wordpress role
+# Optimized for: LearnDash LMS + Cloudflare + High Performance
+#
+# Improvements over standard config:
+# - Security headers (XSS, clickjacking, CSP)
+# - Rate limiting (login, API, general)
+# - LearnDash-specific caching rules
+# - Cloudflare real IP integration
+# - Better static asset caching
+# - XML-RPC protection
+# - Bot protection
+
+# ============================================================================
+# FastCGI Cache Configuration
+# ============================================================================
+fastcgi_cache_path /var/cache/nginx/wordpress
+    levels=1:2
+    keys_zone=wordpress:100m
+    inactive=60m
+    max_size=512m
+    use_temp_path=off;
+
+fastcgi_cache_key "$scheme$request_method$host$request_uri";
+fastcgi_cache_use_stale error timeout invalid_header updating http_500 http_503;
+fastcgi_cache_background_update on;
+fastcgi_cache_lock on;
+fastcgi_cache_lock_timeout 5s;
+fastcgi_ignore_headers Cache-Control Expires Set-Cookie;
+
+# ============================================================================
+# Rate Limiting Zones
+# ============================================================================
+limit_req_zone $binary_remote_addr zone=login:10m rate=5r/m;    # Login: 5 req/min
+limit_req_zone $binary_remote_addr zone=api:10m rate=60r/m;     # API: 60 req/min
+limit_req_zone $binary_remote_addr zone=general:10m rate=10r/s; # General: 10 req/sec
+limit_req_status 429;
+
+# ============================================================================
+# Cloudflare Real IP Configuration
+# ============================================================================
+# Get real visitor IPs from Cloudflare (CRITICAL for logs, rate limiting, fail2ban)
+{% if nginx_wordpress_cloudflare_enabled | default(true) %}
+set_real_ip_from 103.21.244.0/22;
+set_real_ip_from 103.22.200.0/22;
+set_real_ip_from 103.31.4.0/22;
+set_real_ip_from 104.16.0.0/13;
+set_real_ip_from 104.24.0.0/14;
+set_real_ip_from 108.162.192.0/18;
+set_real_ip_from 131.0.72.0/22;
+set_real_ip_from 141.101.64.0/18;
+set_real_ip_from 162.158.0.0/15;
+set_real_ip_from 172.64.0.0/13;
+set_real_ip_from 173.245.48.0/20;
+set_real_ip_from 188.114.96.0/20;
+set_real_ip_from 190.93.240.0/20;
+set_real_ip_from 197.234.240.0/22;
+set_real_ip_from 198.41.128.0/17;
+# IPv6
+set_real_ip_from 2400:cb00::/32;
+set_real_ip_from 2606:4700::/32;
+set_real_ip_from 2803:f800::/32;
+set_real_ip_from 2405:b500::/32;
+set_real_ip_from 2405:8100::/32;
+set_real_ip_from 2a06:98c0::/29;
+set_real_ip_from 2c0f:f248::/32;
+
+real_ip_header CF-Connecting-IP;
+real_ip_recursive on;
+{% endif %}
+
+{% if nginx_wordpress_ssl_enabled %}
+# ============================================================================
+# HTTP to HTTPS Redirect
+# ============================================================================
+server {
+    listen 80;
+    listen [::]:80;
+    server_name {{ nginx_wordpress_server_name }} {{ nginx_wordpress_server_aliases | join(' ') }};
+
+    # Redirect all HTTP to HTTPS
+    return 301 https://$server_name$request_uri;
+}
+
+# ============================================================================
+# HTTPS Server (Main Configuration)
+# ============================================================================
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name {{ nginx_wordpress_server_name }} {{ nginx_wordpress_server_aliases | join(' ') }};
+
+    root {{ nginx_wordpress_web_root }};
+    index index.php index.html;
+
+    # SSL Configuration
+    ssl_certificate {{ nginx_wordpress_ssl_cert_path }};
+    ssl_certificate_key {{ nginx_wordpress_ssl_key_path }};
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384';
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+    ssl_session_tickets off;
+
+    # Logging
+    access_log /var/log/nginx/wordpress-access.log;
+    error_log /var/log/nginx/wordpress-error.log;
+
+    # File upload limits
+    client_max_body_size {{ nginx_wordpress_php_upload_max_filesize }};
+    client_body_buffer_size 256k;
+
+    # ========================================================================
+    # Security Headers
+    # ========================================================================
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
+
+    # Content Security Policy (adjust based on your plugins)
+    add_header Content-Security-Policy "default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.learndash.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self';" always;
+
+    # ========================================================================
+    # Performance Optimizations
+    # ========================================================================
+    keepalive_timeout 65;
+    keepalive_requests 100;
+
+    # Gzip compression
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types text/plain text/css text/xml text/javascript application/json application/javascript application/xml+rss application/atom+xml image/svg+xml;
+    gzip_disable "msie6";
+    gzip_min_length 256;
+
+    # ========================================================================
+    # Cache Bypass Logic (Comprehensive)
+    # ========================================================================
+    set $no_cache 0;
+
+    # POST requests - never cache
+    if ($request_method = POST) {
+        set $no_cache 1;
+    }
+
+    # Query strings - don't cache (except tracking params)
+    if ($query_string != "") {
+        set $no_cache 1;
+    }
+
+    # Allow caching for tracking parameters
+    if ($query_string ~* "^utm_|^fbclid=|^gclid=|^ref=") {
+        set $no_cache 0;
+    }
+
+    # WordPress admin/login - never cache
+    if ($request_uri ~* "/wp-admin/|/wp-login\.php|/wp-register\.php") {
+        set $no_cache 1;
+    }
+
+    # LearnDash LMS - never cache user-specific content
+    if ($request_uri ~* "/courses/|/lessons/|/topics/|/quiz/|/my-courses/|/profile/|/groups/") {
+        set $no_cache 1;
+    }
+
+    # WooCommerce (if selling courses) - never cache
+    if ($request_uri ~* "/cart/|/checkout/|/my-account/|/wc-api/") {
+        set $no_cache 1;
+    }
+
+    # WordPress cookies - don't cache logged-in users
+    if ($http_cookie ~* "wordpress_logged_in|wp-postpass|woocommerce_|edd_items_in_cart") {
+        set $no_cache 1;
+    }
+
+    # LearnDash cookies
+    if ($http_cookie ~* "learndash_|sfwd-lms") {
+        set $no_cache 1;
+    }
+
+    # ========================================================================
+    # Main Location - WordPress
+    # ========================================================================
+    location / {
+        try_files $uri $uri/ /index.php?$args;
+    }
+
+    # ========================================================================
+    # PHP Processing - Default
+    # ========================================================================
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param SCRIPT_NAME $fastcgi_script_name;
+
+        # FastCGI cache
+        fastcgi_cache wordpress;
+        fastcgi_cache_valid 200 60m;
+        fastcgi_cache_valid 404 10m;
+        fastcgi_cache_bypass $no_cache;
+        fastcgi_no_cache $no_cache;
+
+        # FastCGI buffers (optimized for LMS large responses)
+        fastcgi_buffer_size 256k;
+        fastcgi_buffers 256 32k;
+        fastcgi_busy_buffers_size 512k;
+        fastcgi_temp_file_write_size 512k;
+        fastcgi_read_timeout 300;
+        fastcgi_send_timeout 300;
+
+        # Cache status header (for debugging)
+        add_header X-FastCGI-Cache $upstream_cache_status;
+        add_header X-Cache-Bypass $no_cache;
+    }
+
+    # ========================================================================
+    # WordPress Login - RATE LIMITED
+    # ========================================================================
+    location = /wp-login.php {
+        limit_req zone=login burst=3 nodelay;
+
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+
+        # Never cache login page
+        fastcgi_cache_bypass 1;
+        fastcgi_no_cache 1;
+    }
+
+    # ========================================================================
+    # WordPress REST API & AJAX - RATE LIMITED
+    # ========================================================================
+    location ~ ^/wp-json/ {
+        limit_req zone=api burst=20 nodelay;
+
+        try_files $uri $uri/ /index.php?$args;
+
+        location ~ \.php$ {
+            include snippets/fastcgi-php.conf;
+            fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-fpm.sock;
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+
+            # Never cache API responses
+            fastcgi_cache_bypass 1;
+            fastcgi_no_cache 1;
+        }
+    }
+
+    # AJAX admin requests (LearnDash progress tracking, etc.)
+    location = /wp-admin/admin-ajax.php {
+        limit_req zone=api burst=30 nodelay;
+
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+
+        # Never cache AJAX
+        fastcgi_cache_bypass 1;
+        fastcgi_no_cache 1;
+    }
+
+    # ========================================================================
+    # XML-RPC Protection (DDoS vector)
+    # ========================================================================
+    location = /xmlrpc.php {
+        deny all;
+        access_log off;
+    }
+
+    # ========================================================================
+    # Static Assets - Aggressive Caching
+    # ========================================================================
+    location ~* \.(jpg|jpeg|png|gif|ico|svg|webp)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        add_header X-Content-Type-Options "nosniff" always;
+        access_log off;
+        log_not_found off;
+    }
+
+    location ~* \.(css|js)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+
+    location ~* \.(woff|woff2|ttf|eot|otf)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        add_header Access-Control-Allow-Origin "*";
+        access_log off;
+    }
+
+    # Course materials (PDFs, videos, etc.) - cache but shorter
+    location ~* \.(pdf|doc|docx|ppt|pptx|mp4|webm|mp3)$ {
+        expires 30d;
+        add_header Cache-Control "public";
+        access_log off;
+
+        # Prevent hotlinking of course materials
+        valid_referers none blocked {{ nginx_wordpress_server_name }} {{ nginx_wordpress_server_aliases | join(' ') }};
+        if ($invalid_referer) {
+            return 403;
+        }
+    }
+
+    # ========================================================================
+    # WordPress Security - Block Access
+    # ========================================================================
+    # Hidden files
+    location ~ /\. {
+        deny all;
+        access_log off;
+    }
+
+    # WordPress config
+    location = /wp-config.php {
+        deny all;
+    }
+
+    # Readme and license files
+    location ~* ^/(readme|license)\.(html|txt)$ {
+        deny all;
+    }
+
+    # ========================================================================
+    # Standard WordPress Files
+    # ========================================================================
+    location = /favicon.ico {
+        log_not_found off;
+        access_log off;
+        expires 1y;
+    }
+
+    location = /robots.txt {
+        log_not_found off;
+        access_log off;
+    }
+}
+{% else %}
+# ============================================================================
+# HTTP Server (SSL Not Enabled)
+# ============================================================================
+server {
+    listen 80;
+    listen [::]:80;
+    server_name {{ nginx_wordpress_server_name }} {{ nginx_wordpress_server_aliases | join(' ') }};
+
+    root {{ nginx_wordpress_web_root }};
+    index index.php index.html;
+
+    access_log /var/log/nginx/wordpress-access.log;
+    error_log /var/log/nginx/wordpress-error.log;
+
+    client_max_body_size {{ nginx_wordpress_php_upload_max_filesize }};
+    client_body_buffer_size 256k;
+
+    # Security Headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    # Performance
+    keepalive_timeout 65;
+    keepalive_requests 100;
+
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types text/plain text/css text/xml text/javascript application/json application/javascript application/xml+rss application/atom+xml image/svg+xml;
+    gzip_disable "msie6";
+
+    # Cache bypass
+    set $no_cache 0;
+
+    if ($request_method = POST) {
+        set $no_cache 1;
+    }
+
+    if ($query_string != "") {
+        set $no_cache 1;
+    }
+
+    if ($request_uri ~* "/wp-admin/|/wp-login\.php|/xmlrpc\.php|wp-.*\.php|/feed/|sitemap(_index)?\.xml") {
+        set $no_cache 1;
+    }
+
+    if ($http_cookie ~* "wordpress_logged_in|wp-postpass|wordpress_no_cache|learndash_") {
+        set $no_cache 1;
+    }
+
+    location / {
+        try_files $uri $uri/ /index.php?$args;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+
+        fastcgi_cache wordpress;
+        fastcgi_cache_valid 200 60m;
+        fastcgi_cache_valid 404 10m;
+        fastcgi_cache_bypass $no_cache;
+        fastcgi_no_cache $no_cache;
+
+        fastcgi_buffer_size 256k;
+        fastcgi_buffers 256 32k;
+        fastcgi_busy_buffers_size 512k;
+        fastcgi_temp_file_write_size 512k;
+        fastcgi_read_timeout 300;
+
+        add_header X-FastCGI-Cache $upstream_cache_status;
+    }
+
+    # Rate limiting
+    location = /wp-login.php {
+        limit_req zone=login burst=3 nodelay;
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+
+    # XML-RPC protection
+    location = /xmlrpc.php {
+        deny all;
+    }
+
+    # Static files
+    location ~* \.(css|gif|ico|jpeg|jpg|js|png|svg|woff|woff2)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+
+    location ~ /\. {
+        deny all;
+    }
+
+    location = /favicon.ico {
+        log_not_found off;
+        access_log off;
+    }
+
+    location = /robots.txt {
+        log_not_found off;
+        access_log off;
+    }
+}
+{% endif %}

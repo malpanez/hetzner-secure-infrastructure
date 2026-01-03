@@ -1,0 +1,87 @@
+=== ARM64 Benchmark Run ===
+Date: 2026-01-01 19:33:17 UTC
+Target: http://127.0.0.1/
+Requests: 100000
+Concurrency: 100
+
+=== System ===
+Linux Miguel-Inspiron-5379 5.15.167.4-microsoft-standard-WSL2 #1 SMP Tue Nov 5 00:21:55 UTC 2024 x86_64 x86_64 x86_64 GNU/Linux
+
+--- lscpu ---
+Architecture:                         x86_64
+CPU op-mode(s):                       32-bit, 64-bit
+Address sizes:                        39 bits physical, 48 bits virtual
+Byte Order:                           Little Endian
+CPU(s):                               4
+On-line CPU(s) list:                  0-3
+Vendor ID:                            GenuineIntel
+Model name:                           Intel(R) Core(TM) i7-8550U CPU @ 1.80GHz
+CPU family:                           6
+Model:                                142
+Thread(s) per core:                   2
+Core(s) per socket:                   2
+Socket(s):                            1
+Stepping:                             10
+BogoMIPS:                             3983.99
+Flags:                                fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon rep_good nopl xtopology cpuid pni pclmulqdq vmx ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 movbe popcnt aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch invpcid_single pti ssbd ibrs ibpb stibp tpr_shadow vnmi ept vpid ept_ad fsgsbase bmi1 avx2 smep bmi2 erms invpcid rdseed adx smap clflushopt xsaveopt xsavec xgetbv1 xsaves md_clear flush_l1d arch_capabilities
+Virtualization:                       VT-x
+Hypervisor vendor:                    Microsoft
+Virtualization type:                  full
+L1d cache:                            64 KiB (2 instances)
+L1i cache:                            64 KiB (2 instances)
+L2 cache:                             512 KiB (2 instances)
+L3 cache:                             8 MiB (1 instance)
+Vulnerability Gather data sampling:   Unknown: Dependent on hypervisor status
+Vulnerability Itlb multihit:          KVM: Mitigation: VMX disabled
+Vulnerability L1tf:                   Mitigation; PTE Inversion; VMX conditional cache flushes, SMT vulnerable
+Vulnerability Mds:                    Mitigation; Clear CPU buffers; SMT Host state unknown
+Vulnerability Meltdown:               Mitigation; PTI
+Vulnerability Mmio stale data:        Mitigation; Clear CPU buffers; SMT Host state unknown
+Vulnerability Reg file data sampling: Not affected
+Vulnerability Retbleed:               Mitigation; IBRS
+Vulnerability Spec rstack overflow:   Not affected
+Vulnerability Spec store bypass:      Mitigation; Speculative Store Bypass disabled via prctl and seccomp
+Vulnerability Spectre v1:             Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+Vulnerability Spectre v2:             Mitigation; IBRS; IBPB conditional; STIBP conditional; RSB filling; PBRSB-eIBRS Not affected; BHI SW loop, KVM SW loop
+Vulnerability Srbds:                  Unknown: Dependent on hypervisor status
+Vulnerability Tsx async abort:        Not affected
+
+--- uptime ---
+ 19:33:17 up 3 days,  4:45,  2 users,  load average: 1.74, 0.73, 0.49
+
+--- free -h ---
+               total        used        free      shared  buff/cache   available
+Mem:           9.7Gi       7.5Gi       548Mi       3.1Mi       2.0Gi       2.2Gi
+Swap:          8.0Gi       955Mi       7.1Gi
+
+--- df -h ---
+Filesystem                                Size  Used Avail Use% Mounted on
+none                                      4.9G     0  4.9G   0% /usr/lib/modules/5.15.167.4-microsoft-standard-WSL2
+none                                      4.9G  4.0K  4.9G   1% /mnt/wsl
+drivers                                   463G  404G   59G  88% /usr/lib/wsl/drivers
+/dev/sdc                                 1007G   14G  942G   2% /
+none                                      4.9G  120K  4.9G   1% /mnt/wslg
+none                                      4.9G     0  4.9G   0% /usr/lib/wsl/lib
+rootfs                                    4.9G  2.4M  4.9G   1% /init
+none                                      4.9G  540K  4.9G   1% /run
+none                                      4.9G     0  4.9G   0% /run/lock
+none                                      4.9G     0  4.9G   0% /run/shm
+tmpfs                                     4.0M     0  4.0M   0% /sys/fs/cgroup
+none                                      4.9G   76K  4.9G   1% /mnt/wslg/versions.txt
+none                                      4.9G   76K  4.9G   1% /mnt/wslg/doc
+C:\                                       463G  404G   59G  88% /mnt/c
+tmpfs                                     996M   16K  996M   1% /run/user/1000
+none                                      4.9G  780K  4.9G   1% /mnt/wsl/docker-desktop/shared-sockets/host-services
+/dev/sdd                                  130M   66M   54M  55% /mnt/wsl/docker-desktop/docker-desktop-user-distro
+/dev/loop0                                736M  736M     0 100% /mnt/wsl/docker-desktop/cli-tools
+tmpfs                                     996M   16K  996M   1% /run/user/0
+C:\Program Files\Docker\Docker\resources  463G  404G   59G  88% /Docker/host
+C:\Program Files\usbipd-win\WSL           463G  404G   59G  88% /run/usbipd-win
+
+=== Software ===
+=== Benchmark (ab) ===
+This is ApacheBench, Version 2.3 <$Revision: 1903618 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 127.0.0.1 (be patient)

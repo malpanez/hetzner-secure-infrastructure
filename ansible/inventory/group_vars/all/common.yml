@@ -6,8 +6,8 @@
 # Ansible Configuration
 # ========================================
 ansible_python_interpreter: /usr/bin/python3
-ansible_user: admin
-ansible_ssh_private_key_file: ~/.ssh/id_ed25519
+ansible_user: malpanez
+ansible_ssh_private_key_file: ~/.ssh/github_ed25519
 
 # ========================================
 # System Configuration
@@ -18,9 +18,10 @@ system_locale: "en_IE.UTF-8"
 # ========================================
 # Admin User
 # ========================================
-admin_username: miguel
+admin_username: malpanez
 admin_groups:
   - sudo
+common_admin_user_name: "{{ admin_username }}"
 
 # ========================================
 # Package Management
@@ -55,6 +56,14 @@ ntp_servers:
 log_retention_days: 30
 rsyslog_remote_logging: false
 logrotate_enabled: true
+
+# ========================================
+# Security - SSH Access Control
+# ========================================
+# IP addresses allowed to SSH (UFW firewall rules)
+# Override this per environment or use 0.0.0.0/0 for initial setup
+ssh_allowed_ips:
+  - "37.228.206.5/32"  # Management IP
 
 # ========================================
 # Deployment Topology Variables

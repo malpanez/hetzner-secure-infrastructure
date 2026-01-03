@@ -54,6 +54,9 @@ common_admin_user_groups:
 # SSH authorized keys for admin user
 common_admin_user_ssh_keys: []
 
+# Allow passwordless sudo for admin user (use with care)
+common_admin_user_passwordless_sudo: false
+
 # ========================================
 # Cleanup
 # ========================================

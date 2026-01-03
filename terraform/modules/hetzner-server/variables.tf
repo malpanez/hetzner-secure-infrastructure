@@ -36,7 +36,7 @@ variable "ssh_port" {
 variable "ssh_allowed_ips" {
   description = "List of IPs allowed to connect via SSH - MUST specify your IPs"
   type        = list(string)
-  default     = []  # SECURITY: No default - must be explicitly set
+  default     = [] # SECURITY: No default - must be explicitly set
 
   validation {
     condition     = length(var.ssh_allowed_ips) > 0

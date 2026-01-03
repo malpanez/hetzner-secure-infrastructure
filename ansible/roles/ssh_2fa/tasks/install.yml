@@ -13,6 +13,22 @@
     cache_valid_time: 3600
   tags: [ssh-2fa, packages]
 
+- name: SSH 2FA | Install | Create ansible-automation break-glass group
+  ansible.builtin.group:
+    name: ansible-automation
+    state: present
+  when: ssh_2fa_break_glass_enabled | default(true)
+  tags: [ssh-2fa, users, break-glass]
+
+- name: SSH 2FA | Install | Add break-glass users to ansible-automation group
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups: ansible-automation
+    append: true
+  loop: "{{ ssh_2fa_break_glass_users | default([ansible_user]) }}"
+  when: ssh_2fa_break_glass_enabled | default(true)
+  tags: [ssh-2fa, users, break-glass]
+
 - name: SSH 2FA | Install | Deploy 2FA setup script for Yubikey
   ansible.builtin.copy:
     src: setup-2fa-yubikey.sh

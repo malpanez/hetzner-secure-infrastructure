@@ -1,0 +1,59 @@
+# ============================================================================
+# Static Asset Caching Rules
+# ============================================================================
+# Include this in server{} blocks that serve static files
+#
+# Aggressive caching for static assets (images, CSS, JS, fonts).
+# These files rarely change, and when they do, WordPress uses versioned URLs.
+#
+# Performance impact:
+# - First visit: Download 500KB images (2 seconds)
+# - Subsequent visits: Load from browser cache (0 seconds)
+# ============================================================================
+
+# Images - cache for 1 year
+# Images rarely change; if they do, filename changes (e.g., logo-v2.png)
+location ~* \.(jpg|jpeg|png|gif|ico|svg|webp)$ {
+    expires 1y;
+    add_header Cache-Control "public, immutable";
+    add_header X-Content-Type-Options "nosniff" always;
+    access_log off;         # Don't log image requests (80% of requests)
+    log_not_found off;
+}
+
+# CSS and JavaScript - cache for 1 year
+# WordPress/plugins use versioned URLs for cache busting
+# Example: style.css?ver=1.2.3 → Update version → Browser re-downloads
+location ~* \.(css|js)$ {
+    expires 1y;
+    add_header Cache-Control "public, immutable";
+    access_log off;
+}
+
+# Fonts - cache for 1 year with CORS
+# CORS header required for fonts loaded from CSS (cross-origin request)
+# Without CORS: Browser blocks font → broken text rendering
+location ~* \.(woff|woff2|ttf|eot|otf)$ {
+    expires 1y;
+    add_header Cache-Control "public, immutable";
+    add_header Access-Control-Allow-Origin "*";
+    access_log off;
+}
+
+{% if nginx_wordpress_learndash_enabled | default(true) %}
+# Course materials - cache for 30 days with hotlink protection
+# PDFs, documents, videos for LearnDash courses
+# Shorter cache than images (materials update occasionally)
+location ~* \.(pdf|doc|docx|ppt|pptx|mp4|webm|mp3)$ {
+    expires 30d;
+    add_header Cache-Control "public";
+    access_log off;
+
+    # Prevent hotlinking (other sites embedding your course materials)
+    # Saves bandwidth and prevents unauthorized access
+    valid_referers none blocked {{ nginx_wordpress_server_name }} {% for alias in nginx_wordpress_server_aliases %}{{ alias }} {% endfor %};
+    if ($invalid_referer) {
+        return 403;
+    }
+}
+{% endif %}

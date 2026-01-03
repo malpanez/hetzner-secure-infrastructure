@@ -24,12 +24,6 @@ locals {
   volume_name   = var.volume_name != "" ? var.volume_name : "${var.server_name}-volume"
 }
 
-# Data source: Get Debian image dynamically
-data "hcloud_image" "os_image" {
-  count = var.image_id == null ? 1 : 0
-  name  = var.image
-}
-
 # SSH Key Resource
 resource "hcloud_ssh_key" "default" {
   name       = "${var.server_name}-key"
@@ -41,7 +35,7 @@ resource "hcloud_ssh_key" "default" {
 resource "hcloud_server" "server" {
   name        = var.server_name
   server_type = var.server_type
-  image       = var.image_id != null ? var.image_id : data.hcloud_image.os_image[0].id
+  image       = var.image_id != null ? var.image_id : var.image
   location    = var.location
 
   ssh_keys = [hcloud_ssh_key.default.id]
@@ -58,8 +52,8 @@ resource "hcloud_server" "server" {
 
   # Prevent accidental deletion
   lifecycle {
-    prevent_destroy = false  # Set to true in production to prevent accidental deletion
-    ignore_changes  = [user_data]  # Prevent recreation if cloud-init changes
+    prevent_destroy = false       # Set to true in production to prevent accidental deletion
+    ignore_changes  = [user_data] # Prevent recreation if cloud-init changes
   }
 }
 
@@ -69,7 +63,7 @@ resource "hcloud_firewall" "server_firewall" {
 
   name   = local.firewall_name
   labels = local.common_labels
-  
+
   # SSH (limited to specific IPs)
   rule {
     direction   = "in"
@@ -78,37 +72,37 @@ resource "hcloud_firewall" "server_firewall" {
     source_ips  = var.ssh_allowed_ips
     description = "SSH access for remote server management"
   }
-  
+
   # HTTP (public web traffic)
   dynamic "rule" {
     for_each = var.allow_http ? [1] : []
     content {
-      direction   = "in"
-      protocol    = "tcp"
-      port        = "80"
-      source_ips  = [
+      direction = "in"
+      protocol  = "tcp"
+      port      = "80"
+      source_ips = [
         "0.0.0.0/0",
         "::/0"
       ]
       description = "HTTP access for web traffic"
     }
   }
-  
+
   # HTTPS (secure web traffic)
   dynamic "rule" {
     for_each = var.allow_https ? [1] : []
     content {
-      direction   = "in"
-      protocol    = "tcp"
-      port        = "443"
-      source_ips  = [
+      direction = "in"
+      protocol  = "tcp"
+      port      = "443"
+      source_ips = [
         "0.0.0.0/0",
         "::/0"
       ]
       description = "HTTPS access for secure web traffic"
     }
   }
-  
+
   # Custom ports
   dynamic "rule" {
     for_each = var.additional_ports
@@ -119,12 +113,12 @@ resource "hcloud_firewall" "server_firewall" {
       source_ips = rule.value.source_ips
     }
   }
-  
+
   # ICMP (network diagnostics)
   rule {
-    direction   = "in"
-    protocol    = "icmp"
-    source_ips  = [
+    direction = "in"
+    protocol  = "icmp"
+    source_ips = [
       "0.0.0.0/0",
       "::/0"
     ]
@@ -135,7 +129,7 @@ resource "hcloud_firewall" "server_firewall" {
 # Attach firewall to server
 resource "hcloud_firewall_attachment" "server_firewall" {
   count = var.create_firewall ? 1 : 0
-  
+
   firewall_id = hcloud_firewall.server_firewall[0].id
   server_ids  = [hcloud_server.server.id]
 }
@@ -151,14 +145,14 @@ resource "hcloud_volume" "server_volume" {
   labels   = local.common_labels
 
   lifecycle {
-    prevent_destroy = false  # Set to true in production to prevent accidental deletion
+    prevent_destroy = false # Set to true in production to prevent accidental deletion
   }
 }
 
 # Attach volume to server
 resource "hcloud_volume_attachment" "server_volume" {
   count = var.volume_size > 0 ? 1 : 0
-  
+
   volume_id = hcloud_volume.server_volume[0].id
   server_id = hcloud_server.server.id
   automount = var.volume_automount
@@ -177,7 +171,7 @@ resource "hcloud_floating_ip" "server_ip" {
 # Assign floating IP to server
 resource "hcloud_floating_ip_assignment" "server_ip" {
   count = var.enable_floating_ip ? 1 : 0
-  
+
   floating_ip_id = hcloud_floating_ip.server_ip[0].id
   server_id      = hcloud_server.server.id
 }
@@ -185,7 +179,7 @@ resource "hcloud_floating_ip_assignment" "server_ip" {
 # Reverse DNS
 resource "hcloud_rdns" "server_rdns" {
   count = var.reverse_dns_enabled ? 1 : 0
-  
+
   server_id  = hcloud_server.server.id
   ip_address = hcloud_server.server.ipv4_address
   dns_ptr    = var.reverse_dns_ptr != "" ? var.reverse_dns_ptr : "${var.server_name}.${var.domain}"

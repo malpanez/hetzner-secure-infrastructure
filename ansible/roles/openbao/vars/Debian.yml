@@ -7,11 +7,11 @@ openbao_apt_dependencies:
   - curl
   - jq
   - openssl
-  - unzip
 
 # OpenBao download configuration
 openbao_download_base_url: "https://github.com/openbao/openbao/releases/download/v{{ openbao_version }}"
-openbao_binary_zip: "bao_{{ openbao_version }}_linux_amd64.zip"
+openbao_arch: "{{ 'arm64' if ansible_architecture in ['aarch64', 'arm64'] else 'amd64' }}"
+openbao_binary_archive: "bao_{{ openbao_version }}_linux_{{ openbao_arch }}.tar.gz"
 
 # System paths
 openbao_binary_path: "{{ openbao_install_dir }}/bao"
