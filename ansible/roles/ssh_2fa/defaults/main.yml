@@ -99,6 +99,21 @@ ssh_2fa_pam_google_authenticator_ssh_options: "nullok forward_pass"
 ssh_2fa_pam_google_authenticator_sudo_options: "nullok"
 
 # ========================================
+# Break-glass Configuration
+# ========================================
+
+# Enable break-glass access (bypass 2FA for specific users/groups)
+ssh_2fa_break_glass_enabled: true
+
+# Break-glass users (can login with SSH key only, no 2FA required)
+# IMPORTANT: Include admin user to prevent lockout during initial setup
+ssh_2fa_break_glass_users:
+  - malpanez
+
+# Break-glass groups (members can login with SSH key only)
+# ansible-automation group is always included in template
+
+# ========================================
 # Banner Configuration
 # ========================================
 

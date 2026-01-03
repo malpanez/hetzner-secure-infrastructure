@@ -47,45 +47,51 @@
   notify: restart sshd
   tags: [ssh, 2fa, config]
 
-- name: SSH 2FA | Configure | Add group check to SSH PAM (skip 2FA for ansible-automation)
+# ========================================
+# PAM Configuration - Modular Approach
+# ========================================
+# Deploy separate PAM config files that are @include'd by main PAM files
+# This prevents package updates from overwriting our customizations
+
+- name: SSH 2FA | Configure | Deploy modular PAM config for SSH 2FA
+  ansible.builtin.template:
+    src: pam-ssh-2fa.j2
+    dest: /etc/pam.d/sshd-2fa
+    owner: root
+    group: root
+    mode: '0644'
+    backup: yes
+  when: ssh_2fa_enable_ssh | default(true)
+  tags: [pam, 2fa, config]
+
+- name: SSH 2FA | Configure | Add @include directive to /etc/pam.d/sshd
   ansible.builtin.lineinfile:
     path: /etc/pam.d/sshd
-    line: "auth [success=1 default=ignore] pam_succeed_if.so quiet user ingroup ansible-automation"
+    line: "@include sshd-2fa"
     insertafter: "@include common-auth"
     state: present
-    backup: true
-  when:
-    - ssh_2fa_enable_ssh | default(true)
-    - ssh_2fa_break_glass_enabled | default(true)
-  tags: [pam, 2fa]
-
-- name: SSH 2FA | Configure | Add Google Authenticator to SSH PAM
-  community.general.pamd:
-    name: sshd
-    type: auth
-    control: required
-    module_path: pam_google_authenticator.so
-    module_arguments: "{{ ssh_2fa_pam_google_authenticator_ssh_options }}"
-    state: after
-    new_type: auth
-    new_control: '[success=ok new_authtok_reqd=ok ignore=ignore default=bad]'
-    new_module_path: pam_unix.so
-    backup: true
+    backup: yes
   when: ssh_2fa_enable_ssh | default(true)
   tags: [pam, 2fa]
 
-- name: SSH 2FA | Configure | Add Google Authenticator to sudo PAM
-  community.general.pamd:
-    name: sudo
-    type: auth
-    control: required
-    module_path: pam_google_authenticator.so
-    module_arguments: "{{ ssh_2fa_pam_google_authenticator_sudo_options }}"
-    state: before
-    new_type: auth
-    new_control: include
-    new_module_path: system-auth
-    backup: true
+- name: SSH 2FA | Configure | Deploy modular PAM config for sudo 2FA
+  ansible.builtin.template:
+    src: pam-sudo-2fa.j2
+    dest: /etc/pam.d/sudo-2fa
+    owner: root
+    group: root
+    mode: '0644'
+    backup: yes
+  when: ssh_2fa_enable_sudo | default(true)
+  tags: [pam, 2fa, sudo, config]
+
+- name: SSH 2FA | Configure | Add @include directive to /etc/pam.d/sudo
+  ansible.builtin.lineinfile:
+    path: /etc/pam.d/sudo
+    line: "@include sudo-2fa"
+    insertbefore: "@include system-auth"
+    state: present
+    backup: yes
   when: ssh_2fa_enable_sudo | default(true)
   tags: [pam, 2fa, sudo]
 

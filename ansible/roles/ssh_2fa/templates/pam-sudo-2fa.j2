@@ -1,0 +1,11 @@
+# PAM Configuration for Sudo 2FA
+# Managed by Ansible - ssh_2fa role
+# This file is included by /etc/pam.d/sudo via @include directive
+#
+# Purpose: Add Google Authenticator 2FA for sudo commands
+# Location: /etc/pam.d/sudo-2fa
+
+# Require Google Authenticator for sudo
+# Options:
+#   nullok: Allow users without ~/.google_authenticator to use sudo (initial setup)
+auth required pam_google_authenticator.so {{ ssh_2fa_pam_google_authenticator_sudo_options }}

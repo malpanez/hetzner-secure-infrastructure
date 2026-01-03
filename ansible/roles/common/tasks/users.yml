@@ -1,6 +1,13 @@
 ---
 # Common Role - User Management Tasks
 
+- name: Common | Users | Create ansible-automation group
+  ansible.builtin.group:
+    name: ansible-automation
+    state: present
+    system: yes
+  tags: [common, user, groups]
+
 - name: Common | Users | Ensure admin user exists
   ansible.builtin.user:
     name: "{{ common_admin_user_name }}"
@@ -10,6 +17,14 @@
     append: true
   when: common_admin_user_create
   tags: [common, user]
+
+- name: Common | Users | Add admin user to ansible-automation group (SSH key-only access)
+  ansible.builtin.user:
+    name: "{{ common_admin_user_name }}"
+    groups: ansible-automation
+    append: yes
+  when: common_admin_user_create
+  tags: [common, user, ssh]
 
 - name: Common | Users | Create .ssh directory for admin user
   ansible.builtin.file:
