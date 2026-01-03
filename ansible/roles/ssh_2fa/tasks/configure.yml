@@ -64,11 +64,11 @@
   when: ssh_2fa_enable_ssh | default(true)
   tags: [pam, 2fa, config]
 
-- name: SSH 2FA | Configure | Add @include directive to /etc/pam.d/sshd (using pamd module)
+- name: SSH 2FA | Configure | Add substack directive to /etc/pam.d/sshd (using pamd module)
   community.general.pamd:
     name: sshd
     type: auth
-    control: include
+    control: substack
     module_path: sshd-2fa
     state: after
     new_type: auth
@@ -89,11 +89,11 @@
   when: ssh_2fa_enable_sudo | default(true)
   tags: [pam, 2fa, sudo, config]
 
-- name: SSH 2FA | Configure | Add @include directive to /etc/pam.d/sudo (using pamd module)
+- name: SSH 2FA | Configure | Add substack directive to /etc/pam.d/sudo (using pamd module)
   community.general.pamd:
     name: sudo
     type: auth
-    control: include
+    control: substack
     module_path: sudo-2fa
     state: before
     new_type: auth
