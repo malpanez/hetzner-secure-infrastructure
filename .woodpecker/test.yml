@@ -9,13 +9,37 @@ when:
 
 steps:
   # ========================================
-  # Step 1: Validate Terraform
+  # Step 1: Terraform Format Check
   # ========================================
-  validate-terraform:
+  terraform-fmt:
     image: hashicorp/terraform:1.6
     commands:
-      - cd terraform/environments/production
+      - cd terraform
       - terraform fmt -check -recursive
+    when:
+      - event: push
+      - event: pull_request
+
+  # ========================================
+  # Step 2: Terraform Lint (tflint)
+  # ========================================
+  terraform-lint:
+    image: ghcr.io/terraform-linters/tflint:latest
+    commands:
+      - cd terraform
+      - tflint --init
+      - tflint --format compact
+    when:
+      - event: push
+      - event: pull_request
+
+  # ========================================
+  # Step 3: Terraform Validate
+  # ========================================
+  terraform-validate:
+    image: hashicorp/terraform:1.6
+    commands:
+      - cd terraform
       - terraform init -backend=false
       - terraform validate
     when:
@@ -23,22 +47,51 @@ steps:
       - event: pull_request
 
   # ========================================
-  # Step 2: Validate Ansible Syntax
+  # Step 4: Terraform Test (Terratest)
   # ========================================
-  validate-ansible-syntax:
+  terraform-test:
+    image: golang:1.21-alpine
+    secrets:
+      - hcloud_token
+    environment:
+      GO111MODULE: "on"
+    commands:
+      - apk add --no-cache git
+      - cd terraform/tests
+      - go mod download
+      - go test -v -timeout 30m -short
+    when:
+      - event: push
+        branch: main
+
+  # ========================================
+  # Step 5: Ansible Syntax Check
+  # ========================================
+  ansible-syntax:
     image: cytopia/ansible:latest-tools
     commands:
       - cd ansible
       - ansible-playbook playbooks/site.yml --syntax-check
-      - ansible-lint playbooks/site.yml || true
     when:
       - event: push
       - event: pull_request
 
   # ========================================
-  # Step 3: Validate YAML files
+  # Step 6: Ansible Lint
   # ========================================
-  validate-yaml:
+  ansible-lint:
+    image: cytopia/ansible:latest-tools
+    commands:
+      - cd ansible
+      - ansible-lint --force-color playbooks/site.yml
+    when:
+      - event: push
+      - event: pull_request
+
+  # ========================================
+  # Step 7: YAML Lint
+  # ========================================
+  yaml-lint:
     image: cytopia/yamllint:latest
     commands:
       - yamllint -c .yamllint.yml ansible/ || true
@@ -48,9 +101,9 @@ steps:
       - event: pull_request
 
   # ========================================
-  # Step 4: Run Molecule Tests
+  # Step 8: Molecule Tests (Ansible Roles)
   # ========================================
-  test-molecule:
+  molecule-test:
     image: quay.io/ansible/molecule:latest
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -68,18 +121,6 @@ steps:
     when:
       - event: push
         branch: main
-      - event: pull_request
-
-  # ========================================
-  # Step 5: Security Scan (ansible-lint strict)
-  # ========================================
-  security-scan:
-    image: cytopia/ansible:latest-tools
-    commands:
-      - cd ansible
-      - ansible-lint --strict playbooks/ || true
-    when:
-      - event: push
       - event: pull_request
 
   # ========================================
