@@ -395,6 +395,34 @@ Create: `ansible/playbooks/openbao.yml`
           ========================================
 ```
 
+### Bootstrap Automation (Post-Unseal)
+
+Once OpenBao is installed and reachable, you can run the dedicated bootstrap playbook to:
+- Initialize and unseal (first run only)
+- Enable secrets engines
+- Seed WordPress/MariaDB secrets
+- Create the rotation policy/token
+
+Run:
+
+```bash
+ansible-playbook -i inventory/production/hosts.yml \
+  playbooks/openbao-bootstrap.yml \
+  -e openbao_bootstrap_ack=true \
+  --ask-vault-pass
+```
+
+**Important**: This will output unseal keys and the root token once. Store them securely.
+
+### Source of Truth for Initial Secrets
+
+Before OpenBao takes over, the initial secrets live in:
+- `ansible/inventory/group_vars/all/secrets.yml` (Ansible Vault)
+
+After bootstrap:
+- Store `openbao_wordpress_rotation_token` in the same vault file.
+- Re-run the WordPress deployment so the rotation timer can use it.
+
 ### Cost
 
 - **Server**: cx11 = €3.79/month

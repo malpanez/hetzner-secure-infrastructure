@@ -1,12 +1,24 @@
 ---
 # AppArmor Role - Configuration Tasks
 
-- name: AppArmor | Configure | Ensure AppArmor is enabled in GRUB
+- name: AppArmor | Configure | Check GRUB cmdline for AppArmor flags
+  ansible.builtin.command: >-
+    grep -Eq 'GRUB_CMDLINE_LINUX_DEFAULT="[^"]*(apparmor=1|security=apparmor)' {{ apparmor_grub_config_file }}
+  register: apparmor_grub_flags
+  changed_when: false
+  failed_when: false
+  when: apparmor_manage_grub | default(true)
+  tags: [apparmor, grub, config]
+
+- name: AppArmor | Configure | Append AppArmor flags to GRUB cmdline
   ansible.builtin.lineinfile:
     path: "{{ apparmor_grub_config_file }}"
-    regexp: ^GRUB_CMDLINE_LINUX_DEFAULT=
-    line: 'GRUB_CMDLINE_LINUX_DEFAULT="{{ apparmor_grub_cmdline }}"'
-    state: present
+    regexp: ^GRUB_CMDLINE_LINUX_DEFAULT="(.*)"
+    line: 'GRUB_CMDLINE_LINUX_DEFAULT="\1 {{ apparmor_grub_cmdline }}"'
+    backrefs: true
+  when:
+    - apparmor_manage_grub | default(true)
+    - apparmor_grub_flags.rc != 0
   notify:
     - update grub
     - reboot required

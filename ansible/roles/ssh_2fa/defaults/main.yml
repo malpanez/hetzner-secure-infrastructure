@@ -110,6 +110,9 @@ ssh_2fa_break_glass_enabled: true
 ssh_2fa_break_glass_users:
   - malpanez
 
+# Require break-glass users to exist and have SSH keys before enabling 2FA
+ssh_2fa_require_break_glass_ready: false
+
 # Break-glass groups (members can login with SSH key only)
 # ansible-automation group is always included in template
 

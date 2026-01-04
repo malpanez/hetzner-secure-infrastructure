@@ -8,6 +8,9 @@
 # Enable/disable AppArmor deployment
 apparmor_enabled: true
 
+# Manage GRUB kernel cmdline to enable AppArmor
+apparmor_manage_grub: true
+
 # Enable enforce mode (true) or complain mode (false)
 # IMPORTANT: Set to false (complain mode) to avoid blocking SSH
 # Complain mode logs violations but doesn't block them
