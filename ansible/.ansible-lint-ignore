@@ -1,6 +1,4 @@
 # Ansible-lint ignore file
-# Ignore warnings from external roles (geerlingguy.mysql)
-roles/geerlingguy.mysql/
 
 # OpenBao bootstrap tasks - controlled warnings
 playbooks/tasks/openbao-bootstrap.yml no-changed-when
