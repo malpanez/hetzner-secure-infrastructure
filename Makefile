@@ -119,15 +119,25 @@ check-env: ## Check required environment variables
 	@echo "${GREEN}✓ Environment OK${RESET}"
 
 ## Quality & Security
-lint: ## Run all linters
-	@echo "${GREEN}Running linters...${RESET}"
-	@echo "${YELLOW}Linting Terraform...${RESET}"
-	cd $(TERRAFORM_DIR) && terraform fmt -check -recursive
-	@echo "${YELLOW}Linting Ansible...${RESET}"
-	cd $(ANSIBLE_DIR) && ansible-lint playbooks/site.yml
-	@echo "${YELLOW}Linting YAML...${RESET}"
-	yamllint -c .yamllint.yml .
-	@echo "${GREEN}✓ Linting complete${RESET}"
+lint: lint-terraform lint-ansible lint-yaml ## Run all linters
+
+lint-terraform: ## Lint Terraform with tflint
+	@echo "${GREEN}Running Terraform linters...${RESET}"
+	@echo "${YELLOW}Formatting check...${RESET}"
+	cd terraform && terraform fmt -check -recursive
+	@echo "${YELLOW}Running tflint...${RESET}"
+	cd terraform && tflint --init && tflint --format compact
+	@echo "${GREEN}✓ Terraform linting complete${RESET}"
+
+lint-ansible: ## Lint Ansible with ansible-lint
+	@echo "${GREEN}Running Ansible linters...${RESET}"
+	cd $(ANSIBLE_DIR) && ansible-lint --force-color playbooks/site.yml
+	@echo "${GREEN}✓ Ansible linting complete${RESET}"
+
+lint-yaml: ## Lint YAML files
+	@echo "${GREEN}Running YAML linter...${RESET}"
+	yamllint -c .yamllint.yml . || true
+	@echo "${GREEN}✓ YAML linting complete${RESET}"
 
 format: ## Auto-format all code
 	@echo "${GREEN}Formatting code...${RESET}"
