@@ -80,3 +80,8 @@ ssh_allowed_ips:
 #   wordpress_server_ip: "65.108.1.100"
 #   openbao_server_ip: "65.108.1.101"
 #   monitoring_server_ip: "65.108.1.102"
+
+# ========================================
+# OpenBao Bootstrap (opt-in)
+# ========================================
+openbao_bootstrap_enabled: false

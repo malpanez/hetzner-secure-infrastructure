@@ -1,0 +1,17 @@
+# Ansible-lint ignore file
+# Ignore warnings from external roles (geerlingguy.mysql)
+roles/geerlingguy.mysql/
+
+# OpenBao bootstrap tasks - controlled warnings
+playbooks/tasks/openbao-bootstrap.yml no-changed-when
+playbooks/tasks/openbao-bootstrap.yml jinja[spacing]
+playbooks/tasks/openbao-bootstrap.yml risky-shell-pipe
+
+# Site.yml - known safe usage
+playbooks/site.yml risky-shell-pipe
+
+# AppArmor - using systemctl for reload is intentional
+roles/apparmor/handlers/main.yml command-instead-of-module
+
+# Security hardening - known safe usage
+roles/security_hardening/tasks/main.yml no-changed-when

@@ -1300,6 +1300,15 @@ ansible-playbook -i inventory/hetzner.yml \
   --ask-vault-pass
 ```
 
+**OpenBao bootstrap (si aplica):**
+
+```bash
+ansible-playbook -i inventory/hetzner.yml \
+  playbooks/openbao-bootstrap.yml \
+  -e openbao_bootstrap_ack=true \
+  --ask-vault-pass
+```
+
 #### Opción 2: Inventario Estático (Alternativa Simple)
 
 Si prefieres control manual o no quieres usar el plugin dinámico:

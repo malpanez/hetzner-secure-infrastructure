@@ -7,5 +7,12 @@ ssh_2fa_break_glass_enabled: true
 ssh_2fa_break_glass_users:
   - malpanez
 
+# Only enable 2FA if break-glass users exist and have authorized_keys
+ssh_2fa_require_break_glass_ready: true
+
 # Disable auditd in production until audit=1 boot stability is confirmed
 security_hardening_auditd_enabled: false
+security_hardening_manage_grub: false
+
+# Avoid touching GRUB in production until console/kernel cmdline is verified
+apparmor_manage_grub: false

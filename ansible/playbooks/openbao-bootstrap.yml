@@ -1,0 +1,30 @@
+---
+# Bootstrap OpenBao after service is installed and reachable.
+# This playbook initializes/unseals (first run) and configures policies/roles.
+#
+# Usage:
+#   ansible-playbook -i inventory/production/hosts.yml playbooks/openbao-bootstrap.yml \
+#     -e openbao_bootstrap_ack=true --ask-vault-pass
+
+- name: Bootstrap OpenBao (init + seed secrets)
+  hosts: secrets_servers
+  become: true
+  gather_facts: false
+
+  vars:
+    openbao_bootstrap_enabled: true
+    openbao_cli: "{{ openbao_binary_path | default('bao') }}"
+    openbao_env_base:
+      VAULT_ADDR: "{{ openbao_api_addr }}"
+    openbao_env: "{{ openbao_env_base | combine(openbao_tls_self_signed | default(true) | bool | ternary({'VAULT_SKIP_VERIFY': '1'}, {})) }}"
+
+  pre_tasks:
+    - name: Confirm OpenBao bootstrap
+      ansible.builtin.assert:
+        that:
+          - openbao_bootstrap_ack | default(false) | bool
+        fail_msg: "Set -e openbao_bootstrap_ack=true to acknowledge init/unseal operations."
+
+  tasks:
+    - name: Run OpenBao bootstrap tasks
+      ansible.builtin.include_tasks: tasks/openbao-bootstrap.yml
