@@ -117,20 +117,76 @@ The infrastructure code has been fixed but NOT yet deployed. The Hetzner server 
 ## Next Steps (When User Returns)
 
 ### Phase 1: Deploy and Test Basic Functionality
+
+#### User Creation Process (Cloud-init vs Ansible)
+
+**IMPORTANT**: The `malpanez` user is created by Terraform's cloud-init, NOT by Ansible:
+
+1. **Terraform provisions server** → cloud-init runs FIRST
+   - Creates `malpanez` user with sudo access
+   - Adds SSH public key from `terraform.prod.tfvars`
+   - Sets root login to `prohibit-password`
+   - See: `terraform/modules/hetzner-server/templates/cloud-init.yml`
+
+2. **Ansible connects as `malpanez`** → common role runs AFTER
+   - User already exists from cloud-init
+   - Ansible only updates/verifies configuration
+   - Adds `malpanez` to `ansible-automation` group for break-glass SSH access
+
+**Deployment sequence**:
+
 1. Review this status document
-2. Deploy infrastructure: `cd terraform && terraform apply`
-3. Run Ansible with automatic logging:
+
+2. Deploy infrastructure manually (creates server + malpanez user via cloud-init):
    ```bash
-   cd ansible
+   cd terraform
+   terraform apply
+   # Note the server IP address
+   # cloud-init creates malpanez user with SSH key during provisioning
+   ```
+
+3. Run Ansible as `malpanez` (user already exists from cloud-init):
+   ```bash
+   cd ../ansible
    export HCLOUD_TOKEN="..."
-   ./deploy.sh -u root playbooks/site.yml
+   ./deploy.sh playbooks/site.yml
+   # Uses malpanez from ansible.cfg (remote_user = malpanez)
+   # NO NEED for -u malpanez (default in ansible.cfg)
    # Log will be saved to: logs/ansible-YYYYMMDD-HHMMSS.log
    # Symlink created at: logs/latest.log
    ```
-4. Verify SSH access works after deployment
-5. Check that reboot actually triggered (if kernel params changed)
-6. Verify AppArmor is in complain mode: `sudo aa-status`
-7. Review deployment log: `less ansible/logs/latest.log`
+
+4. Verify malpanez has break-glass access (no 2FA required):
+   ```bash
+   ssh -i ~/.ssh/github_ed25519 malpanez@<SERVER_IP>
+   # Should connect WITHOUT 2FA prompt (break-glass user + ansible-automation group)
+   ```
+
+5. Check deployment status:
+   ```bash
+   # Check if reboot happened (uptime should be recent if kernel params changed)
+   uptime
+
+   # Verify AppArmor is in complain mode
+   sudo aa-status
+
+   # Verify malpanez is in ansible-automation group
+   groups malpanez
+
+   # Review deployment log on local machine
+   less ansible/logs/latest.log
+   ```
+
+#### Subsequent Deployments
+
+All deployments use `malpanez` (configured in ansible.cfg):
+
+```bash
+cd ansible
+./deploy.sh playbooks/site.yml
+# Uses malpanez automatically from ansible.cfg
+# remote_user = malpanez
+```
 
 ### Phase 2: Verify Services
 1. **WordPress**: Check HTTP access, verify admin login works

@@ -338,22 +338,31 @@ af7ce05 Fix critical SSH lockout issues and improve deployment reliability
 
 **Deployment seguro mañana**:
 ```bash
-# 1. Terraform (tú manualmente)
+# 1. Terraform (crea servidor + usuario malpanez vía cloud-init)
 cd terraform
 terraform apply
+# cloud-init crea automáticamente:
+#   - Usuario malpanez con sudo
+#   - SSH key de terraform.prod.tfvars
+#   - Root login = prohibit-password
 
-# 2. Ansible como ROOT (primera vez)
+# 2. Ansible como MALPANEZ (ya existe desde cloud-init)
 cd ../ansible
 export HCLOUD_TOKEN="..."
-./deploy.sh -u root playbooks/site.yml
-
-# 3. Verificar acceso
-ssh -i ~/.ssh/github_ed25519 malpanez@<SERVER_IP>
-# NO pedirá 2FA (break-glass)
-
-# 4. Deployments futuros
 ./deploy.sh playbooks/site.yml
-# Usa malpanez automáticamente
+# NO necesitas -u malpanez (ansible.cfg: remote_user = malpanez)
+# Ansible solo actualiza/verifica malpanez y lo agrega a ansible-automation
+
+# 3. Verificar acceso con malpanez (break-glass)
+ssh -i ~/.ssh/github_ed25519 malpanez@<SERVER_IP>
+# NO pedirá 2FA (break-glass: user + grupo ansible-automation)
+
+# 4. Deployments futuros (igual que el primero)
+./deploy.sh playbooks/site.yml
+# Usa malpanez automáticamente (remote_user = malpanez)
+
+# NOTA: Root login = prohibit-password (SSH key sí, password no)
+# Root sigue disponible como backup de emergencia
 ```
 
 ---
@@ -487,6 +496,63 @@ ssh -i ~/.ssh/github_ed25519 malpanez@<SERVER_IP>
 4. **Código del security repo útil**: Aunque incompleto, tiene patrones excelentes
 5. **Logging es esencial**: deploy.sh simplifica troubleshooting masivamente
 6. **Break-glass es mandatorio**: Sin esto, lockout garantizado
+
+---
+
+## Aclaraciones Críticas del Final de Sesión
+
+### Pregunta: ¿Por qué `-u root` si vamos a usar malpanez?
+
+**CORRECCIÓN**: La documentación inicial estaba INCORRECTA. El usuario tenía razón.
+
+**La verdad es**:
+
+1. **Terraform cloud-init crea `malpanez` ANTES de Ansible**:
+   - Ver: `terraform/modules/hetzner-server/templates/cloud-init.yml`
+   - cloud-init se ejecuta durante el aprovisionamiento del servidor
+   - Crea usuario `malpanez` con:
+     - Sudo access: `sudo: ['ALL=(ALL) NOPASSWD:ALL']`
+     - SSH key de `terraform.prod.tfvars` (admin_username = "malpanez")
+     - Shell: `/bin/bash`
+     - Grupo: `sudo`
+
+2. **Ansible se conecta como `malpanez` DESDE EL PRIMER DEPLOYMENT**:
+   - `ansible.cfg` tiene `remote_user = malpanez`
+   - NO necesitas `-u root` NI `-u malpanez`
+   - El rol `common` solo **actualiza/verifica** el usuario (no lo crea)
+   - Agrega `malpanez` al grupo `ansible-automation` para break-glass SSH
+
+3. **Root login NO se deshabilita completamente**:
+   - cloud-init configura: `PermitRootLogin prohibit-password`
+   - Ansible configura: `ssh_2fa_permit_root_login: 'prohibit-password'`
+   - Resultado: Root puede login con SSH key (NO con password)
+   - Root sigue disponible como backup de emergencia
+
+**Secuencia CORRECTA**:
+```bash
+# 1. Terraform crea servidor (cloud-init crea malpanez automáticamente)
+terraform apply
+
+# 2. Ansible configura servidor (conecta como malpanez)
+ansible-playbook playbooks/site.yml
+# NO necesitas -u malpanez (default en ansible.cfg)
+
+# 3. Verificar acceso
+ssh -i ~/.ssh/github_ed25519 malpanez@<IP>
+# Break-glass: sin 2FA (user + grupo ansible-automation)
+
+# 4. Deployments posteriores (igual)
+ansible-playbook playbooks/site.yml
+```
+
+**División de responsabilidades**:
+- **Terraform (cloud-init)**: Crea usuario, SSH keys, sudo básico
+- **Ansible (common role)**: Actualiza configuración, agrega grupos adicionales
+
+**Métodos de acceso al servidor** (en orden):
+1. SSH como `malpanez` con SSH key (sin 2FA - break-glass)
+2. SSH como `root` con SSH key (backup de emergencia, prohibit-password)
+3. Hetzner Cloud Console (siempre disponible)
 
 ---
 
