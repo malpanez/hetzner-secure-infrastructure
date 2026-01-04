@@ -1,15 +1,16 @@
 # Terraform Backend Configuration
 #
-# CURRENT STRATEGY: Local Backend with Git LFS
+# CURRENT STRATEGY: Local Backend (Simple, Reliable)
 # - Local state storage (terraform.tfstate)
-# - Versioned with Git LFS (tracks large binary files efficiently)
-# - No external dependencies or free tier limitations
+# - No external dependencies or costs
 # - Single user workflow (state locking not needed)
+# - Backup via git commits
 #
 # SECURITY:
-# - State file tracked in Git LFS (encrypted at rest in GitHub)
-# - Contains sensitive data (IPs, resource IDs) but NOT secrets (tokens in .envrc)
-# - .envrc file is gitignored (secrets never committed)
+# - State file gitignored (never committed)
+# - Contains sensitive data (IPs, resource IDs) but NOT secrets
+# - Secrets in .envrc file (gitignored)
+# - Regular backups recommended
 #
 # VARIABLES STRATEGY (CONSISTENT):
 # - Secrets (HCLOUD_TOKEN, CLOUDFLARE_API_TOKEN) → .envrc file (gitignored)
@@ -32,25 +33,88 @@ terraform {
 # 2. Local execution mode: "resource not found" state lock error (bug)
 # 3. Both modes fail to save state reliably in free tier
 #
-# Decision: Use local backend with Git LFS for reliability
+# Decision: Use local backend for reliability
 
 # ========================================
-# ALTERNATIVE: OpenBao Backend (Advanced)
+# ALTERNATIVE: Cloudflare R2 Backend (Recommended for Remote State)
 # ========================================
 #
-# NOTE: OpenBao backend creates a chicken-and-egg problem:
+# Cloudflare R2 provides S3-compatible storage with FREE tier:
+# - Storage: 10 GB free/month (tfstate ~50KB = FREE forever)
+# - Operations: 1M writes + 10M reads free/month
+# - Egress: UNLIMITED FREE (R2's killer feature vs AWS S3)
+# - Cost: $0.00/month for this use case
+#
+# IMPORTANT: R2 does NOT support state locking (no DynamoDB equivalent)
+# - Not a problem for single developer workflow
+# - Use with caution in team environments
+#
+# Setup Steps:
+# 1. Create R2 bucket in Cloudflare dashboard:
+#    - Name: terraform-state-hetzner
+#    - Region: Automatic
+#
+# 2. Create R2 API token:
+#    - Permissions: Object Read & Write
+#    - Scope: Apply to specific bucket (terraform-state-hetzner)
+#    - Copy Access Key ID and Secret Access Key
+#
+# 3. Add to .envrc:
+#    export AWS_ACCESS_KEY_ID="<R2_ACCESS_KEY_ID>"
+#    export AWS_SECRET_ACCESS_KEY="<R2_SECRET_ACCESS_KEY>"
+#
+# 4. Uncomment backend config below
+#
+# 5. Migrate state:
+#    terraform init -migrate-state
+#
+# terraform {
+#   backend "s3" {
+#     bucket = "terraform-state-hetzner"
+#     key    = "prod/terraform.tfstate"
+#
+#     # R2 endpoint (replace <ACCOUNT_ID> with your Cloudflare Account ID)
+#     endpoints = {
+#       s3 = "https://<ACCOUNT_ID>.r2.cloudflarestorage.com"
+#     }
+#
+#     region                      = "auto"
+#     skip_credentials_validation = true
+#     skip_metadata_api_check     = true
+#     skip_region_validation      = true
+#     skip_requesting_account_id  = true
+#   }
+# }
+
+# ========================================
+# ALTERNATIVE: OpenBao Backend (Advanced Self-Hosted)
+# ========================================
+#
+# NOTE: Chicken-and-egg problem:
 # - Need Terraform to deploy server
 # - Need server to run OpenBao
 # - Need OpenBao for Terraform backend
 #
-# SOLUTION: Use Terraform Cloud first, then migrate to OpenBao later if desired
+# SOLUTION: Deploy with local backend first, migrate to OpenBao later
 #
-# To use OpenBao backend (after OpenBao is deployed):
-# 1. Deploy infrastructure with Terraform Cloud first
-# 2. OpenBao is now running on your server
-# 3. Uncomment the backend config below
-# 4. Run: terraform init -migrate-state
-# 5. Terraform state moves from Cloud to OpenBao
+# Migration steps (after OpenBao is deployed):
+# 1. OpenBao is running on your server
+# 2. Create OpenBao policy for Terraform:
+#    bao policy write terraform-state - <<EOF
+#    path "secret/data/terraform/*" {
+#      capabilities = ["create", "read", "update", "delete", "list"]
+#    }
+#    path "secret/metadata/terraform/*" {
+#      capabilities = ["list", "read"]
+#    }
+#    EOF
+#
+# 3. Create Terraform user in OpenBao:
+#    bao auth enable userpass
+#    bao write auth/userpass/users/terraform password="SECURE_PASSWORD" policies="terraform-state"
+#
+# 4. Uncomment backend config below
+# 5. Run: terraform init -migrate-state
 #
 # terraform {
 #   backend "http" {
@@ -62,55 +126,12 @@ terraform {
 #     # export TF_HTTP_PASSWORD="your-openbao-token"
 #   }
 # }
-
-# ========================================
-# ALTERNATIVE: Local Backend (NOT RECOMMENDED)
-# ========================================
 #
-# Local backend stores state in a file on your machine
-# RISKS:
-# - State file contains sensitive data (IP addresses, IDs)
-# - Easy to accidentally commit to Git
-# - No collaboration support
-# - No state locking
-#
-# Only use for testing/development, never production
-#
-# terraform {
-#   backend "local" {
-#     path = "terraform.tfstate"
-#   }
-# }
-
-# ========================================
-# Migration Path (if needed later)
-# ========================================
-#
-# To migrate from Terraform Cloud to OpenBao:
-# 1. Ensure OpenBao is running and accessible
-# 2. Create OpenBao policy for Terraform:
-#    bao policy write terraform-state - <<EOF
-#    path "secret/data/terraform/*" {
-#      capabilities = ["create", "read", "update", "delete", "list"]
-#    }
-#    path "secret/metadata/terraform/*" {
-#      capabilities = ["list", "read"]
-#    }
-#    EOF
-# 3. Create Terraform user in OpenBao:
-#    bao auth enable userpass
-#    bao write auth/userpass/users/terraform password="SECURE_PASSWORD" policies="terraform-state"
-# 4. Comment out Terraform Cloud config above
-# 5. Uncomment OpenBao backend config
-# 6. Run: terraform init -migrate-state
-# 7. Answer "yes" to migrate state
-#
-# Benefits of OpenBao backend:
+# Benefits:
 # - Complete self-hosting (no external dependencies)
+# - State locking supported (unlike R2)
 # - All secrets in one place
-# - Full control over data
 #
 # Drawbacks:
 # - OpenBao must be running 24/7 for Terraform operations
-# - More complex setup
 # - Requires VPN or secure tunnel for remote access
