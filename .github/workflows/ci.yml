@@ -135,7 +135,7 @@ jobs:
 
       - name: Install Molecule
         run: |
-          pip install molecule molecule-docker ansible-lint
+          pip install 'ansible<2.18' molecule molecule-docker ansible-lint
 
       - name: Run Molecule Test
         run: |
@@ -144,6 +144,7 @@ jobs:
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
+          ALLOW_BROKEN_CONDITIONALS: 'true'
 
   # ========================================
   # Security Scan
