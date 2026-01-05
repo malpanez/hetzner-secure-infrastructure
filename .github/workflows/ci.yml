@@ -20,7 +20,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  TERRAFORM_VERSION: '1.9.0'
+  TERRAFORM_VERSION: '1.10.4'
   PYTHON_VERSION: '3.12'
   GO_VERSION: '1.22'
 
