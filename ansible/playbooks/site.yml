@@ -206,7 +206,7 @@
   post_tasks:
     - name: Display OpenBao information
       ansible.builtin.debug:
-        msg: |
+        msg: |-
           ========================================
           OpenBao Deployed Successfully
           ========================================
