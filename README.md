@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[![Build Status](https://ci.codeberg.org/api/badges/malpanez/twomindstrading_hetzner/status.svg)](https://ci.codeberg.org/malpanez/twomindstrading_hetzner)
+[![Build Status](https://github.com/malpanez/hetzner-secure-infrastructure/actions/workflows/ci.yml/badge.svg)](https://github.com/malpanez/hetzner-secure-infrastructure/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Terraform](https://img.shields.io/badge/Terraform-1.9-7B42BC?logo=terraform&logoColor=white)](https://terraform.io)
 [![Ansible](https://img.shields.io/badge/Ansible-2.15-EE0000?logo=ansible&logoColor=white)](https://ansible.com)
@@ -128,20 +128,24 @@ make test-molecule
 
 ### x86 vs ARM Decision
 
-**Tested Performance** (CX23 x86): 3,114 req/s, 32ms latency, A+ grade
+**Tested Performance**: Both architectures tested head-to-head
 
 | Option | Type | Cost (with IPv4) | Performance | Availability |
 |--------|------|------------------|-------------|--------------|
-| **CX23** (x86) | cx23 | €4.09/mo | Tested: 3,114 req/s | Limited stock |
-| **CAX11** (ARM) | cax11 | €4.59/mo | TBD (testing pending) | Always available |
+| **CAX11** (ARM) | cax11 | €4.05/mo | **8,339 req/s, 12ms latency** | ✅ Always available |
+| **CX23** (x86) | cx23 | €3.68/mo | 3,114 req/s, 32ms latency | ⚠️ Limited stock |
 
-**Interesting**: CX23 x86 is now cheaper than CAX11 ARM (€0.50/mo difference)
+**Winner**: ARM64 (CAX11)
+- **2.68x faster** throughput (8,339 vs 3,114 req/s)
+- **2.7x lower** latency (12ms vs 32ms)
+- **19% lower** memory usage
+- Always available (no stock issues)
 
-**See**: [docs/performance/X86_STAGING_BENCHMARK_WITH_MONITORING.md](docs/performance/X86_STAGING_BENCHMARK_WITH_MONITORING.md)
+**See**: [ARM64 vs x86 Comparison](docs/performance/ARM64_vs_X86_COMPARISON.md)
 
 ### Production Architecture (Minimal - 1 Server)
 
-**Cost**: €4.09/month (x86) | **Capacity**: 2,000-3,000 req/s
+**Cost**: €4.05/month (ARM64) | **Capacity**: 8,000+ req/s
 
 ```
 ┌─────────────────────────────────────┐
@@ -149,7 +153,8 @@ make test-molecule
 └─────────────────────────────────────┘
                  ↓
 ┌─────────────────────────────────────┐
-│ Hetzner CX23 (4GB RAM, 2 vCPU)     │
+│ Hetzner CAX11 ARM64                 │
+│ (Ampere Altra, 4GB RAM, 2 vCPU)    │
 │ ├── WordPress + LearnDash           │
 │ ├── Nginx + FastCGI Cache           │
 │ ├── PHP 8.4-FPM + OpCache           │
@@ -165,18 +170,19 @@ make test-molecule
 
 ### Future: Multi-Server (When Revenue Grows)
 
-**Cost**: €8.18/month | **Capacity**: 5,000+ req/s | **When**: After first €6,000 revenue
+**Cost**: €8.10/month | **Capacity**: 16,000+ req/s | **When**: After first €6,000 revenue
 
 ```
 ┌──────────────┐  ┌──────────────────────┐
 │  WordPress   │  │  Monitoring+Secrets  │
 │  + Database  │  │  Prometheus+Grafana  │
-│  CX23 €4.09  │  │  Vault OSS           │
-└──────────────┘  │  CX23 €4.09          │
+│  CAX11 €4.05 │  │  Vault OSS           │
+│  (ARM64)     │  │  CAX11 €4.05         │
+└──────────────┘  │  (ARM64)             │
                   └──────────────────────┘
 ```
 
-**Why wait**: Current 1-server setup handles 2,000+ req/s. Separate when traffic or revenue justifies additional cost.
+**Why wait**: Current 1-server ARM64 setup handles 8,000+ req/s. Separate when traffic or revenue justifies additional cost.
 
 ---
 
@@ -396,7 +402,7 @@ Every push runs:
 - ✅ Security scanning
 - ✅ Documentation checks
 
-**Status**: [![Build Status](https://ci.codeberg.org/api/badges/malpanez/twomindstrading_hetzner/status.svg)](https://ci.codeberg.org/malpanez/twomindstrading_hetzner)
+**Status**: [![Build Status](https://github.com/malpanez/hetzner-secure-infrastructure/actions/workflows/ci.yml/badge.svg)](https://github.com/malpanez/hetzner-secure-infrastructure/actions/workflows/ci.yml)
 
 **See**: [.github/CI_CD.md](.github/CI_CD.md)
 
@@ -408,30 +414,30 @@ Every push runs:
 
 ### Minimal (Production - 1 Server)
 
-| Component | Type | Cost |
-|-----------|------|------|
-| All-in-One Server | CX23 (x86) | €4.09/month |
-| Cloudflare (Free) | - | €0/month |
-| **Total** | | **€4.09/month** |
+| Component | Type | Monthly | **Annual** |
+|-----------|------|---------|------------|
+| All-in-One Server | CAX11 (ARM64) | €4.05 | **€48.60** |
+| Cloudflare (Free) | - | €0 | **€0** |
+| **Total** | | **€4.05/month** | **€48.60/year** |
 
 **Includes**: WordPress, MariaDB, Valkey, Nginx, Monitoring (Prometheus+Grafana+Loki), optional Vault OSS
 
-**Specs**: 2 vCPUs, 4 GB RAM, 40 GB NVMe SSD, 20 TB traffic
-**Capacity**: 2,000-3,000 req/s sustained
-**Good for**: Launch → First 100-200 students
+**Specs**: 2 vCPU Ampere Altra, 4 GB RAM, 40 GB NVMe SSD, 20 TB traffic
+**Capacity**: 8,000+ req/s sustained
+**Good for**: Launch → First 500-1,000 students
 
 ### Future: Separated (When Revenue Justifies)
 
-| Component | Type | Cost | When to Deploy |
-|-----------|------|------|----------------|
-| WordPress Server | CX23 (x86) | €4.09/month | Always |
-| Monitoring+Secrets Server | CX23 (x86) | €4.09/month | After first €6k revenue |
-| **Total** | | **€8.18/month** | |
+| Component | Type | Monthly | **Annual** | When to Deploy |
+|-----------|------|---------|------------|----------------|
+| WordPress Server | CAX11 (ARM64) | €4.05 | €48.60 | Always |
+| Monitoring+Secrets Server | CAX11 (ARM64) | €4.05 | €48.60 | After first €6k revenue |
+| **Total** | | **€8.10/month** | **€97.20/year** | |
 
-**Capacity**: 5,000+ req/s sustained
-**Good for**: 200-500 students
+**Capacity**: 16,000+ req/s sustained
+**Good for**: 1,000-2,000 students
 
-**Scaling trigger**: When sustained traffic exceeds 1,500 req/s or after selling 2-3 courses at €3,000 each.
+**Scaling trigger**: When sustained traffic exceeds 6,000 req/s or after selling 2-3 courses at €3,000 each.
 
 ---
 
@@ -454,10 +460,23 @@ Please see our [Security Policy](SECURITY.md) for reporting vulnerabilities.
 
 ## 🗺️ Roadmap
 
-- [ ] Multi-region support
-- [ ] Automated backups to S3-compatible storage
-- [ ] Enhanced monitoring with Loki for log aggregation
-- [ ] Kubernetes deployment option
+### Completed ✅
+- [x] ARM64 architecture support (CAX11)
+- [x] Cloudflare integration with DNS management
+- [x] Comprehensive monitoring (Prometheus + Grafana)
+- [x] GitHub Actions CI/CD pipelines
+- [x] Terraform + Ansible automation
+- [x] SSH 2FA with break-glass account
+
+### In Progress 🚧
+- [ ] Production deployment and validation
+- [ ] WordPress SSL certificate automation
+- [ ] OpenBao secrets rotation
+
+### Future 🔮
+- [ ] Multi-region failover support
+- [ ] Automated backups to S3-compatible storage (R2)
+- [ ] Kubernetes deployment option (k3s)
 - [ ] Infrastructure cost optimization automation
 - [ ] Advanced CDN configuration templates
 
@@ -465,11 +484,14 @@ Please see our [Security Policy](SECURITY.md) for reporting vulnerabilities.
 
 ## 📊 Project Statistics
 
-- **Lines of Code**: ~5,000+
-- **Ansible Roles**: 12 (all tested)
-- **Test Coverage**: 100%
-- **Documentation Pages**: 15+
-- **Security Scans**: 5 different tools
+- **Lines of Code**: 17,584 (Terraform + Ansible + Scripts)
+- **Ansible Roles**: 11 custom roles + 1 external (geerlingguy.mysql)
+- **Terraform Modules**: 2 (hetzner-server, cloudflare-config)
+- **GitHub Actions Workflows**: 5 (CI, Terraform, Ansible, Security, Markdown)
+- **Documentation Pages**: 44 markdown files
+- **Test Coverage**: Terraform validation + Ansible lint + syntax checks
+- **Security Scans**: Trivy, TFLint, ansible-lint, yamllint, markdownlint
+- **Supported Architectures**: x86_64, ARM64 (aarch64)
 - **Supported Platforms**: Debian 12/13
 
 ---

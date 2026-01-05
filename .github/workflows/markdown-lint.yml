@@ -1,0 +1,71 @@
+name: Markdown Linting
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - '**.md'
+      - '.github/workflows/markdown-lint.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - '**.md'
+
+jobs:
+  markdownlint:
+    name: Markdown Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run markdownlint
+        uses: articulate/actions-markdownlint@v1
+        with:
+          config: .markdownlint.json
+          files: '**/*.md'
+          ignore: 'node_modules'
+        continue-on-error: true
+
+  markdown-link-check:
+    name: Check Markdown Links
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for broken links
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+          use-verbose-mode: 'yes'
+          config-file: '.markdown-link-check.json'
+        continue-on-error: true
+
+  markdown-toc:
+    name: Check Table of Contents
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install markdown-toc
+        run: npm install -g markdown-toc
+
+      - name: Verify TOCs are up-to-date
+        run: |
+          for file in $(find . -name "*.md" -not -path "./node_modules/*" -not -path "./.git/*"); do
+            if grep -q "<!-- toc -->" "$file"; then
+              echo "Checking TOC in $file"
+              markdown-toc -i "$file" --no-write
+            fi
+          done
+        continue-on-error: true

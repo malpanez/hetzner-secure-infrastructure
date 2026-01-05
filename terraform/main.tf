@@ -77,7 +77,7 @@ resource "local_file" "ssh_config" {
     hostname     = module.production_server.server_name
     host_address = module.production_server.server_ipv4
     user         = var.admin_username
-    ssh_key      = "~/.ssh/github_ed25519"  # Consistent with 20-hetzner config
+    ssh_key      = "~/.ssh/github_ed25519" # Consistent with 20-hetzner config
   })
   filename        = pathexpand("~/.ssh/config.d/30-terraform-managed.conf")
   file_permission = "0600"
