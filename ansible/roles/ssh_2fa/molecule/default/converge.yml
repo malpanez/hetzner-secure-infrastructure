@@ -10,4 +10,4 @@
         cache_valid_time: 3600
 
   roles:
-    - role: ssh-2fa
+    - role: ssh_2fa
