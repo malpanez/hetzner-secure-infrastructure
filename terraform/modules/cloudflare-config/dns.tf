@@ -35,3 +35,25 @@ resource "cloudflare_record" "root_ipv6" {
   ttl     = 1
   comment = "IPv6 support for root domain"
 }
+
+# Monitoring subdomain: Grafana
+resource "cloudflare_record" "grafana" {
+  zone_id = data.cloudflare_zone.main.id
+  name    = "grafana"
+  value   = var.server_ipv4
+  type    = "A"
+  proxied = true
+  ttl     = 1
+  comment = "Grafana monitoring dashboard (Nginx reverse proxy)"
+}
+
+# Monitoring subdomain: Prometheus
+resource "cloudflare_record" "prometheus" {
+  zone_id = data.cloudflare_zone.main.id
+  name    = "prometheus"
+  value   = var.server_ipv4
+  type    = "A"
+  proxied = true
+  ttl     = 1
+  comment = "Prometheus metrics endpoint (Nginx reverse proxy)"
+}
