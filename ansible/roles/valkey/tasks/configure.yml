@@ -1,7 +1,7 @@
 ---
 # Valkey Role - Configuration Tasks
 
-- name: Valkey | Configure | Create Valkey directories
+- name: Valkey | Configure | Create Valkey config/data/log directories
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
@@ -12,8 +12,16 @@
     - "{{ valkey_config_dir }}"
     - "{{ valkey_data_dir }}"
     - "{{ valkey_log_dir }}"
-    - "{{ valkey_run_dir }}"
   tags: [valkey, config, directories]
+
+- name: Valkey | Configure | Create Valkey runtime directory
+  ansible.builtin.file:
+    path: "{{ valkey_run_dir }}"
+    state: directory
+    owner: "{{ valkey_user }}"
+    group: "{{ valkey_group }}"
+    mode: '0750'
+  tags: [valkey, config, directories, molecule-notest]
 
 - name: Valkey | Configure | Deploy Valkey configuration
   ansible.builtin.template:
@@ -86,5 +94,6 @@
         enabled: true
         daemon_reload: true
         state: started
+      tags: [molecule-notest]
   when: valkey_disable_thp
   tags: [valkey, config, thp]
