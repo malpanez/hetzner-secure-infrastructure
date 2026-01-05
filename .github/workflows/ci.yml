@@ -77,6 +77,12 @@ jobs:
         run: |
           pip install ansible ansible-lint yamllint
 
+      - name: Install Ansible Galaxy requirements
+        run: |
+          cd ansible
+          ansible-galaxy install -r requirements.yml
+        continue-on-error: false
+
       - name: Create dummy vault password for CI
         run: echo "dummy_password_for_ci_only" > ~/.ansible_vault_pass
 
