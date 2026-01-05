@@ -17,7 +17,7 @@ resource "cloudflare_record" "root" {
 resource "cloudflare_record" "www" {
   zone_id = data.cloudflare_zone.main.id
   name    = "www"
-  value   = var.domain_name
+  content = var.domain_name
   type    = "CNAME"
   proxied = true
   ttl     = 1
@@ -25,16 +25,18 @@ resource "cloudflare_record" "www" {
 }
 
 # Optional: IPv6 support
-resource "cloudflare_record" "root_ipv6" {
-  count   = var.server_ipv6 != null ? 1 : 0
-  zone_id = data.cloudflare_zone.main.id
-  name    = "@"
-  value   = var.server_ipv6
-  type    = "AAAA"
-  proxied = true
-  ttl     = 1
-  comment = "IPv6 support for root domain"
-}
+# NOTE: Commented out due to count dependency on server output (causes plan error)
+# IPv6 record should be added manually in Cloudflare after server deployment
+# resource "cloudflare_record" "root_ipv6" {
+#   count   = var.server_ipv6 != null ? 1 : 0
+#   zone_id = data.cloudflare_zone.main.id
+#   name    = "@"
+#   value   = var.server_ipv6
+#   type    = "AAAA"
+#   proxied = true
+#   ttl     = 1
+#   comment = "IPv6 support for root domain"
+# }
 
 # Monitoring subdomain: Grafana
 resource "cloudflare_record" "grafana" {
