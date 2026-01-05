@@ -108,16 +108,15 @@ jobs:
   molecule-test:
     name: Test Ansible Roles
     runs-on: ubuntu-latest
-    if: false  # Disabled: Molecule tests not yet configured for all roles
     strategy:
       matrix:
         role:
-          - nginx_wordpress
-          - valkey
-          - monitoring
+          - apparmor
           - fail2ban
           - firewall
-          - apparmor
+          - openbao
+          - security_hardening
+          - ssh_2fa
       fail-fast: false
 
     steps:
