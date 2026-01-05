@@ -1,0 +1,43 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Check if Valkey is installed
+      ansible.builtin.stat:
+        path: /usr/bin/valkey-server
+      register: valkey_binary
+      failed_when: not valkey_binary.stat.exists
+
+    - name: Check if Valkey service is running
+      ansible.builtin.service:
+        name: valkey
+        state: started
+        enabled: true
+      check_mode: true
+      register: valkey_service
+      failed_when: valkey_service.changed
+
+    - name: Check Valkey configuration file exists
+      ansible.builtin.stat:
+        path: /etc/valkey/valkey.conf
+      register: valkey_conf
+      failed_when: not valkey_conf.stat.exists
+
+    - name: Verify Valkey is listening on port 6379
+      ansible.builtin.wait_for:
+        port: 6379
+        host: 127.0.0.1
+        timeout: 5
+
+    - name: Test Valkey PING command
+      ansible.builtin.command: valkey-cli -h 127.0.0.1 PING
+      register: valkey_ping
+      changed_when: false
+      failed_when: valkey_ping.stdout != "PONG"
+
+    - name: Display test results
+      ansible.builtin.debug:
+        msg: "All valkey role tests passed!"

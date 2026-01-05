@@ -112,11 +112,15 @@ jobs:
       matrix:
         role:
           - apparmor
+          - common
           - fail2ban
           - firewall
+          - monitoring
+          - nginx_wordpress
           - openbao
           - security_hardening
           - ssh_2fa
+          - valkey
       fail-fast: false
 
     steps:

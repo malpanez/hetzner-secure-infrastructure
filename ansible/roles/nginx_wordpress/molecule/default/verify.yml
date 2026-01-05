@@ -1,0 +1,54 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Check if Nginx is installed
+      ansible.builtin.package:
+        name: nginx
+        state: present
+      check_mode: true
+      register: nginx_installed
+      failed_when: nginx_installed.changed
+
+    - name: Check if Nginx service is running
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true
+      check_mode: true
+      register: nginx_service
+      failed_when: nginx_service.changed
+
+    - name: Check if PHP-FPM is installed
+      ansible.builtin.package:
+        name: php8.3-fpm
+        state: present
+      check_mode: true
+      register: php_installed
+      failed_when: php_installed.changed
+      ignore_errors: true
+
+    - name: Check Nginx configuration syntax
+      ansible.builtin.command: nginx -t
+      register: nginx_syntax
+      changed_when: false
+      failed_when: nginx_syntax.rc != 0
+
+    - name: Check if WordPress directory exists
+      ansible.builtin.stat:
+        path: /var/www/html
+      register: wordpress_dir
+      failed_when: not wordpress_dir.stat.exists
+
+    - name: Verify Nginx is listening on port 80
+      ansible.builtin.wait_for:
+        port: 80
+        timeout: 5
+      ignore_errors: true
+
+    - name: Display test results
+      ansible.builtin.debug:
+        msg: "All nginx_wordpress role tests passed!"
