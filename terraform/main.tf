@@ -70,16 +70,6 @@ module "production_server" {
   )
 }
 
-# Output Ansible inventory
-resource "local_file" "ansible_inventory" {
-  content = templatefile("${path.module}/templates/inventory.tpl", {
-    servers = {
-      production = module.production_server.ansible_inventory
-    }
-  })
-  filename = "${path.module}/../../../ansible/inventory/terraform-inventory.yml"
-}
-
 # Output for easy SSH access
 resource "local_file" "ssh_config" {
   content = templatefile("${path.module}/templates/ssh_config.tpl", {
