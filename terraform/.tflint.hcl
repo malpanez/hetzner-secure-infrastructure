@@ -6,11 +6,12 @@ plugin "terraform" {
   preset  = "recommended"
 }
 
-plugin "hcloud" {
-  enabled = true
-  version = "0.3.0"
-  source  = "github.com/hetznercloud/tflint-ruleset-hcloud"
-}
+# Hetzner Cloud plugin disabled - ruleset repository archived
+# plugin "hcloud" {
+#   enabled = true
+#   version = "0.3.0"
+#   source  = "github.com/hetznercloud/tflint-ruleset-hcloud"
+# }
 
 # Rule configurations
 rule "terraform_deprecated_index" {
