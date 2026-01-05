@@ -7,4 +7,4 @@
     enabled: true
     state: started
   when: monitoring_rsyslog_enabled
-  tags: [monitoring, service]
+  tags: [monitoring, service, molecule-notest]
