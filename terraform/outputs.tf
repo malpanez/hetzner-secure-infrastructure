@@ -73,8 +73,8 @@ output "ssh_command" {
 }
 
 output "ssh_config_file" {
-  description = "SSH config drop-in file location"
-  value       = "~/.ssh/config.d/${module.production_server.server_name}.conf"
+  description = "SSH config drop-in file location (auto-managed by Terraform)"
+  value       = "~/.ssh/config.d/30-terraform-managed.conf"
 }
 
 output "connection_info" {
@@ -82,7 +82,7 @@ output "connection_info" {
   value = {
     host     = module.production_server.server_ipv4
     user     = var.admin_username
-    ssh_key  = "~/.ssh/id_ed25519_sk"
+    ssh_key  = "~/.ssh/github_ed25519"
     location = var.location
   }
   sensitive = false

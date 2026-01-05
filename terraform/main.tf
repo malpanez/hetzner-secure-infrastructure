@@ -71,14 +71,15 @@ module "production_server" {
 }
 
 # SSH config drop-in for ~/.ssh/config.d/
+# Generates 30-terraform-managed.conf with specific host entries
 resource "local_file" "ssh_config" {
   content = templatefile("${path.module}/templates/ssh_config.tpl", {
     hostname     = module.production_server.server_name
     host_address = module.production_server.server_ipv4
     user         = var.admin_username
-    ssh_key      = "~/.ssh/id_ed25519_sk"
+    ssh_key      = "~/.ssh/github_ed25519"  # Consistent with 20-hetzner config
   })
-  filename        = pathexpand("~/.ssh/config.d/${module.production_server.server_name}.conf")
+  filename        = pathexpand("~/.ssh/config.d/30-terraform-managed.conf")
   file_permission = "0600"
 
   lifecycle {
