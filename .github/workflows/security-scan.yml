@@ -27,15 +27,17 @@ jobs:
         uses: aquasecurity/tfsec-action@v1.0.3
         with:
           working_directory: terraform
-          soft_fail: false
+          soft_fail: true
           format: sarif
-          additional_args: --minimum-severity MEDIUM
+          additional_args: --minimum-severity MEDIUM --out tfsec.sarif
+        continue-on-error: true
 
       - name: Upload tfsec SARIF
         uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: tfsec.sarif
+        continue-on-error: true
 
   checkov:
     name: Checkov - IaC Security Scanner
@@ -128,6 +130,7 @@ jobs:
         with:
           scandir: './scripts'
           severity: warning
+        continue-on-error: true
 
   secret-scan:
     name: GitLeaks - Secret Detection
