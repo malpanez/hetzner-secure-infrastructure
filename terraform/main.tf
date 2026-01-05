@@ -81,13 +81,6 @@ resource "local_file" "ssh_config" {
   })
   filename        = pathexpand("~/.ssh/config.d/30-terraform-managed.conf")
   file_permission = "0600"
-
-  lifecycle {
-    precondition {
-      condition     = fileexists(pathexpand("~/.ssh/config.d"))
-      error_message = "Directory ~/.ssh/config.d does not exist. Create it with: mkdir -p ~/.ssh/config.d && echo 'Include config.d/*.conf' >> ~/.ssh/config"
-    }
-  }
 }
 
 # Cloudflare DNS and Security Configuration
