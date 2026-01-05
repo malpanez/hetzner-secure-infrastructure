@@ -135,7 +135,7 @@ jobs:
 
       - name: Install Molecule
         run: |
-          pip install 'ansible<2.18' molecule molecule-docker ansible-lint
+          pip install 'ansible-core>=2.15,<2.18' 'ansible>=8.0,<10.0' molecule 'molecule-plugins[docker]' ansible-lint
 
       - name: Run Molecule Test
         run: |
