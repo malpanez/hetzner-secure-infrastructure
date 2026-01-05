@@ -1,0 +1,31 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+platforms:
+  - name: nginx-wordpress-debian13
+    image: geerlingguy/docker-debian13-ansible:latest
+    pre_build_image: true
+    privileged: true
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    cgroupns_mode: host
+    command: /lib/systemd/systemd
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      callbacks_enabled: profile_tasks
+  inventory:
+    host_vars:
+      nginx-wordpress-debian13:
+        nginx_wordpress_server_name: test.example.com
+        nginx_wordpress_db_name: wordpress_test
+        nginx_wordpress_db_user: wp_user
+        nginx_wordpress_db_password: test_password_123
+        nginx_wordpress_admin_user: admin
+        nginx_wordpress_admin_password: admin_test_123
+        nginx_wordpress_admin_email: admin@example.com
+verifier:
+  name: ansible
