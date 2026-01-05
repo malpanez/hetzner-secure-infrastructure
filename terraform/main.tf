@@ -70,7 +70,7 @@ module "production_server" {
   )
 }
 
-# Output for easy SSH access
+# SSH config drop-in for ~/.ssh/config.d/
 resource "local_file" "ssh_config" {
   content = templatefile("${path.module}/templates/ssh_config.tpl", {
     hostname     = module.production_server.server_name
@@ -78,7 +78,15 @@ resource "local_file" "ssh_config" {
     user         = var.admin_username
     ssh_key      = "~/.ssh/id_ed25519_sk"
   })
-  filename = "${path.module}/.ssh_config"
+  filename        = pathexpand("~/.ssh/config.d/${module.production_server.server_name}.conf")
+  file_permission = "0600"
+
+  lifecycle {
+    precondition {
+      condition     = fileexists(pathexpand("~/.ssh/config.d"))
+      error_message = "Directory ~/.ssh/config.d does not exist. Create it with: mkdir -p ~/.ssh/config.d && echo 'Include config.d/*.conf' >> ~/.ssh/config"
+    }
+  }
 }
 
 # Cloudflare DNS and Security Configuration
