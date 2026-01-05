@@ -72,6 +72,11 @@ output "ssh_command" {
   value       = "ssh ${var.admin_username}@${module.production_server.server_ipv4}"
 }
 
+output "ssh_config_file" {
+  description = "SSH config drop-in file location"
+  value       = "~/.ssh/config.d/${module.production_server.server_name}.conf"
+}
+
 output "connection_info" {
   description = "Complete connection information"
   value = {
