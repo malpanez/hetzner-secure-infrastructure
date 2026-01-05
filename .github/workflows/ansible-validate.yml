@@ -38,6 +38,9 @@ jobs:
       - name: Check Ansible version
         run: ansible --version
 
+      - name: Create dummy vault password for CI
+        run: echo "dummy_password_for_ci_only" > ~/.ansible_vault_pass
+
       - name: Ansible Syntax Check
         run: |
           cd ansible
