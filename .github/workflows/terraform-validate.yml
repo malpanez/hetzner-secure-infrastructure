@@ -14,7 +14,7 @@ on:
 jobs:
   validate:
     name: Terraform Validate
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
 
     steps:
       - name: Checkout code
@@ -79,7 +79,7 @@ jobs:
 
   tflint:
     name: TFLint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     needs: validate
 
     steps:
@@ -102,7 +102,7 @@ jobs:
 
   plan:
     name: Terraform Plan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     needs: validate
     if: github.event_name == 'pull_request'
 
