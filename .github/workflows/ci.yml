@@ -141,18 +141,18 @@ jobs:
         run: |
           source .venv/bin/activate
           cd ansible/roles/${{ matrix.role }}
-          # Pre-create temp directory with correct permissions for Docker containers
-          mkdir -p /tmp/ansible-tmp
-          chmod 777 /tmp/ansible-tmp
+          # Use /var/tmp instead of /tmp - /tmp is tmpfs mounted and fails with umask 77
+          mkdir -p /var/tmp/ansible-tmp
+          chmod 777 /var/tmp/ansible-tmp
           molecule test
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
           ALLOW_BROKEN_CONDITIONALS: 'true'
           # Fix for Docker container temp directory permission issues
-          # Both /var/tmp and /tmp can have restrictive permissions in containers
-          ANSIBLE_REMOTE_TMP: /tmp/ansible-tmp
-          ANSIBLE_LOCAL_TMP: /tmp/ansible-tmp
+          # /tmp is tmpfs mounted in molecule containers - use /var/tmp instead
+          ANSIBLE_REMOTE_TMP: /var/tmp/ansible-tmp
+          ANSIBLE_LOCAL_TMP: /var/tmp/ansible-tmp
 
   # ========================================
   # Security Scan
