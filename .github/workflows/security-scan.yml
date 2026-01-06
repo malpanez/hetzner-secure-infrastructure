@@ -54,7 +54,7 @@ jobs:
       - name: Install Checkov with UV
         run: |
           export PATH="$HOME/.cargo/bin:$PATH"
-          uv pip install --system checkov
+          uv pip install --break-system-packages checkov
           checkov --version
 
       - name: Run Checkov
@@ -115,7 +115,7 @@ jobs:
       - name: Install Ansible and ansible-lint with UV
         run: |
           export PATH="$HOME/.cargo/bin:$PATH"
-          uv pip install --system ansible ansible-lint
+          uv pip install --break-system-packages ansible ansible-lint
 
       - name: Run ansible-lint
         run: |
@@ -167,7 +167,7 @@ jobs:
       - name: Install safety with UV
         run: |
           export PATH="$HOME/.cargo/bin:$PATH"
-          uv pip install --system safety
+          uv pip install --break-system-packages safety
 
       - name: Check Python dependencies
         run: |
