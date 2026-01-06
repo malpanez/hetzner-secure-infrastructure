@@ -195,7 +195,9 @@
   pre_tasks:
     - name: Check OpenBao deployment status
       ansible.builtin.debug:
-        msg: OpenBao will {{ 'be deployed' if (deploy_openbao | default(true) | bool) else 'NOT be deployed' }} on {{ inventory_hostname }}
+        msg: >-
+          OpenBao will {{ 'be deployed' if (deploy_openbao | default(true) | bool)
+          else 'NOT be deployed' }} on {{ inventory_hostname }}
       tags: [openbao]
 
   roles:
