@@ -21,15 +21,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
+      - name: Install UV
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
-      - name: Install tools
+      - name: Install tools with UV
         run: |
-          pip install ansible yamllint
+          export PATH="$HOME/.cargo/bin:$PATH"
+          uv pip install --system ansible yamllint
 
       - name: Check Ansible version
         run: ansible --version
@@ -67,14 +65,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
+      - name: Install UV
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
-      - name: Install ansible-lint
-        run: pip install ansible ansible-lint
+      - name: Install ansible-lint with UV
+        run: |
+          export PATH="$HOME/.cargo/bin:$PATH"
+          uv pip install --system ansible ansible-lint
 
       - name: Run ansible-lint
         run: |
