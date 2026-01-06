@@ -48,18 +48,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install UV
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
-
-      - name: Install Checkov with UV
+      - name: Install UV and Checkov
         run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
           export PATH="$HOME/.cargo/bin:$PATH"
-          uv pip install --system --break-system-packages checkov
+          uv venv
+          source .venv/bin/activate
+          uv pip install checkov
           checkov --version
 
       - name: Run Checkov
         id: checkov
         run: |
+          source .venv/bin/activate
           checkov -d terraform --framework terraform --output sarif --skip-check CKV_TF_1 > results.sarif || true
         continue-on-error: true
 
@@ -109,16 +110,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install UV
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
-
-      - name: Install Ansible and ansible-lint with UV
+      - name: Install UV and Ansible
         run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
           export PATH="$HOME/.cargo/bin:$PATH"
-          uv pip install --system --break-system-packages ansible ansible-lint
+          uv venv
+          source .venv/bin/activate
+          uv pip install ansible ansible-lint
 
       - name: Run ansible-lint
         run: |
+          source .venv/bin/activate
           ansible-lint ansible/
         continue-on-error: true
 
@@ -161,17 +163,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install UV
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
-
-      - name: Install safety with UV
+      - name: Install UV and Safety
         run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
           export PATH="$HOME/.cargo/bin:$PATH"
-          uv pip install --system --break-system-packages safety
+          uv venv
+          source .venv/bin/activate
+          uv pip install safety
 
       - name: Check Python dependencies
         run: |
-          export PATH="$HOME/.cargo/bin:$PATH"
+          source .venv/bin/activate
           uv pip list | safety check --stdin || true
 
   markdown-lint:

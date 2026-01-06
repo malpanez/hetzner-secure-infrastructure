@@ -67,13 +67,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install UV
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
-
-      - name: Install Ansible with UV
+      - name: Install UV and Ansible
         run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
           export PATH="$HOME/.cargo/bin:$PATH"
-          uv pip install --system --break-system-packages ansible ansible-lint yamllint
+          uv venv
+          source .venv/bin/activate
+          uv pip install ansible ansible-lint yamllint
 
       - name: Install Ansible Galaxy requirements
         run: |
@@ -86,17 +86,20 @@ jobs:
 
       - name: Ansible Syntax Check
         run: |
+          source .venv/bin/activate
           cd ansible
           ansible-playbook playbooks/site.yml --syntax-check
 
       - name: Ansible Lint
         run: |
+          source .venv/bin/activate
           cd ansible
           ansible-lint playbooks/site.yml
         continue-on-error: true
 
       - name: YAML Lint
         run: |
+          source .venv/bin/activate
           yamllint ansible/
         continue-on-error: true
 
@@ -125,16 +128,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install UV
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
-
-      - name: Install Molecule with UV
+      - name: Install UV and Molecule
         run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
           export PATH="$HOME/.cargo/bin:$PATH"
-          uv pip install --system --break-system-packages 'ansible-core>=2.15,<2.18' 'ansible>=8.0,<10.0' molecule 'molecule-plugins[docker]' ansible-lint
+          uv venv
+          source .venv/bin/activate
+          uv pip install 'ansible-core>=2.15,<2.18' 'ansible>=8.0,<10.0' molecule 'molecule-plugins[docker]' ansible-lint
 
       - name: Run Molecule Test
         run: |
+          source .venv/bin/activate
           cd ansible/roles/${{ matrix.role }}
           molecule test
         env:
@@ -249,13 +253,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install UV
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
-
-      - name: Install pre-commit with UV
+      - name: Install UV and pre-commit
         run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
           export PATH="$HOME/.cargo/bin:$PATH"
-          uv pip install --system --break-system-packages pre-commit
+          uv venv
+          source .venv/bin/activate
+          uv pip install pre-commit
 
       - name: Cache pre-commit environments
         uses: actions/cache@v4
@@ -266,7 +270,9 @@ jobs:
             pre-commit-
 
       - name: Run pre-commit
-        run: pre-commit run --all-files --show-diff-on-failure
+        run: |
+          source .venv/bin/activate
+          pre-commit run --all-files --show-diff-on-failure
         continue-on-error: true
 
   # ========================================
