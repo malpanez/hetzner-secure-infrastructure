@@ -11,11 +11,13 @@ El sistema SSH está configurado con **autenticación de 2 factores (2FA) opcion
 ### Tipos de Usuarios
 
 #### 1. Usuarios Break-glass (Sin 2FA) ⭐
+
 **Quién**: Usuario `malpanez` (administrador principal)
 
 **Autenticación**: Solo SSH key (sin 2FA)
 
 **Configuración**:
+
 ```yaml
 # ansible/roles/ssh_2fa/defaults/main.yml
 ssh_2fa_break_glass_users:
@@ -23,6 +25,7 @@ ssh_2fa_break_glass_users:
 ```
 
 **Match block SSH generado**:
+
 ```
 Match User malpanez
     AuthenticationMethods publickey
@@ -31,6 +34,7 @@ Match User malpanez
 ```
 
 **Uso**:
+
 ```bash
 # Conectar desde tu máquina
 ssh -i ~/.ssh/github_ed25519 malpanez@<SERVER_IP>
@@ -43,14 +47,17 @@ ansible-playbook playbooks/site.yml
 ---
 
 #### 2. Grupo ansible-automation (Sin 2FA)
+
 **Quién**: Usuarios miembros del grupo `ansible-automation`
 
 **Autenticación**: Solo SSH key (sin 2FA)
 
 **Miembros automáticos**:
+
 - Usuario `malpanez` (agregado automáticamente por role common)
 
 **Match block SSH generado**:
+
 ```
 Match Group ansible-automation
     AuthenticationMethods publickey
@@ -63,17 +70,20 @@ Match Group ansible-automation
 ---
 
 #### 3. Usuarios normales (CON 2FA)
+
 **Quién**: Cualquier otro usuario que no esté en break-glass ni en ansible-automation
 
 **Autenticación**: SSH key + Google Authenticator (2FA)
 
 **Match block SSH generado**:
+
 ```
 Match All
     AuthenticationMethods publickey,keyboard-interactive
 ```
 
 **Flujo de login**:
+
 1. SSH key verificada
 2. Prompt: "Verification code:" → Ingresar código de Google Authenticator
 3. Acceso concedido
@@ -117,6 +127,7 @@ sudo sshd -T -C user=malpanez | grep authenticationmethods
 ## Deployment Seguro
 
 ### Paso 1: Deploy Terraform
+
 ```bash
 cd terraform
 terraform apply
@@ -124,6 +135,7 @@ terraform apply
 ```
 
 ### Paso 2: Deploy Ansible como root (Primera vez)
+
 ```bash
 cd ../ansible
 export HCLOUD_TOKEN="your-token"
@@ -133,6 +145,7 @@ export HCLOUD_TOKEN="your-token"
 ```
 
 **Qué pasa durante este deploy**:
+
 1. ✅ Crea usuario `malpanez`
 2. ✅ Agrega `malpanez` a grupo `sudo`
 3. ✅ Agrega `malpanez` a grupo `ansible-automation`
@@ -141,6 +154,7 @@ export HCLOUD_TOKEN="your-token"
 6. ✅ **Root puede seguir conectándose** (permit-root-login con key)
 
 ### Paso 3: Verificar acceso como malpanez
+
 ```bash
 # Probar conexión SSH como malpanez (SIN 2FA)
 ssh -i ~/.ssh/github_ed25519 malpanez@<SERVER_IP>
@@ -150,6 +164,7 @@ ssh -i ~/.ssh/github_ed25519 malpanez@<SERVER_IP>
 ```
 
 ### Paso 4 (Opcional): Deployments subsiguientes
+
 ```bash
 # Ahora puedes usar malpanez (ya configurado en ansible.cfg)
 cd ansible
@@ -167,6 +182,7 @@ cd ansible
 Si en el futuro quieres agregar otros usuarios CON 2FA:
 
 ### 1. Crear usuario (sin break-glass)
+
 ```yaml
 # En tu playbook o inventario
 new_users:
@@ -196,6 +212,7 @@ google-authenticator
 ```
 
 ### 3. Probar login con 2FA
+
 ```bash
 # Desde tu máquina
 ssh developer1@<SERVER_IP>
@@ -216,15 +233,18 @@ ssh_2fa_pam_google_authenticator_ssh_options: "nullok forward_pass"
 ```
 
 **Qué significa `nullok`**:
+
 - Usuarios SIN `~/.google_authenticator` configurado → Pueden entrar solo con SSH key
 - Usuarios CON `~/.google_authenticator` configurado → Requieren SSH key + 2FA
 
 **Por qué está habilitado**:
+
 - Previene lockout durante setup inicial
 - Permite deployment gradual de 2FA por usuario
 - Usuarios break-glass (malpanez) no lo necesitan de todas formas
 
 **Para producción estricta** (futuro):
+
 ```yaml
 # Cambiar a:
 ssh_2fa_pam_google_authenticator_ssh_options: "forward_pass"
@@ -238,6 +258,7 @@ ssh_2fa_pam_google_authenticator_ssh_options: "forward_pass"
 SSH procesa Match blocks **en orden de arriba hacia abajo** y usa el **PRIMERO que coincida**.
 
 **Orden actual** (correcto):
+
 ```
 1. Match User malpanez          ← Procesa PRIMERO
 2. Match Group ansible-automation
@@ -245,10 +266,12 @@ SSH procesa Match blocks **en orden de arriba hacia abajo** y usa el **PRIMERO q
 ```
 
 **Por qué importa**:
+
 - Si `Match All` estuviera primero, atraparía TODOS los usuarios (incluido malpanez)
 - El orden específico→general es crítico
 
 **Verificación**:
+
 ```bash
 # Ver orden en archivo generado
 ssh -i ~/.ssh/github_ed25519 malpanez@<SERVER_IP>
@@ -262,6 +285,7 @@ sudo cat /etc/ssh/sshd_config.d/50-2fa.conf
 ### Problema: No puedo conectarme como malpanez
 
 **Diagnóstico**:
+
 ```bash
 # Ver logs SSH en el servidor (necesitas Hetzner Console)
 sudo tail -f /var/log/auth.log
@@ -273,23 +297,27 @@ ssh -vvv -i ~/.ssh/github_ed25519 malpanez@<SERVER_IP>
 **Soluciones**:
 
 1. **Usar root como backup**:
+
    ```bash
    ssh -i ~/.ssh/github_ed25519 root@<SERVER_IP>
    ```
 
 2. **Verificar configuración SSH**:
+
    ```bash
    sudo sshd -T -C user=malpanez | grep authenticationmethods
    # Debe mostrar: authenticationmethods publickey
    ```
 
 3. **Verificar grupo ansible-automation**:
+
    ```bash
    id malpanez
    # Debe listar: ansible-automation
    ```
 
 4. **Verificar SSH key**:
+
    ```bash
    sudo cat /home/malpanez/.ssh/authorized_keys
    # Debe contener tu public key
@@ -302,12 +330,14 @@ ssh -vvv -i ~/.ssh/github_ed25519 malpanez@<SERVER_IP>
 **Causa**: Match User o Match Group no está funcionando
 
 **Diagnóstico**:
+
 ```bash
 # Ver qué Match block se está usando
 sudo sshd -T -C user=malpanez | grep -A 5 -B 5 authenticationmethods
 ```
 
 **Solución**:
+
 ```bash
 # Verificar archivo de configuración generado
 sudo cat /etc/ssh/sshd_config.d/50-2fa.conf
@@ -318,6 +348,7 @@ sudo cat /etc/ssh/sshd_config.d/50-2fa.conf
 ```
 
 Si falta, volver a ejecutar Ansible:
+
 ```bash
 cd ansible
 ./deploy.sh -u root playbooks/site.yml --tags ssh-2fa
@@ -332,6 +363,7 @@ cd ansible
 **Causa**: Ansible está usando usuario incorrecto o key incorrecta
 
 **Solución**:
+
 ```bash
 # Verificar ansible.cfg
 cat ansible/ansible.cfg | grep -E "(remote_user|private_key)"
@@ -364,29 +396,37 @@ ssh -i ~/.ssh/github_ed25519 malpanez@<SERVER_IP>
 ### 🎯 Mejoras Futuras (Opcional)
 
 1. **Deshabilitar root SSH completamente**:
+
    ```yaml
    # ansible/roles/ssh_2fa/defaults/main.yml
    ssh_2fa_permit_root_login: "no"
    ```
+
    ⚠️ Solo después de verificar que malpanez funciona perfecto
 
 2. **Remover malpanez de break-glass**:
+
    ```yaml
    ssh_2fa_break_glass_users: []
    ```
+
    ⚠️ Solo después de configurar Google Authenticator para malpanez
 
 3. **Eliminar `nullok` de PAM**:
+
    ```yaml
    ssh_2fa_pam_google_authenticator_ssh_options: "forward_pass"
    ```
+
    ⚠️ Solo cuando TODOS los usuarios tengan 2FA configurado
 
 4. **AppArmor a enforce mode**:
+
    ```yaml
    # ansible/roles/apparmor/defaults/main.yml
    apparmor_enforce_mode: true
    ```
+
    ⚠️ Solo después de revisar logs en complain mode
 
 ---
@@ -410,6 +450,7 @@ ssh -i ~/.ssh/github_ed25519 malpanez@<SERVER_IP>
 ### Backups de Acceso
 
 Si algo falla:
+
 1. SSH como root: `ssh -i ~/.ssh/github_ed25519 root@<SERVER_IP>`
 2. Hetzner Cloud Console (siempre disponible)
 
@@ -423,6 +464,6 @@ Si algo falla:
 
 ## Referencias
 
-- Google Authenticator PAM: https://github.com/google/google-authenticator-libpam
+- Google Authenticator PAM: <https://github.com/google/google-authenticator-libpam>
 - OpenSSH Match blocks: `man sshd_config` (sección PATTERNS)
 - Configuración actual: [ansible/roles/ssh_2fa/templates/sshd_2fa.conf.j2](../../ansible/roles/ssh_2fa/templates/sshd_2fa.conf.j2)

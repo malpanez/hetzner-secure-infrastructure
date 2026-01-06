@@ -22,12 +22,14 @@
 ## Stack Tecnológico
 
 ### Sistema Base
+
 - **OS**: Debian 13 (Trixie)
 - **Gestión de configuración**: Ansible
 - **Infraestructura como código**: OpenTofu (Terraform fork)
 - **Formato de repositorios**: DEB822 (modern Debian format)
 
 ### Aplicación
+
 - **Web Server**: Nginx (latest)
 - **PHP**: PHP 8.3 FPM
 - **Database**: MariaDB 10.11+
@@ -35,6 +37,7 @@
 - **CMS**: WordPress 6.x + Tutor LMS
 
 ### Monitoring Stack
+
 - **Metrics**: Prometheus (APT official repo)
 - **Logs**: Loki + Promtail (Grafana Labs APT repo)
 - **Visualization**: Grafana (APT official repo)
@@ -47,6 +50,7 @@
   - Blackbox Exporter (SSL/HTTP probes)
 
 ### Security & Secrets
+
 - **Secrets Management**: OpenBao 2.0 (Vault fork)
 - **Firewall**: UFW + Hetzner Cloud Firewall
 - **Intrusion Detection**: Fail2ban
@@ -150,6 +154,7 @@ graph TB
 ### 1. WordPress Server (cx21)
 
 **Especificaciones:**
+
 - **CPU**: 2 vCPUs AMD/Intel
 - **RAM**: 4 GB
 - **Disco**: 40 GB SSD (+ 20 GB volume)
@@ -157,6 +162,7 @@ graph TB
 - **Costo**: €5.83/mes + €2.40/mes volume = **€8.23/mes**
 
 **Servicios instalados:**
+
 - ✅ Nginx (web server)
 - ✅ PHP 8.3 FPM (application runtime)
 - ✅ MariaDB 10.11+ (database)
@@ -166,6 +172,7 @@ graph TB
 - ✅ UFW + Fail2ban (security)
 
 **Exporters para Prometheus:**
+
 - Node Exporter :9100 (CPU, memoria, disco, red)
 - Nginx Exporter :9113 (requests, connections, status)
 - PHP-FPM Exporter :9253 (procesos, pool, slow requests)
@@ -176,6 +183,7 @@ graph TB
 ### 2. Monitoring Stack (mismo servidor cx21)
 
 **Prometheus**
+
 - Puerto: 9090
 - Retención: 30 días
 - Scrape interval: 15s
@@ -184,6 +192,7 @@ graph TB
 - Formato: DEB822
 
 **Loki**
+
 - Puerto: 3100
 - Retención: 30 días (720h) - configurable hasta 90 días
 - Compresión: gzip
@@ -193,6 +202,7 @@ graph TB
 - Consumo estimado: ~150 MB RAM, ~600-900 MB disco (30 días)
 
 **Promtail**
+
 - Recopila logs de:
   - Nginx (access + error)
   - PHP-FPM (error + slow)
@@ -204,6 +214,7 @@ graph TB
 - Instalación: APT oficial (Grafana Labs)
 
 **Grafana**
+
 - Puerto: 3000
 - Datasources: Prometheus (metrics) + Loki (logs)
 - Dashboards precargados:
@@ -217,6 +228,7 @@ graph TB
 - Instalación: APT oficial (Grafana Labs)
 
 **Alertas configuradas:**
+
 - System: CPU, memoria, disco, instancia down
 - Nginx: high error rate, high connections, connection drops
 - PHP-FPM: max children reached, slow requests, high queue
@@ -227,12 +239,14 @@ graph TB
 ### 3. Valkey (Cache Layer)
 
 **¿Qué es Valkey?**
+
 - Fork 100% compatible con Redis
 - Mantenido por Linux Foundation
 - Licencia BSD (open-source real)
 - Sin riesgos de cambios de licencia
 
 **Configuración:**
+
 - Puerto: 6379 (localhost only)
 - Socket Unix: `/var/run/valkey/valkey.sock` (recomendado para WordPress)
 - Memoria máxima: 256 MB (ajustable)
@@ -242,6 +256,7 @@ graph TB
 - Instalación: **APT oficial Debian/Ubuntu**
 
 **WordPress Integration:**
+
 - Plugin: Redis Object Cache (100% compatible)
 - Conexión: Unix socket (más rápido que TCP)
 - Usuario: `www-data` en grupo `valkey`
@@ -249,6 +264,7 @@ graph TB
 ### 4. OpenBao (Secrets Management)
 
 **¿Qué es OpenBao?**
+
 - Fork open-source de HashiCorp Vault
 - Gestión centralizada de secretos
 - Cifrado en reposo y tránsito
@@ -257,6 +273,7 @@ graph TB
 **Deployment Options:**
 
 #### Opción 1: Servidor separado (Recomendado para producción)
+
 - **Server**: cx11 (€3.79/mes)
 - **Volume**: 10 GB (€1.20/mes)
 - **Backups**: €0.76/mes
@@ -265,22 +282,26 @@ graph TB
 - **Cuándo**: Producción, múltiples servidores
 
 #### Opción 2: Mismo servidor (Development)
+
 - **Costo**: €0 extra
 - **Ventajas**: Simple, sin costos adicionales
 - **Desventajas**: Menos seguro, recursos compartidos
 - **Cuándo**: Desarrollo, single server, presupuesto limitado
 
 #### Opción 3: Terraform Cloud (Secrets Management)
+
 - **Costo**: Gratis para state backend + secrets
 - **Ventajas**: Sin gestión, integración nativa con Terraform
 - **Cuándo**: Usar para secretos de infraestructura (API tokens, etc.)
 
 **Decisión recomendada para tu caso:**
+
 - **Terraform Cloud**: Para secretos de infraestructura (Hetzner API, Cloudflare API)
 - **Ansible Vault**: Para secretos de aplicación (WordPress, MariaDB passwords)
 - **OpenBao**: Opcional, solo si necesitas rotación automática de secretos o múltiples aplicaciones
 
 **Casos de uso OpenBao:**
+
 - Rotación automática de passwords de BD
 - Secretos compartidos entre múltiples servidores
 - Cumplimiento normativo (auditoría detallada)
@@ -293,6 +314,7 @@ graph TB
 ### Métricas (Prometheus)
 
 **System Metrics (Node Exporter):**
+
 ```promql
 # CPU usage
 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
@@ -305,6 +327,7 @@ graph TB
 ```
 
 **Nginx Metrics:**
+
 ```promql
 # Request rate
 rate(nginx_http_requests_total[5m])
@@ -317,6 +340,7 @@ nginx_connections_active
 ```
 
 **PHP-FPM Metrics:**
+
 ```promql
 # Process usage
 (phpfpm_active_processes / phpfpm_max_children) * 100
@@ -329,6 +353,7 @@ phpfpm_listen_queue
 ```
 
 **MariaDB Metrics:**
+
 ```promql
 # Connection usage
 (mysql_global_status_threads_connected / mysql_global_variables_max_connections) * 100
@@ -341,6 +366,7 @@ rate(mysql_global_status_slow_queries[5m])
 ```
 
 **Valkey Metrics:**
+
 ```promql
 # Memory usage
 (redis_memory_used_bytes / redis_memory_max_bytes) * 100
@@ -379,6 +405,7 @@ rate(redis_evicted_keys_total[5m])
 ### Dashboards Grafana
 
 **Precargados:**
+
 1. **Node Exporter Full** (ID: 1860) - Métricas de sistema completas
 2. **Nginx Dashboard** (ID: 12708) - Requests, connections, upstream
 3. **PHP-FPM Dashboard** (ID: 12835) - Procesos, pools, workers
@@ -390,15 +417,18 @@ rate(redis_evicted_keys_total[5m])
 ### Retention Policies
 
 **Prometheus:**
+
 - Retención: 30 días
 - Espacio estimado: ~5-10 GB (dependiendo del número de métricas)
 
 **Loki:**
+
 - Retención: 30 días (configurable a 90 días)
 - Espacio estimado: 600-900 MB (30 días)
 - Compresión: gzip (70-80% reducción)
 
 **Logrotate:**
+
 - Nginx: 14 días
 - PHP-FPM: 14 días
 - MariaDB: 7 días
@@ -412,12 +442,14 @@ rate(redis_evicted_keys_total[5m])
 ### Terraform Cloud (Recomendado para infraestructura)
 
 **Uso:**
+
 - State backend de Terraform
 - Secretos de infraestructura (API tokens)
 - Variables de entorno
 - Workspace management
 
 **Ventajas:**
+
 - ✅ Gratis para uso individual
 - ✅ State encryption automática
 - ✅ Locking distribuido
@@ -425,6 +457,7 @@ rate(redis_evicted_keys_total[5m])
 - ✅ Historial de cambios
 
 **Setup:**
+
 ```bash
 # ~/.terraformrc
 credentials "app.terraform.io" {
@@ -445,12 +478,14 @@ terraform {
 ### Ansible Vault (Para secretos de aplicación)
 
 **Uso:**
+
 - Passwords de MariaDB
 - Passwords de WordPress
 - Claves API de plugins
 - Configuración sensible
 
 **Ejemplo:**
+
 ```yaml
 # ansible/inventory/group_vars/all/secrets.yml (encriptado)
 vault_mariadb_root_password: "secure-password"
@@ -460,6 +495,7 @@ vault_wordpress_secure_auth_key: "random-key"
 ```
 
 **Comandos:**
+
 ```bash
 # Crear archivo de secretos
 ansible-vault create ansible/inventory/group_vars/all/secrets.yml
@@ -474,12 +510,14 @@ ansible-playbook site.yml --ask-vault-pass
 ### OpenBao (Opcional - Advanced)
 
 **Cuándo usar:**
+
 - Múltiples servidores accediendo a secretos compartidos
 - Rotación automática de passwords
 - Cumplimiento normativo (auditoría)
 - Secrets as a Service
 
 **Cuándo NO usar:**
+
 - Single server simple
 - Presupuesto muy limitado
 - No necesitas rotación automática
@@ -548,6 +586,7 @@ ansible-playbook site.yml --ask-vault-pass
 **Decisión**: Valkey 8.0
 
 **Razones:**
+
 - ✅ **Open-source real**: Licencia BSD, sin restricciones
 - ✅ **Gobernanza neutral**: Linux Foundation (no vendor lock-in)
 - ✅ **100% compatible**: Drop-in replacement para Redis
@@ -555,6 +594,7 @@ ansible-playbook site.yml --ask-vault-pass
 - ✅ **Repositorios oficiales**: APT packages en Debian/Ubuntu
 
 **Vs Redis:**
+
 - ❌ Redis cambió a licencia BSL (no open-source)
 - ❌ Controlled por Redis Ltd. (vendor lock-in potencial)
 - ❌ Futuras versiones pueden tener restricciones
@@ -564,6 +604,7 @@ ansible-playbook site.yml --ask-vault-pass
 **Decisión**: Loki + Promtail
 
 **Razones:**
+
 - ✅ **Lightweight**: ~150 MB RAM vs ~2 GB Elasticsearch
 - ✅ **Costo-eficiente**: Storage comprimido (70-80% reducción)
 - ✅ **Integración nativa**: Misma stack que Prometheus (Grafana)
@@ -571,6 +612,7 @@ ansible-playbook site.yml --ask-vault-pass
 - ✅ **Query language**: LogQL similar a PromQL
 
 **Vs ELK Stack:**
+
 - ❌ Elasticsearch: 2-4 GB RAM mínimo
 - ❌ Kibana: 1-2 GB RAM adicional
 - ❌ Logstash: Complejo de configurar
@@ -581,6 +623,7 @@ ansible-playbook site.yml --ask-vault-pass
 **Decisión**: Migrar todos los roles a DEB822
 
 **Razones:**
+
 - ✅ **Formato moderno**: Debian 11+ official format
 - ✅ **Más seguro**: GPG keys en `/etc/apt/keyrings/`
 - ✅ **Mejor estructura**: Archivos `.sources` más legibles
@@ -588,6 +631,7 @@ ansible-playbook site.yml --ask-vault-pass
 - ✅ **Future-proof**: Preparado para Debian 13+
 
 **Roles migrados:**
+
 - ✅ Grafana (apt.grafana.com)
 - ✅ Loki (apt.grafana.com)
 - ✅ Promtail (apt.grafana.com)
@@ -599,6 +643,7 @@ ansible-playbook site.yml --ask-vault-pass
 **Decisión**: Usar repositorios oficiales APT siempre que sea posible
 
 **Razones:**
+
 - ✅ **Gestión automática**: Users, groups, paths, logrotate
 - ✅ **Systemd services**: Pre-configurados y hardened
 - ✅ **Updates sencillas**: `apt upgrade`
@@ -606,6 +651,7 @@ ansible-playbook site.yml --ask-vault-pass
 - ✅ **Consistencia**: Mismo método para todos los componentes
 
 **Antes (binarios manuales):**
+
 ```yaml
 - Download from GitHub
 - Extract tar.gz
@@ -616,6 +662,7 @@ ansible-playbook site.yml --ask-vault-pass
 ```
 
 **Ahora (APT):**
+
 ```yaml
 - Add repository (DEB822)
 - apt install package
@@ -627,6 +674,7 @@ ansible-playbook site.yml --ask-vault-pass
 **Decisión**: Terraform Cloud (free tier)
 
 **Razones:**
+
 - ✅ **Gratis**: Para uso individual/small teams
 - ✅ **Seguro**: State encriptado automáticamente
 - ✅ **Locking**: Previene conflictos
@@ -634,12 +682,14 @@ ansible-playbook site.yml --ask-vault-pass
 - ✅ **UI**: Gestión visual de variables
 
 **Vs Backend local:**
+
 - ❌ State en archivo local (riesgo de pérdida)
 - ❌ No locking (conflictos en team)
 - ❌ No encryption (secrets en plaintext)
 - ❌ No historial (difícil auditoría)
 
 **Vs OpenBao como backend:**
+
 - ❌ Circular dependency (OpenBao depends on Terraform)
 - ❌ Complejidad innecesaria
 - ❌ Costo adicional (€5.75/mes)
@@ -649,12 +699,14 @@ ansible-playbook site.yml --ask-vault-pass
 **Decisión**: Recomendación flexible según fase
 
 **Fase 1 (MVP - Ahora):**
+
 - 💻 **Mismo servidor o SIN OpenBao**
 - Usar: Terraform Cloud + Ansible Vault
 - Razón: Simplificar, reducir costos inicial
 - Costo: €0 extra
 
 **Fase 2 (Producción - Después del launch):**
+
 - 🏆 **Servidor separado**
 - Cuando: > 100 usuarios, múltiples aplicaciones
 - Razón: Mejor seguridad, escalabilidad
@@ -669,6 +721,7 @@ ansible-playbook site.yml --ask-vault-pass
 ### 1. Prometheus: Binary → APT (DEB822)
 
 **Antes:**
+
 ```yaml
 - Download: https://github.com/prometheus/prometheus/releases/download/v2.48.0/...
 - Extract to: /opt/prometheus
@@ -678,6 +731,7 @@ ansible-playbook site.yml --ask-vault-pass
 ```
 
 **Ahora:**
+
 ```yaml
 - Repository: deb.robustperception.io/debian (DEB822)
 - Install: apt install prometheus
@@ -688,6 +742,7 @@ ansible-playbook site.yml --ask-vault-pass
 ```
 
 **Beneficios:**
+
 - ✅ 200 → 170 líneas de código
 - ✅ Gestión automática de usuarios
 - ✅ Updates con `apt upgrade`
@@ -698,6 +753,7 @@ ansible-playbook site.yml --ask-vault-pass
 ### 2. Node Exporter: Binary → APT (DEB822)
 
 **Antes:**
+
 ```yaml
 - Download binary from GitHub
 - Extract to /usr/local/bin
@@ -707,6 +763,7 @@ ansible-playbook site.yml --ask-vault-pass
 ```
 
 **Ahora:**
+
 ```yaml
 - Repository: deb.robustperception.io/debian (DEB822)
 - Install: apt install prometheus-node-exporter
@@ -716,6 +773,7 @@ ansible-playbook site.yml --ask-vault-pass
 ```
 
 **Beneficios:**
+
 - ✅ Mismo repositorio que Prometheus
 - ✅ Naming consistency
 - ✅ Simplified maintenance
@@ -725,6 +783,7 @@ ansible-playbook site.yml --ask-vault-pass
 ### 3. Grafana: Deprecated apt_key → DEB822
 
 **Antes:**
+
 ```yaml
 - ansible.builtin.apt_key:  # DEPRECATED
     url: https://apt.grafana.com/gpg.key
@@ -733,6 +792,7 @@ ansible-playbook site.yml --ask-vault-pass
 ```
 
 **Ahora:**
+
 ```yaml
 - Download GPG key to /tmp
 - Dearmor to /etc/apt/keyrings/grafana.gpg
@@ -745,6 +805,7 @@ ansible-playbook site.yml --ask-vault-pass
 ```
 
 **Beneficios:**
+
 - ✅ No deprecation warnings
 - ✅ Más seguro (keys en keyrings)
 - ✅ Compatible Debian 11+
@@ -752,6 +813,7 @@ ansible-playbook site.yml --ask-vault-pass
 ### 4. Loki + Promtail: Nuevos roles completos
 
 **Implementado:**
+
 - ✅ Role completo de Loki con DEB822
 - ✅ Role completo de Promtail con DEB822
 - ✅ Scrape configs para 7 tipos de logs
@@ -762,17 +824,20 @@ ansible-playbook site.yml --ask-vault-pass
 - ✅ Molecule tests
 
 **Templates creados:**
+
 - `loki.yml.j2` - Configuración con compresión y retención
 - `promtail.yml.j2` - 7 scrape configs con regex parsing
 - `logrotate-loki.j2` - Rotación automática
 - `backup-loki.sh.j2` - Backup script
 
 **Documentación:**
+
 - `docs/LOGGING.md` - 500+ líneas de documentación completa
 
 ### 5. Valkey: Role completo implementado
 
 **Implementado:**
+
 - ✅ Instalación desde APT oficial Debian/Ubuntu
 - ✅ Configuración optimizada para WordPress
 - ✅ Socket Unix + TCP
@@ -784,22 +849,26 @@ ansible-playbook site.yml --ask-vault-pass
 - ✅ Sysctl optimization
 
 **Templates creados:**
+
 - `valkey.conf.j2` - Configuración completa
 - `valkey_exporter.service.j2` - Systemd service para exporter
 - `backup-valkey.sh.j2` - BGSAVE + tar backup
 - `logrotate-valkey.j2` - Log rotation
 
 **Handlers:**
+
 - restart valkey
 - reload valkey
 - restart valkey-exporter
 
 **Documentación:**
+
 - `README.md` - Guía completa de uso y migración desde Redis
 
 ### 6. Prometheus: Expandido con alertas completas
 
 **Alert rules añadidas:**
+
 - ✅ `nginx_alerts.yml.j2` - 5 alertas (down, errors, connections, drops, rate)
 - ✅ `php_fpm_alerts.yml.j2` - 5 alertas (down, high usage, max children, slow, queue)
 - ✅ `mariadb_alerts.yml.j2` - 8 alertas (down, connections, queries, slow, replication, locks, buffer pool, aborts)
@@ -807,6 +876,7 @@ ansible-playbook site.yml --ask-vault-pass
 - ✅ `ssl_certificate_alerts.yml.j2` - 7 alertas (expiring soon, expiring, expired, probe failure, website down, response time, HTTP errors)
 
 **Scrape configs añadidos:**
+
 ```yaml
 prometheus_scrape_nginx_exporter: true (:9113)
 prometheus_scrape_phpfpm_exporter: true (:9253)
@@ -820,6 +890,7 @@ prometheus_scrape_blackbox_exporter: true (:9115)
 ### 7. Documentación completa
 
 **Creado/Actualizado:**
+
 - ✅ `docs/LOGGING.md` - Sistema de logs completo
 - ✅ `docs/OPENBAO_DEPLOYMENT.md` - Ya existía, completo
 - ✅ `docs/ARCHITECTURE_SUMMARY.md` - Este documento
@@ -870,6 +941,7 @@ ansible-playbook -i inventory/hetzner.yml playbooks/site.yml --ask-vault-pass
 **Checklist completo en**: `POST_DEPLOYMENT.md`
 
 **Tests clave:**
+
 1. ✅ Todos los servicios running (`systemctl status`)
 2. ✅ Firewall configurado (`ufw status`)
 3. ✅ SSL válido (Cloudflare + Let's Encrypt)
@@ -894,12 +966,14 @@ Esta arquitectura proporciona:
 ✅ **Open-source**: 100% software libre, sin vendor lock-in
 
 **Total líneas de código:**
+
 - Terraform: ~1,500 líneas
 - Ansible: ~3,000 líneas
 - Documentación: ~2,500 líneas
 - Tests: ~500 líneas
 
 **Tiempo de deployment:**
+
 - Terraform: ~5 minutos
 - Ansible: ~15-20 minutos
 - Post-deployment manual: ~30-60 minutos

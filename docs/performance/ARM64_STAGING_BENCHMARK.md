@@ -58,6 +58,7 @@ Swap: Disabled (0B)
 *TTFB = Time To First Byte
 
 **Analysis**:
+
 - First request shows expected cold start overhead (220ms)
 - Steady state performance stabilizes around 126-138ms
 - Occasional spikes (requests 8) suggest network variability
@@ -79,6 +80,7 @@ Swap: Disabled (0B)
 | **Failed requests** | 0 |
 
 **Analysis**:
+
 - Excellent stability: **0 failed requests**
 - Consistent with single-request tests (~153ms avg)
 - Transfer rate of 4.2 MB/sec indicates good network throughput
@@ -102,6 +104,7 @@ Swap: Disabled (0B)
 | **Fastest request** | 1ms |
 
 **Response Time Distribution**:
+
 - 50% of requests: ≤ 5ms
 - 90% of requests: ≤ 7ms
 - 95% of requests: ≤ 8ms
@@ -109,6 +112,7 @@ Swap: Disabled (0B)
 - 100% of requests: ≤ 10ms
 
 **Analysis**:
+
 - **🚀 Exceptional performance**: 9,218 req/sec (140x better than light load!)
 - **Perfect stability**: 0 failed requests
 - **Consistent speed**: All requests under 10ms
@@ -117,6 +121,7 @@ Swap: Disabled (0B)
 - **Note**: Test run from localhost (no network latency)
 
 **Key Insight**:
+
 - Previous external test failed due to security (Fail2ban/firewall)
 - Local test shows true server capacity
 - Network latency is primary bottleneck for external clients
@@ -148,6 +153,7 @@ Available:    3,081 MB (80.7%)
 **Total Service Memory**: ~1,195 MB (31.3% of total RAM)
 
 **Analysis**:
+
 - Excellent memory efficiency for full WordPress + monitoring stack
 - 80.7% memory still available for caching and growth
 - PHP-FPM workers well-sized (~65-80 MB each)
@@ -167,6 +173,7 @@ Throughput: 1.9 GB/s
 ```
 
 **Analysis**:
+
 - **Excellent SSD performance**: 1.9 GB/s write with fsync
 - Local NVMe storage performing very well
 - 10x faster than typical cloud network storage
@@ -184,6 +191,7 @@ Result: 6 rows returned
 ```
 
 **Analysis**:
+
 - Query time reasonable for small dataset
 - WordPress has minimal content (6 posts total)
 - MariaDB performing efficiently (151 MB RAM usage)
@@ -271,12 +279,14 @@ Result: 6 rows returned
 ## Comparison to x86 Equivalent
 
 **This ARM64 server (CAX21)**: €4.09/month
+
 - 4 vCPU ARM64
 - 4 GB RAM
 - Local NVMe SSD
 - Performance: 65 req/sec
 
 **Equivalent x86 server (CPX21)**: €5.90/month
+
 - 3 vCPU AMD
 - 4 GB RAM
 - Local SSD
@@ -286,6 +296,7 @@ Result: 6 rows returned
 **vCPU difference**: +1 core on ARM64 (4 vs 3)
 
 **ARM64 Advantages**:
+
 - 31% cheaper (€21.72/year savings)
 - More vCPU cores (4 vs 3)
 - Better performance per watt
@@ -326,6 +337,7 @@ Total: €11.67/month
 ```
 
 **Benefits**:
+
 - Isolated database for better performance
 - Separate monitoring for reliability
 - Easy to scale each component independently
@@ -348,6 +360,7 @@ Total: €11.67/month
 The ARM64 CAX21 server delivers **excellent performance** for a WordPress + full monitoring stack at **€4.09/month**.
 
 Key highlights:
+
 - 130ms average response time
 - 0 failed requests
 - 65 req/sec throughput
@@ -355,6 +368,7 @@ Key highlights:
 - 1.9 GB/s disk I/O
 
 The server is **production-ready** for:
+
 - Small to medium WordPress sites (< 10,000 visits/day)
 - Development and staging environments
 - Cost-conscious deployments

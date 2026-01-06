@@ -8,6 +8,7 @@
 ## 📋 Resumen
 
 Esta guía te lleva paso a paso para:
+
 1. Desplegar servidor con Terraform (x86 o ARM)
 2. Configurar stack completo con Ansible (WordPress + MariaDB + Valkey + Nginx)
 3. Desplegar monitorización completa (Prometheus + Grafana + Loki + Promtail)
@@ -20,12 +21,14 @@ Esta guía te lleva paso a paso para:
 ## 🎯 Estado Actual
 
 ✅ **x86 (CX23) - COMPLETADO**
+
 - Desplegado y testeado: 30-12-2024
 - Resultados documentados en: [docs/performance/X86_STAGING_BENCHMARK_WITH_MONITORING.md](docs/performance/X86_STAGING_BENCHMARK_WITH_MONITORING.md)
 - Rendimiento: 3,114 req/s, 32ms latencia, A+ grade
 - Destruido: Sí
 
 ⏳ **ARM (CAX11) - PENDIENTE**
+
 - Siguiente paso: Desplegar y testear con stack completo
 - Comparar con resultados de x86
 
@@ -107,6 +110,7 @@ terraform apply -var-file=terraform.staging.tfvars
 ```
 
 **Salida esperada**:
+
 ```
 Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
 
@@ -118,6 +122,7 @@ server_type = "cx23"
 ```
 
 **Guardar IP del servidor**:
+
 ```bash
 SERVER_IP=$(terraform output -raw server_ipv4)
 echo "Server IP: $SERVER_IP"
@@ -135,6 +140,7 @@ ssh malpanez@$SERVER_IP "cloud-init status"
 ```
 
 **¿Qué hace cloud-init?**
+
 - Instala paquetes base
 - Configura SSH
 - Actualiza sistema
@@ -169,6 +175,7 @@ ansible-inventory -i inventory/hetzner.hcloud.yml --graph
 ```
 
 **¿Cómo funciona?**
+
 1. **Terraform** crea servidor con labels: `environment = "staging"`, `project = "wordpress"`
 2. **Plugin hcloud** lee la API de Hetzner cada vez que ejecutas Ansible
 3. **Descubre servidores** con esos labels automáticamente
@@ -176,6 +183,7 @@ ansible-inventory -i inventory/hetzner.hcloud.yml --graph
 5. **Obtiene la IP** del campo `ipv4_address` (siempre actualizada)
 
 **Ventajas**:
+
 - ✅ **Nunca editas IPs manualmente** - todo automático
 - ✅ **Siempre sincronizado** con Hetzner Cloud
 - ✅ **Escalable** - funciona con 1 o 100 servidores
@@ -184,6 +192,7 @@ ansible-inventory -i inventory/hetzner.hcloud.yml --graph
 - ✅ **host_vars funciona**: `host_vars/stag-de-wp-01.yml` se aplica al host específico
 
 **Grupos disponibles automáticamente**:
+
 ```
 staging              → Servidores con label environment=staging
 env_staging          → Mismo grupo (prefijo alternativo)
@@ -196,6 +205,7 @@ hetzner              → TODOS los servidores de Hetzner
 ```
 
 **Variables aplicadas por grupo**:
+
 ```
 ansible/inventory/group_vars/
 ├── all.yml              → Se aplica a TODOS los servidores
@@ -253,6 +263,7 @@ ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml --limit stag
 **¿Qué se despliega?**
 
 **Stack WordPress**:
+
 - ✅ Nginx (web server)
 - ✅ PHP 8.4-FPM (application)
 - ✅ MariaDB 11.4 (database)
@@ -263,6 +274,7 @@ ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml --limit stag
 - ✅ AppArmor (security hardening)
 
 **Stack Monitorización** (añade ~400MB RAM overhead):
+
 - ✅ Prometheus 3.8+ (metrics collection)
 - ✅ Grafana (dashboards)
 - ✅ Loki (log aggregation)
@@ -270,6 +282,7 @@ ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml --limit stag
 - ✅ Node Exporter (system metrics)
 
 **Salida esperada**:
+
 ```
 PLAY RECAP *************************************************
 stag-de-wp-01  : ok=127  changed=89   unreachable=0    failed=0
@@ -319,6 +332,7 @@ curl -I http://$SERVER_IP:9090
 ```
 
 **Acceder desde navegador**:
+
 ```
 WordPress:   http://X.X.X.X
 Grafana:     http://X.X.X.X:3000 (admin/admin - cambiar password)
@@ -342,6 +356,7 @@ Prometheus:  http://X.X.X.X:9090
    - Click "Import"
 
 **Dashboard instalado**: Node Exporter Full
+
 - CPU usage
 - Memory usage
 - Disk I/O
@@ -371,6 +386,7 @@ cat ~/benchmark_x86_cx23.txt
 **Duración**: ≈30-40 segundos
 
 **Métricas clave a buscar**:
+
 ```
 Requests per second:    XXXX [#/sec] (mean)
 Time per request:       XX.XXX [ms] (mean)
@@ -397,6 +413,7 @@ Failed requests:        0
 | **Disk I/O** | Read/Write | Mínimo (todo en RAM) |
 
 **Ejemplo resultados x86 CX23** (ya testeado):
+
 - Load 1m: **0.66** (excelente, 67% headroom)
 - RAM used: **866 MB** (23% de 4GB)
 - CPU: **33%** utilization
@@ -534,6 +551,7 @@ location     = "fsn1"   # Falkenstein (ARM solo en fsn1, hel1, nbg1)
 ```
 
 **Cambios esperados**:
+
 - Server type: `cax11` (en vez de `cx23`)
 - Architecture: `aarch64` (en vez de `x86_64`)
 - Resultados de rendimiento: **por determinar**
@@ -569,17 +587,20 @@ location     = "fsn1"   # Falkenstein (ARM solo en fsn1, hel1, nbg1)
 ### Criterios de Decisión
 
 **Elige x86 (CX23) si**:
+
 - ✅ Stock disponible cuando necesites desplegar
 - ✅ Rendimiento >= ARM (dentro del 10%)
 - ✅ Quieres ahorrar €0.59/mes (€7.08/año)
 
 **Elige ARM (CAX11) si**:
+
 - ✅ x86 sin stock disponible
 - ✅ Rendimiento >= x86 (dentro del 10%)
 - ✅ Priorizas disponibilidad garantizada
 - ✅ Arquitectura moderna (ARM64 futuro-proof)
 
 **Recomendación por defecto**: **ARM (CAX11)**
+
 - Razón: Solo €0.59/mes más caro (€7.08/año)
 - Siempre disponible (no hay riesgo de stock)
 - Rendimiento esperado similar o mejor

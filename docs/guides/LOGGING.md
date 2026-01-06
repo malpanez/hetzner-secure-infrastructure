@@ -52,6 +52,7 @@ Guía completa sobre el sistema de centralización de logs usando Grafana Loki y
 ## Qué es cada componente
 
 ### **Promtail** (Agente recolector)
+
 - **Función:** Leer archivos de log y enviarlos a Loki
 - **Puerto:** 9080
 - **RAM:** ~30-50 MB
@@ -60,12 +61,14 @@ Guía completa sobre el sistema de centralización de logs usando Grafana Loki y
 - **Posiciones:** `/var/lib/promtail/positions.yaml` (guarda offset de cada archivo leído)
 
 **¿Qué hace?**
+
 1. Lee archivos de log en tiempo real
 2. Parsea el contenido (extrae timestamp, level, etc.)
 3. Añade etiquetas (labels) para categorizar
 4. Envía batch de logs a Loki vía HTTP
 
 ### **Loki** (Base de datos de logs)
+
 - **Función:** Almacenar, indexar y consultar logs
 - **Puerto:** 3100
 - **RAM:** ~100-150 MB
@@ -74,6 +77,7 @@ Guía completa sobre el sistema de centralización de logs usando Grafana Loki y
 - **Backups:** `/var/backups/loki/`
 
 **¿Qué hace?**
+
 1. Recibe logs de Promtail
 2. Los comprime (gzip)
 3. Los indexa por etiquetas (NO por contenido completo)
@@ -81,6 +85,7 @@ Guía completa sobre el sistema de centralización de logs usando Grafana Loki y
 5. Borra logs automáticamente después del período de retención
 
 **Diferencias con Elasticsearch:**
+
 | Característica | Loki | Elasticsearch |
 |----------------|------|---------------|
 | RAM | ~150 MB | ~3 GB |
@@ -114,6 +119,7 @@ Promtail está configurado para recopilar los siguientes logs:
 ### Variables principales (en `group_vars/monitoring_servers/`)
 
 **Loki (`loki.yml`):**
+
 ```yaml
 # Despliegue
 deploy_loki: true
@@ -140,6 +146,7 @@ loki_backup_retention_days: 7
 ```
 
 **Promtail (`promtail.yml`):**
+
 ```yaml
 # Despliegue
 deploy_promtail: true
@@ -161,6 +168,7 @@ promtail_scrape_fail2ban: true
 ### Habilitar/deshabilitar en deployment
 
 En `playbooks/site.yml` (ya configurado):
+
 ```yaml
 - role: loki
   tags: [monitoring, loki, logging]
@@ -172,6 +180,7 @@ En `playbooks/site.yml` (ya configurado):
 ```
 
 Para **NO** desplegar Loki/Promtail, añadir a tu inventory:
+
 ```yaml
 deploy_loki: false
 deploy_promtail: false
@@ -220,6 +229,7 @@ loki_retention_period: "2160h"
 ```
 
 Luego re-ejecutar Ansible:
+
 ```bash
 cd ansible
 ansible-playbook -i inventory/hetzner.yml playbooks/site.yml --tags loki --ask-vault-pass
@@ -282,36 +292,43 @@ Los siguientes dashboards se instalan automáticamente:
 ### Ejemplos reales
 
 #### 1. Ver todos los errores de Nginx
+
 ```
 {job="nginx", type="error"}
 ```
 
 #### 2. Errores 500 en Nginx Access
+
 ```
 {job="nginx", type="access"} |= "500"
 ```
 
 #### 3. Errores PHP (Fatal, Warning)
+
 ```
 {job="php"} |~ "Fatal error|Warning"
 ```
 
 #### 4. Logins SSH fallidos
+
 ```
 {job="auth"} |= "Failed password"
 ```
 
 #### 5. IPs baneadas por Fail2ban
+
 ```
 {job="fail2ban"} |= "Ban"
 ```
 
 #### 6. Queries MySQL lentas (>1 segundo)
+
 ```
 {job="mariadb", type="slow_query"}
 ```
 
 #### 7. Top 10 IPs con más requests (última hora)
+
 ```
 topk(10, sum by (remote_addr) (
   count_over_time({job="nginx", type="access"}[1h])
@@ -319,16 +336,19 @@ topk(10, sum by (remote_addr) (
 ```
 
 #### 8. Rate de errores (por minuto)
+
 ```
 sum(rate({job="nginx", type="error"}[1m]))
 ```
 
 #### 9. Logs de WordPress con "Fatal error"
+
 ```
 {job="wordpress"} |= "Fatal error"
 ```
 
 #### 10. Ver logs de múltiples fuentes a la vez
+
 ```
 {job=~"nginx|php|mariadb"} |= "ERROR"
 ```
@@ -442,11 +462,13 @@ sudo systemctl start loki
 ### Problema: Queries muy lentas
 
 **Causas comunes:**
+
 1. Query sin filtrar por tiempo (`[24h]` en vez de `[5m]`)
 2. Query muy amplia (regex complejo)
 3. Demasiados streams
 
 **Solución:**
+
 ```yaml
 # En loki.yml, aumentar:
 loki_max_query_parallelism: 64  # Default: 32
@@ -460,6 +482,7 @@ loki_max_query_series: 1000     # Default: 500
 ### Backup automático
 
 Configurado en `loki.yml`:
+
 ```yaml
 loki_backup_enabled: true
 loki_backup_schedule: "0 3 * * *"  # Diario 3 AM
@@ -513,26 +536,31 @@ curl http://localhost:3100/ready
 ### Archivos de configuración
 
 **Promtail logs:**
+
 ```bash
 /etc/logrotate.d/promtail
 ```
 
 **Loki logs:**
+
 ```bash
 /etc/logrotate.d/loki
 ```
 
 **Nginx logs** (gestionado por Nginx role):
+
 ```bash
 /etc/logrotate.d/nginx
 ```
 
 **PHP-FPM logs:**
+
 ```bash
 /etc/logrotate.d/php8.2-fpm
 ```
 
 **MariaDB logs:**
+
 ```bash
 /etc/logrotate.d/mysql-server
 ```
@@ -594,6 +622,7 @@ Loki expone métricas en `http://localhost:3100/metrics`.
 Prometheus las recopila automáticamente (scrape config).
 
 **Métricas útiles:**
+
 ```
 # Total de logs ingestados
 loki_distributor_lines_received_total
@@ -637,10 +666,10 @@ groups:
 
 ## Recursos adicionales
 
-- **Loki Docs:** https://grafana.com/docs/loki/latest/
-- **LogQL Reference:** https://grafana.com/docs/loki/latest/query/
-- **Promtail Config:** https://grafana.com/docs/loki/latest/clients/promtail/configuration/
-- **Grafana Dashboards:** https://grafana.com/grafana/dashboards/?search=loki
+- **Loki Docs:** <https://grafana.com/docs/loki/latest/>
+- **LogQL Reference:** <https://grafana.com/docs/loki/latest/query/>
+- **Promtail Config:** <https://grafana.com/docs/loki/latest/clients/promtail/configuration/>
+- **Grafana Dashboards:** <https://grafana.com/grafana/dashboards/?search=loki>
 
 ---
 

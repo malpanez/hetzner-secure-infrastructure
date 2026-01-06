@@ -28,6 +28,7 @@ Internet → Hetzner Cloud Firewall → UFW → Fail2ban → SSH 2FA → OS Hard
 ### Why 2FA is Critical
 
 Even with SSH keys only:
+
 - Stolen/leaked SSH private keys can grant access
 - Compromised developer workstation exposes keys
 - 2FA adds second factor that attackers don't have
@@ -39,6 +40,7 @@ Even with SSH keys only:
 ### Authentication Flow
 
 #### For Regular Users (2FA Required)
+
 ```
 ssh user@server
 1. SSH Key authentication (publickey) ✓
@@ -47,6 +49,7 @@ ssh user@server
 ```
 
 #### For Ansible Automation (Break-Glass)
+
 ```
 ansible-playbook -i inventory site.yml
 1. SSH Key authentication (publickey) ✓
@@ -131,6 +134,7 @@ ssh_2fa_break_glass_users:
 **Problem**: Admin loses phone with Google Authenticator
 
 **Solution**:
+
 1. Admin cannot access server with regular account
 2. Use break-glass account (`malpanez`) with only SSH key
 3. SSH to server: `ssh -i ~/.ssh/key malpanez@server`
@@ -142,6 +146,7 @@ ssh_2fa_break_glass_users:
 **Problem**: Ansible playbook requires interaction (shouldn't happen)
 
 **Solution**:
+
 1. User `malpanez` in `ansible-automation` group
 2. SSH authentication uses only publickey (no TOTP)
 3. Ansible continues working without modification
@@ -151,6 +156,7 @@ ssh_2fa_break_glass_users:
 **Problem**: All admins unavailable, need immediate access
 
 **Solution**:
+
 1. Use break-glass account
 2. Document access in audit logs
 3. Review logs post-incident
@@ -172,6 +178,7 @@ ssh_2fa_break_glass_users:
 
 ❌ **Break-glass user has SSH key only** (less secure than 2FA)
 ✅ **Mitigation**:
+
 - Break-glass user only accessible from specific IPs (add to Hetzner firewall)
 - SSH key protected with strong passphrase
 - Key stored in encrypted vault
@@ -180,6 +187,7 @@ ssh_2fa_break_glass_users:
 
 ❌ **Stolen SSH key grants access**
 ✅ **Mitigation**:
+
 - Rotate SSH keys regularly
 - Use hardware keys (YubiKey) for production
 - Monitor SSH access logs
@@ -298,6 +306,7 @@ alerts:
 ### Future State (Production)
 
 1. **Create dedicated `ansible` user**
+
    ```bash
    sudo useradd -m -s /bin/bash ansible
    sudo usermod -aG ansible-automation ansible
@@ -307,12 +316,14 @@ alerts:
    ```
 
 2. **Update Ansible inventory**
+
    ```yaml
    ansible_user: ansible
    ansible_ssh_private_key_file: ~/.ssh/ansible_ed25519
    ```
 
 3. **Enable 2FA for `malpanez`**
+
    ```bash
    # Remove from ansible-automation group
    sudo gpasswd -d malpanez ansible-automation
@@ -335,6 +346,7 @@ alerts:
 **Cause**: User not in `ansible-automation` group
 
 **Solution**:
+
 ```bash
 # Check group membership
 id $USER
@@ -354,6 +366,7 @@ sudo systemctl restart sshd
 **Cause**: Google Authenticator not configured
 
 **Solution**:
+
 ```bash
 # Set up Google Authenticator
 google-authenticator
@@ -367,6 +380,7 @@ google-authenticator
 **Cause**: Lost TOTP device + break-glass disabled
 
 **Solution**:
+
 ```bash
 # Via Hetzner console (KVM access)
 # 1. Boot into rescue mode

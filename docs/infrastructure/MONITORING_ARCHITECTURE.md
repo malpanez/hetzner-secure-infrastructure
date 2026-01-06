@@ -128,16 +128,19 @@ graph LR
 ## Opción 1: Servidor Dedicado (Recomendado)
 
 ### Ventajas
+
 - ✅ Aislamiento completo (monitoreo no afecta aplicaciones)
 - ✅ Puede monitorear múltiples servidores
 - ✅ Escalable (agrega más servidores monitoreados)
 - ✅ Mejor seguridad (firewall dedicado)
 
 ### Desventajas
+
 - ❌ Costo adicional (~€4.51/mes para cx11)
 - ❌ Más infraestructura que gestionar
 
 ### Cuándo usar
+
 - Producción con múltiples servidores
 - Cuando el monitoreo es crítico
 - Equipos profesionales
@@ -192,16 +195,19 @@ graph TB
 ## Opción 2: Mismo Servidor (Dev/Testing)
 
 ### Ventajas
+
 - ✅ Sin costo adicional
 - ✅ Configuración simple
 - ✅ Ideal para desarrollo y pruebas
 
 ### Desventajas
+
 - ❌ Recursos compartidos con la aplicación
 - ❌ Si el servidor cae, pierdes el monitoreo
 - ❌ No escala para múltiples servidores
 
 ### Cuándo usar
+
 - Entorno de desarrollo
 - Proyectos pequeños (1 servidor)
 - Aprendizaje y experimentación
@@ -229,6 +235,7 @@ graph TB
 ### Grafana Cloud (Recomendado para cloud)
 
 **Free Tier incluye:**
+
 - ✅ 10,000 series de métricas
 - ✅ 50 GB de logs
 - ✅ 50 GB de traces
@@ -238,6 +245,7 @@ graph TB
 - ✅ Loki (logs) alojado
 
 **Ventajas:**
+
 - ✅ Gratis hasta cierto límite
 - ✅ Sin mantenimiento de infraestructura
 - ✅ Escalado automático
@@ -245,6 +253,7 @@ graph TB
 - ✅ Alerting avanzado
 
 **Desventajas:**
+
 - ❌ Dependencia de terceros
 - ❌ Datos fuera de tu infraestructura
 - ❌ Costo si superas free tier
@@ -560,7 +569,7 @@ open http://YOUR_SERVER_IP:3000
 
 #### Paso 1: Crear cuenta en Grafana Cloud
 
-1. Ir a https://grafana.com/auth/sign-up/create-user
+1. Ir a <https://grafana.com/auth/sign-up/create-user>
 2. Crear cuenta gratuita
 3. Obtener API key y endpoint
 
@@ -666,18 +675,24 @@ Total (3 app servers):         €13.53/mes
 ## Recomendaciones
 
 ### Para Producción
+
 ✅ **Opción 1: Servidor Dedicado**
+
 - Separa monitoreo de aplicaciones
 - Escalable y confiable
 - ~€5/mes extra bien invertidos
 
 ### Para Desarrollo/Testing
+
 ✅ **Opción 2: Mismo Servidor**
+
 - Sin costo adicional
 - Suficiente para pruebas
 
 ### Para Startups/MVP
+
 ✅ **Opción 3: Grafana Cloud**
+
 - Sin infraestructura adicional
 - Free tier generoso
 - Upgradable cuando crezcas

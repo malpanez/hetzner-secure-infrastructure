@@ -730,10 +730,12 @@ curl -I https://tu-dominio.com
 ### Monitoreo
 
 **Cloudflare Analytics:**
+
 - Dashboard → Analytics → Traffic
 - Ver requests, bandwidth, threats blocked
 
 **Alertas recomendadas:**
+
 - DDoS attacks detected
 - High error rate (5xx)
 - SSL certificate expiring
@@ -750,6 +752,7 @@ curl -I https://tu-dominio.com
 | **Total** | **~€13/mes** |
 
 **vs. Sin Cloudflare + GoDaddy:**
+
 - GoDaddy dominio: ~€15/año
 - Sin DDoS protection: Riesgo alto
 - Sin CDN: Lento para usuarios internacionales
@@ -758,6 +761,7 @@ curl -I https://tu-dominio.com
 ---
 
 **Tu stack final:**
+
 - ✅ Cloudflare Free (DDoS + CDN + WAF)
 - ✅ Hetzner Cloud (Server)
 - ✅ WordPress + Tutor LMS

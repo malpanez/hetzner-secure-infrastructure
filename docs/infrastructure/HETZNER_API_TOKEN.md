@@ -4,7 +4,7 @@
 
 ### 1. Accede a Hetzner Cloud Console
 
-**URL**: https://console.hetzner.cloud/
+**URL**: <https://console.hetzner.cloud/>
 
 - Usuario: Tu email de Hetzner
 - Password: Tu contraseña
@@ -29,10 +29,12 @@ Una vez dentro:
 **Opciones**:
 
 #### A) Usar proyecto existente
+
 - Click en el proyecto que quieres usar
 - Ej: "Default Project" o "WordPress Infrastructure"
 
 #### B) Crear proyecto nuevo (recomendado para testing)
+
 1. Click **"+ Nuevo Proyecto"**
 2. Nombre: `Staging Testing`
 3. Click **"Crear Proyecto"**
@@ -101,6 +103,7 @@ Se abre modal:
 ```
 
 **Configuración recomendada**:
+
 - **Name**: `terraform-staging` o `terraform-production`
 - **Permissions**: ✅ **Read & Write**
 
@@ -130,11 +133,13 @@ El token se muestra **UNA SOLA VEZ**:
 ```
 
 **IMPORTANTE**:
+
 1. Click **"📋 Copy to Clipboard"**
 2. Guarda el token en un lugar seguro **AHORA**
 3. No podrás verlo de nuevo después de cerrar
 
 **Guardar token temporalmente**:
+
 ```bash
 # En WSL2, crear archivo temporal
 echo "ABC123def456GHI789jkl012MNO345pqr678STU901vwx" > ~/hetzner-token.txt
@@ -185,6 +190,7 @@ nano terraform.staging.tfvars
 ```
 
 **Editar línea**:
+
 ```hcl
 # ANTES:
 hcloud_token = "YOUR_HCLOUD_TOKEN_HERE"
@@ -251,7 +257,8 @@ curl -H "Authorization: Bearer ABC123def456..." \
 
 Tu token con **Read & Write** puede:
 
-### ✅ Puede hacer:
+### ✅ Puede hacer
+
 - ✅ Crear/eliminar servidores
 - ✅ Crear/eliminar SSH keys
 - ✅ Crear/eliminar firewalls
@@ -259,7 +266,8 @@ Tu token con **Read & Write** puede:
 - ✅ Listar/modificar recursos
 - ✅ Todo lo que Terraform necesita
 
-### ❌ NO puede hacer:
+### ❌ NO puede hacer
+
 - ❌ Cambiar billing/facturación
 - ❌ Eliminar el proyecto
 - ❌ Modificar permisos de usuarios
@@ -282,7 +290,7 @@ Si comprometes el token o ya no lo necesitas:
 
 ## 🎯 Resumen - Checklist Completo
 
-- [ ] 1. Acceder a https://console.hetzner.cloud/
+- [ ] 1. Acceder a <https://console.hetzner.cloud/>
 - [ ] 2. Seleccionar/crear proyecto
 - [ ] 3. Ir a Security → API Tokens
 - [ ] 4. Click "Generate API Token"
@@ -310,6 +318,7 @@ Si comprometes el token o ya no lo necesitas:
    - Elimina tokens viejos
 
 3. **Nunca commits tokens**:
+
    ```bash
    # Verifica .gitignore
    cat .gitignore | grep tfvars
@@ -324,6 +333,7 @@ Si comprometes el token o ya no lo necesitas:
 ### 📊 Monitoreo
 
 Revisa uso del token en Hetzner Console:
+
 - **Settings → Audit Log**
 - Verás todas las operaciones hechas con el token
 
@@ -357,4 +367,4 @@ grep hcloud_token terraform/terraform.staging.tfvars
 ---
 
 **Última actualización**: 29 Diciembre 2025
-**Documentación oficial**: https://docs.hetzner.cloud/#authentication
+**Documentación oficial**: <https://docs.hetzner.cloud/#authentication>

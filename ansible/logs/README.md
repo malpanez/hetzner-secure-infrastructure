@@ -32,6 +32,7 @@ El script `deploy.sh` configura logging automáticamente:
 ```
 
 **Ventajas**:
+
 - ✅ Logging automático con timestamp
 - ✅ Symlink `latest.log` actualizado
 - ✅ Muestra ubicación del log al inicio y fin
@@ -58,6 +59,7 @@ ansible-playbook -u root playbooks/site.yml
 ## Revisar Logs
 
 ### Ver último log
+
 ```bash
 # Ver en tiempo real (si deploy está corriendo)
 tail -f logs/latest.log
@@ -71,6 +73,7 @@ grep -i failed logs/latest.log
 ```
 
 ### Ver log específico por fecha
+
 ```bash
 # Listar logs disponibles
 ls -lht logs/ansible-*.log
@@ -80,6 +83,7 @@ less logs/ansible-20260103-143022.log
 ```
 
 ### Buscar en múltiples logs
+
 ```bash
 # Buscar patrón en todos los logs
 grep -h "pattern" logs/ansible-*.log
@@ -176,6 +180,7 @@ logs/*         # Todo el contenido de logs/ ignorado
 ```
 
 Esto previene:
+
 - ❌ Commits accidentales de logs con información sensible
 - ❌ Inflado del repositorio git
 - ❌ Conflictos de merge en logs
@@ -190,6 +195,7 @@ Esto previene:
 - Output de comandos que podrían revelar configuración
 
 **Recomendaciones**:
+
 1. ✅ Nunca committear logs al repositorio git
 2. ✅ Revisar logs antes de compartirlos
 3. ✅ Usar `ansible-playbook --diff` con cuidado (muestra contenido de archivos)
@@ -199,6 +205,7 @@ Esto previene:
 ## Troubleshooting
 
 ### Problema: No se crea el log
+
 ```bash
 # Verificar que el directorio existe y tiene permisos
 ls -ld logs/
@@ -212,6 +219,7 @@ echo $ANSIBLE_LOG_PATH
 ```
 
 ### Problema: latest.log es un archivo en vez de symlink
+
 ```bash
 # Eliminar y dejar que deploy.sh lo recree
 rm logs/latest.log
@@ -219,6 +227,7 @@ rm logs/latest.log
 ```
 
 ### Problema: Logs muy grandes
+
 ```bash
 # Ver tamaño de logs
 du -h logs/*.log

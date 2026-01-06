@@ -54,6 +54,7 @@ All `cloudflare_filter` + `cloudflare_firewall_rule` resources have been success
 The `cloudflare_rate_limit` resource for login protection is redundant since we already have challenge rules in the WAF ruleset. Migration is optional but recommended.
 
 **Current Implementation** (optional-features.tf):
+
 ```hcl
 resource "cloudflare_rate_limit" "login_attempts" {
   count   = var.enable_rate_limiting ? 1 : 0
@@ -95,11 +96,13 @@ terraform/modules/cloudflare-config/
 ## 📊 Migration Impact
 
 **Before**:
+
 - 12 deprecation warnings
 - 306 lines in main.tf
 - Using deprecated APIs past deadline
 
 **After**:
+
 - 2 deprecation warnings (non-critical)
 - 26 lines in main.tf
 - Using current Cloudflare API
@@ -114,6 +117,7 @@ terraform validate
 ```
 
 Only remaining warnings:
+
 - `cloudflare_rate_limit` deprecation (2 instances, optional)
 
 ## 📚 References

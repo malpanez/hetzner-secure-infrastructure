@@ -17,6 +17,7 @@
 **Purpose**: Validate Terraform creates correct infrastructure
 
 **What to test**:
+
 - ✅ Servers created with correct specs
 - ✅ Firewall rules applied
 - ✅ SSH keys configured
@@ -26,6 +27,7 @@
 **Location**: `terraform/test/`
 
 **Example Test**:
+
 ```go
 // terraform/test/infrastructure_test.go
 package test
@@ -64,6 +66,7 @@ func TestTerraformInfrastructure(t *testing.T) {
 ```
 
 **Run tests**:
+
 ```bash
 cd terraform/test
 go test -v -timeout 30m
@@ -76,16 +79,19 @@ go test -v -timeout 30m
 **Purpose**: Validate Ansible roles work correctly
 
 **Existing tests** (already configured):
+
 - ✅ `common` role
 - ✅ `security-hardening` role
 
 **Need to add**:
+
 - ⚠️ `nginx-wordpress` role
 - ⚠️ `valkey` role (renamed from redis)
 - ⚠️ `prometheus` role
 - ⚠️ `grafana` role
 
 **Molecule Test Structure**:
+
 ```
 ansible/roles/nginx-wordpress/
 ├── molecule/
@@ -97,6 +103,7 @@ ansible/roles/nginx-wordpress/
 ```
 
 **Example Verify** (nginx-wordpress):
+
 ```yaml
 # ansible/roles/nginx-wordpress/molecule/default/verify.yml
 ---
@@ -137,6 +144,7 @@ ansible/roles/nginx-wordpress/
 ```
 
 **Run Molecule tests**:
+
 ```bash
 # Test single role
 cd ansible/roles/nginx-wordpress
@@ -320,6 +328,7 @@ wordpress_plugins:
 **Challenge**: LearnDash Pro is not in WordPress.org repository (paid plugin)
 
 **Solution 1**: Manual upload (one-time)
+
 ```yaml
 # ansible/roles/nginx-wordpress/tasks/learndash.yml
 - name: Upload LearnDash Pro zip
@@ -335,6 +344,7 @@ wordpress_plugins:
 ```
 
 **Solution 2**: Download from secure storage (recommended for DR)
+
 ```yaml
 - name: Download LearnDash from S3
   amazon.aws.s3_object:
@@ -349,6 +359,7 @@ wordpress_plugins:
 ```
 
 **Solution 3**: Version-controlled (best for DR)
+
 ```bash
 # Store in private Git repository
 git clone https://github.com/yourorg/wordpress-premium-plugins.git
@@ -517,17 +528,20 @@ ansible-playbook -i inventory/hetzner.yml playbooks/site.yml --check
 ## 📋 DR Checklist
 
 ### Monthly (Preparation)
+
 - [ ] Test backup restore procedure
 - [ ] Verify all credentials accessible
 - [ ] Update DR documentation
 - [ ] Review RTO/RPO targets
 
 ### Quarterly (Validation)
+
 - [ ] Full DR drill (complete rebuild)
 - [ ] Time the recovery process
 - [ ] Update procedures based on learnings
 
 ### After Every Major Change
+
 - [ ] Update Terraform configs in Git
 - [ ] Update Ansible playbooks in Git
 - [ ] Test deployment from scratch
@@ -565,6 +579,7 @@ echo "✅ Recovery complete! New IP: ${NEW_IP}"
 ```
 
 Make executable:
+
 ```bash
 chmod +x emergency-rebuild.sh
 ```

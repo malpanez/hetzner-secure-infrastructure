@@ -45,7 +45,7 @@ Analogía:
 
 ### 2. **Complejidad Adicional Sin Beneficio**
 
-#### Stack SIN Varnish (tu configuración actual):
+#### Stack SIN Varnish (tu configuración actual)
 
 ```
 User
@@ -64,7 +64,7 @@ Performance: Excelente para <100 usuarios
 Mantenimiento: Simple
 ```
 
-#### Stack CON Varnish:
+#### Stack CON Varnish
 
 ```
 User
@@ -88,6 +88,7 @@ Mantenimiento: Complejo
 ```
 
 **Problemas añadidos**:
+
 1. **SSL Termination Doble**:
    - Cloudflare termina SSL
    - Nginx debe terminar SSL de nuevo
@@ -123,6 +124,7 @@ Porcentaje del tráfico: 50-70% para curso premium
 ```
 
 **Problema de Varnish**:
+
 ```
 Varnish es EXCELENTE para contenido estático/semi-estático
 Varnish es MALO para contenido personalizado por usuario
@@ -135,7 +137,7 @@ WordPress con usuarios logueados = 50-70% dinámico
 
 ### 4. **Costos de Operación**
 
-#### Mantenimiento SIN Varnish:
+#### Mantenimiento SIN Varnish
 
 ```yaml
 Archivos de configuración:
@@ -155,7 +157,7 @@ Troubleshooting:
 Tiempo de troubleshooting: 5-10 minutos
 ```
 
-#### Mantenimiento CON Varnish:
+#### Mantenimiento CON Varnish
 
 ```yaml
 Archivos de configuración:
@@ -251,7 +253,7 @@ location ~* \.(jpg|jpeg|png|gif|css|js)$ {
 
 ## ✅ Qué Usar en Vez de Varnish
 
-### Tu Stack Actual (Óptimo):
+### Tu Stack Actual (Óptimo)
 
 ```yaml
 Layer 1: Cloudflare CDN ✅
@@ -312,7 +314,7 @@ Varnish tiene sentido en estos escenarios:
   - Protege backend de sobrecarga
 ```
 
-### Características de estos casos:
+### Características de estos casos
 
 1. **Escala masiva**: >100,000 concurrent users
 2. **Contenido mayormente público**: >80% requests cacheables
@@ -366,6 +368,7 @@ Resource usage:
 ```
 
 **Resultado**:
+
 - Páginas públicas: 6% mejor (insignificante)
 - Páginas logueadas: 3% peor (overhead)
 - Recursos: 20% más RAM, 10% más CPU
@@ -390,6 +393,7 @@ Reconsidera Varnish si **TODOS** estos son verdad:
 ```
 
 **Para tu caso (año 1-2)**:
+
 - ❌ 10-100 estudiantes (no 1,000)
 - ❌ 500-2,000 pageviews/día (no 50,000)
 - ❌ 5-20 concurrent (no 200)
@@ -460,7 +464,7 @@ Cuándo considerar:
 
 ## ✅ Conclusión
 
-### Para Tu Curso de Trading ($3,000/estudiante, 10-100 students):
+### Para Tu Curso de Trading ($3,000/estudiante, 10-100 students)
 
 ```yaml
 Stack Recomendado (ACTUAL):
@@ -482,7 +486,7 @@ Resultado:
 └── Escalabilidad: Suficiente para primeros 500-1,000 estudiantes
 ```
 
-### Cuándo Reconsiderar:
+### Cuándo Reconsiderar
 
 ```
 Mes 12-18: Si tienes 500+ estudiantes activos
@@ -503,6 +507,7 @@ Mes 18-24: Si tienes 1,000+ estudiantes
 **Varnish es una herramienta profesional excelente... para casos de uso que NO son el tuyo.**
 
 Tu stack actual (Cloudflare + Nginx FastCGI + Valkey) es la elección correcta para:
+
 - Escala: 10-500 estudiantes
 - Budget: €10-30/mes
 - Mantenimiento: 1 persona

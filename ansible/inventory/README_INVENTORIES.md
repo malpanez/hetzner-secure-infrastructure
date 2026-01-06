@@ -16,6 +16,7 @@ wordpress_servers:
 ```
 
 **Pros**:
+
 - ✅ Simple and explicit
 - ✅ No API token required
 - ✅ Works immediately
@@ -23,16 +24,19 @@ wordpress_servers:
 - ✅ Compatible with all group_vars structure
 
 **Cons**:
+
 - ❌ Manual IP management
 - ❌ Must update when adding/removing servers
 
 **When to use**:
+
 - Starting with infrastructure
 - Fixed/known IPs
 - Small deployments (<10 servers)
 - No Terraform integration
 
 **Usage**:
+
 ```bash
 ansible-playbook playbooks/site.yml
 # Uses production.yml by default (configured in ansible.cfg)
@@ -50,24 +54,28 @@ token: "{{ lookup('env', 'HCLOUD_TOKEN') }}"
 ```
 
 **Pros**:
+
 - ✅ Auto-discovers servers from Hetzner API
 - ✅ Syncs with Terraform state
 - ✅ Auto-groups by labels
 - ✅ No manual IP updates needed
 
 **Cons**:
+
 - ❌ Requires HCLOUD_TOKEN environment variable
 - ❌ Requires `hcloud` Ansible collection
 - ❌ Host names determined by Hetzner API
 - ❌ More complex setup
 
 **When to use**:
+
 - Using Terraform to provision servers
 - Many servers (10+)
 - Frequent server changes
 - Auto-scaling scenarios
 
 **Setup**:
+
 ```bash
 # 1. Install collection
 ansible-galaxy collection install hetzner.hcloud
@@ -87,11 +95,13 @@ ansible-playbook -i inventory/hetzner.yml playbooks/site.yml
 ## 🔄 Migration Path
 
 ### Phase 1: Manual (Current) ✅
+
 ```
 production.yml → Fixed IPs → group_vars/
 ```
 
 ### Phase 2: Terraform + Dynamic (Future)
+
 ```
 Terraform → Hetzner Cloud → hetzner.yml → group_vars/
 ```
@@ -101,13 +111,16 @@ Terraform → Hetzner Cloud → hetzner.yml → group_vars/
 ## 🛠️ Switching Inventories
 
 ### Temporary Switch
+
 ```bash
 # Use dynamic inventory for this playbook run
 ansible-playbook -i inventory/hetzner.yml playbooks/site.yml
 ```
 
 ### Permanent Switch
+
 Edit `ansible.cfg`:
+
 ```ini
 [defaults]
 inventory = inventory/hetzner.yml  # Change from production.yml
@@ -134,12 +147,14 @@ inventory = inventory/hetzner.yml  # Change from production.yml
 ## 🎯 Recommendation
 
 **Start with `production.yml`** (already configured):
+
 1. ✅ Simpler to understand
 2. ✅ No external dependencies
 3. ✅ Works with all group_vars
 4. ✅ Ready to use now
 
 **Migrate to `hetzner.yml` when**:
+
 1. You implement Terraform provisioning
 2. You have 10+ servers
 3. You need auto-scaling
@@ -168,11 +183,13 @@ inventory/
 ## 🧪 Testing Both
 
 ### Test Static Inventory
+
 ```bash
 ansible-inventory -i inventory/production.yml --graph
 ```
 
 ### Test Dynamic Inventory
+
 ```bash
 export HCLOUD_TOKEN="your-token"
 ansible-inventory -i inventory/hetzner.yml --graph

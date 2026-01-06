@@ -30,12 +30,14 @@ Esta guía proporciona instrucciones detalladas paso a paso para desplegar la in
 ### Hardware/Infraestructura
 
 #### Servidor Local de Desarrollo
+
 - Sistema operativo: Linux, macOS, o WSL2 en Windows
 - RAM mínima: 4 GB
 - Espacio en disco: 20 GB disponibles
 - Docker Desktop instalado (para testing con Molecule)
 
 #### Conectividad
+
 - Conexión a internet estable
 - IP estática o dinámica conocida para acceso SSH seguro
 
@@ -64,6 +66,7 @@ graph TD
 #### Instalación de Dependencias
 
 **Debian/Ubuntu:**
+
 ```bash
 # Instalar dependencias del sistema
 sudo apt update
@@ -86,6 +89,7 @@ pipx install molecule[docker]
 ```
 
 **macOS (Homebrew):**
+
 ```bash
 brew install terraform ansible python@3.10 git
 pipx install molecule[docker]
@@ -119,7 +123,8 @@ flowchart LR
 ```
 
 #### 1. Cuenta Hetzner Cloud
-- **URL:** https://console.hetzner.cloud
+
+- **URL:** <https://console.hetzner.cloud>
 - **Requisito:** Tarjeta de crédito o PayPal
 - **Verificación:** Email + verificación de identidad
 - **Necesitarás generar:**
@@ -127,22 +132,26 @@ flowchart LR
   - SSH Key para acceso a servidores
 
 #### 2. Cuenta Cloudflare (Opcional pero Recomendado)
-- **URL:** https://dash.cloudflare.com
+
+- **URL:** <https://dash.cloudflare.com>
 - **Plan:** Free tier es suficiente
 - **Necesitarás:**
   - Transferir nameservers de tu dominio
   - Generar API Token para DNS
 
 #### 3. Dominio
+
 - Registrado en cualquier registrar (GoDaddy, Namecheap, Cloudflare, etc.)
 - Apuntando a nameservers de Cloudflare (recomendado)
 
 #### 4. Licencia LearnDash
-- **URL:** https://www.learndash.com
+
+- **URL:** <https://www.learndash.com>
 - **Costo:** $199/año (licencia básica)
 - **Incluye:** 1 sitio, actualizaciones y soporte
 
 #### 5. Servicio SMTP (Opcional)
+
 - SendGrid (100 emails/día gratis)
 - Mailgun (5,000 emails/mes gratis primeros 3 meses)
 - Amazon SES (~$0.10 por 1,000 emails)
@@ -224,6 +233,7 @@ flowchart TD
 **Recomendación: Usar tu nombre `malpanez` (o variante)**
 
 **Razones:**
+
 1. ✅ **No es obvio** - No es `root`, `admin`, `administrator`, `user`
 2. ✅ **Fácil de recordar** - Es tu nombre
 3. ✅ **SSH ya filtrado por IP** - Solo tu IP puede conectar (variable ssh_allowed_ips)
@@ -231,6 +241,7 @@ flowchart TD
 5. ✅ **Fail2ban activo** - 3 intentos = ban automático
 
 **Usuarios a EVITAR:**
+
 - ❌ `admin` - Primer target de bots
 - ❌ `administrator` - Segundo target
 - ❌ `root` - Deshabilitado por defecto
@@ -238,6 +249,7 @@ flowchart TD
 - ❌ `ubuntu` / `debian` - Nombres por defecto
 
 **Usuarios OK:**
+
 - ✅ `malpanez` - No obvio, fácil de recordar (RECOMENDADO)
 - ✅ `malpanez_admin` - Variante
 - ✅ Nombre aleatorio: `svc_adm_92x` (si quieres máxima ofuscación)
@@ -277,6 +289,7 @@ flowchart TD
 **Recomendación: Mantener puerto 22**
 
 **Razones:**
+
 1. ✅ **IP filtering ya activo** - Solo tu IP puede conectar (ssh_allowed_ips)
 2. ✅ **2FA activado** - TOTP requerido
 3. ✅ **Fail2ban activo** - Ban automático tras 3 intentos
@@ -438,6 +451,7 @@ gantt
 | | **TOTAL RECOMENDADO** | | | **~$220 / €200** | Con transferencia dominio |
 
 **IMPORTANTE:**
+
 - ✅ **Dominio en GoDaddy:** Ya lo tienes - NO necesitas pagar nada extra
 - ⚠️ **Transferir a Cloudflare:** RECOMENDADO - €9-10 (incluye +1 año renovación)
   - NO es un fee, es renovación anticipada
@@ -524,12 +538,14 @@ graph TD
 **¿Necesitas el Volume extra de 20GB (+€2.40/mes)?**
 
 **NO necesitas Volume extra SI:**
+
 - Sitio pequeño/mediano (<1000 usuarios)
 - Pocos cursos (<50 cursos con videos)
 - Uploads pequeños (documentos PDF, imágenes)
 - **Los 40GB incluidos son suficientes**
 
 **SÍ necesitas Volume extra SI:**
+
 - Muchos videos (cada curso con 2+ horas de video)
 - Miles de usuarios con contenido
 - Quieres backups completos diarios en el servidor
@@ -538,6 +554,7 @@ graph TD
 **Recomendación:** Empieza SIN el volume. Puedes añadirlo después si lo necesitas.
 
 **Para desactivarlo en la configuración:**
+
 ```hcl
 # terraform/environments/production/terraform.tfvars
 volume_size = 0  # Cambiar de 20 a 0 = sin volume extra
@@ -658,7 +675,7 @@ sequenceDiagram
 
 **Instrucciones detalladas:**
 
-1. Acceder a https://console.hetzner.cloud
+1. Acceder a <https://console.hetzner.cloud>
 2. Crear cuenta nueva o iniciar sesión
 3. Verificar cuenta (puede requerir documento de identidad)
 4. Crear nuevo proyecto o seleccionar existente:
@@ -682,6 +699,7 @@ cat ~/.ssh/hetzner_ed25519.pub
 ```
 
 En Hetzner Console:
+
 1. Security → SSH Keys
 2. Add SSH Key
 3. Pegar contenido de `hetzner_ed25519.pub`
@@ -720,6 +738,7 @@ export TF_VAR_ssh_allowed_ips='["TU.IP.PUBLICA.AQUI/32"]'
 ```
 
 **IMPORTANTE:** Para obtener tu IP pública:
+
 ```bash
 # Linux/Mac
 curl -4 ifconfig.me
@@ -950,6 +969,7 @@ ssh -i ~/.ssh/hetzner_ed25519 malpanez@${SERVER_IP} \
 Terraform gestiona DNS automáticamente usando el módulo Cloudflare integrado.
 
 **Ventajas:**
+
 - ✅ DNS records creados automáticamente
 - ✅ Reglas WAF para WordPress (bloqueo xmlrpc.php, wp-config.php)
 - ✅ Configuración SSL/TLS automática (Full strict, TLS 1.2+)
@@ -960,11 +980,12 @@ Terraform gestiona DNS automáticamente usando el módulo Cloudflare integrado.
 
 **Paso 1: Migrar dominio a Cloudflare**
 
-1. Ir a https://dash.cloudflare.com
+1. Ir a <https://dash.cloudflare.com>
 2. Click "Add a Site"
 3. Introducir tu dominio: `tudominio.com`
 4. Seleccionar plan **Free** (suficiente para todo)
 5. Cloudflare te dará 2 nameservers:
+
    ```
    Ejemplo:
    alex.ns.cloudflare.com
@@ -972,7 +993,8 @@ Terraform gestiona DNS automáticamente usando el módulo Cloudflare integrado.
    ```
 
 **En GoDaddy:**
-1. Ir a https://account.godaddy.com
+
+1. Ir a <https://account.godaddy.com>
 2. My Products → Domains → tudominio.com
 3. Settings → Manage DNS → Nameservers
 4. Cambiar a "Custom"
@@ -986,7 +1008,7 @@ Terraform gestiona DNS automáticamente usando el módulo Cloudflare integrado.
 
 **Pasos EXACTOS (seguir al pie de la letra):**
 
-1. **Ir directamente a:** https://dash.cloudflare.com/profile/api-tokens
+1. **Ir directamente a:** <https://dash.cloudflare.com/profile/api-tokens>
    - O en el dashboard: Click tu email (arriba derecha) → My Profile → API Tokens
 
 2. Click botón azul **"Create Token"** (NO "View Global API Key")
@@ -1031,6 +1053,7 @@ Terraform gestiona DNS automáticamente usando el módulo Cloudflare integrado.
    - NO cierres esta ventana hasta haber guardado el token
 
 8. **Verificar que funciona:**
+
    ```bash
    # Test del token (RECOMENDADO)
    curl -X GET "https://api.cloudflare.com/client/v4/user/tokens/verify" \
@@ -1044,6 +1067,7 @@ Terraform gestiona DNS automáticamente usando el módulo Cloudflare integrado.
 9. Click **"View"** si necesitas ver qué permisos tiene (pero NO puedes ver el token de nuevo)
 
 **Errores comunes:**
+
 - ❌ Usar "Global API Key" en lugar de "API Token" → Terraform fallará
 - ❌ No especificar "Specific zone" → Terraform puede afectar otros dominios
 - ❌ Copiar mal el token (espacios, saltos de línea) → Authentication failed
@@ -1066,6 +1090,7 @@ nano terraform/environments/production/terraform.tfvars
 ```
 
 **Añadir a terraform.tfvars:**
+
 ```hcl
 # DNS Configuration
 domain              = "tudominio.com"
@@ -1085,6 +1110,7 @@ terraform apply
 ```
 
 Terraform creará automáticamente:
+
 - ✅ Registro A: `@` (root) → IP del servidor (proxied)
 - ✅ Registro A: `www` → CNAME al root (proxied)
 - ✅ Registro AAAA: IPv6 si disponible (proxied)
@@ -1161,6 +1187,7 @@ En Cloudflare Dashboard → DNS → Records:
 | A | monitoring | `TU.IP.SERVIDOR` | ❌ DNS only | Auto | Grafana (sin proxy) |
 
 **IMPORTANTE sobre Proxy:**
+
 - ✅ **WordPress (@, www): PROXIED** - Cloudflare cachea y protege con CDN
 - ❌ **Grafana (monitoring): DNS ONLY** - Acceso directo sin proxy
 
@@ -1235,6 +1262,7 @@ flowchart LR
 El plugin de Hetzner Cloud ya está configurado en [`ansible/inventory/hetzner.yml`](ansible/inventory/hetzner.yml)
 
 **Ventajas:**
+
 - ✅ Descubre servidores automáticamente desde Hetzner API
 - ✅ Lee labels de Terraform (environment, project, etc.)
 - ✅ No necesitas copiar/pegar IPs manualmente
@@ -1513,6 +1541,7 @@ server {
 ```
 
 **¿Qué hace?**
+
 - Escucha en puerto 443 (HTTPS)
 - Responde SOLO si el dominio es `tudominio.com` o `www.tudominio.com`
 - Pasa peticiones PHP a PHP-FPM (puerto 9000)
@@ -1544,6 +1573,7 @@ server {
 ```
 
 **¿Qué hace?**
+
 - Escucha en puerto 443 (HTTPS)
 - Responde SOLO si el dominio es `monitoring.tudominio.com`
 - Reenvía TODO el tráfico a Grafana (localhost:3000)
@@ -1584,6 +1614,7 @@ sequenceDiagram
 ### Puertos Internos vs Externos
 
 **Puertos EXTERNOS (accesibles desde internet):**
+
 ```
 443/TCP → Nginx HTTPS (todos los servicios)
  80/TCP → Nginx HTTP (redirect a HTTPS)
@@ -1591,6 +1622,7 @@ sequenceDiagram
 ```
 
 **Puertos INTERNOS (solo localhost, NO accesibles):**
+
 ```
 3000/TCP → Grafana (solo via Nginx proxy)
 3306/TCP → MariaDB (solo desde localhost)
@@ -1696,6 +1728,7 @@ flowchart TD
 | CNAME | * | tudominio.com | ✗ DNS Only | Auto |
 
 **Cloudflare: Configuración SSL/TLS:**
+
 - SSL/TLS → Overview → **Full (strict)**
 - SSL/TLS → Edge Certificates → Always Use HTTPS: **On**
 - SSL/TLS → Edge Certificates → Automatic HTTPS Rewrites: **On**
@@ -1708,11 +1741,12 @@ https://tudominio.com/wp-admin/install.php
 ```
 
 **Wizard de instalación automático:**
+
 1. Seleccionar idioma
 2. Crear usuario administrador:
    - Usuario: admin (o tu preferencia)
    - Contraseña: (usa la de vault_wordpress_admin_password)
-   - Email: admin@tudominio.com
+   - Email: <admin@tudominio.com>
 3. Click "Install WordPress"
 
 #### 3. LearnDash - Instalación Manual (OBLIGATORIA)
@@ -1739,7 +1773,7 @@ sequenceDiagram
 **Pasos detallados:**
 
 1. **Comprar LearnDash:**
-   - Ir a https://www.learndash.com/pricing/
+   - Ir a <https://www.learndash.com/pricing/>
    - Seleccionar plan (Basic $199/año)
    - Completar compra
 
@@ -1749,17 +1783,21 @@ sequenceDiagram
    - Descargar `learndash-xxx.zip`
 
 3. **Instalar en WordPress:**
+
    ```
    WordPress Admin → Plugins → Add New → Upload Plugin
    ```
+
    - Seleccionar archivo .zip
    - Click "Install Now"
    - Click "Activate"
 
 4. **Activar licencia:**
+
    ```
    LearnDash LMS → Settings → LMS License
    ```
+
    - Introducir License Email
    - Introducir License Key
    - Click "Update License"
@@ -1767,18 +1805,22 @@ sequenceDiagram
 #### 4. Plugins WordPress Recomendados (Instalación Manual)
 
 **Seguridad:**
+
 - **Wordfence Security** (Gratis) - WAF + Malware scanner
 - **UpdraftPlus** (Gratis) - Backups a Cloudflare R2/S3
 
 **Performance:**
+
 - **WP Rocket** ($59/año) - Caché avanzado (opcional, Nginx ya cachea)
 - **Imagify** (Gratis hasta 20MB/mes) - Optimización de imágenes
 
 **LearnDash Extras:**
+
 - **Uncanny Toolkit** (Gratis) - Mejoras UI para LearnDash
 - **GamiPress** (Gratis) - Gamificación
 
 **Email:**
+
 - **WP Mail SMTP** (Gratis) - Configurar SendGrid/Mailgun
 
 #### 5. Configuración SMTP (Para Emails)
@@ -1805,7 +1847,7 @@ graph TD
 
 **SendGrid (Recomendado - 100 emails/día gratis):**
 
-1. Crear cuenta en https://sendgrid.com
+1. Crear cuenta en <https://sendgrid.com>
 2. Verificar dominio:
    - Settings → Sender Authentication → Authenticate Your Domain
    - Añadir registros DNS en Cloudflare
@@ -1813,6 +1855,7 @@ graph TD
    - Settings → API Keys → Create API Key
    - Permisos: Mail Send → Full Access
 4. Configurar WP Mail SMTP:
+
    ```
    WordPress → Settings → Email
    From Email: noreply@tudominio.com
@@ -1887,11 +1930,13 @@ graph TB
 ```
 
 **Puertos accesibles externamente:**
+
 - `80/TCP` - HTTP (redirect a HTTPS)
 - `443/TCP` - HTTPS (WordPress + Grafana)
 - `22/TCP` - SSH (solo desde tu IP)
 
 **Puertos internos (localhost only):**
+
 - `3000/TCP` - Grafana (proxy via Nginx)
 - `3306/TCP` - MariaDB
 - `6379/TCP` - Valkey (Redis)
@@ -1983,10 +2028,10 @@ echo "=== Verificación completa ==="
 
 | Servicio | URL | Credenciales |
 |----------|-----|--------------|
-| **WordPress Admin** | https://tudominio.com/wp-admin | Usuario: admin<br/>Pass: (vault) |
-| **WordPress Site** | https://tudominio.com | Público |
-| **Grafana** | https://monitoring.tudominio.com | Usuario: admin<br/>Pass: (vault) |
-| **Prometheus** | http://IP:9090 | Sin auth (local only) |
+| **WordPress Admin** | <https://tudominio.com/wp-admin> | Usuario: admin<br/>Pass: (vault) |
+| **WordPress Site** | <https://tudominio.com> | Público |
+| **Grafana** | <https://monitoring.tudominio.com> | Usuario: admin<br/>Pass: (vault) |
+| **Prometheus** | <http://IP:9090> | Sin auth (local only) |
 
 ### Tests de Seguridad
 
@@ -2093,6 +2138,7 @@ echo "Backup completado: ${DATE}"
 ### Actualizaciones
 
 **WordPress (interfaz web):**
+
 - Dashboard → Updates
 - Actualizar automático para security patches
 - Probar en staging antes de major updates
@@ -2129,7 +2175,7 @@ ansible-playbook -i ansible/inventory/production/hosts.yml \
 **Grafana Dashboards:**
 
 1. **WordPress Performance:**
-   - Acceder: https://monitoring.tudominio.com
+   - Acceder: <https://monitoring.tudominio.com>
    - Dashboard: "Node Exporter Full"
    - Métricas clave:
      - CPU usage < 70%
@@ -2178,17 +2224,17 @@ dmesg -T
 ### Documentación
 
 - **Este proyecto:** [TESTING.md](TESTING.md), [ARCHITECTURE.md](ARCHITECTURE.md)
-- **Hetzner Cloud:** https://docs.hetzner.com/cloud/
-- **Terraform:** https://www.terraform.io/docs
-- **Ansible:** https://docs.ansible.com
-- **WordPress:** https://wordpress.org/support/
-- **LearnDash:** https://www.learndash.com/support/
+- **Hetzner Cloud:** <https://docs.hetzner.com/cloud/>
+- **Terraform:** <https://www.terraform.io/docs>
+- **Ansible:** <https://docs.ansible.com>
+- **WordPress:** <https://wordpress.org/support/>
+- **LearnDash:** <https://www.learndash.com/support/>
 
 ### Comunidad
 
-- **Hetzner Community:** https://community.hetzner.com
-- **WordPress Forums:** https://wordpress.org/support/forums/
-- **LearnDash Facebook Group:** https://www.facebook.com/groups/learndash/
+- **Hetzner Community:** <https://community.hetzner.com>
+- **WordPress Forums:** <https://wordpress.org/support/forums/>
+- **LearnDash Facebook Group:** <https://www.facebook.com/groups/learndash/>
 
 ---
 

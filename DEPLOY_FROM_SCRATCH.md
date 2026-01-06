@@ -29,6 +29,7 @@ ls -la terraform*.tfvars
 ```
 
 If using `terraform.staging.tfvars`, verify it contains:
+
 ```hcl
 # Server Configuration
 environment       = "production"
@@ -182,6 +183,7 @@ cd /home/malpanez/repos/hetzner-secure-infrastructure
 ```
 
 **What this creates**:
+
 - `ansible` user on server (no 2FA, key-based only)
 - All ansible commands logged to `/var/log/ansible-automation/sudo.log`
 - Fail2ban monitoring for ansible user
@@ -260,7 +262,7 @@ ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml --check
 
 ### 8.1 Create Cloudflare Account
 
-1. Go to: https://dash.cloudflare.com/sign-up
+1. Go to: <https://dash.cloudflare.com/sign-up>
 2. Create free account
 3. Verify email
 
@@ -274,6 +276,7 @@ ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml --check
 ### 8.3 Get Cloudflare Nameservers
 
 Cloudflare will provide two nameservers like:
+
 ```
 alexa.ns.cloudflare.com
 phil.ns.cloudflare.com
@@ -283,7 +286,7 @@ phil.ns.cloudflare.com
 
 ### 8.4 Update GoDaddy Nameservers
 
-1. Login: https://account.godaddy.com
+1. Login: <https://account.godaddy.com>
 2. Navigate: My Products → Domains
 3. Click your domain → Manage DNS
 4. Scroll to "Nameservers" section
@@ -304,14 +307,17 @@ Add these records:
 ### 8.6 Configure Cloudflare Settings
 
 **SSL/TLS**:
+
 - Mode: **Full (strict)**
 - Always Use HTTPS: **ON**
 
 **Speed**:
+
 - Auto Minify: Enable HTML, CSS, JS
 - Brotli: **ON**
 
 **Security**:
+
 - Security Level: **Medium**
 - Bot Fight Mode: **ON**
 
@@ -372,11 +378,13 @@ After completing all steps, verify:
 ## What You Have Now
 
 ### Infrastructure
+
 - ✅ Hetzner ARM64 CAX11 server (2.68x faster than x86!)
 - ✅ Hetzner Cloud Firewall
 - ✅ Cloudflare DNS + CDN + DDoS protection
 
 ### Security (8 Layers)
+
 1. **Network Edge**: Cloudflare DDoS + WAF
 2. **Cloud Firewall**: Hetzner Cloud Firewall
 3. **Host Firewall**: UFW (ports 22, 80, 443)
@@ -387,12 +395,14 @@ After completing all steps, verify:
 8. **Secrets**: Ansible Vault (AES256)
 
 ### Automation
+
 - ✅ Ansible deployments without 2FA prompts
 - ✅ All ansible user commands logged
 - ✅ Fail2ban monitoring ansible user
 - ✅ Daily secret rotation (3 AM)
 
 ### Services
+
 - ✅ WordPress Latest + LearnDash (to install after purchase)
 - ✅ Nginx with TLS 1.3
 - ✅ PHP 8.4-FPM
@@ -406,17 +416,20 @@ After completing all steps, verify:
 ## Next Steps
 
 ### Immediate
+
 1. Purchase LearnDash license
 2. Upload LearnDash plugin via WordPress admin
 3. Configure course structure
 
 ### Content Creation
+
 1. Design homepage
 2. Create first trading course
 3. Setup payment gateway (Stripe/PayPal)
 4. Configure course enrollment
 
 ### Ongoing
+
 - Daily: OpenBao rotates DB credentials (automated)
 - Weekly: Update WordPress plugins
 - Monthly: Review security logs and backups
@@ -426,27 +439,32 @@ After completing all steps, verify:
 ## Useful Commands
 
 ### Deploy updates (no 2FA!)
+
 ```bash
 ansible-playbook -i ansible/inventory/hetzner.hcloud.yml ansible/playbooks/site.yml
 ```
 
 ### Manual SSH (your account with 2FA)
+
 ```bash
 ssh -i ~/.ssh/github_ed25519 malpanez@SERVER_IP
 ```
 
 ### Automation SSH (ansible user, no 2FA)
+
 ```bash
 ssh -i ~/.ssh/ansible_automation ansible@SERVER_IP
 ```
 
 ### Check ansible user activity
+
 ```bash
 ssh -i ~/.ssh/github_ed25519 malpanez@SERVER_IP
 sudo tail -50 /var/log/ansible-automation/sudo.log
 ```
 
 ### View Grafana
+
 ```
 http://SERVER_IP:3000
 Username: admin

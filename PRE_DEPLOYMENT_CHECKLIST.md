@@ -19,17 +19,20 @@ Testing all changes from the last session (11 commits) that fix critical SSH loc
 ## Risk Assessment
 
 **CRITICAL FIXES** (prevent lockout):
+
 - ✅ AppArmor in complain mode (was blocking SSH)
 - ✅ malpanez break-glass access (no 2FA required)
 - ✅ SSH 2FA before firewall activation
 - ✅ Reboot detection fixed (kernel params will apply)
 
 **MEDIUM CHANGES** (improve reliability):
+
 - ✅ Modular PAM with substack (survives system updates)
 - ✅ Timestamped logging (easier troubleshooting)
 - ✅ GRUB safety checks (no duplicate params)
 
 **LOW RISK** (documentation/testing):
+
 - ✅ Testing infrastructure (doesn't affect deployment)
 - ✅ Documentation corrections (code unchanged)
 
@@ -293,6 +296,7 @@ All of these must be TRUE:
    - Login as root (password in Hetzner console)
 
 2. **Diagnose Issue**:
+
    ```bash
    # Check auth log for SSH denials
    tail -100 /var/log/auth.log
@@ -308,6 +312,7 @@ All of these must be TRUE:
    ```
 
 3. **Emergency Recovery**:
+
    ```bash
    # Disable UFW temporarily
    ufw disable

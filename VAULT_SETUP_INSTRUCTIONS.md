@@ -73,6 +73,7 @@ ansible-vault create inventory/group_vars/all/secrets.yml
 Cuando se abra el editor, pega el contenido de arriba (las contraseñas generadas).
 
 **Contraseña del vault**: Elige una contraseña maestra segura (mínimo 16 caracteres)
+
 - Guárdala en tu password manager
 - Esta contraseña desencripta TODAS las contraseñas del vault
 - **CRÍTICO**: Sin esta contraseña no podrás ejecutar playbooks
@@ -188,8 +189,8 @@ ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml --ask-vault-
 
 | Servicio | URL | Usuario | Contraseña |
 |----------|-----|---------|------------|
-| WordPress Admin | http://46.224.156.140/wp-admin | admin | `nf0ZTtKYCd78NoY1EivkCT9Mi7aNrImR` |
-| Grafana | http://46.224.156.140:3000 | admin | `QiNzF3GvnyWp2URH3FXhKfiBt8CtR1vl` |
+| WordPress Admin | <http://46.224.156.140/wp-admin> | admin | `nf0ZTtKYCd78NoY1EivkCT9Mi7aNrImR` |
+| Grafana | <http://46.224.156.140:3000> | admin | `QiNzF3GvnyWp2URH3FXhKfiBt8CtR1vl` |
 
 ---
 
@@ -230,6 +231,7 @@ ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml --ask-vault-
 ### Olvidé la contraseña del vault
 
 **Solución**:
+
 1. Si tienes backup: Restaura el backup
 2. Si no: Necesitas recrear el vault con nuevas contraseñas
 3. Tendrás que actualizar todas las contraseñas en los servicios

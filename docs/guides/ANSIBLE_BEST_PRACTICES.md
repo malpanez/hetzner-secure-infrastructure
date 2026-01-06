@@ -92,7 +92,7 @@ vault_mariadb_wordpress_db_password: "..."
 
 **Propósito**: Identificar rápidamente qué role y qué fase ejecutó cada task en los logs de Ansible.
 
-### Formato según estructura:
+### Formato según estructura
 
 #### 1. Tasks en main.yml (sin imports)
 
@@ -208,7 +208,7 @@ vault_mariadb_wordpress_db_password: "..."
     state: present
 ```
 
-### Beneficios de esta convención:
+### Beneficios de esta convención
 
 **1. Trazabilidad completa en logs:**
 
@@ -237,11 +237,13 @@ changed: [server-01]
 ```
 
 **2. Debugging inmediato:**
+
 - Sabes exactamente **qué role** falló (`prometheus`)
 - Sabes en **qué fase** falló (`install`, `configure`, `service`)
 - Sabes **qué task específica** causó el error
 
 **3. Testing granular:**
+
 ```bash
 # Ejecutar solo instalación
 ansible-playbook site.yml --tags install
@@ -254,6 +256,7 @@ ansible-playbook site.yml --tags service
 ```
 
 **4. Mejor mantenimiento:**
+
 - Fácil identificar qué archivo modificar
 - Código organizado por responsabilidad
 - Reutilización de sub-tasks en diferentes playbooks
@@ -359,6 +362,7 @@ role_name/
 ```
 
 **Ventajas:**
+
 - ✅ Mejor organización
 - ✅ Más fácil de mantener
 - ✅ Reutilización de sub-tasks
@@ -597,6 +601,7 @@ grafana_gpg_key_path: /etc/apt/keyrings/grafana.gpg
 ```
 
 **Beneficios:**
+
 - ✅ Menos líneas de código (más limpio)
 - ✅ Cambios centralizados (modificar `state` o `update_cache` en un solo lugar)
 - ✅ Mejor legibilidad (foco en lo que varía entre tasks)
@@ -650,6 +655,7 @@ grafana_gpg_key_path: /etc/apt/keyrings/grafana.gpg
 ```
 
 **Ventajas:**
+
 - ✅ No necesita crear `/etc/apt/keyrings/`
 - ✅ No necesita `gpg --dearmor`
 - ✅ No deja archivos en el filesystem
@@ -721,6 +727,7 @@ grafana_install_method: apt
 ```
 
 **Resultado:**
+
 - 🎯 Código limpio y mantenible
 - 🎯 Fácil personalización (override en inventory)
 - 🎯 DRY: parámetros comunes en `module_defaults`
@@ -859,12 +866,14 @@ ansible-playbook site.yml --skip-tags validate
 ### 1. Firewall Role
 
 **Cambios:**
+
 - ✅ Creado `defaults/main.yml` (no existía)
 - ✅ Renombrado `ufw_*` → `firewall_*`
 - ✅ Añadido prefijo `firewall |` a todas las tasks
 - ✅ Añadido control de deployment (`firewall_enabled`)
 
 **Variables corregidas:**
+
 ```yaml
 # ANTES
 ufw_default_incoming_policy: deny
@@ -880,10 +889,12 @@ firewall_allowed_ports: [...]
 ### 2. MariaDB Role
 
 **Cambios:**
+
 - ✅ Renombrado `wordpress_db_*` → `mariadb_wordpress_db_*`
 - ✅ Actualizado `vault_wordpress_db_password` → `vault_mariadb_wordpress_db_password`
 
 **Variables corregidas:**
+
 ```yaml
 # ANTES
 wordpress_db_name: wordpress
@@ -899,12 +910,14 @@ mariadb_wordpress_db_password: "{{ vault_mariadb_wordpress_db_password }}"
 ### 3. Nginx-WordPress Role
 
 **Cambios:**
+
 - ✅ Renombrado `wordpress_*` → `nginx_wordpress_*`
 - ✅ Renombrado `php_*` → `nginx_wordpress_php_*`
 - ✅ Renombrado `cloudflare_*` → `nginx_wordpress_cloudflare_*`
 - ✅ Renombrado `tutor_*` → `nginx_wordpress_learndash_*` (correcto LMS)
 
 **Variables corregidas (muestra):**
+
 ```yaml
 # ANTES
 wordpress_domain: example.com
@@ -952,6 +965,7 @@ control_path = ~/.ssh/ansible-%%r@%%h:%%p
 ```
 
 **Mejoras aplicadas:**
+
 - ✅ Multiple `roles_path` para búsqueda flexible
 - ✅ Smart gathering (cache de facts)
 - ✅ YAML stdout para mejor legibilidad

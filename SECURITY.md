@@ -19,7 +19,7 @@ Please **do not** report security vulnerabilities through public GitHub issues.
 
 ### 2. Report Privately
 
-Report security vulnerabilities by emailing **security@example.com** or using [GitHub Security Advisories](https://github.com/malpanez/hetzner-secure-infrastructure/security/advisories/new).
+Report security vulnerabilities by emailing **<security@example.com>** or using [GitHub Security Advisories](https://github.com/malpanez/hetzner-secure-infrastructure/security/advisories/new).
 
 ### 3. Provide Details
 

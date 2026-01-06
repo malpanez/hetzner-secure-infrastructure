@@ -5,12 +5,14 @@
 ## ✅ ¿Qué necesito PAGAR?
 
 ### OBLIGATORIO (para empezar)
-1. **LearnDash:** $199 USD → Comprar en https://learndash.com/pricing/
+
+1. **LearnDash:** $199 USD → Comprar en <https://learndash.com/pricing/>
 2. **Hetzner Cloud:** €5.39/mes → Se cobra automáticamente cuando creas el servidor
 
 **TOTAL MÍNIMO: ~$210 USD para empezar**
 
 ### OPCIONAL pero RECOMENDADO
+
 3. **Transferir dominio a Cloudflare:** €9-10 (incluye +1 año renovación)
    - **AHORRO REAL:** GoDaddy cobra €21.99/año vs Cloudflare €9/año
    - **Ahorro anual: ~€13/año**
@@ -20,6 +22,7 @@
 **TOTAL RECOMENDADO: ~$220 USD si transfieres dominio**
 
 ### NO necesitas pagar
+
 - ❌ Cloudflare DNS/CDN/SSL (gratis)
 - ❌ SSL/Certificados (gratis)
 - ❌ WordPress Core (gratis)
@@ -48,13 +51,15 @@ graph TD
 ## 1️⃣ ANTES de empezar
 
 ### Comprar LearnDash
-1. Ir a https://learndash.com/pricing/
+
+1. Ir a <https://learndash.com/pricing/>
 2. Comprar licencia ($199 USD)
 3. Descargar el archivo `.zip`
 4. **GUARDAR** el archivo y la license key
 
 ### Obtener API Token de Hetzner
-1. Ir a https://console.hetzner.cloud
+
+1. Ir a <https://console.hetzner.cloud>
 2. Crear cuenta (tarjeta de crédito requerida)
 3. Crear proyecto "wordpress-production"
 4. Ir a: Security → API Tokens
@@ -83,6 +88,7 @@ export TF_VAR_ssh_allowed_ips='["TU.IP.AQUI/32"]'
 ```
 
 **Para saber tu IP:**
+
 ```bash
 curl -4 ifconfig.me
 # Resultado ejemplo: 203.0.113.42
@@ -176,6 +182,7 @@ terraform output server_ip
 **Migrar el dominio completo de GoDaddy → Cloudflare**
 
 **¿Por qué transferir y no solo DNS?**
+
 - ✅ Renovación más barata (Cloudflare cobra al costo, sin markup)
 - ✅ Todo en un proveedor (dominio + DNS + CDN + SSL)
 - ✅ Si haces upgrade a Cloudflare Pro, todo está integrado
@@ -185,7 +192,7 @@ terraform output server_ip
 
 **Paso 1: Preparar dominio en GoDaddy**
 
-1. Ir a https://account.godaddy.com
+1. Ir a <https://account.godaddy.com>
 2. My Products → Domains → tu dominio
 3. Click "Manage"
 4. **Desbloquear dominio:**
@@ -196,7 +203,7 @@ terraform output server_ip
 
 **Paso 2: Iniciar transferencia en Cloudflare**
 
-1. Ir a https://dash.cloudflare.com
+1. Ir a <https://dash.cloudflare.com>
 2. Click "Domain Registration" → "Transfer Domains"
 3. Introducir tu dominio
 4. Introducir el Authorization Code de GoDaddy
@@ -211,6 +218,7 @@ terraform output server_ip
 **⏱️ Esperar: 5-7 días para transferencia completa**
 
 **💰 Costo total de transferencia:**
+
 - Pago único: ~€9-10 (renovación por 1 año)
 - No hay fees ocultos
 - **Renovaciones futuras: €9/año en Cloudflare vs €21.99/año en GoDaddy**
@@ -219,6 +227,7 @@ terraform output server_ip
 **Paso 3: Mientras tanto, configurar DNS temporalmente**
 
 Mientras se completa la transferencia (5-7 días), puedes:
+
 - Cambiar nameservers a Cloudflare (2-6 horas) para empezar a usar DNS
 - O esperar a que termine la transferencia
 
@@ -228,7 +237,7 @@ Mientras se completa la transferencia (5-7 días), puedes:
 
 **Pasos EXACTOS:**
 
-1. Ir a https://dash.cloudflare.com/profile/api-tokens
+1. Ir a <https://dash.cloudflare.com/profile/api-tokens>
 2. Click botón azul **"Create Token"**
 3. Buscar template **"Edit zone DNS"** → Click "Use template"
 4. En **"Zone Resources":**
@@ -267,6 +276,7 @@ nano terraform/environments/production/terraform.tfvars
 ```
 
 **Añadir estas líneas:**
+
 ```hcl
 domain              = "tudominio.com"
 enable_cloudflare   = true
@@ -294,7 +304,7 @@ terraform apply
 
 **Paso 1: Añadir sitio en Cloudflare**
 
-1. Ir a https://dash.cloudflare.com
+1. Ir a <https://dash.cloudflare.com>
 2. Click "Add a Site"
 3. Escribir tu dominio
 4. Elegir plan **Free**
@@ -302,7 +312,7 @@ terraform apply
 
 **Paso 2: En GoDaddy cambiar nameservers**
 
-1. Ir a https://account.godaddy.com
+1. Ir a <https://account.godaddy.com>
 2. My Products → Domains → tu dominio
 3. Manage DNS → Nameservers → Custom
 4. Pegar los 2 nameservers de Cloudflare
@@ -329,12 +339,14 @@ Crear **3 registros A**:
 | A | monitoring | TU.IP.DEL.SERVIDOR | ❌ OFF |
 
 **En Cloudflare → SSL/TLS:**
+
 - Overview: **Full (strict)**
 - Always Use HTTPS: **On**
 
 ---
 
 **✅ Verificar DNS (ambas opciones):**
+
 ```bash
 dig tudominio.com +short
 # Debe mostrar una IP
@@ -355,6 +367,7 @@ nano inventory/group_vars/env_production/wordpress.yml
 ```
 
 **Contenido:**
+
 ```yaml
 ---
 wordpress_domain: "tudominio.com"
@@ -368,6 +381,7 @@ ansible_ssh_private_key_file: ~/.ssh/id_ed25519
 ```
 
 **Ejecutar:**
+
 ```bash
 ansible-playbook -i inventory/hetzner.yml playbooks/site.yml --ask-vault-pass
 # Introducir la contraseña del vault
@@ -381,6 +395,7 @@ nano inventory/production/hosts.yml
 ```
 
 **Contenido (cambiar IP):**
+
 ```yaml
 ---
 all:
@@ -401,6 +416,7 @@ all:
 ```
 
 **Ejecutar:**
+
 ```bash
 ansible-playbook -i inventory/production/hosts.yml playbooks/site.yml --ask-vault-pass
 ```
@@ -427,23 +443,29 @@ ansible-playbook -i inventory/production/hosts.yml playbooks/site.yml --ask-vaul
 ## ✅ Verificar que todo funciona
 
 ### WordPress
+
 ```bash
 # Abrir en navegador
 https://tudominio.com
 ```
+
 **Debe mostrar:** Sitio WordPress funcionando
 
 ### Grafana Monitoring
+
 ```bash
 # Abrir en navegador
 https://monitoring.tudominio.com
 ```
+
 **Debe mostrar:** Página de login Grafana
 
 ### SSH al servidor
+
 ```bash
 ssh malpanez@tudominio.com
 ```
+
 **Debe conectar** y pedir TOTP (código Google Authenticator)
 
 ---
@@ -451,14 +473,17 @@ ssh malpanez@tudominio.com
 ## 🆘 Problemas Comunes
 
 ### "No puedo conectar por SSH"
+
 - ✅ Verificar que tu IP está en `ssh_allowed_ips`
 - ✅ Esperar 5 minutos después de `terraform apply`
 
 ### "WordPress no carga"
+
 - ✅ Verificar DNS: `dig tudominio.com`
 - ✅ Esperar propagación DNS (hasta 6 horas)
 
 ### "Ansible falla con vault"
+
 - ✅ Verificar contraseña del vault
 - ✅ Verificar que secrets.yml está cifrado
 
@@ -467,6 +492,7 @@ ssh malpanez@tudominio.com
 ## 📊 Qué instala automáticamente Ansible
 
 ### ✅ SE INSTALA SOLO
+
 - WordPress Core
 - Nginx (web server)
 - PHP-FPM
@@ -477,6 +503,7 @@ ssh malpanez@tudominio.com
 - Auditd (logs de seguridad)
 
 ### ❌ DEBES INSTALAR MANUAL
+
 - LearnDash Plugin ($199 - OBLIGATORIO)
 - Wordfence Security (gratis - recomendado)
 - UpdraftPlus Backups (gratis - recomendado)
@@ -487,6 +514,7 @@ ssh malpanez@tudominio.com
 ## 💰 Resumen de Gastos
 
 ### Hoy (para empezar)
+
 | Concepto | Costo | Obligatorio |
 |----------|-------|-------------|
 | LearnDash | $199 USD | ✅ SÍ |
@@ -496,9 +524,11 @@ ssh malpanez@tudominio.com
 | **TOTAL RECOMENDADO** | **~$220 USD** | Si transfieres dominio |
 
 ### Cada mes
+
 - Hetzner CX22: €5.39/mes
 
 ### Cada año (renovaciones)
+
 | Concepto | Si dominio en GoDaddy | Si dominio en Cloudflare |
 |----------|----------------------|-------------------------|
 | LearnDash | $199 USD | $199 USD |
@@ -512,19 +542,23 @@ ssh malpanez@tudominio.com
 ## 🔑 Información Importante
 
 ### SSH Keys
+
 - ✅ Puedes usar tu clave existente `~/.ssh/id_ed25519`
 - ✅ NO necesitas crear claves nuevas
 - ✅ La misma clave funciona para GitHub + Codeberg + Hetzner
 
 ### Usuario
+
 - ✅ Usar `malpanez` (no obvio, fácil de recordar)
 - ❌ NO usar `admin`, `root`, `administrator`, `miguel`
 
 ### Puerto SSH
+
 - ✅ Mantener puerto 22 (estándar)
 - ✅ Ya está protegido con IP filtering + 2FA
 
 ### Cloudflare
+
 - ✅ Plan Free es suficiente
 - ❌ NO necesitas Cloudflare Pro ($20/mes)
 
@@ -533,9 +567,10 @@ ssh malpanez@tudominio.com
 ## 📞 Siguiente Paso
 
 Después de completar todos los pasos, tu sitio estará en:
-- **WordPress:** https://tudominio.com
-- **Admin:** https://tudominio.com/wp-admin
-- **Monitoring:** https://monitoring.tudominio.com
+
+- **WordPress:** <https://tudominio.com>
+- **Admin:** <https://tudominio.com/wp-admin>
+- **Monitoring:** <https://monitoring.tudominio.com>
 
 **¡Listo para crear cursos con LearnDash! 🎓**
 

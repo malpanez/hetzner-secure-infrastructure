@@ -58,17 +58,20 @@ Quick access to all project documentation.
 - [Security Policy](../SECURITY.md) - Vulnerability reporting
 
 ### Performance
+
 - [ARM64 vs x86 Comparison](performance/ARM64_vs_X86_COMPARISON.md) - **Performance benchmarks**
 - [ARM64 Staging Benchmark](performance/ARM64_STAGING_BENCHMARK.md) - CAX11 test results
 - [x86 Staging Benchmark](performance/X86_STAGING_BENCHMARK_WITH_MONITORING.md) - CX23 test results
 - [Testing x86 vs ARM](performance/TESTING_x86_vs_ARM.md) - Methodology
 
 ### Configuration
+
 - [Nginx Configuration Explained](guides/NGINX_CONFIGURATION_EXPLAINED.md) - Deep dive into Nginx setup
 - [Ansible Best Practices](guides/ANSIBLE_BEST_PRACTICES.md) - Coding standards
 - [Terraform Cloud Migration](guides/TERRAFORM_CLOUD_MIGRATION.md) - Terraform setup
 
 ### Reference
+
 - [Trading Course Website Template](reference/TRADING_COURSE_WEBSITE_TEMPLATE.md) - Site structure
 - [WordPress Plugins Analysis](reference/WORDPRESS_PLUGINS_ANALYSIS.md) - Plugin security review
 - [Hetzner API Token](infrastructure/HETZNER_API_TOKEN.md) - API setup
@@ -77,7 +80,7 @@ Quick access to all project documentation.
 
 ## 🎯 By Task
 
-### I want to...
+### I want to
 
 **Deploy to production today**
 → [Go Live Today Checklist](../GO_LIVE_TODAY_CHECKLIST.md)

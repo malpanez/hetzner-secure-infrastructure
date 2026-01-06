@@ -539,6 +539,7 @@ graph TB
 **Decision:** Use OpenTofu (Terraform fork) for full open-source stack
 
 **Consequences:**
+
 - ✅ No vendor lock-in
 - ✅ Community-driven development
 - ✅ Compatible with Terraform modules
@@ -553,6 +554,7 @@ graph TB
 **Decision:** Implement 6-layer defense in depth
 
 **Consequences:**
+
 - ✅ Multiple failure points required for breach
 - ✅ Compliant with CIS benchmarks
 - ⚠️ More complex to manage
@@ -566,6 +568,7 @@ graph TB
 **Decision:** Use Ansible with custom roles
 
 **Consequences:**
+
 - ✅ Idempotent operations
 - ✅ Easy to audit and version control
 - ✅ Large community and module ecosystem

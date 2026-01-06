@@ -9,6 +9,7 @@
 ## Why Terraform Cloud?
 
 ### Benefits
+
 1. **Remote State Storage**: No sensitive data in local files
 2. **Secret Management**: Store Hetzner API token securely
 3. **State Locking**: Prevent concurrent modifications
@@ -21,7 +22,7 @@
 
 ### 1.1 Sign Up
 
-1. Go to: https://app.terraform.io/signup/account
+1. Go to: <https://app.terraform.io/signup/account>
 2. Create account (use same email as Cloudflare for consistency)
 3. Verify email address
 
@@ -48,6 +49,7 @@
 Navigate to workspace settings:
 
 **General Settings**:
+
 - Execution Mode: **Remote**
 - Terraform Working Directory: `terraform/` (if your tf files are in terraform/ subdirectory)
 - Auto apply: **Disabled** (require manual approval for safety)
@@ -73,6 +75,7 @@ Navigate to workspace settings:
 | `ssh_public_key_path` | `~/.ssh/github_ed25519.pub` | ❌ NO | ❌ NO | Your SSH key path |
 
 **To add variables**:
+
 1. Click "Variables" in workspace menu
 2. Click "Add variable"
 3. Select "Environment variable" or "Terraform variable"
@@ -127,8 +130,10 @@ terraform login
 ```
 
 **Alternative** (if browser doesn't open):
-1. Generate token manually: https://app.terraform.io/app/settings/tokens
+
+1. Generate token manually: <https://app.terraform.io/app/settings/tokens>
 2. Create `~/.terraform.d/credentials.tfrc.json`:
+
 ```json
 {
   "credentials": {
@@ -151,6 +156,7 @@ terraform init -migrate-state
 ```
 
 **What this does**:
+
 - Uploads current state to Terraform Cloud
 - Deletes local `terraform.tfstate` (now managed remotely)
 - Configures workspace for remote execution
@@ -172,7 +178,8 @@ terraform plan
 ```
 
 **Check Terraform Cloud UI**:
-1. Go to https://app.terraform.io
+
+1. Go to <https://app.terraform.io>
 2. Navigate to your workspace
 3. Click "Runs" tab
 4. You should see the plan execution
@@ -206,6 +213,7 @@ terraform apply
 ```
 
 **Monitor in Terraform Cloud UI**:
+
 1. Go to workspace → Runs
 2. Watch apply progress in real-time
 3. See detailed logs
@@ -229,7 +237,7 @@ Now that server is deployed, configure Cloudflare DNS.
 
 ### 6.1 Create Cloudflare Account
 
-1. Go to: https://dash.cloudflare.com/sign-up
+1. Go to: <https://dash.cloudflare.com/sign-up>
 2. Use **same email as Terraform Cloud** for consistency
 3. Verify email
 
@@ -243,6 +251,7 @@ Now that server is deployed, configure Cloudflare DNS.
 ### 6.3 Get Cloudflare Nameservers
 
 Cloudflare will provide two nameservers:
+
 ```
 example1.ns.cloudflare.com
 example2.ns.cloudflare.com
@@ -252,7 +261,7 @@ example2.ns.cloudflare.com
 
 ### 6.4 Update GoDaddy DNS
 
-1. Login to: https://account.godaddy.com
+1. Login to: <https://account.godaddy.com>
 2. Navigate: **My Products** → **Domains**
 3. Find your domain → Click **Manage DNS**
 4. Scroll to **Nameservers** section
@@ -282,24 +291,28 @@ While waiting for nameserver propagation, configure DNS:
 ### 6.6 Configure Cloudflare Security Settings
 
 **SSL/TLS**:
+
 - Navigate: SSL/TLS → Overview
 - Mode: **Full (strict)**
 - Always Use HTTPS: **ON**
 - Minimum TLS Version: **TLS 1.2**
 
 **Security**:
+
 - Navigate: Security → Settings
 - Security Level: **Medium**
 - Bot Fight Mode: **ON**
 - Challenge Passage: **30 minutes**
 
 **Speed**:
+
 - Navigate: Speed → Optimization
 - Auto Minify: Enable **HTML**, **CSS**, **JS**
 - Brotli: **ON**
 - Rocket Loader: **OFF** (can break WordPress admin)
 
 **Caching**:
+
 - Navigate: Caching → Configuration
 - Caching Level: **Standard**
 - Browser Cache TTL: **4 hours**
@@ -311,12 +324,14 @@ While waiting for nameserver propagation, configure DNS:
 ### 7.1 Secrets Stored in Terraform Cloud
 
 ✅ **Already secure** (you added these in Step 2.2):
+
 - Hetzner API token (`HCLOUD_TOKEN`)
 - Infrastructure variables
 
 ### 7.2 Secrets Stored in Ansible Vault
 
 ✅ **Already secure**:
+
 - All passwords encrypted with AES256
 - Vault password: `8ZpBU0IW4pWNKuXm4b7hQxF5e/jmfspQYzrSSLhuXu8=`
 
@@ -325,6 +340,7 @@ Location: `ansible/inventory/group_vars/all/secrets.yml`
 ### 7.3 Secrets to Protect Locally
 
 **DO NOT commit these files**:
+
 ```bash
 # Check .gitignore includes:
 cat .gitignore | grep -E "(tfvars|credentials|vault|token)"
@@ -340,6 +356,7 @@ cat .gitignore | grep -E "(tfvars|credentials|vault|token)"
 ```
 
 **Remove sensitive files from Git** (if accidentally committed):
+
 ```bash
 # Remove from Git but keep locally
 git rm --cached terraform/terraform.staging.tfvars
@@ -355,6 +372,7 @@ git push
 After completing all steps:
 
 ### Terraform Cloud
+
 - [ ] Organization created
 - [ ] Workspace created and configured
 - [ ] Environment variables added (HCLOUD_TOKEN)
@@ -364,6 +382,7 @@ After completing all steps:
 - [ ] Test plan executes remotely (`terraform plan`)
 
 ### Cloudflare
+
 - [ ] Account created (same email as Terraform Cloud)
 - [ ] Domain added
 - [ ] Nameservers copied from Cloudflare
@@ -373,6 +392,7 @@ After completing all steps:
 - [ ] Security settings configured
 
 ### Infrastructure
+
 - [ ] Server deployed via Terraform Cloud
 - [ ] Server IP address obtained (`terraform output server_ipv4`)
 - [ ] Server accessible via SSH
@@ -384,11 +404,13 @@ After completing all steps:
 ### Daily Operations
 
 **Check infrastructure status**:
+
 ```bash
 terraform plan  # Shows any drift from desired state
 ```
 
 **Deploy changes**:
+
 ```bash
 # Edit terraform files
 terraform plan   # Review changes
@@ -396,6 +418,7 @@ terraform apply  # Apply after confirmation
 ```
 
 **View state remotely**:
+
 ```bash
 terraform show   # Shows current state from Terraform Cloud
 ```
@@ -410,6 +433,7 @@ If you add team members later:
    - Set permissions (Plan/Apply/Admin)
 
 2. **They run**:
+
    ```bash
    terraform login
    terraform init
@@ -420,11 +444,13 @@ If you add team members later:
 ### Backup and Recovery
 
 **Terraform Cloud automatically**:
+
 - ✅ Backs up state after every apply
 - ✅ Keeps version history (can roll back)
 - ✅ Stores encrypted in their infrastructure
 
 **To download state backup** (for local archive):
+
 ```bash
 terraform state pull > terraform.tfstate.backup.json
 ```
@@ -447,14 +473,16 @@ terraform state pull > terraform.tfstate.backup.json
 ### "Invalid Hetzner Cloud API Token"
 
 **Fix**:
+
 1. Check token in Terraform Cloud workspace variables
 2. Ensure variable name is `HCLOUD_TOKEN` or `TF_VAR_hcloud_token`
 3. Mark as "Sensitive"
-4. Generate new token at: https://console.hetzner.cloud → Security → API tokens
+4. Generate new token at: <https://console.hetzner.cloud> → Security → API tokens
 
 ### "Failed to migrate state"
 
 **Fix**:
+
 ```bash
 # Force reinit
 rm -rf .terraform/
@@ -464,6 +492,7 @@ terraform init -reconfigure
 ### "Cloudflare nameservers not working"
 
 **Check**:
+
 ```bash
 # Check current nameservers
 dig NS yourdomain.com +short
@@ -475,6 +504,7 @@ dig NS yourdomain.com +short
 ### "DNS_PROBE_FINISHED_NXDOMAIN"
 
 **Fix**:
+
 - Wait for DNS propagation (2-24 hours)
 - Clear browser DNS cache: chrome://net-internals/#dns
 - Try different DNS server: `dig @8.8.8.8 yourdomain.com`
@@ -507,12 +537,14 @@ Once Terraform Cloud + Cloudflare are configured:
 ### What's Protected
 
 ✅ **Terraform Cloud**:
+
 - API tokens stored encrypted
 - State files encrypted at rest
 - TLS for all communication
 - SOC 2 Type II compliant
 
 ✅ **Cloudflare**:
+
 - DDoS protection (Layer 3/4/7)
 - WAF (Web Application Firewall)
 - Bot mitigation
@@ -520,6 +552,7 @@ Once Terraform Cloud + Cloudflare are configured:
 - Rate limiting
 
 ✅ **Local**:
+
 - `.gitignore` prevents committing secrets
 - Ansible Vault encrypts passwords (AES256)
 - SSH keys protected with filesystem permissions
@@ -527,6 +560,7 @@ Once Terraform Cloud + Cloudflare are configured:
 ### What to Never Commit
 
 ❌ Never commit:
+
 - `terraform.tfvars` (contains sensitive variables)
 - `terraform.tfstate*` (contains infrastructure details)
 - `VAULT_SETUP_INSTRUCTIONS.md` (contains plaintext passwords)

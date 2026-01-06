@@ -1,4 +1,5 @@
 # Architecture Decision Record (ADR)
+
 ## Hetzner Secure Infrastructure - WordPress + LearnDash Premium Course Platform
 
 **Project**: Trading Course Platform ($3,000/student)
@@ -28,6 +29,7 @@
 **Decision**: Single server (All-in-one) for Phase 1
 
 **Alternatives Considered**:
+
 ```yaml
 Option A: 1 Server (All-in-one) ✅ SELECTED
   - Cost: €9.40/mes
@@ -57,6 +59,7 @@ Option C: 4 Servers (Fully separated)
    - Cloudflare caches static content
    - 2 vCPU sufficient for 100 concurrent users
    - RAM (4 GB) well-distributed:
+
      ```
      System:    500 MB
      Nginx:     200 MB
@@ -74,6 +77,7 @@ Option C: 4 Servers (Fully separated)
    - Less complexity = fewer bugs
 
 **Migration Path**:
+
 ```
 Month 1-6:  1 server (cx21)
 Month 6-12: Upgrade to cx31 if needed (4 vCPU, 8 GB) - €17.90/mes
@@ -81,6 +85,7 @@ Month 12+:  Split to 2 servers (Frontend + Backend) - €18.80/mes
 ```
 
 **Triggers for Scaling**:
+
 - CPU avg >70% for 7 days
 - RAM usage >85% consistently
 - DB slow queries >50/day
@@ -107,6 +112,7 @@ Cost: €9.40/month
 ```
 
 **Why Hetzner**:
+
 - ✅ Best price/performance ratio in EU
 - ✅ GDPR compliant (EU data sovereignty)
 - ✅ Excellent network (20 TB bandwidth)
@@ -114,6 +120,7 @@ Cost: €9.40/month
 - ✅ Terraform + Ansible compatible
 
 **Alternatives Rejected**:
+
 - ❌ DigitalOcean: 2x more expensive (€18/mes for similar specs)
 - ❌ Linode: Limited EU locations
 - ❌ AWS/GCP: Too expensive for MVP (~€50-100/mes)
@@ -126,6 +133,7 @@ Cost: €9.40/month
 **Decision**: Debian 13 (Trixie)
 
 **Rationale**:
+
 - ✅ Latest stable Debian release
 - ✅ Long-term support (5+ years)
 - ✅ Excellent package ecosystem
@@ -133,6 +141,7 @@ Cost: €9.40/month
 - ✅ Well-documented
 
 **Alternatives Rejected**:
+
 - ❌ Ubuntu 24.04: More bloat, less predictable
 - ❌ CentOS/Rocky: rpm ecosystem less ideal for WordPress
 - ❌ Arch: Too bleeding-edge, less stable
@@ -146,6 +155,7 @@ Cost: €9.40/month
 **Decision**: MariaDB 10.11 LTS
 
 **Alternatives Considered**:
+
 ```yaml
 MariaDB 10.11: ✅ SELECTED
   WordPress Compatibility: ⭐⭐⭐⭐⭐ (100%)
@@ -169,6 +179,7 @@ PostgreSQL 15:
 **Rationale**:
 
 1. **Performance Benchmarks**:
+
    ```
    Test: WordPress + LearnDash + 1,000 students
 
@@ -204,6 +215,7 @@ PostgreSQL 15:
    - Drop-in replacement for MySQL (easy migration)
 
 **Configuration Highlights**:
+
 ```ini
 [mysqld]
 # InnoDB Optimization
@@ -254,6 +266,7 @@ Redis 7.2+:
 ```
 
 **History**:
+
 ```
 March 2024: Redis changed license from BSD to RSALv2/SSPLv1
             ↓ Community outrage
@@ -267,6 +280,7 @@ Nov 2024:   Valkey 8.0 released (more features than Redis)
 ```
 
 **Technical Details**:
+
 ```yaml
 Connection: Unix socket (faster than TCP)
 Path: /var/run/valkey/valkey.sock
@@ -294,6 +308,7 @@ Performance Impact:
 ```
 
 **Alternatives Rejected**:
+
 - ❌ Redis 7.2+: License concerns
 - ❌ Memcached: Less features, no persistence
 - ❌ APCu: PHP-only, can't share between PHP-FPM workers
@@ -334,6 +349,7 @@ Layer 5: NVMe SSD Filesystem
 ```
 
 **Performance Results**:
+
 ```
 Without caching:
 - TTFB: 800-1200ms
@@ -349,6 +365,7 @@ With full stack:
 ```
 
 **Why NOT Varnish**:
+
 - ❌ Overkill for <100 users
 - ❌ Complex HTTPS handling
 - ❌ Doesn't work well with cookies (WordPress logged-in users)
@@ -392,6 +409,7 @@ Modes available:
 ```
 
 **Why Full (strict)**:
+
 1. End-to-end encryption (user → Cloudflare → server)
 2. Cloudflare validates your Let's Encrypt certificate
 3. Protection against MITM attacks
@@ -399,6 +417,7 @@ Modes available:
 5. Auto-renewal (certbot systemd timer)
 
 **Setup Process**:
+
 ```bash
 # 1. Cloudflare (automatic)
 Cloudflare issues Universal SSL within 15 minutes of adding domain
@@ -415,6 +434,7 @@ SSL/TLS → Overview → Full (strict)
 ```
 
 **Cost**:
+
 ```yaml
 Cloudflare Universal SSL: FREE ✅
 Let's Encrypt: FREE ✅
@@ -423,12 +443,14 @@ Total: €0/month
 ```
 
 **Alternatives Rejected**:
+
 - ❌ Cloudflare Origin CA: Locks you into Cloudflare (vendor lock-in)
 - ❌ Commercial SSL ($50-200/year): Unnecessary expense
 - ❌ Self-signed: Browsers show warnings
 - ❌ Flexible mode: Insecure (HTTP to origin)
 
 **Security Headers** (configured by Ansible):
+
 ```nginx
 add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
 add_header X-Frame-Options "SAMEORIGIN" always;
@@ -446,6 +468,7 @@ add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 **Decision**: LearnDash Pro ($199/year)
 
 **Alternatives Considered**:
+
 ```yaml
 LearnDash Pro: ✅ SELECTED
   Price: $199/year (1 site)
@@ -478,6 +501,7 @@ LifterLMS:
 **Why LearnDash for $3,000 Course**:
 
 1. **Drip Content is CRITICAL**:
+
    ```
    Without drip:
    - Student gets all content day 1
@@ -493,6 +517,7 @@ LifterLMS:
    ```
 
 2. **ROI Analysis**:
+
    ```
    Investment: $199/year (€180)
    First sale: $3,000 (€2,727)
@@ -515,6 +540,7 @@ LifterLMS:
    - Assignment submissions with grading
 
 **Migration Path**:
+
 - Start with LearnDash from Day 1 ✅ RECOMMENDED
 - Alternative: Start with Tutor Free → Migrate to LearnDash
   - Migration effort: 8-12 hours
@@ -572,6 +598,7 @@ Why upgrade:
 ```
 
 **Why NOT Self-Hosted + Cloudflare**:
+
 - ❌ No watermarking capability
 - ❌ No screen capture detection
 - ❌ Vulnerable to download tools
@@ -579,6 +606,7 @@ Why upgrade:
 - ✅ Only viable for <$500 courses
 
 **Video Strategy**:
+
 ```
 Month 1-3: Build course, use Bunny.net
 Month 4:   First sales, upgrade to InfoProtector
@@ -612,6 +640,7 @@ Resource Usage:
 ```
 
 **Dashboards**:
+
 1. Node Exporter Full (ID: 1860)
    - CPU, RAM, Disk, Network
    - System health
@@ -627,12 +656,14 @@ Resource Usage:
    - InnoDB metrics
 
 **Why NOT Separate Monitoring Server**:
+
 - Only 1 server to monitor
 - Resources: <400 MB RAM
 - Cost: €3.79/mes saved
 - Complexity: Simpler
 
 **When to Separate**:
+
 - Monitoring 5+ servers
 - Need >90 days metrics
 - SLA requirements

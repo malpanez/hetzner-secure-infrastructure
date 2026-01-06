@@ -25,6 +25,7 @@
 ## Software Stack
 
 ### Application Stack
+
 - **OS**: Debian 13 (Trixie)
 - **Web Server**: Nginx 1.27.3
 - **PHP**: PHP 8.4-FPM
@@ -33,6 +34,7 @@
 - **WordPress**: Latest (redirect to setup)
 
 ### Monitoring Stack (All-in-One Deployment)
+
 - **Prometheus**: 3.8.1 (metrics collection)
 - **Grafana**: Latest (visualization)
 - **Loki**: Latest (log aggregation)
@@ -144,18 +146,21 @@ Load Average: 2.87, 1.14, 0.51
 Based on Node Exporter Full dashboard observations:
 
 #### System Load
+
 - **Load 1m**: Peaked at 0.66 (healthy for 2 vCPUs)
 - **Load 5m**: Stable at 0.32
 - **Load 15m**: Stable at 0.21
 - **Status**: 🟢 Well below critical threshold of 2.0
 
 #### System Processes
+
 - **Runnable processes**: Mean 1.46, max 4
 - **Blocked I/O**: 0 (no I/O bottleneck)
 - **Process forks**: ~3.5/sec (stable)
 - **Status**: 🟢 No process contention
 
 #### Process Memory
+
 - **Virtual memory usage**: Minimal spike (~17.5 kB)
 - **Status**: 🟢 No memory pressure
 
@@ -195,6 +200,7 @@ Based on Node Exporter Full dashboard observations:
 ### Impact Assessment
 
 ✅ **Negligible Performance Impact**
+
 - Monitoring stack uses 10% of total RAM
 - CPU overhead is < 1% during normal operation
 - No measurable impact on request throughput or latency
@@ -280,6 +286,7 @@ Based on Node Exporter Full dashboard observations:
 ### Why the Difference?
 
 The previous benchmark (5,213 req/s) was likely:
+
 1. **Different concurrency level** (500 vs 100)
 2. **Different endpoint** (may have been static file vs WordPress redirect)
 3. **Different test conditions** (earlier in server lifecycle)
@@ -303,6 +310,7 @@ The previous benchmark (5,213 req/s) was likely:
 ### System Processes During Benchmark
 
 **Key Metrics**:
+
 - Runnable processes: Mean 1.46, max 4
 - Blocked I/O processes: 0 (no I/O wait)
 - Process forks: Stable at ~3.5/sec
@@ -320,6 +328,7 @@ The previous benchmark (5,213 req/s) was likely:
 1. **Scale horizontally** when traffic exceeds 2,000 req/s sustained
 2. **Enable object caching** (Valkey) for WordPress to reduce PHP-FPM load
 3. **Tune PHP-FPM** if you need higher concurrency:
+
    ```ini
    pm = dynamic
    pm.max_children = 50
@@ -339,6 +348,7 @@ The previous benchmark (5,213 req/s) was likely:
 ✅ **Keep the monitoring stack**
 
 The overhead is negligible and the observability is invaluable:
+
 - Real-time performance metrics
 - Historical trend analysis
 - Alert on anomalies before they become issues
@@ -360,11 +370,13 @@ Current capacity estimates:
 ## Next Steps
 
 ### Immediate
+
 1. ✅ Complete x86 benchmark with monitoring - **DONE**
 2. ⏳ Document findings - **IN PROGRESS**
 3. ⏳ Deploy ARM (CAX11) for comparison testing
 
 ### ARM Comparison Testing
+
 1. Deploy identical WordPress stack on CAX11 (ARM64)
 2. Run same benchmark (100k requests, 100 concurrency)
 3. Compare:
@@ -375,6 +387,7 @@ Current capacity estimates:
 4. Make architecture decision (x86 vs ARM)
 
 ### Production Deployment
+
 1. Choose architecture (x86 or ARM) based on testing
 2. Deploy 3-tier setup (staging, testing, production)
 3. Configure Cloudflare CDN

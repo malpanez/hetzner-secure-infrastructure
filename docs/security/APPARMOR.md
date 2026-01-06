@@ -18,7 +18,7 @@
 
 **AppArmor** (Application Armor) is a **Mandatory Access Control (MAC)** security system for Linux. It confines programs to a limited set of resources through **profiles**.
 
-### Key Concepts:
+### Key Concepts
 
 - **Profile**: Defines what resources a program can access
 - **Enforce mode**: Violations are blocked and logged
@@ -46,11 +46,13 @@
 | **Performance** | Similar | Similar |
 
 **Use AppArmor when:**
+
 - You're on Debian/Ubuntu
 - You want simpler profile management
 - Path-based security model makes sense for your use case
 
 **Use SELinux when:**
+
 - You're on RHEL/CentOS
 - You need very fine-grained control
 - You have experience with it
@@ -59,7 +61,7 @@
 
 ## Installation and Setup
 
-### On Debian 12/13:
+### On Debian 12/13
 
 ```bash
 # Install AppArmor
@@ -78,7 +80,7 @@ cat /proc/cmdline | grep apparmor
 # Should see: apparmor=1 security=apparmor
 ```
 
-### Enable in GRUB (if not enabled):
+### Enable in GRUB (if not enabled)
 
 ```bash
 # Edit GRUB config
@@ -94,7 +96,7 @@ sudo update-grub
 sudo reboot
 ```
 
-### Verify Installation:
+### Verify Installation
 
 ```bash
 # Check AppArmor status
@@ -111,7 +113,7 @@ sudo aa-status
 
 ## Understanding Profiles
 
-### Profile Locations:
+### Profile Locations
 
 ```bash
 /etc/apparmor.d/          # Main profiles directory
@@ -120,7 +122,7 @@ sudo aa-status
 /etc/apparmor.d/abstractions/ # Reusable components
 ```
 
-### Profile Structure:
+### Profile Structure
 
 ```
 #include <tunables/global>
@@ -146,7 +148,7 @@ sudo aa-status
 }
 ```
 
-### Access Modes:
+### Access Modes
 
 | Mode | Meaning |
 |------|---------|
@@ -161,7 +163,7 @@ sudo aa-status
 | `Ux` | Execute unconfined |
 | `m` | Memory map executable |
 
-### Capabilities:
+### Capabilities
 
 AppArmor can restrict Linux capabilities:
 
@@ -268,7 +270,7 @@ sudo aa-enforce /usr/bin/myapp
 
 ## Managing Profiles
 
-### Common Commands:
+### Common Commands
 
 ```bash
 # View status of all profiles
@@ -310,27 +312,33 @@ sudo dmesg | grep -i apparmor | grep -i denied
 sudo journalctl -b | grep -i apparmor | grep -i denied
 ```
 
-### Profile Modes:
+### Profile Modes
 
 1. **Enforce Mode** (Production):
+
    ```bash
    sudo aa-enforce /etc/apparmor.d/usr.sbin.sshd
    ```
+
    - Blocks violations
    - Logs denials
 
 2. **Complain Mode** (Testing):
+
    ```bash
    sudo aa-complain /etc/apparmor.d/usr.sbin.sshd
    ```
+
    - Allows violations
    - Logs would-be denials
    - Perfect for testing
 
 3. **Disabled**:
+
    ```bash
    sudo aa-disable /etc/apparmor.d/usr.sbin.sshd
    ```
+
    - Profile not loaded
 
 ---
@@ -401,11 +409,13 @@ sudo apparmor_parser -r /etc/apparmor.d/usr.sbin.myapp
 ### Problem: Need to temporarily disable AppArmor
 
 **For specific profile:**
+
 ```bash
 sudo aa-disable /etc/apparmor.d/usr.sbin.sshd
 ```
 
 **For entire system (NOT recommended):**
+
 ```bash
 sudo systemctl stop apparmor
 sudo systemctl disable apparmor
@@ -540,6 +550,7 @@ Our Ansible deployment includes a complete SSHD profile. Key points:
 ```
 
 **Why this works:**
+
 - SSH needs special capabilities for privilege separation
 - Yubikey FIDO2 needs hidraw device access
 - User shells run unconfined (users aren't confined by SSH profile)
@@ -588,6 +599,7 @@ Our Ansible deployment includes a complete SSHD profile. Key points:
 See the complete profile in `ansible/roles/apparmor/templates/apparmor.d/usr.bin.fail2ban-server.j2`
 
 Key points:
+
 - Needs to read log files
 - Needs net_admin capability for iptables
 - Child profile for iptables commands
@@ -675,10 +687,10 @@ sudo aa-logprof                   # Update profile
 
 ## Additional Resources
 
-- **Official Documentation**: https://gitlab.com/apparmor/apparmor/-/wikis/home
-- **Debian Wiki**: https://wiki.debian.org/AppArmor
-- **Ubuntu AppArmor**: https://ubuntu.com/server/docs/security-apparmor
-- **Profile Repository**: https://gitlab.com/apparmor/apparmor/-/tree/master/profiles
+- **Official Documentation**: <https://gitlab.com/apparmor/apparmor/-/wikis/home>
+- **Debian Wiki**: <https://wiki.debian.org/AppArmor>
+- **Ubuntu AppArmor**: <https://ubuntu.com/server/docs/security-apparmor>
+- **Profile Repository**: <https://gitlab.com/apparmor/apparmor/-/tree/master/profiles>
 
 ---
 
@@ -692,6 +704,7 @@ AppArmor provides **path-based mandatory access control** that:
 ✅ Can **limit damage** from compromised processes  
 
 **Remember:**
+
 1. Always test in **complain mode** first
 2. Use **abstractions** to simplify profiles
 3. Follow **least privilege** principle

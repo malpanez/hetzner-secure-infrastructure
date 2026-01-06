@@ -30,6 +30,7 @@ Our staging environment uses an **all-in-one deployment** with:
 | **Node Exporter** | 9100 | System metrics exporter | 0.0.0.0 (all interfaces) |
 
 **Security Note**: Prometheus, Grafana, and Loki are bound to localhost only and accessed via:
+
 - SSH tunnel (recommended for development)
 - Nginx reverse proxy (for production with subdomains)
 
@@ -51,6 +52,7 @@ ssh -L 3000:localhost:3000 -L 9090:localhost:9090 malpanez@46.224.156.140
 ### Method 2: Nginx Reverse Proxy (Production)
 
 If DNS is configured:
+
 - Grafana: `http://grafana.yourdomain.com`
 - Prometheus: `http://prometheus.yourdomain.com`
 
@@ -76,6 +78,7 @@ We have 2 pre-configured dashboards from Grafana.com:
 **Purpose**: Comprehensive system metrics visualization
 
 **Key Panels**:
+
 - CPU usage (system, user, iowait)
 - Memory usage (used, free, cached, buffers)
 - Disk I/O (read/write rates)
@@ -91,6 +94,7 @@ We have 2 pre-configured dashboards from Grafana.com:
 **Purpose**: Monitor Prometheus itself (self-monitoring)
 
 **Key Panels**:
+
 - Scrape duration
 - Sample ingestion rate
 - Memory usage
@@ -108,6 +112,7 @@ We have 2 pre-configured dashboards from Grafana.com:
 **Alert Trigger**: CPU usage > 80% for 5 minutes
 
 **Symptoms**:
+
 - Slow response times
 - High load averages
 - Dashboard shows red CPU panel
@@ -115,6 +120,7 @@ We have 2 pre-configured dashboards from Grafana.com:
 **Investigation Steps**:
 
 1. **Check current processes**
+
    ```bash
    ssh malpanez@46.224.156.140
    top -o %CPU
@@ -122,11 +128,13 @@ We have 2 pre-configured dashboards from Grafana.com:
    ```
 
 2. **Identify the culprit**
+
    ```bash
    ps aux | sort -rk 3 | head -10
    ```
 
 3. **Check WordPress/PHP-FPM**
+
    ```bash
    systemctl status php8.2-fpm
    journalctl -u php8.2-fpm -n 50 --no-pager
@@ -143,6 +151,7 @@ We have 2 pre-configured dashboards from Grafana.com:
 | **DDoS attack** | Check Cloudflare analytics, enable rate limiting |
 
 **Quick Fix for WordPress**:
+
 ```bash
 # Restart PHP-FPM to clear worker pool
 sudo systemctl restart php8.2-fpm
@@ -161,6 +170,7 @@ sudo systemctl restart nginx
 **Alert Trigger**: Memory usage > 85% for 5 minutes
 
 **Symptoms**:
+
 - System swapping
 - OOM (Out of Memory) kills
 - Slow performance
@@ -168,16 +178,19 @@ sudo systemctl restart nginx
 **Investigation Steps**:
 
 1. **Check memory breakdown**
+
    ```bash
    free -h
    ```
 
 2. **Find memory hogs**
+
    ```bash
    ps aux | sort -rk 4 | head -10
    ```
 
 3. **Check for memory leaks**
+
    ```bash
    # Monitor memory over time
    watch -n 5 'free -h; echo "---"; ps aux | head -5'
@@ -225,17 +238,20 @@ sudo kill -9 <PID>
 **Investigation Steps**:
 
 1. **Check disk usage**
+
    ```bash
    df -h
    ```
 
 2. **Find large directories**
+
    ```bash
    du -sh /* 2>/dev/null | sort -hr | head -10
    du -sh /var/* 2>/dev/null | sort -hr | head -10
    ```
 
 3. **Find large files**
+
    ```bash
    find / -type f -size +100M -exec ls -lh {} \; 2>/dev/null
    ```
@@ -279,11 +295,13 @@ df -h
 **Alert Trigger**: 15-minute load average > number of CPUs
 
 **Understanding Load Average**:
+
 - **CX23 x86**: 2 vCPUs → Normal load: 0.0 - 2.0
 - **Load > 2.0**: System is overloaded
 - **Load > 4.0**: Critical, investigate immediately
 
 **Check Load**:
+
 ```bash
 uptime
 # Example: load average: 0.53, 0.42, 0.38
@@ -322,6 +340,7 @@ iotop -o
 **Alert**: Prometheus can't scrape metrics from Node Exporter
 
 **Symptoms**:
+
 - No data in Grafana dashboards
 - Prometheus targets page shows "DOWN"
 - "No data" or "Query returned no data" errors
@@ -339,28 +358,33 @@ curl -s http://localhost:9090/api/v1/targets | jq '.data.activeTargets[] | {job:
 **Fix Steps**:
 
 1. **Check Node Exporter is running**
+
    ```bash
    sudo systemctl status node_exporter
    ```
 
 2. **Check if port 9100 is listening**
+
    ```bash
    sudo ss -tlnp | grep 9100
    # Should show: *:9100 ... node_exporter
    ```
 
 3. **Test metrics endpoint**
+
    ```bash
    curl http://localhost:9100/metrics | head -20
    ```
 
 4. **Check Prometheus config**
+
    ```bash
    cat /etc/prometheus/prometheus.yml
    # Verify scrape_configs have correct targets
    ```
 
 5. **Check file service discovery**
+
    ```bash
    ls -la /etc/prometheus/file_sd/
    cat /etc/prometheus/file_sd/node.yml
@@ -375,6 +399,7 @@ curl -s http://localhost:9090/api/v1/targets | jq '.data.activeTargets[] | {job:
    ```
 
 6. **Restart Prometheus**
+
    ```bash
    sudo systemctl restart prometheus
    sudo systemctl status prometheus
@@ -396,6 +421,7 @@ node_cpu_seconds_total{mode="steal"}    # Time stolen by hypervisor (virtualizat
 ```
 
 **CPU Usage % Calculation**:
+
 ```promql
 100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
 ```
@@ -413,6 +439,7 @@ node_memory_SwapFree_bytes       # Free swap
 ```
 
 **Memory Usage % Calculation**:
+
 ```promql
 (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100
 ```

@@ -74,12 +74,14 @@ labels = {
 ## Why This Way?
 
 ### Terraform Cloud Variables (Secrets)
+
 - ✅ Encrypted at rest
 - ✅ Never appear in Terraform logs
 - ✅ Can't accidentally commit to Git
 - ✅ Easy to rotate (change in UI, no code change)
 
 ### tfvars File (Config)
+
 - ✅ Version controlled (track why you changed from x86 to ARM64)
 - ✅ Reviewable in Git diffs
 - ✅ Documented (comments explain decisions)
@@ -91,14 +93,14 @@ labels = {
 
 ### Step 1: Add Secret to Terraform Cloud (ONE TIME - 2 min)
 
-1. Go to: https://app.terraform.io
+1. Go to: <https://app.terraform.io>
 2. Navigate: `twomindstrading` org → `twomindstrading-production` workspace
 3. Click **Variables** in left menu
 4. Click **+ Add variable**
 5. Fill in:
    - **Variable category**: Environment variable
    - **Key**: `HCLOUD_TOKEN`
-   - **Value**: Your Hetzner API token (from https://console.hetzner.cloud → Security → API tokens)
+   - **Value**: Your Hetzner API token (from <https://console.hetzner.cloud> → Security → API tokens)
    - **Sensitive**: ✅ Check this box
    - **Description**: Terraform Hetzner API Key
 6. Click **Add variable**
@@ -124,6 +126,7 @@ terraform apply -var-file=terraform.prod.tfvars
 ## Do NOT Add These to Terraform Cloud
 
 ❌ **DO NOT** add these as Terraform Cloud variables:
+
 - `environment`
 - `architecture`
 - `server_size`
@@ -188,19 +191,24 @@ git push
 When you're ready to enable Cloudflare:
 
 ### Secret (Cloudflare API Token)
+
 **Add to Terraform Cloud**:
+
 - Key: `CLOUDFLARE_API_TOKEN`
 - Value: Your Cloudflare token
 - Category: Environment variable
 - Sensitive: ✅ YES
 
 ### Config (Enable Cloudflare)
+
 **Add to terraform.prod.tfvars**:
+
 ```hcl
 enable_cloudflare = true  # Change from false to true
 ```
 
 Then deploy:
+
 ```bash
 terraform plan -var-file=terraform.prod.tfvars
 terraform apply -var-file=terraform.prod.tfvars
@@ -211,12 +219,14 @@ terraform apply -var-file=terraform.prod.tfvars
 ## Summary: The Complete Picture
 
 ### Terraform Cloud (UI)
+
 ```
 Variables:
 └── HCLOUD_TOKEN (env, sensitive) ← ONLY THIS
 ```
 
 ### terraform.prod.tfvars (File in Git)
+
 ```hcl
 environment      = "prod"
 architecture     = "arm64"
@@ -227,6 +237,7 @@ instance_number  = 1
 ```
 
 ### Deployment Command (ALWAYS)
+
 ```bash
 terraform apply -var-file=terraform.prod.tfvars
 ```
@@ -238,16 +249,19 @@ terraform apply -var-file=terraform.prod.tfvars
 The Terraform Cloud Setup guide mentioned adding **Terraform variables** to the UI. That was **optional** - you can do it either way:
 
 **Option A** (What I recommend - SIMPLER):
+
 - Secrets in Terraform Cloud
 - Config in tfvars file
 - Use: `terraform apply -var-file=terraform.prod.tfvars`
 
 **Option B** (Also valid, but more complex):
+
 - Secrets in Terraform Cloud
 - Config ALSO in Terraform Cloud
 - Use: `terraform apply` (no -var-file needed)
 
 **Option A is simpler** because:
+
 - Version control for config
 - One source of truth (the file)
 - Easy to see what changed
@@ -257,10 +271,12 @@ The Terraform Cloud Setup guide mentioned adding **Terraform variables** to the 
 ## Final Answer
 
 **What you have now:**
+
 - ✅ `HCLOUD_TOKEN` in Terraform Cloud ← CORRECT
 - ✅ `terraform.prod.tfvars` file exists ← CORRECT
 
 **What to do:**
+
 1. Always deploy with: `terraform apply -var-file=terraform.prod.tfvars`
 2. Never add non-secret variables to Terraform Cloud UI
 3. Commit terraform.prod.tfvars to Git

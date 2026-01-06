@@ -80,16 +80,19 @@ graph TB
 ### Recommendation by Use Case
 
 **Production Trading Course (Your Case):**
+
 - 🏆 **Option 1: Separate Server** (RECOMMENDED)
 - Why: Better security isolation, can manage multiple servers
 - Cost: Only €3.79/mo extra (worth it for security)
 
 **Development/Testing:**
+
 - 💻 **Option 2: Same Server**
 - Why: Cost-effective, simpler setup
 - Cost: €0 extra
 
 **Enterprise/Multiple Projects:**
+
 - ☁️ **Option 3: HCP Vault**
 - Why: No management overhead, SLA guarantees
 - Cost: ~€22/mo (expensive for single project)
@@ -398,6 +401,7 @@ Create: `ansible/playbooks/openbao.yml`
 ### Bootstrap Automation (Post-Unseal)
 
 Once OpenBao is installed and reachable, you can run the dedicated bootstrap playbook to:
+
 - Initialize and unseal (first run only)
 - Enable secrets engines
 - Seed WordPress/MariaDB secrets
@@ -417,9 +421,11 @@ ansible-playbook -i inventory/production/hosts.yml \
 ### Source of Truth for Initial Secrets
 
 Before OpenBao takes over, the initial secrets live in:
+
 - `ansible/inventory/group_vars/all/secrets.yml` (Ansible Vault)
 
 After bootstrap:
+
 - Store `openbao_wordpress_rotation_token` in the same vault file.
 - Re-run the WordPress deployment so the rotation timer can use it.
 
@@ -484,11 +490,13 @@ Add to existing server playbook:
 ### Pros & Cons
 
 **Pros:**
+
 - ✅ No extra cost
 - ✅ Simple setup
 - ✅ Good for development
 
 **Cons:**
+
 - ❌ Less secure (compromised server = compromised secrets)
 - ❌ Resource contention with WordPress
 - ❌ Harder to scale
@@ -499,7 +507,7 @@ Add to existing server playbook:
 
 ### Setup
 
-1. **Sign up**: https://portal.cloud.hashicorp.com/
+1. **Sign up**: <https://portal.cloud.hashicorp.com/>
 2. **Create Vault cluster**:
    - Development tier: $0.03/hour (~€22/month)
    - Starter tier: $0.51/hour (~€370/month)
@@ -527,12 +535,14 @@ provider "vault" {
 ### Pros & Cons
 
 **Pros:**
+
 - ✅ Zero management
 - ✅ High availability (99.95% SLA)
 - ✅ Automatic backups
 - ✅ Expert support
 
 **Cons:**
+
 - ❌ Expensive (~€22/month minimum)
 - ❌ Vendor lock-in
 - ❌ Data stored with third-party
@@ -778,12 +788,14 @@ terraform state list
 **CRITICAL**: Store unseal keys securely!
 
 **Options:**
+
 - 🔐 **Password manager** (1Password, Bitwarden)
 - 📄 **Offline backup** (encrypted USB drive)
 - 🔑 **Shamir's Secret Sharing** (split among team members)
 - ☁️ **Cloud KMS** (AWS KMS, Google Cloud KMS for auto-unseal)
 
 **DO NOT:**
+
 - ❌ Store in Git
 - ❌ Store on same server
 - ❌ Email to yourself
