@@ -4,13 +4,16 @@ set -e
 # Upload Terraform state to Terraform Cloud
 # This script works around the "resource not found" state lock bug
 
+# Set your Terraform Cloud token via environment variable:
+# export TF_TOKEN="your-token-here"
 TF_TOKEN="${TF_TOKEN:-}"
+WORKSPACE_ID="ws-DL9gtBH8GXfvFQ39"
 
 if [ -z "$TF_TOKEN" ]; then
-  echo "Error: TF_TOKEN not set" >&2
+  echo "❌ Error: TF_TOKEN environment variable is not set" >&2
+  echo "Set it with: export TF_TOKEN=\"your-terraform-cloud-token\"" >&2
   exit 1
 fi
-WORKSPACE_ID="ws-DL9gtBH8GXfvFQ39"
 STATE_FILE="terraform.tfstate"
 
 echo "🔄 Uploading state to Terraform Cloud..."
