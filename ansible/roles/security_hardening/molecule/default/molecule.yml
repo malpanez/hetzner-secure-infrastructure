@@ -1,6 +1,4 @@
 ---
-# Molecule configuration for security-hardening role
-
 dependency:
   name: galaxy
 
@@ -8,16 +6,13 @@ driver:
   name: docker
 
 platforms:
-  - name: debian-13-security
-    image: debian:13
-    pre_build_image: false
-    dockerfile: ../common/Dockerfile.j2
+  - name: security-hardening-debian13
+    image: geerlingguy/docker-debian13-ansible:latest
+    pre_build_image: true
     privileged: true
+    command: /lib/systemd/systemd
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
-    command: /lib/systemd/systemd
-    capabilities:
-      - SYS_ADMIN
     tmpfs:
       - /run
       - /tmp
@@ -26,46 +21,11 @@ provisioner:
   name: ansible
   config_options:
     defaults:
-      interpreter_python: auto_silent
-      callback_whitelist: profile_tasks, timer, yaml
-    ssh_connection:
-      pipelining: true
+      callbacks_enabled: profile_tasks, timer
+      stdout_callback: yaml
+      remote_tmp: /tmp
   env:
     ANSIBLE_ROLES_PATH: ../../
-  inventory:
-    host_vars:
-      debian-13-security:
-        ansible_user: root
-  playbooks:
-    converge: converge.yml
-    verify: verify.yml
 
 verifier:
-  name: testinfra
-  directory: tests/
-  options:
-    # Show verbose output
-    v: 1
-    # Stop on first failure
-    x: 1
-
-scenario:
-  name: default
-  test_sequence:
-    - dependency
-    - cleanup
-    - destroy
-    - syntax
-    - create
-    - prepare
-    - converge
-    - idempotence
-    - side_effect
-    - verify
-    - cleanup
-    - destroy
-
-lint: |
-  set -e
-  yamllint .
-  ansible-lint .
+  name: ansible
