@@ -73,13 +73,13 @@ jobs:
           export PATH="$HOME/.cargo/bin:$PATH"
           uv venv
           source .venv/bin/activate
-          uv pip install ansible ansible-lint yamllint requests
+          uv pip install ansible ansible-lint yamllint requests python-dateutil
 
       - name: Install Ansible Galaxy requirements
         run: |
           source .venv/bin/activate
           cd ansible
-          ansible-galaxy collection install -r requirements.yml
+          ansible-galaxy install -r requirements.yml
         continue-on-error: false
 
       - name: Create dummy vault password for CI
@@ -272,7 +272,8 @@ jobs:
       - name: Install terraform-docs
         run: |
           # Install terraform-docs for pre-commit hook
-          curl -Lo /tmp/terraform-docs.tar.gz https://github.com/terraform-docs/terraform-docs/releases/latest/download/terraform-docs-v0.19.0-linux-amd64.tar.gz
+          TFDOCS_VERSION="v0.19.0"
+          curl -sSLo /tmp/terraform-docs.tar.gz "https://github.com/terraform-docs/terraform-docs/releases/download/${TFDOCS_VERSION}/terraform-docs-${TFDOCS_VERSION}-linux-amd64.tar.gz"
           tar -xzf /tmp/terraform-docs.tar.gz -C /tmp
           chmod +x /tmp/terraform-docs
           sudo mv /tmp/terraform-docs /usr/local/bin/terraform-docs
