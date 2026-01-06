@@ -9,10 +9,9 @@ set -e
 ROOT_DIR="/home/malpanez/repos/hetzner-secure-infrastructure"
 ARCHIVE_DIR="$ROOT_DIR/.archive/root-docs-$(date +%Y-%m)"
 
-# Colors
+# Colors for output
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-RED='\033[0;31m'
 NC='\033[0m'
 
 echo -e "${GREEN}Documentation Cleanup - Starting...${NC}"

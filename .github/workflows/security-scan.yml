@@ -34,7 +34,7 @@ jobs:
           exit-code: '0'
 
       - name: Upload Terraform Trivy SARIF
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: terraform-trivy.sarif
@@ -65,7 +65,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload Checkov SARIF
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: results.sarif
@@ -89,7 +89,7 @@ jobs:
           exit-code: '0'  # Don't fail on findings, just report
 
       - name: Upload Trivy SARIF
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: trivy-results.sarif
@@ -104,7 +104,7 @@ jobs:
 
   ansible-lint:
     name: Ansible Lint
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
@@ -171,10 +171,12 @@ jobs:
           source .venv/bin/activate
           uv pip install safety
 
-      - name: Check Python dependencies
+      - name: Check Python dependencies with Safety
         run: |
           source .venv/bin/activate
-          uv pip list | safety check --stdin || true
+          # Use new 'scan' command instead of deprecated 'check'
+          safety scan || true
+        continue-on-error: true
 
   markdown-lint:
     name: Markdown Lint
