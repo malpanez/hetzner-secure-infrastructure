@@ -518,3 +518,4 @@ gitleaks-report.json
 !.editorconfig
 !.gitattributes
 terraform/.envrc
+terraform/tfplan
