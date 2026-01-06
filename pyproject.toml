@@ -77,7 +77,9 @@ build-backend = "hatchling.build"
 
 [tool.uv]
 # UV-specific configuration
-dev-dependencies = [
+
+[dependency-groups]
+dev = [
     "pre-commit>=3.5.0",
     "ansible-lint>=6.20.0",
 ]
