@@ -11,6 +11,7 @@
 We're ready to deploy your production WordPress trading course platform today! Here's what you'll get:
 
 ✅ **Secure Infrastructure**:
+
 - SSH with 2FA for human access
 - Dedicated ansible user for automation (no 2FA bypass)
 - All automation commands logged and monitored
@@ -18,12 +19,14 @@ We're ready to deploy your production WordPress trading course platform today! H
 - UFW firewall (ports 22, 80, 443 only)
 
 ✅ **Automatic Security**:
+
 - OpenBao rotating WordPress DB credentials daily
 - Automated security audits
 - Real-time monitoring (Prometheus + Grafana)
 - Cloudflare DDoS protection + CDN
 
 ✅ **Best Practices**:
+
 - ARM64 architecture (2.68x faster than x86 for same price tier)
 - Full monitoring stack
 - Encrypted secrets (Ansible Vault)
@@ -41,6 +44,7 @@ cd /home/malpanez/repos/hetzner-secure-infrastructure
 ```
 
 This script will:
+
 1. Generate SSH key for ansible user
 2. Deploy ansible automation user to server
 3. Setup OpenBao daily secret rotation
@@ -90,22 +94,24 @@ sudo -u www-data wp --path=/var/www/wordpress db check
 
 ### Step 3: Migrate to Cloudflare (15 min)
 
-1. **Create Cloudflare Account**: https://dash.cloudflare.com/sign-up
+1. **Create Cloudflare Account**: <https://dash.cloudflare.com/sign-up>
 2. **Add Domain**: Click "Add a Site" → Enter your domain → Select Free Plan
 3. **Get Nameservers**: Cloudflare will show two nameservers:
+
    ```
    alexa.ns.cloudflare.com
    phil.ns.cloudflare.com
    ```
 
 4. **Update GoDaddy**:
-   - Login to https://account.godaddy.com
+   - Login to <https://account.godaddy.com>
    - My Products → Domains → Your Domain → Manage DNS
    - Nameservers → Change → Custom Nameservers
    - Replace with Cloudflare nameservers
    - Save
 
 5. **Configure DNS in Cloudflare**:
+
    ```
    Type    Name    Content           Proxy Status
    ────────────────────────────────────────────────
@@ -139,9 +145,10 @@ sudo -u www-data wp --path=/var/www/wordpress db check
 |-----------|-----|---------|
 | Grafana | http://YOUR_IP:3000 | Dashboards |
 | Prometheus | http://YOUR_IP:9090 | Metrics |
-| OpenBao | http://127.0.0.1:8200 | Secret management |
+| OpenBao | <http://127.0.0.1:8200> | Secret management |
 
 **Grafana Credentials**:
+
 - Username: `admin`
 - Password: `QiNzF3GvnyWp2URH3FXhKfiBt8CtR1vl`
 
@@ -174,12 +181,14 @@ sudo -u www-data wp --path=/var/www/wordpress db check
 
 - [ ] Purchase LearnDash license
 - [ ] Install WordPress plugins:
+
   ```bash
   # After DNS is migrated and Cloudflare is active
   sudo -u www-data wp plugin install wordfence --activate --path=/var/www/wordpress
   sudo -u www-data wp plugin install cloudflare --activate --path=/var/www/wordpress
   sudo -u www-data wp plugin install updraftplus --activate --path=/var/www/wordpress
   ```
+
 - [ ] Upload LearnDash plugin manually
 - [ ] Configure Wordfence firewall
 - [ ] Setup automated backups (UpdraftPlus → S3/Backblaze)
@@ -346,6 +355,7 @@ Based on benchmarks ([docs/performance/ARM64_vs_X86_COMPARISON.md](docs/performa
 - **Reliability**: 100% uptime in tests (0 failed requests)
 
 With Cloudflare CDN:
+
 - **Edge caching**: 80-90% of requests served from cache
 - **Origin load**: Reduced to 10-20% of total traffic
 - **Global latency**: < 100ms worldwide
@@ -357,6 +367,7 @@ With Cloudflare CDN:
 ### Do I need Wordfence if I have Cloudflare?
 
 **YES**. They protect different layers:
+
 - **Cloudflare**: Stops attacks at the network edge (DDoS, bots)
 - **Wordfence**: Stops WordPress-specific threats (plugin vulns, malware, brute force on wp-login)
 
@@ -369,6 +380,7 @@ Think of it like: Cloudflare is your building security, Wordfence is your apartm
 ### What if I forget the OpenBao admin password?
 
 Use the break-glass procedure:
+
 1. Stop OpenBao service
 2. Reset with unseal key
 3. Re-init if needed
@@ -378,6 +390,7 @@ Use the break-glass procedure:
 ### How do I add more courses/users?
 
 WordPress admin:
+
 - URL: `https://yourdomain.com/wp-admin`
 - Username: `admin`
 - Password: `nf0ZTtKYCd78NoY1EivkCT9Mi7aNrImR`
@@ -422,6 +435,7 @@ cd /home/malpanez/repos/hetzner-secure-infrastructure
 **Time estimate**: 30-45 minutes total (mostly waiting for DNS propagation)
 
 **Result**: Production-ready WordPress LMS platform with:
+
 - ✅ Automated deployments
 - ✅ Daily credential rotation
 - ✅ Full security stack

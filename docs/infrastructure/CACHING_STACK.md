@@ -69,6 +69,7 @@ This infrastructure implements a **5-layer caching stack** designed for maximum 
 **Plan**: FREE initially, PRO ($20/mes) recommended for production
 
 **DNS Records**:
+
 ```yaml
 Type: A
 Name: @
@@ -82,6 +83,7 @@ Proxy: ENABLED (Orange cloud ✅)
 ```
 
 **SSL/TLS Settings**:
+
 ```yaml
 Mode: Full (strict)
 Always Use HTTPS: ON
@@ -95,6 +97,7 @@ Automatic HTTPS Rewrites: ON
 ```
 
 **Speed Optimizations**:
+
 ```yaml
 Auto Minify:
   ✅ JavaScript
@@ -107,6 +110,7 @@ Rocket Loader: OFF (conflicts with LearnDash)
 ```
 
 **Caching Configuration**:
+
 ```yaml
 Caching Level: Standard
 Browser Cache TTL: 4 hours
@@ -115,6 +119,7 @@ Development Mode: OFF
 ```
 
 **Page Rules** (PRO plan):
+
 ```yaml
 # Rule 1: Bypass admin
 Pattern: *tudominio.com/wp-admin*
@@ -150,6 +155,7 @@ Settings:
 ```
 
 **Firewall Rules**:
+
 ```yaml
 # Block bad bots
 Expression: (cf.bot_management.score lt 30)
@@ -177,6 +183,7 @@ Deployed automatically by `nginx-wordpress` role.
 **Cache Location**: `/var/run/nginx-cache`
 
 **Configuration** (`/etc/nginx/conf.d/fastcgi-cache.conf`):
+
 ```nginx
 # FastCGI Cache Zone
 fastcgi_cache_path /var/run/nginx-cache
@@ -192,6 +199,7 @@ fastcgi_ignore_headers Cache-Control Expires Set-Cookie;
 ```
 
 **Bypass Conditions**:
+
 ```nginx
 # Don't cache if:
 set $skip_cache 0;
@@ -228,6 +236,7 @@ if ($query_string != "") {
 ```
 
 **TTL Settings**:
+
 ```nginx
 # Public pages (landing, about, blog)
 fastcgi_cache_valid 200 1h;
@@ -242,6 +251,7 @@ fastcgi_cache_valid 301 302 10m;
 **Purge Configuration**:
 
 Cache is automatically purged when:
+
 - Publishing/updating a post
 - Publishing/updating a page
 - Changing theme
@@ -263,6 +273,7 @@ Deployed by `valkey` role.
 **Eviction Policy**: `allkeys-lru` (evict least recently used)
 
 **Why Valkey instead of Redis?**
+
 - Open source (BSD license) - Redis changed to RSALv2/SSPLv1 in March 2024
 - Linux Foundation project (AWS, Google Cloud backing)
 - 100% Redis protocol compatible
@@ -273,6 +284,7 @@ Deployed by `valkey` role.
 Plugin: [Redis Object Cache](https://wordpress.org/plugins/redis-cache/) (fully compatible with Valkey)
 
 Configuration in `wp-config.php`:
+
 ```php
 define('WP_REDIS_CLIENT', 'phpredis');
 define('WP_REDIS_SCHEME', 'unix');
@@ -312,6 +324,7 @@ define('WP_CACHE', true);
 **Monitoring**:
 
 Valkey Exporter exposes metrics on port `9121` for Prometheus:
+
 - `valkey_connected_clients`
 - `valkey_used_memory_bytes`
 - `valkey_keyspace_hits_total`
@@ -320,6 +333,7 @@ Valkey Exporter exposes metrics on port `9121` for Prometheus:
 **Maintenance**:
 
 Automatic daily backup at 2 AM:
+
 ```bash
 /usr/local/bin/backup-valkey
 ```
@@ -334,6 +348,7 @@ Retention: 7 days
 ### MySQL Configuration
 
 **Query Cache** (if supported by MySQL version):
+
 ```sql
 query_cache_type = 1
 query_cache_size = 128M
@@ -341,12 +356,14 @@ query_cache_limit = 2M
 ```
 
 **InnoDB Buffer Pool**:
+
 ```sql
 innodb_buffer_pool_size = 1G  # For cx21 with 4GB RAM
 innodb_buffer_pool_instances = 4
 ```
 
 **Connections**:
+
 ```sql
 max_connections = 200
 max_connect_errors = 10000
@@ -355,6 +372,7 @@ max_connect_errors = 10000
 ### PHP OpCache
 
 **Configuration** (`/etc/php/8.3/fpm/conf.d/10-opcache.ini`):
+
 ```ini
 opcache.enable=1
 opcache.memory_consumption=128
@@ -366,6 +384,7 @@ opcache.enable_cli=1
 ```
 
 **What OpCache Does**:
+
 - Caches compiled PHP bytecode in memory
 - Eliminates need to recompile on every request
 - ~30-50% performance improvement for PHP execution
@@ -377,6 +396,7 @@ opcache.enable_cli=1
 ### SSD Performance
 
 Hetzner servers use **NVMe SSDs**:
+
 - Sequential read: ~3,000 MB/s
 - Sequential write: ~1,500 MB/s
 - Random IOPS: ~100,000
@@ -384,12 +404,14 @@ Hetzner servers use **NVMe SSDs**:
 ### Filesystem
 
 **Ext4** with optimizations:
+
 ```bash
 # Mount options
 /dev/sda1 / ext4 defaults,noatime,nodiratime 0 1
 ```
 
 **Benefits**:
+
 - `noatime`: Don't update access time on file reads (faster)
 - `nodiratime`: Don't update access time on directories
 
@@ -411,22 +433,26 @@ Hetzner servers use **NVMe SSDs**:
 ### Monitoring Cache Performance
 
 **Cloudflare Analytics**:
+
 - Dashboard → Analytics → Caching
 - Shows: Bandwidth saved, requests cached, cache hit ratio
 
 **Nginx Cache Stats**:
+
 ```bash
 # Add this to nginx config
 add_header X-Cache-Status $upstream_cache_status;
 ```
 
 Possible values:
+
 - `HIT`: Served from cache
 - `MISS`: Not in cache
 - `BYPASS`: Cache bypassed (logged-in user)
 - `EXPIRED`: Cache expired, refreshing
 
 **Valkey Stats**:
+
 ```bash
 # Via WordPress
 wp redis info  # Redis Object Cache plugin is Valkey-compatible
@@ -436,6 +462,7 @@ valkey-cli INFO stats
 ```
 
 Key metrics:
+
 - `keyspace_hits`: Cache hits
 - `keyspace_misses`: Cache misses
 - Hit ratio = hits / (hits + misses)
@@ -443,6 +470,7 @@ Key metrics:
 **Grafana Dashboard**:
 
 Prometheus scrapes metrics from:
+
 - Valkey Exporter (port 9121)
 - Node Exporter (port 9100)
 - MariaDB Exporter (optional)
@@ -456,6 +484,7 @@ Pre-built dashboard ID: 7362 (Redis Dashboard for Prometheus - compatible with V
 ### Critical Considerations
 
 **What NOT to Cache**:
+
 1. ❌ Student dashboard (`/courses/`)
 2. ❌ Lesson pages (for enrolled students)
 3. ❌ Quiz pages
@@ -463,6 +492,7 @@ Pre-built dashboard ID: 7362 (Redis Dashboard for Prometheus - compatible with V
 5. ❌ Certificate generation
 
 **What TO Cache**:
+
 1. ✅ Course catalog (public)
 2. ✅ Lesson previews (non-enrolled)
 3. ✅ Landing pages
@@ -472,6 +502,7 @@ Pre-built dashboard ID: 7362 (Redis Dashboard for Prometheus - compatible with V
 ### Cache Exclusions
 
 **Nginx**:
+
 ```nginx
 # Exclude LearnDash student areas
 location ~ ^/courses/ {
@@ -482,11 +513,13 @@ location ~ ^/courses/ {
 
 **Valkey**:
 LearnDash automatically uses persistent object cache for:
+
 - User progress (not cached, always fresh from DB)
 - Quiz attempts (not cached)
 - Certificates (generated on-demand)
 
 Non-user-specific data IS cached:
+
 - Course structure
 - Lesson content (for same user)
 - Settings
@@ -498,6 +531,7 @@ Non-user-specific data IS cached:
 ### Tools
 
 **1. GTmetrix**:
+
 ```
 URL: https://gtmetrix.com
 Test: Your landing page
@@ -505,6 +539,7 @@ Target: A grade, <1s load time
 ```
 
 **2. WebPageTest**:
+
 ```
 URL: https://www.webpagetest.org
 Test: From multiple locations
@@ -512,12 +547,14 @@ Target: First Byte <200ms, Fully Loaded <2s
 ```
 
 **3. Lighthouse (Chrome DevTools)**:
+
 ```
 F12 → Lighthouse → Run audit
 Target: 90+ performance score
 ```
 
 **4. Load Testing with k6**:
+
 ```bash
 # Install k6
 sudo apt install k6
@@ -531,6 +568,7 @@ k6 run --vus 50 --duration 30s loadtest.js
 ### Benchmarks
 
 **Before Optimization** (no cache):
+
 ```
 Requests/sec: 10-20
 Avg response: 800ms
@@ -539,6 +577,7 @@ Max concurrent: 20-30 users
 ```
 
 **After Full Stack** (all caches):
+
 ```
 Requests/sec: 200-400
 Avg response: 100ms
@@ -553,12 +592,14 @@ Max concurrent: 100-200 users
 ### Cache Not Working
 
 **1. Check Cloudflare**:
+
 ```bash
 curl -I https://tudominio.com
 # Look for: cf-cache-status: HIT
 ```
 
 **2. Check Nginx**:
+
 ```bash
 curl -I https://tudominio.com
 # Look for: X-Cache-Status: HIT
@@ -568,6 +609,7 @@ ls -lah /var/run/nginx-cache/
 ```
 
 **3. Check Valkey**:
+
 ```bash
 # WordPress CLI
 wp redis status  # Redis Object Cache plugin works with Valkey
@@ -579,6 +621,7 @@ valkey-cli
 ```
 
 **4. Check Logs**:
+
 ```bash
 # Nginx error log
 tail -f /var/log/nginx/error.log
@@ -593,6 +636,7 @@ tail -f /var/log/php8.3-fpm.log
 ### Purging Caches
 
 **Cloudflare**:
+
 ```bash
 # Via dashboard
 Caching → Purge Everything
@@ -605,6 +649,7 @@ curl -X POST "https://api.cloudflare.com/client/v4/zones/{zone_id}/purge_cache" 
 ```
 
 **Nginx**:
+
 ```bash
 # Via WordPress plugin: Nginx Helper → Purge Cache
 
@@ -614,6 +659,7 @@ systemctl reload nginx
 ```
 
 **Valkey**:
+
 ```bash
 # Via WordPress
 wp redis flush  # Redis Object Cache plugin works with Valkey
@@ -629,6 +675,7 @@ valkey-cli FLUSHDB
 ### Development vs Production
 
 **Development**:
+
 ```yaml
 Cloudflare: Development Mode (ON) - Bypass cache
 Nginx FastCGI: TTL 10s (fast iteration)
@@ -636,6 +683,7 @@ Valkey: Enabled (test functionality)
 ```
 
 **Production**:
+
 ```yaml
 Cloudflare: Development Mode (OFF) - Full caching
 Nginx FastCGI: TTL 1h (optimal)
@@ -645,6 +693,7 @@ Valkey: Enabled with monitoring
 ### When to Purge Cache
 
 **Always purge after**:
+
 1. WordPress updates
 2. Plugin updates
 3. Theme changes
@@ -652,6 +701,7 @@ Valkey: Enabled with monitoring
 5. Pricing changes
 
 **WordPress plugins auto-purge**:
+
 - Nginx Helper (Nginx cache)
 - Redis Object Cache (Valkey - fully compatible)
 - Cloudflare plugin (Cloudflare)

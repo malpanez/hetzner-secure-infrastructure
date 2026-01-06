@@ -101,6 +101,7 @@ sequenceDiagram
 ### Software
 
 **Windows (WSL2):**
+
 ```powershell
 # PowerShell como Administrador
 # Instalar Yubikey Manager
@@ -110,6 +111,7 @@ winget install Yubico.YubikeyManager
 ```
 
 **Linux/WSL2:**
+
 ```bash
 # Instalar dependencias
 sudo apt update
@@ -133,6 +135,7 @@ ykman info
 ### Paso 1: Generar SSH Key FIDO2
 
 **En Windows (PowerShell):**
+
 ```powershell
 # Navegar a .ssh
 cd ~\.ssh
@@ -151,6 +154,7 @@ ssh-keygen -t ed25519-sk -C "your-email@example.com"
 ```
 
 **En Linux/WSL2:**
+
 ```bash
 cd ~/.ssh
 
@@ -175,6 +179,7 @@ cat ~/.ssh/id_ed25519_sk.pub
 ### Paso 3: Agregar a SSH Agent (Opcional)
 
 **Windows:**
+
 ```powershell
 # Iniciar ssh-agent
 Start-Service ssh-agent
@@ -185,6 +190,7 @@ ssh-add ~\.ssh\id_ed25519_sk
 ```
 
 **Linux/WSL2:**
+
 ```bash
 # Iniciar ssh-agent
 eval "$(ssh-agent -s)"
@@ -283,6 +289,7 @@ sudo /usr/local/bin/setup-2fa-yubikey.sh $USER
 #### Paso 2: Agregar TOTP a Yubikey
 
 **En Windows (PowerShell):**
+
 ```powershell
 # Listar cuentas existentes
 ykman oath accounts list
@@ -304,6 +311,7 @@ ykman oath accounts code "hetzner-server-ssh"
 ```
 
 **En Linux/WSL2:**
+
 ```bash
 # Mismo proceso
 ykman oath accounts add "hetzner-server-ssh" "JBSWY3DPEHPK3PXP"
@@ -313,6 +321,7 @@ ykman oath accounts code "hetzner-server-ssh"
 #### Paso 3: Configurar Yubikey Authenticator (GUI - Opcional)
 
 **Windows:**
+
 ```powershell
 # Descargar Yubikey Authenticator
 # https://www.yubico.com/products/yubico-authenticator/
@@ -326,6 +335,7 @@ winget install Yubico.Authenticator
 ### Opción B: TOTP en App Móvil (Backup)
 
 También puedes escanear el QR code con:
+
 - Google Authenticator
 - Microsoft Authenticator
 - Authy
@@ -380,6 +390,7 @@ sudo cat /etc/pam.d/sshd | grep google_authenticator
 **1. Abrir terminal (PowerShell/WSL2)**
 
 **2. Generar código TOTP de Yubikey:**
+
 ```powershell
 # En otra ventana/tab
 ykman oath accounts code "hetzner-server-ssh"
@@ -387,6 +398,7 @@ ykman oath accounts code "hetzner-server-ssh"
 ```
 
 **3. SSH al servidor:**
+
 ```bash
 ssh -i ~/.ssh/id_ed25519_sk user@server
 
@@ -404,6 +416,7 @@ ssh -i ~/.ssh/id_ed25519_sk user@server
 **Script para facilitar login:**
 
 **login-server.sh:**
+
 ```bash
 #!/bin/bash
 # Login script con TOTP de Yubikey
@@ -424,6 +437,7 @@ ssh -i ~/.ssh/id_ed25519_sk "$SERVER"
 ```
 
 **Uso:**
+
 ```bash
 chmod +x login-server.sh
 ./login-server.sh
@@ -439,6 +453,7 @@ chmod +x login-server.sh
 ### Problema: "Confirm user presence for key" nunca aparece
 
 **Solución:**
+
 ```bash
 # Verificar que la llave es tipo SK
 cat ~/.ssh/id_ed25519_sk.pub | grep "sk-ssh"
@@ -450,6 +465,7 @@ ssh-keygen -t ed25519-sk -C "your-email@example.com"
 ### Problema: Yubikey no detectada en WSL2
 
 **Solución:**
+
 ```bash
 # En WSL2, instalar usbipd
 # Ver: https://learn.microsoft.com/en-us/windows/wsl/connect-usb
@@ -473,6 +489,7 @@ ykman info
 **Causas comunes:**
 
 1. **Tiempo desincronizado:**
+
 ```bash
 # Windows PowerShell (Admin):
 w32tm /resync
@@ -481,13 +498,15 @@ w32tm /resync
 sudo ntpdate pool.ntp.org
 ```
 
-2. **Código expirado** (30 segundos):
+1. **Código expirado** (30 segundos):
+
 ```bash
 # Generar código nuevo
 ykman oath accounts code "hetzner-server-ssh"
 ```
 
-3. **Cuenta incorrecta:**
+1. **Cuenta incorrecta:**
+
 ```bash
 # Listar todas las cuentas
 ykman oath accounts list
@@ -498,6 +517,7 @@ ykman oath accounts list
 ### Problema: "Enter PIN for sk-ecdsa..." en Windows
 
 **Solución:**
+
 ```powershell
 # Configurar SSH para no pedir PIN
 # Crear/editar: %USERPROFILE%\.ssh\config
@@ -512,17 +532,20 @@ Host *
 **Soluciones:**
 
 1. **Verificar llave pública en servidor:**
+
 ```bash
 ssh user@server "cat ~/.ssh/authorized_keys | grep sk-ssh"
 ```
 
-2. **Verificar permisos:**
+1. **Verificar permisos:**
+
 ```bash
 ssh user@server "ls -la ~/.ssh/authorized_keys"
 # Debe ser: -rw------- (600)
 ```
 
-3. **Ver logs del servidor:**
+1. **Ver logs del servidor:**
+
 ```bash
 ssh user@server "sudo tail -f /var/log/auth.log"
 # Intentar login en otra ventana
@@ -545,6 +568,7 @@ cp ~/.ssh/id_ed25519_sk.pub ~/.ssh/id_ed25519_sk.pub.backup
 ### Backup de TOTP Secrets
 
 **Opción 1: Guardar secret**
+
 ```bash
 # El secret que te dio el servidor:
 # JBSWY3DPEHPK3PXP
@@ -553,6 +577,7 @@ cp ~/.ssh/id_ed25519_sk.pub ~/.ssh/id_ed25519_sk.pub.backup
 ```
 
 **Opción 2: Backup codes**
+
 ```bash
 # Los códigos de respaldo del servidor:
 # 12345678, 23456789, etc.
@@ -563,6 +588,7 @@ cp ~/.ssh/id_ed25519_sk.pub ~/.ssh/id_ed25519_sk.pub.backup
 ### Si pierdes la Yubikey
 
 **Opción A: Usar backup codes**
+
 ```bash
 ssh -i ~/.ssh/id_ed25519_sk user@server
 # Tocar Yubikey de backup (si tienes)
@@ -570,6 +596,7 @@ ssh -i ~/.ssh/id_ed25519_sk user@server
 ```
 
 **Opción B: Usar Hetzner Console**
+
 ```bash
 # Login vía web console
 # Deshabilitar 2FA temporalmente:
@@ -613,6 +640,7 @@ ykman oath accounts add "hetzner-server-ssh" "JBSWY3DPEHPK3PXP"
 ---
 
 **Resumen:**
+
 1. ✅ SSH key FIDO2 en Yubikey (factor 1: algo que tienes)
 2. ✅ TOTP en Yubikey (factor 2: algo que sabes)
 3. ✅ Todo en un dispositivo

@@ -119,12 +119,14 @@
 ### Response Time Distribution Comparison
 
 **x86 (CX23)**:
+
 - 50% of requests: ≤ 31ms
 - 90% of requests: ≤ 49ms
 - 95% of requests: ≤ 57ms
 - 99% of requests: ≤ 76ms
 
 **ARM64 (CAX11)**:
+
 - 50% of requests: ≤ 12ms
 - 90% of requests: ≤ 15ms
 - 95% of requests: ≤ 16ms
@@ -137,6 +139,7 @@
 ## Monitoring Stack Impact
 
 Both servers run identical monitoring stack:
+
 - Prometheus (metrics)
 - Grafana (visualization)
 - Loki (logs)
@@ -154,12 +157,14 @@ Both servers run identical monitoring stack:
 ### x86 (CX23) - System Load Behavior
 
 **Observation during 100k request test**:
+
 - Load 1m: Peaked at **0.66** (33% of 2 vCPU capacity)
 - Load 5m: Stable at **0.32**
 - Load 15m: Very stable at **0.21**
 - Recovery: Immediate after test completion
 
 **System Processes**:
+
 - Runnable processes: Mean **1.46**, max **4**
 - Blocked I/O: **0** (no I/O bottleneck)
 - Process forks: Stable at **~3.5/sec**
@@ -169,12 +174,14 @@ Both servers run identical monitoring stack:
 ### ARM64 (CAX11) - System Load Behavior
 
 **Observation during 100k request test**:
+
 - Load 1m: Baseline **0.19** (very low)
 - System remained responsive throughout
 - No visible stress on CPU resources
 - Lower per-core utilization than x86
 
 **Key Difference**:
+
 - ARM64 maintained **significantly lower system load** (0.19 vs 0.66)
 - This indicates **better CPU efficiency** per request
 - Same 2 vCPU count, but ARM64 processes requests with less CPU stress
@@ -207,6 +214,7 @@ Both servers run identical monitoring stack:
 ### For Development/Staging
 
 **ARM64 is the clear winner**:
+
 - ~2.7x faster = shorter CI/CD cycles
 - Slightly higher cost but better price/performance
 - Same core count with better per-core throughput
@@ -214,12 +222,14 @@ Both servers run identical monitoring stack:
 ### For Production
 
 **ARM64 recommended for**:
+
 - New deployments (no legacy constraints)
 - WordPress sites
 - Modern PHP applications
 - Cost-conscious operations
 
 **x86 still needed for**:
+
 - Legacy software requiring x86
 - Specific x86-only dependencies
 - Applications not ARM-compatible
@@ -237,6 +247,7 @@ ab -n 100000 -c 100 http://localhost/
 ```
 
 ### Test Environment
+
 - Both tests run from localhost (no network latency)
 - Same WordPress configuration (redirect to /wp-admin/install.php)
 - Same Nginx + PHP-FPM + MariaDB stack
@@ -262,6 +273,7 @@ ab -n 100000 -c 100 http://localhost/
 ### Recommendation
 
 **Use ARM64 (CAX11 or CAX21) for**:
+
 - ✅ New WordPress deployments
 - ✅ Cost-sensitive projects
 - ✅ High-performance requirements
@@ -269,6 +281,7 @@ ab -n 100000 -c 100 http://localhost/
 - ✅ Development and staging environments
 
 **Use x86 (CX23) only if**:
+
 - ❌ You have x86-specific dependencies
 - ❌ You need legacy software compatibility
 - ❌ Your application isn't ARM-compatible
@@ -278,6 +291,7 @@ ab -n 100000 -c 100 http://localhost/
 **ARM64 (CAX11) offers ~2.7x better performance at ~10% higher cost**
 
 For WordPress hosting on Hetzner Cloud, ARM64 is the obvious choice. The combination of:
+
 - Similar vCPU cores (2 vs 2)
 - Better performance (8,339 vs 3,114 req/sec)
 - Slightly higher cost (€4.05 vs €3.68)
@@ -286,6 +300,7 @@ For WordPress hosting on Hetzner Cloud, ARM64 is the obvious choice. The combina
 Makes ARM64 the clear winner for modern web applications.
 
 **Grade Comparison**:
+
 - x86 (CX23): A+ (excellent)
 - ARM64 (CAX11): **S-tier** (exceptional)
 
@@ -294,11 +309,13 @@ Makes ARM64 the clear winner for modern web applications.
 ## Next Steps
 
 ### Immediate Actions
+
 1. ✅ **Choose ARM64** for production deployment (CAX11 or CAX21)
 2. ✅ Update infrastructure templates to default to CAX series
 3. ✅ Document ARM64 configuration
 
 ### For Production
+
 1. Deploy ARM64 CAX11 for WordPress production (or CAX21 for more headroom)
 2. Add Cloudflare CDN for edge caching
 3. Configure Grafana alerts
@@ -306,7 +323,9 @@ Makes ARM64 the clear winner for modern web applications.
 5. Monitor performance for 30 days
 
 ### For Scaling (when revenue justifies)
+
 Consider 2-3 server architecture:
+
 ```
 Server 1: WordPress + Nginx (CAX11: €4.05)
 Server 2: MariaDB (CAX11: €4.05)
@@ -315,6 +334,7 @@ Total: €12.15/month
 ```
 
 Compared to x86 equivalent:
+
 ```
 Server 1: WordPress + Nginx (CPX21: €5.90)
 Server 2: MariaDB (CPX11: €4.15)

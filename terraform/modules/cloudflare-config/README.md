@@ -15,21 +15,26 @@ This Terraform module configures Cloudflare DNS, SSL/TLS, WAF, and security sett
 ## WordPress Security Features
 
 ### 1. **XML-RPC Protection**
+
 Blocks XML-RPC attacks (common WordPress vulnerability)
 
 ### 2. **Login Protection**
+
 - Rate limiting on wp-login.php (5 attempts/minute)
 - CAPTCHA challenges after threshold
 
 ### 3. **Config File Protection**
+
 Blocks direct access to wp-config.php
 
 ### 4. **Attack Pattern Blocking**
+
 - Path traversal attempts
 - XSS injection attempts
 - SQL injection patterns
 
 ### 5. **Tutor LMS Course Protection**
+
 Optional protection requiring login for course content access
 
 ## Usage
@@ -92,7 +97,7 @@ module "cloudflare_prod" {
 
 ### 1. Cloudflare Account Setup
 
-1. **Create Cloudflare account**: https://dash.cloudflare.com/sign-up
+1. **Create Cloudflare account**: <https://dash.cloudflare.com/sign-up>
 2. **Add your domain** to Cloudflare (free tier is sufficient)
 3. **Get API token**:
    - Go to: My Profile → API Tokens
@@ -182,6 +187,7 @@ The module uses **5 page rules** (Free tier allows 3, these require paid plan or
 **Free tier**: 1 rate limiting rule
 
 Configured to protect wp-login.php:
+
 - **Threshold**: 5 requests
 - **Period**: 60 seconds
 - **Action**: CAPTCHA challenge
@@ -202,12 +208,15 @@ The module configures:
 ## Caching Strategy
 
 ### Static Assets (30 days)
+
 - `/wp-content/uploads/*` - Images, videos, PDFs
 
 ### CSS/JS (7 days)
+
 - `*.css`, `*.js` - Stylesheets and scripts
 
 ### No Caching
+
 - `/wp-admin/*` - WordPress admin
 - `/wp-login.php` - Login page
 - Dynamic pages - Automatic based on headers
@@ -320,7 +329,7 @@ If you upgrade to Pro ($20/month):
 
 Monitor Cloudflare metrics:
 
-1. **Dashboard**: https://dash.cloudflare.com/
+1. **Dashboard**: <https://dash.cloudflare.com/>
 2. **Analytics**: Traffic, threats blocked, bandwidth saved
 3. **Firewall Events**: See blocked requests
 4. **Speed**: Performance metrics

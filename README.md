@@ -60,12 +60,14 @@ make deploy
 ## 📋 Features
 
 ### Infrastructure
+
 - ✅ **Terraform** - Infrastructure as Code (Hetzner Cloud)
 - ✅ **Ansible** - Configuration Management (12 roles)
 - ✅ **Debian 13** - Latest stable OS
 - ✅ **Red Hat CoP** - Best practices compliant
 
 ### WordPress Stack
+
 - ✅ **WordPress** - Latest version
 - ✅ **LearnDash Pro** - Premium LMS
 - ✅ **Nginx** - High-performance web server
@@ -74,6 +76,7 @@ make deploy
 - ✅ **Valkey 8.0** - Redis-compatible object cache
 
 ### Performance (5-Layer Caching)
+
 - ✅ **Cloudflare CDN** - Edge caching + WAF
 - ✅ **Nginx FastCGI** - Full-page caching
 - ✅ **Valkey** - Object cache
@@ -81,11 +84,13 @@ make deploy
 - ✅ **MariaDB** - Query cache
 
 ### Monitoring
+
 - ✅ **Prometheus** - Metrics collection
 - ✅ **Grafana** - Visualization dashboards
 - ✅ **Node Exporter** - System metrics
 
 ### Security
+
 - ✅ **Cloudflare WAF** - Web Application Firewall
 - ✅ **UFW Firewall** - Host-level firewall
 - ✅ **Fail2ban** - Intrusion prevention
@@ -136,6 +141,7 @@ make test-molecule
 | **CX23** (x86) | cx23 | €3.68/mo | 3,114 req/s, 32ms latency | ⚠️ Limited stock |
 
 **Winner**: ARM64 (CAX11)
+
 - **2.68x faster** throughput (8,339 vs 3,114 req/s)
 - **2.7x lower** latency (12ms vs 32ms)
 - **19% lower** memory usage
@@ -396,6 +402,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines
 ### Automated Testing (Codeberg)
 
 Every push runs:
+
 - ✅ Terraform validation
 - ✅ Ansible validation
 - ✅ Molecule tests (12 roles)
@@ -461,6 +468,7 @@ Please see our [Security Policy](SECURITY.md) for reporting vulnerabilities.
 ## 🗺️ Roadmap
 
 ### Completed ✅
+
 - [x] ARM64 architecture support (CAX11)
 - [x] Cloudflare integration with DNS management
 - [x] Comprehensive monitoring (Prometheus + Grafana)
@@ -469,11 +477,13 @@ Please see our [Security Policy](SECURITY.md) for reporting vulnerabilities.
 - [x] SSH 2FA with break-glass account
 
 ### In Progress 🚧
+
 - [ ] Production deployment and validation
 - [ ] WordPress SSL certificate automation
 - [ ] OpenBao secrets rotation
 
 ### Future 🔮
+
 - [ ] Multi-region failover support
 - [ ] Automated backups to S3-compatible storage (R2)
 - [ ] Kubernetes deployment option (k3s)
@@ -501,7 +511,7 @@ Please see our [Security Policy](SECURITY.md) for reporting vulnerabilities.
 - 📖 [Documentation](docs/)
 - 🐛 [Issue Tracker](https://codeberg.org/malpanez/twomindstrading_hetzner/issues)
 - 💬 [Discussions](https://github.com/malpanez/hetzner-secure-infrastructure/discussions)
-- 📧 Email: malpanez@codeberg.org
+- 📧 Email: <malpanez@codeberg.org>
 
 ---
 

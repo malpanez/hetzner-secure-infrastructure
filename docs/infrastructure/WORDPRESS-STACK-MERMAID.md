@@ -498,6 +498,7 @@ gitGraph
 2. **Editar diagramas**: Usa [Mermaid Live Editor](https://mermaid.live/) para previsualizar cambios.
 
 3. **Sintaxis alternativa**: Si Codeberg no renderiza, usar:
+
    ````markdown
    ```mermaid
    graph TD

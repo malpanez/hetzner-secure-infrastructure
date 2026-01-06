@@ -7,6 +7,7 @@
 ## ✅ What's Already Good
 
 Your current nginx configuration is already solid:
+
 - ✅ FastCGI caching configured
 - ✅ Gzip compression enabled
 - ✅ Security headers (server_tokens off)
@@ -23,6 +24,7 @@ Your current nginx configuration is already solid:
 **Missing**: Modern security headers for production
 
 **Add to server block**:
+
 ```nginx
 # Security Headers (add after server_name)
 add_header X-Frame-Options "SAMEORIGIN" always;
@@ -50,6 +52,7 @@ add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
 **Current**: No rate limiting on wp-login.php
 
 **Add before server block**:
+
 ```nginx
 # Rate limiting zones
 limit_req_zone $binary_remote_addr zone=login:10m rate=5r/m;   # 5 requests per minute for login
@@ -58,6 +61,7 @@ limit_req_zone $binary_remote_addr zone=general:10m rate=10r/s; # 10 req/sec gen
 ```
 
 **Add to locations**:
+
 ```nginx
 # WordPress login rate limiting
 location = /wp-login.php {
@@ -93,6 +97,7 @@ location = /xmlrpc.php {
 **Current**: May not be getting real visitor IPs
 
 **Add to http block** (nginx.conf.j2):
+
 ```nginx
 # Cloudflare real IP (REQUIRED if using Cloudflare)
 set_real_ip_from 103.21.244.0/22;
@@ -124,6 +129,7 @@ real_ip_recursive on;
 ```
 
 **Why**: Without this, all requests appear to come from Cloudflare IPs, breaking:
+
 - WordPress IP logging
 - Fail2ban
 - Rate limiting
@@ -134,6 +140,7 @@ real_ip_recursive on;
 ### 4. Static Asset Optimization (MEDIUM PRIORITY)
 
 **Improve**:
+
 ```nginx
 # Better static file caching
 location ~* \.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2|ttf|eot|webp)$ {
@@ -166,6 +173,7 @@ location ~* \.(pdf|doc|docx|ppt|pptx|zip|tar|gz)$ {
 ### 5. LearnDash-Specific Optimizations (LMS)
 
 **Add**:
+
 ```nginx
 # LearnDash course content (don't cache)
 location ~* /courses/ {
@@ -207,6 +215,7 @@ location ~* /profile/|/my-courses/ {
 
 **Current**: Basic cookie-based bypass
 **Improved**:
+
 ```nginx
 # More comprehensive cache bypass
 set $no_cache 0;
@@ -260,6 +269,7 @@ if ($http_cookie ~* "learndash_") {
 ### 7. Brotli Compression (MEDIUM PRIORITY)
 
 **If module available** (Debian 13 should have it):
+
 ```nginx
 # In nginx.conf.j2 http block
 brotli on;
@@ -274,6 +284,7 @@ brotli_types text/plain text/css text/xml text/javascript application/json appli
 ### 8. HTTP/3 Support (LOW PRIORITY - Future)
 
 **If Debian 13 nginx has QUIC**:
+
 ```nginx
 server {
     listen 443 quic reuseport;  # HTTP/3
@@ -292,6 +303,7 @@ server {
 
 **Current**: Good, but can be tuned for LMS
 **Improve**:
+
 ```nginx
 # In server block - optimize for LearnDash large content
 client_body_buffer_size 256k;  # Larger for course uploads
@@ -311,6 +323,7 @@ fastcgi_busy_buffers_size 512k;
 ### 10. Security: Block Bad Bots (MEDIUM PRIORITY)
 
 **Add**:
+
 ```nginx
 # Block common bad bots (Cloudflare handles most, but defense in depth)
 if ($http_user_agent ~* (bot|crawler|spider|scrapy|curl|wget|python-requests) ) {
@@ -334,36 +347,43 @@ if ($bad_bot = 1) {
 ## 📊 Priority Implementation Order
 
 ### Phase 1: Security (Before Production)
+
 1. ✅ **Security headers** (5 min)
 2. ✅ **Rate limiting on wp-login.php** (10 min)
 3. ✅ **Cloudflare real IP** (10 min) - CRITICAL if using CF
 4. ✅ **XML-RPC disable** (2 min)
 
 ### Phase 2: Performance (After Testing)
+
 5. ⏳ **Improved cache bypass** (15 min)
-6. ⏳ **LearnDash-specific caching** (10 min)
-7. ⏳ **Static asset optimization** (5 min)
+2. ⏳ **LearnDash-specific caching** (10 min)
+3. ⏳ **Static asset optimization** (5 min)
 
 ### Phase 3: Advanced (Optional)
+
 8. ⏳ **Brotli compression** (if module available)
-9. ⏳ **Bad bot blocking**
-10. ⏳ **HTTP/3** (future)
+2. ⏳ **Bad bot blocking**
+3. ⏳ **HTTP/3** (future)
 
 ---
 
 ## 📝 Implementation Guide
 
 ### Step 1: Backup Current Config
+
 ```bash
 ansible-playbook -i inventory/production.yml playbooks/site.yml --tags nginx-wordpress --check
 ```
 
 ### Step 2: Update Templates
+
 Edit the following files:
+
 - `ansible/roles/nginx_wordpress/templates/nginx-wordpress.conf.j2`
 - `ansible/roles/nginx_wordpress/defaults/main.yml` (add new variables)
 
 ### Step 3: Test Configuration
+
 ```bash
 # On server
 nginx -t
@@ -373,7 +393,9 @@ systemctl reload nginx
 ```
 
 ### Step 4: Monitor
+
 Watch logs and Grafana for:
+
 - Rate limit hits (429 errors)
 - Cache hit rate
 - Response times
@@ -410,17 +432,20 @@ Watch logs and Grafana for:
 ## 💡 Recommendations
 
 ### Highest Value, Lowest Effort
+
 1. **Security headers** - Copy/paste, instant A+ security score
 2. **Cloudflare real IP** - Critical for logs, analytics, rate limiting
 3. **Rate limit wp-login.php** - Prevents 99% of brute force attacks
 4. **Disable XML-RPC** - Closes major attack vector
 
 ### Test First
+
 - LearnDash-specific caching (test with actual courses)
 - Rate limiting (ensure legitimate users not blocked)
 - CSP header (may need adjustment for plugins)
 
 ### Monitor After
+
 - Grafana nginx dashboards (req/s, cache hit rate)
 - Error logs (`/var/log/nginx/error.log`)
 - Rate limit logs (429 errors)

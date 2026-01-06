@@ -99,6 +99,7 @@
 ### 1. **Home Page (Landing Page)**
 
 #### Hero Section
+
 ```
 [BACKGROUND: Trading chart, professional trader]
 
@@ -115,6 +116,7 @@ Trust Indicators:
 ```
 
 #### Course Overview (What You'll Learn)
+
 ```
 📈 Module 1: Trading Fundamentals
    - Forex, Stocks, Crypto basics
@@ -148,6 +150,7 @@ Trust Indicators:
 ```
 
 #### Testimonials (Social Proof)
+
 ```
 [Student Photo]
 "I went from losing $5k to making $2k/month consistently"
@@ -165,6 +168,7 @@ Trust Indicators:
 ```
 
 #### Instructor Bio
+
 ```
 [Professional Photo]
 
@@ -180,6 +184,7 @@ About Your Instructor: [Your Name]
 ```
 
 #### Pricing
+
 ```
 Choose Your Path:
 
@@ -209,6 +214,7 @@ Choose Your Path:
 ```
 
 #### FAQ (Objection Handling)
+
 ```
 Q: Do I need previous trading experience?
 A: No! We start from absolute basics.
@@ -493,6 +499,7 @@ Lesson 3.4: Risk/Reward Ratios
 ## Recommended WordPress Plugins
 
 ### **LMS (Choose One)**
+
 ```
 ✅ LearnDash ($199/year) - RECOMMENDED
    - Professional, feature-rich
@@ -506,42 +513,52 @@ Lesson 3.4: Risk/Reward Ratios
 ### **Essential Plugins**
 
 **Security:**
+
 - **Wordfence Security** (Free) - Firewall, malware scan
 - **iThemes Security** (Free) - Hardening, brute force protection
 
 **Performance:**
+
 - **WP Rocket** ($49/year) - Caching (best)
 - **Smush** (Free) - Image optimization
 - **Cloudflare** (Free) - CDN (already covered)
 
 **SEO:**
+
 - **Yoast SEO** (Free) - On-page SEO
 - **Rank Math** (Free) - Alternative to Yoast
 
 **Email Marketing:**
+
 - **MailerLite** (Free up to 1,000 subscribers)
 - **FluentCRM** (Free) - CRM + automation
 
 **Video Hosting:**
+
 - **Vimeo Pro** ($20/month) - Professional, private videos
 - **Wistia** ($99/month) - Best for courses, analytics
 
 **Payment:**
+
 - **WooCommerce** (Free) - E-commerce
 - **Stripe/PayPal** - Payment gateways
 
 **Webinars:**
+
 - **WebinarPress** ($97/year) - Host webinars on your site
 - **Zoom** ($14.99/month) - Live sessions
 
 **Community:**
+
 - **BuddyPress** (Free) - Social network
 - **bbPress** (Free) - Forum
 
 **Analytics:**
+
 - **MonsterInsights** ($99/year) - Google Analytics for WordPress
 
 **Landing Pages:**
+
 - **Elementor** (Free/Pro $49/year) - Page builder
 - **Thrive Architect** ($97/year) - Conversion-focused
 
@@ -552,22 +569,26 @@ Lesson 3.4: Risk/Reward Ratios
 ### **Theme Options:**
 
 **1. Astra Theme (FREE/PRO)**
+
 - ✅ Fast, lightweight
 - ✅ LearnDash integration
 - ✅ Elementor compatible
 - 💰 Pro: $59/year
 
 **2. Neve Theme (FREE)**
+
 - ✅ Modern design
 - ✅ Fast loading
 - ✅ Gutenberg compatible
 
 **3. LearnDash-Specific Themes:**
+
 - **Focus** by Social Learner - $89 (built for LearnDash)
 
 ### **Design Elements:**
 
 **Color Scheme (Trust & Success):**
+
 - Primary: #1E88E5 (Blue - trust, stability)
 - Secondary: #43A047 (Green - profit, success)
 - Accent: #FFA726 (Orange - CTA buttons)
@@ -575,10 +596,12 @@ Lesson 3.4: Risk/Reward Ratios
 - Text: #212121 (Dark gray)
 
 **Typography:**
+
 - Headings: Montserrat (bold, modern)
 - Body: Open Sans (readable)
 
 **Images:**
+
 - Professional trading charts
 - Real student testimonials (photos)
 - Your photo at trading desk
@@ -661,23 +684,27 @@ advisor before making any investment decisions.
 ### **Required Legal Pages:**
 
 **1. Terms & Conditions**
+
 - User responsibilities
 - Course access terms
 - Intellectual property
 - Liability limitations
 
 **2. Privacy Policy (GDPR Compliant)**
+
 - Data collection
 - Cookie usage
 - Third-party services (email, analytics)
 - User rights (data deletion)
 
 **3. Refund Policy**
+
 - 30-day money-back guarantee (recommended)
 - Process for requesting refund
 - Conditions
 
 **4. Earnings Disclaimer**
+
 ```
 EARNINGS DISCLAIMER
 
@@ -701,6 +728,7 @@ from our course. Trading involves risk, and you may lose your entire investment.
 ### **Payment Plans:**
 
 Increase conversion by offering:
+
 - 3 payments of €99 (€297 total)
 - 6 payments of €49 (€294 total)
 - 12 payments of €25 (€300 total)
@@ -718,39 +746,49 @@ Increase conversion by offering:
 ### **Drip Content Schedule:**
 
 **Week 1:**
+
 - Module 1: Fundamentals
 - Welcome email
 - Introduction video
 
 **Week 2:**
+
 - Module 2: Technical Analysis (Part 1)
 - First live Q&A session
 
 **Week 3:**
+
 - Module 2: Technical Analysis (Part 2)
 
 **Week 4:**
+
 - Module 3: Risk Management
 - Trading journal template
 
 **Week 5:**
+
 - Module 4: Trading Psychology
 
 **Week 6:**
+
 - Module 5: Strategy Development (Part 1)
 
 **Week 7:**
+
 - Module 5: Strategy Development (Part 2)
 - First assignment due
 
 **Week 8:**
+
 - Module 6: Live Trading Session 1
 
 **Weeks 9-12:**
+
 - Weekly live trading sessions
 - Final project
 
 **Week 12:**
+
 - Certificate issued
 - Alumni community access
 
@@ -759,18 +797,21 @@ Increase conversion by offering:
 ## Success Metrics to Track
 
 ### **Student Engagement:**
+
 - Course completion rate (target: >60%)
 - Avg. time in course (target: 30+ days)
 - Quiz scores (avg. target: >80%)
 - Forum participation
 
 ### **Business Metrics:**
+
 - Conversion rate (target: 2-5%)
 - Average order value
 - Student LTV (lifetime value)
 - Refund rate (target: <5%)
 
 ### **Marketing Metrics:**
+
 - Email open rate (target: >20%)
 - Email click rate (target: >3%)
 - Webinar attendance (target: 30%+)
@@ -780,7 +821,8 @@ Increase conversion by offering:
 
 ## Launch Checklist
 
-### Pre-Launch (4 weeks before):
+### Pre-Launch (4 weeks before)
+
 - [ ] Record all course videos
 - [ ] Create all PDFs/resources
 - [ ] Set up website
@@ -792,7 +834,8 @@ Increase conversion by offering:
 - [ ] Legal pages (Terms, Privacy, etc.)
 - [ ] Beta test with 5-10 students
 
-### Launch Week:
+### Launch Week
+
 - [ ] Send email to list
 - [ ] Post on social media
 - [ ] Host launch webinar
@@ -800,7 +843,8 @@ Increase conversion by offering:
 - [ ] Monitor and fix issues
 - [ ] Answer questions promptly
 
-### Post-Launch:
+### Post-Launch
+
 - [ ] Collect testimonials
 - [ ] Optimize based on feedback
 - [ ] Plan content updates

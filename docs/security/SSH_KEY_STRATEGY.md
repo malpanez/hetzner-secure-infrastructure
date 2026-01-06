@@ -14,6 +14,7 @@ Host hetzner-* *.homelabforge.dev
 ```
 
 **Ventajas**:
+
 - ✅ Requiere touch físico (no pueden SSH sin Yubikey)
 - ✅ Protección contra robo de laptop
 - ✅ Protección contra malware/keyloggers
@@ -21,6 +22,7 @@ Host hetzner-* *.homelabforge.dev
 - ✅ Ideal para producción/staging
 
 **Usa para**:
+
 - Hetzner Cloud servers (producción y staging)
 - AWS/GCP servers críticos
 - Bastion hosts
@@ -42,6 +44,7 @@ ssh-keygen -t ed25519 -C "miguel@dev-workstation"
 ```
 
 **Configuración**:
+
 ```bash
 # Para GitHub, GitLab, Bitbucket
 Host github.com gitlab.com bitbucket.org
@@ -51,12 +54,14 @@ Host github.com gitlab.com bitbucket.org
 ```
 
 **Ventajas**:
+
 - ✅ No requiere touch físico para cada git push
 - ✅ Compatible con ssh-agent (desbloqueas una vez)
 - ✅ Funciona en CI/CD pipelines
 - ✅ Más rápido para operaciones frecuentes
 
 **Usa para**:
+
 - GitHub/GitLab/Bitbucket
 - git push/pull frecuentes
 - Desarrollo local (docker, vagrant)
@@ -223,6 +228,7 @@ chmod 600 ~/.ssh/config
 ## 🧪 Probar Configuración
 
 ### GitHub (debe usar clave normal)
+
 ```bash
 ssh -T git@github.com
 # Debe conectar SIN pedir touch de Yubikey
@@ -230,6 +236,7 @@ ssh -T git@github.com
 ```
 
 ### Hetzner (debe usar Yubikey)
+
 ```bash
 # Después de desplegar con Terraform
 ssh miguel@95.217.XXX.XXX
@@ -237,6 +244,7 @@ ssh miguel@95.217.XXX.XXX
 ```
 
 ### Verificar qué clave usa
+
 ```bash
 # Ver qué clave SSH usará
 ssh -v git@github.com 2>&1 | grep "Offering public key"
@@ -348,9 +356,9 @@ cat ~/.ssh/id_ed25519_sk.pub
 
 ## 📖 Referencias
 
-- SSH FIDO2: https://developers.yubico.com/SSH/
-- GitHub SSH: https://docs.github.com/en/authentication/connecting-to-github-with-ssh
-- OpenSSH Config: https://man.openbsd.org/ssh_config
+- SSH FIDO2: <https://developers.yubico.com/SSH/>
+- GitHub SSH: <https://docs.github.com/en/authentication/connecting-to-github-with-ssh>
+- OpenSSH Config: <https://man.openbsd.org/ssh_config>
 
 ---
 

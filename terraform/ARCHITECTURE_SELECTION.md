@@ -56,6 +56,7 @@ location    = "fsn1"
 ### Staging Environment
 
 **Opción A: ARM medium** (Recomendado)
+
 ```hcl
 architecture = "arm"
 server_size  = "medium"  # cax21
@@ -66,6 +67,7 @@ Precio: €8.30/mes = €99.60/año
 ```
 
 **Opción B: x86 large**
+
 ```hcl
 architecture = "x86"
 server_size  = "large"   # cpx31
@@ -92,12 +94,14 @@ location     = "fsn1"  # Falkenstein
 ```
 
 **Razones:**
+
 - ✅ 40% más barato que x86 equivalent
 - ✅ Mismo RAM que CPX31 (8GB)
 - ✅ Stack WordPress 100% compatible
 - ✅ Perfecto para testing y validación
 
 **Trade-off:**
+
 - ⚠️ ~10% más lento en single-core (imperceptible con cache)
 
 ---
@@ -113,6 +117,7 @@ location     = "nbg1"  # Nuremberg
 ```
 
 **Razones:**
+
 - ✅ Mejor performance single-core (PHP es single-threaded)
 - ✅ Más barato que ARM large (€13.90 vs €16.60)
 - ✅ Stack totalmente probado en producción
@@ -131,11 +136,13 @@ location     = "nbg1"
 ```
 
 **Razones:**
+
 - ✅ 8 vCPUs para alto tráfico concurrente
 - ✅ 16GB RAM para cache agresivo
 - ✅ Mejor rendimiento MySQL bajo carga
 
 **Alternativa: ARM xlarge** (si budget es crítico)
+
 - Más cores (16 vs 8)
 - Más RAM (32GB vs 16GB)
 - 24% más caro (€33.20 vs €26.90)
@@ -153,6 +160,7 @@ location     = "nbg1"
 | Hillsboro, US   | `hil`  | ✅ | ❌ | ~150ms   |
 
 **Recomendaciones de location:**
+
 - Europa (audiencia española/EU): `fsn1` o `nbg1`
 - Global: `fsn1` (ARM disponible) + Cloudflare CDN
 - USA: `ash` (ARM disponible)
@@ -175,6 +183,7 @@ location     = "nbg1"  # ❌ Nuremberg no soporta ARM
 ```
 
 **Error de Terraform:**
+
 ```
 ERROR: ARM architecture requires location to be one of: fsn1, hel1, ash
 Current location: nbg1
@@ -222,15 +231,17 @@ ssh_command = "ssh malpanez@X.X.X.X"
 
 ## 🔄 Migración de Configuración Existente
 
-### Si tienes config antigua (server_type hardcoded):
+### Si tienes config antigua (server_type hardcoded)
 
 **Antes:**
+
 ```hcl
 server_type = "cpx31"
 location    = "nbg1"
 ```
 
 **Después (Método 1 - Auto-select):**
+
 ```hcl
 architecture = "x86"
 server_size  = "large"  # Auto-selecciona cpx31
@@ -238,6 +249,7 @@ location     = "nbg1"
 ```
 
 **Después (Método 2 - Override):**
+
 ```hcl
 server_type = "cpx31"  # Funciona igual que antes
 location    = "nbg1"
@@ -346,6 +358,7 @@ ssh_allowed_ips = ["YOUR_IP/32"]  # Restringir SSH
 ### ¿Puedo cambiar de x86 a ARM sin perder datos?
 
 Sí, pero requiere:
+
 1. Backup completo (Hetzner snapshot)
 2. `terraform apply` con nueva config (destruye x86, crea ARM)
 3. Restaurar datos desde backup
@@ -357,6 +370,7 @@ Sí, pero requiere:
 ### ¿ARM funciona con WordPress?
 
 ✅ Sí, 100% compatible:
+
 - Debian 13 tiene imagen ARM64 nativa
 - Nginx, PHP 8.4, MariaDB, Valkey: todos ARM-native
 - WordPress, LearnDash: PHP puro (sin binarios)

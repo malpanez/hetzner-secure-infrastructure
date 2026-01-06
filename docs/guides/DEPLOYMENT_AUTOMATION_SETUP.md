@@ -21,6 +21,7 @@
 ### The Challenge
 
 You have SSH 2FA enabled for security, which blocks automated deployments. We need a solution that:
+
 - ✅ Keeps 2FA enabled for human access (your account)
 - ✅ Allows automation to run without human interaction
 - ✅ Maintains security best practices
@@ -46,6 +47,7 @@ sudo visudo -f /etc/sudoers.d/ansible
 ```
 
 Add this content:
+
 ```
 # Ansible automation user
 ansible ALL=(ALL) NOPASSWD: ALL
@@ -69,6 +71,7 @@ sudo vim /etc/ssh/sshd_config.d/2fa.conf
 ```
 
 Update the 2FA config:
+
 ```
 # Enable 2FA for all users EXCEPT ansible
 Match User *,!ansible
@@ -289,6 +292,7 @@ ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml --tags passw
 ✅ **Analytics** - Traffic insights
 
 ⚠️ **Risks**:
+
 - Single point of failure (as you noted, 2 outages in 2025)
 - All traffic proxied through Cloudflare
 - Limited control on free plan
@@ -297,7 +301,7 @@ ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml --tags passw
 
 #### 1. Create Cloudflare Account
 
-1. Go to https://dash.cloudflare.com/sign-up
+1. Go to <https://dash.cloudflare.com/sign-up>
 2. Sign up with your email
 3. Verify email address
 
@@ -325,6 +329,7 @@ TXT     @       v=spf1 ...              ❌      Auto
 ```
 
 **Important**:
+
 - ✅ Orange cloud (Proxied) = Traffic goes through Cloudflare CDN
 - ❌ Grey cloud (DNS only) = Direct to your server (use for mail, SSH)
 
@@ -339,7 +344,7 @@ phil.ns.cloudflare.com
 
 **On GoDaddy:**
 
-1. Login to https://account.godaddy.com
+1. Login to <https://account.godaddy.com>
 2. Go to **My Products** → **Domains**
 3. Click on your domain → **Manage DNS**
 4. Scroll to **Nameservers** section
@@ -347,10 +352,12 @@ phil.ns.cloudflare.com
 6. Select **Custom Nameservers**
 7. Remove GoDaddy nameservers
 8. Add Cloudflare nameservers:
+
    ```
    alexa.ns.cloudflare.com
    phil.ns.cloudflare.com
    ```
+
 9. Click **Save**
 
 **⏱️ Propagation Time**: 24-48 hours (usually < 2 hours)
@@ -384,6 +391,7 @@ dig A yourdomain.com +short
 
 1. Go to **Security** → **WAF**
 2. Create rule: **WordPress Protection**
+
    ```
    Field: URI Path
    Operator: contains
@@ -409,6 +417,7 @@ dig A yourdomain.com +short
 2. Set caching level: **Standard**
 3. Browser Cache TTL: **4 hours** (for WordPress)
 4. Create Page Rule:
+
    ```
    URL: yourdomain.com/wp-admin/*
    Settings:
@@ -516,13 +525,15 @@ terraform apply -target=module.cloudflare
 ### Monitoring Cloudflare
 
 **Free Analytics Dashboard:**
-- https://dash.cloudflare.com → Analytics
+
+- <https://dash.cloudflare.com> → Analytics
 - Traffic overview
 - Cache hit rate
 - Threats blocked
 - Performance metrics
 
 **Set up Email Alerts:**
+
 1. Go to **Notifications**
 2. Enable:
    - ✅ SSL/TLS certificate expiration
@@ -577,12 +588,14 @@ sudo -u www-data wp learndash license activate LICENSE_KEY --path=/var/www/wordp
 **LearnDash Security Settings:**
 
 1. **Restrict course access**:
+
    ```php
    // In wp-config.php
    define('LEARNDASH_COURSE_PROTECTION', true);
    ```
 
 2. **Disable REST API for courses** (prevent scraping):
+
    ```bash
    sudo -u www-data wp plugin install disable-json-api --activate
    ```
@@ -616,6 +629,7 @@ sudo -u www-data wp wordfence set-learning-mode off --path=/var/www/wordpress
    - ✅ Disable XML-RPC (unless needed)
 
 4. **Rate Limiting**:
+
    ```
    Human verification: 5 min for 100+ page views
    Crawler verification: Block aggressive crawlers
@@ -647,6 +661,7 @@ sudo crontab -e -u www-data
 ```
 
 Add:
+
 ```cron
 # Update WordPress core, plugins, themes weekly
 0 3 * * 0 /usr/bin/wp --path=/var/www/wordpress core update && /usr/bin/wp --path=/var/www/wordpress plugin update --all && /usr/bin/wp --path=/var/www/wordpress theme update --all
@@ -706,7 +721,7 @@ Before going live with your trading course site:
 - [ ] Update GoDaddy nameservers to Cloudflare
 - [ ] Verify DNS propagation (24-48h)
 - [ ] Configure Cloudflare SSL/TLS (Full Strict mode)
-- [ ] Test HTTPS works (https://yourdomain.com)
+- [ ] Test HTTPS works (<https://yourdomain.com>)
 - [ ] Setup Cloudflare page rules for WordPress
 - [ ] Configure Nginx to trust Cloudflare IPs
 
@@ -872,6 +887,7 @@ If site is compromised:
 ---
 
 **Questions?** Open an issue or check the documentation:
+
 - SSH 2FA: [docs/security/SSH_2FA_BREAK_GLASS.md](../security/SSH_2FA_BREAK_GLASS.md)
 - Nginx Security: [docs/guides/NGINX_CONFIGURATION_EXPLAINED.md](NGINX_CONFIGURATION_EXPLAINED.md)
 - Deployment: [docs/guides/DEPLOYMENT.md](DEPLOYMENT.md)

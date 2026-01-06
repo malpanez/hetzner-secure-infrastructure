@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - **WordPress + LearnDash Infrastructure**
   - Complete WordPress stack with Nginx, PHP 8.3, MariaDB 10.11, Valkey 8.0
   - LearnDash Pro LMS integration for premium course platform
@@ -69,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Enhanced .markdownlint.json, .tflint.hcl
 
 ### Changed
+
 - **Technology Stack Updates**
   - Migrated from Redis to Valkey 8.0 (Linux Foundation, BSD license)
   - Chose MariaDB 10.11 over MySQL/PostgreSQL for WordPress optimization
@@ -97,17 +99,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Makefile deployment automation (make deploy)
 
 ### Removed
+
 - Redis role (replaced with Valkey)
 - Redundant WordPress plugins eliminated
 - Varnish HTTP cache (unnecessary for <100 users)
 - MySQL references (MariaDB chosen)
 
 ### Fixed
+
 - Ansible inventory organization (hosts vs variables separation)
 - FQCN compliance for all Ansible modules
 - Proper group_vars structure following Red Hat CoP
 
 ### Security
+
 - Cloudflare WAF integration
 - Nginx security headers (CSP, HSTS, X-Frame-Options)
 - Fail2ban with WordPress-specific rules
@@ -118,6 +123,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Regular vulnerability scanning with Trivy
 
 ### Performance
+
 - 5-layer caching reduces TTFB from 800-1200ms to 50-150ms (85% faster)
 - Page load time: 2-3s → 0.5-0.8s (75% faster)
 - Concurrent user capacity: 20-30 → 100-200 (5x improvement)
@@ -126,6 +132,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2024-12-23
 
 ### Added
+
 - Initial release
 - OpenTofu/Terraform infrastructure for Hetzner Cloud
   - Modular server configuration
@@ -149,6 +156,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Makefile for common operations
 
 ### Security
+
 - SSH hardening with modern ciphers
 - Multi-factor authentication (FIDO2 + TOTP)
 - AppArmor mandatory access control
@@ -163,6 +171,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Version History Format
 
 ### Types of Changes
+
 - **Added** - New features
 - **Changed** - Changes in existing functionality
 - **Deprecated** - Soon-to-be removed features
@@ -171,7 +180,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Security** - Security improvements
 
 ### Version Numbers
+
 Following Semantic Versioning (MAJOR.MINOR.PATCH):
+
 - **MAJOR** - Incompatible API/breaking changes
 - **MINOR** - Backwards-compatible functionality additions
 - **PATCH** - Backwards-compatible bug fixes

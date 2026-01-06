@@ -51,12 +51,14 @@ graph TB
 ## What This Creates
 
 ### Infrastructure
+
 - ✅ **Hetzner Cloud Server**: cx21 (2 vCPU, 4 GB RAM, 40 GB SSD)
 - ✅ **Additional Volume**: 20 GB for WordPress uploads and backups
 - ✅ **Automated Backups**: Weekly snapshots included
 - ✅ **Firewall**: Cloud firewall with restricted access
 
 ### Cloudflare Protection
+
 - ✅ **DDoS Protection**: Unlimited, automatic
 - ✅ **CDN**: Global edge caching
 - ✅ **SSL/TLS**: Free SSL certificate
@@ -70,6 +72,7 @@ graph TB
 - ✅ **Caching**: Aggressive caching for static assets
 
 ### Security Features
+
 - 🔐 SSH restricted to admin IPs only
 - 🔐 HTTP/HTTPS restricted to Cloudflare IPs (configured via Ansible)
 - 🔐 FIDO2 + TOTP 2FA for SSH (optional, via Ansible)
@@ -81,11 +84,11 @@ graph TB
 ## Prerequisites
 
 1. **Hetzner Cloud Account**
-   - Sign up: https://www.hetzner.com/cloud
+   - Sign up: <https://www.hetzner.com/cloud>
    - Get API token: Cloud Console → Security → API Tokens
 
 2. **Cloudflare Account**
-   - Sign up: https://dash.cloudflare.com/sign-up
+   - Sign up: <https://dash.cloudflare.com/sign-up>
    - Add domain to Cloudflare
    - Get API token: My Profile → API Tokens → Create Token
    - Required permissions: Zone.Zone Settings, Zone.DNS, Zone.Firewall Services
@@ -95,6 +98,7 @@ graph TB
    - Ready to change nameservers to Cloudflare
 
 4. **OpenTofu Installed**
+
    ```bash
    # macOS
    brew install opentofu
@@ -104,6 +108,7 @@ graph TB
    ```
 
 5. **SSH Key Pair**
+
    ```bash
    # Generate if you don't have one
    ssh-keygen -t ed25519 -C "your-email@example.com"
@@ -131,6 +136,7 @@ export TF_VAR_admin_ips='["203.0.113.50/32"]'  # Replace with your IP
 ```
 
 **Important**: Get your IP address:
+
 ```bash
 curl ifconfig.me
 # Example output: 203.0.113.50
@@ -151,6 +157,7 @@ tofu plan
 ```
 
 This will show:
+
 - 1 Hetzner server (cx21)
 - 1 Volume (20 GB)
 - Cloudflare DNS records (A, AAAA, CNAME)
@@ -178,6 +185,7 @@ tofu output nameservers
 ```
 
 **Steps:**
+
 1. Log into GoDaddy
 2. Go to: My Products → Domains → Manage DNS
 3. Click "Change" next to Nameservers
@@ -201,6 +209,7 @@ ansible-playbook -i inventory/hetzner.yml playbooks/site.yml
 ```
 
 This configures:
+
 - ✅ Security hardening (kernel params, AIDE, auto-updates)
 - ✅ AppArmor profiles
 - ✅ SSH 2FA (FIDO2 + TOTP)
@@ -268,6 +277,7 @@ tofu apply
 **Annual**: ~€112.80/year
 
 **Upgrade Options:**
+
 - Hetzner cx31 (3 vCPU, 8 GB RAM): €11.90/month
 - Cloudflare Pro (better WAF, more page rules): +€20/month
 - Additional volumes: €0.12/GB/month
@@ -442,9 +452,10 @@ wordpress_prod:
 
 ### Cloudflare Dashboard
 
-Monitor at: https://dash.cloudflare.com/
+Monitor at: <https://dash.cloudflare.com/>
 
 **Key Metrics:**
+
 - Requests per second
 - Bandwidth saved (caching)
 - Threats blocked
@@ -501,11 +512,13 @@ ansible-playbook -i inventory.yml playbooks/setup-backups.yml
 ### 1. Restrict SSH Access
 
 ✅ **DO**: Restrict to your IP only
+
 ```bash
 export TF_VAR_admin_ips='["203.0.113.50/32"]'
 ```
 
 ❌ **DON'T**: Allow from anywhere
+
 ```bash
 export TF_VAR_admin_ips='["0.0.0.0/0"]'  # INSECURE!
 ```
@@ -551,6 +564,7 @@ sudo -u www-data wp theme update --all
 ### 6. Install Security Plugins
 
 Recommended WordPress plugins:
+
 - **Wordfence Security** - Firewall, malware scanner
 - **iThemes Security** - Hardening, 2FA for WordPress
 - **UpdraftPlus** - Automated backups to S3
@@ -599,6 +613,7 @@ module "cloudflare" {
 ```
 
 After WordPress is configured with SSL:
+
 1. Install Let's Encrypt certificate
 2. Change to `ssl_mode = "full"` or `"strict"`
 
@@ -669,6 +684,7 @@ tofu destroy
 ```
 
 **Before destroying:**
+
 1. Export WordPress database
 2. Download uploads folder
 3. Create Hetzner snapshot (if needed)
@@ -698,10 +714,10 @@ After infrastructure is deployed:
 
 ## Support
 
-- **Hetzner**: https://docs.hetzner.com/cloud/
-- **Cloudflare**: https://support.cloudflare.com/
-- **WordPress**: https://wordpress.org/support/
-- **Tutor LMS**: https://www.themeum.com/support/
+- **Hetzner**: <https://docs.hetzner.com/cloud/>
+- **Cloudflare**: <https://support.cloudflare.com/>
+- **WordPress**: <https://wordpress.org/support/>
+- **Tutor LMS**: <https://www.themeum.com/support/>
 
 ## License
 

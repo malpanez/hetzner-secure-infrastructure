@@ -20,11 +20,13 @@ compose:
 ```
 
 **What this means**:
+
 - All future Ansible runs will use the `ansible` user (no 2FA prompts)
 - Your `malpanez` account still exists with 2FA for manual SSH access
 - Both users work simultaneously
 
 **To override** (use your 2FA account):
+
 ```bash
 ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml \
   -u malpanez \
@@ -54,6 +56,7 @@ google-authenticator
 ```
 
 **If you lose the QR code**:
+
 - Use emergency scratch codes to login
 - Or use `ansible` user to regain access (no 2FA)
 - Regenerate with: `google-authenticator`
@@ -70,6 +73,7 @@ cd /home/malpanez/repos/hetzner-secure-infrastructure
 ```
 
 **What it does**:
+
 - Moves root-level `.md` files to proper `docs/` folders
 - Archives outdated documentation
 - Removes duplicates
@@ -77,6 +81,7 @@ cd /home/malpanez/repos/hetzner-secure-infrastructure
 - Keeps only essential files in root (README, CHANGELOG, etc.)
 
 **After cleanup**, root will only have:
+
 - `README.md` - Main project overview
 - `CHANGELOG.md` - Version history
 - `CONTRIBUTING.md` - How to contribute
@@ -86,6 +91,7 @@ cd /home/malpanez/repos/hetzner-secure-infrastructure
 - `EXECUTION_GUIDE.md` - This file!
 
 All other docs organized in `docs/`:
+
 - `docs/guides/` - How-to guides
 - `docs/security/` - Security documentation
 - `docs/infrastructure/` - Architecture docs
@@ -117,6 +123,7 @@ cd /home/malpanez/repos/hetzner-secure-infrastructure
 ```
 
 This will:
+
 1. Generate `ansible` user SSH key
 2. Deploy `ansible` user to server (with hardening)
 3. Test connection
@@ -169,21 +176,24 @@ sudo /usr/local/bin/rotate-wordpress-secrets.sh
 
 ### Step 6: Migrate to Cloudflare (15 min + 24h propagation)
 
-1. **Create Cloudflare account**: https://dash.cloudflare.com/sign-up
+1. **Create Cloudflare account**: <https://dash.cloudflare.com/sign-up>
 2. **Add your domain** → Free plan
 3. **Get nameservers** (example):
+
    ```
    alexa.ns.cloudflare.com
    phil.ns.cloudflare.com
    ```
+
 4. **Update GoDaddy**:
-   - Login: https://account.godaddy.com
+   - Login: <https://account.godaddy.com>
    - My Products → Domains → Your Domain → Manage DNS
    - Nameservers → Change → Custom
    - Add Cloudflare nameservers
    - Save
 
 5. **Add DNS records in Cloudflare**:
+
    ```
    Type    Name    Content         Proxy
    ─────────────────────────────────────
@@ -263,6 +273,7 @@ ssh -i ~/.ssh/ansible_automation ansible@YOUR_SERVER_IP \
 ### Passwords Location
 
 All passwords are in Ansible Vault:
+
 ```bash
 ansible-vault view ansible/inventory/group_vars/all/secrets.yml
 # Vault password: 8ZpBU0IW4pWNKuXm4b7hQxF5e/jmfspQYzrSSLhuXu8=
@@ -399,12 +410,14 @@ sudo /usr/local/bin/rotate-wordpress-secrets.sh
 ### Lost Phone (Can't Get 2FA Code)
 
 **Option 1**: Use emergency scratch code
+
 ```bash
 ssh -i ~/.ssh/github_ed25519 malpanez@YOUR_SERVER_IP
 # Enter scratch code instead of TOTP code
 ```
 
 **Option 2**: Use ansible user
+
 ```bash
 ssh -i ~/.ssh/ansible_automation ansible@YOUR_SERVER_IP
 sudo -u malpanez bash
@@ -443,14 +456,17 @@ sudo /usr/local/bin/rotate-wordpress-secrets.sh
 All documentation is now organized in `docs/`:
 
 **Start here**:
+
 - [docs/INDEX.md](docs/INDEX.md) - Complete documentation index
 
 **Key guides**:
+
 - [docs/guides/DEPLOYMENT_AUTOMATION_SETUP.md](docs/guides/DEPLOYMENT_AUTOMATION_SETUP.md) - **Main production guide**
 - [docs/security/SSH_2FA_INITIAL_SETUP.md](docs/security/SSH_2FA_INITIAL_SETUP.md) - **2FA setup with QR code**
 - [docs/performance/ARM64_vs_X86_COMPARISON.md](docs/performance/ARM64_vs_X86_COMPARISON.md) - **Performance benchmarks**
 
 **Quick access** (in root):
+
 - [GO_LIVE_TODAY_CHECKLIST.md](GO_LIVE_TODAY_CHECKLIST.md) - 30-minute deployment
 - [VAULT_SETUP_INSTRUCTIONS.md](VAULT_SETUP_INSTRUCTIONS.md) - Ansible Vault setup
 

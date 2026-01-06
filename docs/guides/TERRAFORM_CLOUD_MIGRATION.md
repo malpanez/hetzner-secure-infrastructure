@@ -106,7 +106,7 @@ Terraform Cloud Free tier includes:
 ### Required Accounts
 
 1. **Terraform Cloud account** (free)
-   - Sign up: https://app.terraform.io/signup/account
+   - Sign up: <https://app.terraform.io/signup/account>
 
 2. **Codeberg account** (free)
    - Your existing account with infrastructure repository
@@ -151,7 +151,7 @@ git push
 ### Step 1: Create Terraform Cloud Organization
 
 1. **Sign up / Log in**:
-   - Go to: https://app.terraform.io
+   - Go to: <https://app.terraform.io>
    - Create account or log in
 
 2. **Create organization**:
@@ -160,7 +160,7 @@ git push
      - Must be unique across all Terraform Cloud
      - Use lowercase, hyphens only
      - Example: `yourname-wordpress-infra`
-   - Email: your-email@example.com
+   - Email: <your-email@example.com>
    - Click "Create organization"
 
 3. **Note your organization name** - you'll need it later
@@ -185,7 +185,7 @@ cat ~/.ssh/terraform_cloud_codeberg.pub
 ### Step 3: Add SSH Key to Codeberg
 
 1. **Go to Codeberg SSH keys**:
-   - URL: https://codeberg.org/user/settings/keys
+   - URL: <https://codeberg.org/user/settings/keys>
    - Or: Settings > SSH/GPG Keys
 
 2. **Add new SSH key**:
@@ -195,6 +195,7 @@ cat ~/.ssh/terraform_cloud_codeberg.pub
    - Click "Add Key"
 
 3. **Test SSH connection**:
+
    ```bash
    ssh -T git@codeberg.org -i ~/.ssh/terraform_cloud_codeberg
    # Expected: "Hi username! You've successfully authenticated..."
@@ -210,6 +211,7 @@ cat ~/.ssh/terraform_cloud_codeberg.pub
    - Click "Add SSH Key"
    - Name: `codeberg-read-key`
    - Private SSH Key: Paste content of `~/.ssh/terraform_cloud_codeberg` (**private key**)
+
      ```bash
      cat ~/.ssh/terraform_cloud_codeberg
      # Copy ALL lines including:
@@ -217,6 +219,7 @@ cat ~/.ssh/terraform_cloud_codeberg.pub
      # ... (key content)
      # -----END OPENSSH PRIVATE KEY-----
      ```
+
    - Click "Add SSH Key"
 
 ### Step 5: Create Workspace for Production
@@ -266,6 +269,7 @@ Go to: Workspace > Variables > Add variable
 | `deploy_openbao_server` | `false` | Terraform | ❌ No | ✅ **Yes** | Deploy dedicated secrets server |
 
 **Notes:**
+
 - Mark `hcloud_token` as **Sensitive** (will be hidden)
 - Mark boolean variables (`deploy_*`) as **HCL** (treats as boolean, not string)
 - Non-sensitive variables visible in logs (helpful for debugging)
@@ -278,6 +282,7 @@ Go to: Workspace > Variables > Add variable
 | `TF_LOG` | `INFO` | Environment | ❌ No | Terraform logging level (optional) |
 
 **Why both `hcloud_token` and `HCLOUD_TOKEN`?**
+
 - `hcloud_token`: Terraform variable (used in `variables.tf`)
 - `HCLOUD_TOKEN`: Environment variable (used by Hetzner provider)
 - Set both for maximum compatibility
@@ -355,6 +360,7 @@ ls -la
 ```
 
 **Verify in Terraform Cloud UI:**
+
 1. Go to workspace: `hetzner-production`
 2. Click "States" tab
 3. Should see current state with your resources
@@ -472,7 +478,7 @@ Configure email notifications:
   - ✅ Run needs attention (waiting for approval)
   - ✅ Run errored
   - ✅ Run applied successfully
-- ✅ **Email Recipients**: your-email@example.com
+- ✅ **Email Recipients**: <your-email@example.com>
 
 #### Run Triggers
 
@@ -492,6 +498,7 @@ Link workspaces (if you have multiple):
 Terraform state tracks which real-world resources correspond to your configuration.
 
 **Before migration:**
+
 ```
 Local State (terraform.tfstate)
 ├─ hcloud_server.wordpress
@@ -501,6 +508,7 @@ Local State (terraform.tfstate)
 ```
 
 **After migration:**
+
 ```
 Terraform Cloud State (remote)
 ├─ hcloud_server.wordpress  (SAME resources)
@@ -566,6 +574,7 @@ terraform plan
 ### Test 2: Git Push Trigger
 
 1. **Make harmless change**:
+
    ```bash
    cd terraform/environments/production
 
@@ -620,6 +629,7 @@ git push origin main
 ```
 
 **In Terraform Cloud:**
+
 1. Run triggered automatically
 2. Plan shows: `~ hcloud_server.wordpress` (modify in-place)
 3. Review plan carefully
@@ -627,6 +637,7 @@ git push origin main
 5. Verify server updated in Hetzner Console
 
 **Rollback test change:**
+
 ```bash
 git revert HEAD
 git push origin main
@@ -658,6 +669,7 @@ git push origin main
 **Scenario:** Migrate from CX23 (x86) to CAX11 (ARM) after testing.
 
 1. **Update configuration**:
+
    ```bash
    cd terraform/environments/production
    nano terraform.production.tfvars
@@ -713,6 +725,7 @@ git push origin main
    - Wait for completion
 
 5. **Configure with Ansible**:
+
    ```bash
    cd ansible
    ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml \
@@ -727,6 +740,7 @@ git push origin main
 ### Issue: State Lock Error
 
 **Symptoms:**
+
 ```
 Error: Error acquiring the state lock
 Lock Info:
@@ -760,6 +774,7 @@ Lock Info:
 **Solutions:**
 
 1. **Verify SSH key**:
+
    ```bash
    ssh -T git@codeberg.org -i ~/.ssh/terraform_cloud_codeberg
    # Should authenticate successfully
@@ -787,6 +802,7 @@ Lock Info:
 **Common causes:**
 
 1. **Drift detection** (resources changed outside Terraform):
+
    ```bash
    # Someone modified server in Hetzner Console
    # Terraform detects difference
@@ -806,6 +822,7 @@ Lock Info:
 ### Issue: Run Failed with "No Valid Credentials"
 
 **Symptoms:**
+
 ```
 Error: No valid credential sources found for Hetzner Cloud Provider.
 ```
@@ -822,6 +839,7 @@ Error: No valid credential sources found for Hetzner Cloud Provider.
    - Should also exist
 
 3. **Verify token is valid**:
+
    ```bash
    # Test locally
    export HCLOUD_TOKEN="your-token"
@@ -840,6 +858,7 @@ Error: No valid credential sources found for Hetzner Cloud Provider.
 **Symptoms:** Email: "Approaching free tier limit (500 resources)"
 
 **Cause:** Each resource counts toward limit:
+
 - Server = 1 resource
 - Network = 1 resource
 - Firewall = 1 resource
@@ -850,6 +869,7 @@ Error: No valid credential sources found for Hetzner Cloud Provider.
 **If you hit limit:**
 
 1. **Audit resources**:
+
    ```bash
    terraform state list | wc -l
    # Shows total resource count
@@ -860,6 +880,7 @@ Error: No valid credential sources found for Hetzner Cloud Provider.
    - Use `terraform.workspace` to differentiate
 
 3. **Clean up unused resources**:
+
    ```bash
    # Remove orphaned resources
    terraform state rm 'resource.name'
@@ -876,6 +897,7 @@ Error: No valid credential sources found for Hetzner Cloud Provider.
 ### Immediate (After Successful Migration)
 
 1. ✅ **Verify state migration**:
+
    ```bash
    terraform state list
    # Should match pre-migration resources
@@ -967,6 +989,7 @@ These remain manual for simplicity and reliability:
 **Author:** Infrastructure Team
 
 **Related Documentation:**
+
 - [DEPLOYMENT.md](DEPLOYMENT.md) - Complete deployment guide
 - [COMPLETE_TESTING_GUIDE.md](COMPLETE_TESTING_GUIDE.md) - Testing procedures
 - [SYSTEM_OVERVIEW.md](../architecture/SYSTEM_OVERVIEW.md) - Architecture overview

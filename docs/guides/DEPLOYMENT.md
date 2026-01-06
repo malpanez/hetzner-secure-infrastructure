@@ -74,10 +74,11 @@ ssh -V            # OpenSSH >= 8.0
 ### Required Credentials
 
 1. **Hetzner Cloud API Token**
-   - Get from: https://console.hetzner.cloud/projects
+   - Get from: <https://console.hetzner.cloud/projects>
    - Permissions: Read & Write
 
 2. **SSH Key Pair**
+
    ```bash
    # Generate if not exists
    ssh-keygen -t ed25519 -C "your-email@example.com" -f ~/.ssh/github_ed25519
@@ -88,7 +89,7 @@ ssh -V            # OpenSSH >= 8.0
 
 4. **Terraform Cloud Account** (for production)
    - Free tier: Up to 500 resources
-   - Sign up: https://app.terraform.io/signup/account
+   - Sign up: <https://app.terraform.io/signup/account>
 
 ---
 
@@ -374,13 +375,13 @@ systemctl status nginx php8.4-fpm mariadb valkey-server prometheus grafana-serve
 ### Step 1: Create Terraform Cloud Account
 
 1. **Sign up for free account**:
-   - Go to: https://app.terraform.io/signup/account
+   - Go to: <https://app.terraform.io/signup/account>
    - Use your email
    - Verify email
 
 2. **Create organization**:
    - Name: `wordpress-lms-infrastructure` (or your choice)
-   - Email: your-email@example.com
+   - Email: <your-email@example.com>
 
 3. **Create workspace**:
    - **Workspace name**: `hetzner-production`
@@ -394,12 +395,13 @@ Terraform Cloud doesn't have native Codeberg integration, but we can use SSH-bas
 #### Option A: SSH Key Connection (Recommended)
 
 1. **Generate SSH key for Terraform Cloud**:
+
    ```bash
    ssh-keygen -t ed25519 -C "terraform-cloud" -f ~/.ssh/terraform_cloud_ed25519
    ```
 
 2. **Add SSH public key to Codeberg**:
-   - Go to: https://codeberg.org/user/settings/keys
+   - Go to: <https://codeberg.org/user/settings/keys>
    - Add new SSH key
    - Paste content of `~/.ssh/terraform_cloud_ed25519.pub`
    - Title: "Terraform Cloud Read Access"
@@ -426,6 +428,7 @@ If SSH setup is complex, use manual workflow:
    - Name: `hetzner-production`
 
 2. **Upload configuration manually**:
+
    ```bash
    cd terraform/environments/production
    tar -czf terraform-config.tar.gz *.tf *.tfvars
@@ -658,6 +661,7 @@ ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml \
 **Only if you want full automation**. This is **NOT required** for "set and forget" - Terraform Cloud handles infrastructure, Ansible can be manual for the 1-2 times/month you need it.
 
 If you choose this path, you'd need to:
+
 1. Mirror Codeberg → GitHub (adds complexity)
 2. Store `HCLOUD_TOKEN` and vault password in GitHub Secrets
 3. Create `.github/workflows/ansible-deploy.yml`
@@ -681,6 +685,7 @@ If you choose this path, you'd need to:
 ### Testing Process
 
 1. **Deploy x86 staging** (already done):
+
    ```bash
    cd terraform/environments/staging
    terraform apply -var="architecture=x86" -var="server_type=cx23"
@@ -690,6 +695,7 @@ If you choose this path, you'd need to:
    - Result: 3,114 req/s, 32ms latency, A+ grade
 
 3. **Deploy ARM staging**:
+
    ```bash
    # Destroy x86
    terraform destroy
@@ -699,6 +705,7 @@ If you choose this path, you'd need to:
    ```
 
 4. **Run identical benchmarks**:
+
    ```bash
    # SSH to server
    ssh malpanez@<arm-server-ip>
@@ -721,6 +728,7 @@ If you choose this path, you'd need to:
    - If ARM significantly slower → Choose x86 (better performance)
 
 7. **Update production config**:
+
    ```bash
    # Edit terraform/environments/production/terraform.production.tfvars
    server_type = "cax11"  # or "cx23"
@@ -764,11 +772,12 @@ See detailed guide: [docs/infrastructure/CLOUDFLARE_SETUP.md](../infrastructure/
 **Quick steps:**
 
 1. **Add site to Cloudflare**:
-   - Login: https://dash.cloudflare.com
+   - Login: <https://dash.cloudflare.com>
    - Add site: yourdomain.com
    - Select Free plan
 
 2. **Configure DNS records**:
+
    ```
    A     @       <production-ip>   Proxied (orange cloud)
    A     www     <production-ip>   Proxied (orange cloud)
@@ -780,6 +789,7 @@ See detailed guide: [docs/infrastructure/CLOUDFLARE_SETUP.md](../infrastructure/
    - Use custom nameservers from Cloudflare
 
 4. **Wait for propagation** (2-24 hours, usually 2-4 hours):
+
    ```bash
    dig yourdomain.com
    # Should show Cloudflare IPs
@@ -795,12 +805,12 @@ See detailed guide: [docs/infrastructure/CLOUDFLARE_SETUP.md](../infrastructure/
 ### Install WordPress & LearnDash
 
 1. **Complete WordPress setup**:
-   - Go to: https://yourdomain.com
+   - Go to: <https://yourdomain.com>
    - Follow installation wizard
    - Create admin user (use vault password)
 
 2. **Install LearnDash Pro**:
-   - Download from: https://www.learndash.com/your-account/
+   - Download from: <https://www.learndash.com/your-account/>
    - WordPress Admin > Plugins > Add New > Upload Plugin
    - Upload `learndash-X.X.X.zip`
    - Activate
@@ -814,6 +824,7 @@ See detailed guide: [docs/infrastructure/CLOUDFLARE_SETUP.md](../infrastructure/
 ### Set Up Monitoring Dashboards
 
 1. **Access Grafana**:
+
    ```
    URL: http://<production-ip>:3000
    User: admin
@@ -840,6 +851,7 @@ See detailed guide: [docs/infrastructure/CLOUDFLARE_SETUP.md](../infrastructure/
 **Solutions**:
 
 1. **Check SSH key**:
+
    ```bash
    # Test SSH connection manually
    ssh -T git@codeberg.org -i ~/.ssh/terraform_cloud_ed25519
@@ -865,6 +877,7 @@ See detailed guide: [docs/infrastructure/CLOUDFLARE_SETUP.md](../infrastructure/
 **Solutions**:
 
 1. **Check HCLOUD_TOKEN**:
+
    ```bash
    echo $HCLOUD_TOKEN
    # Should show your token
@@ -874,18 +887,21 @@ See detailed guide: [docs/infrastructure/CLOUDFLARE_SETUP.md](../infrastructure/
    ```
 
 2. **Test Hetzner API**:
+
    ```bash
    hcloud server list
    # Should show your servers
    ```
 
 3. **Check server labels**:
+
    ```bash
    hcloud server describe <server-name>
    # Look for labels: environment, role, project
    ```
 
 4. **Verify hcloud collection**:
+
    ```bash
    ansible-galaxy collection list | grep hetzner
    # Should show: hetzner.hcloud
@@ -903,6 +919,7 @@ See detailed guide: [docs/infrastructure/CLOUDFLARE_SETUP.md](../infrastructure/
 1. **Wait for current run to finish** (if running in Terraform Cloud)
 
 2. **Force unlock** (only if run crashed):
+
    ```bash
    # In Terraform Cloud UI:
    # Settings > Locking > Force Unlock
@@ -918,6 +935,7 @@ See detailed guide: [docs/infrastructure/CLOUDFLARE_SETUP.md](../infrastructure/
 **Solutions**:
 
 1. **Check logs**:
+
    ```bash
    journalctl -u nginx -n 50
    journalctl -u php8.4-fpm -n 50
@@ -929,6 +947,7 @@ See detailed guide: [docs/infrastructure/CLOUDFLARE_SETUP.md](../infrastructure/
    - Missing PHP modules
 
 3. **Verify configuration**:
+
    ```bash
    # Nginx
    sudo nginx -t
@@ -938,6 +957,7 @@ See detailed guide: [docs/infrastructure/CLOUDFLARE_SETUP.md](../infrastructure/
    ```
 
 4. **Re-run Ansible with specific role**:
+
    ```bash
    ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml \
      --tags nginx_wordpress \
@@ -956,6 +976,7 @@ See detailed guide: [docs/infrastructure/CLOUDFLARE_SETUP.md](../infrastructure/
    - NOT: Flexible or Full
 
 2. **Verify Let's Encrypt certificate**:
+
    ```bash
    ssh malpanez@<server-ip>
    sudo certbot certificates
@@ -964,6 +985,7 @@ See detailed guide: [docs/infrastructure/CLOUDFLARE_SETUP.md](../infrastructure/
    ```
 
 3. **Manually trigger certificate renewal**:
+
    ```bash
    sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
    ```
@@ -1051,18 +1073,21 @@ Ansible MANUAL (when needed)
 ```
 
 **Why NOT GitHub Actions for Ansible:**
+
 - Adds complexity (mirror Codeberg→GitHub)
 - Auto-healing can hide problems
 - Manual Ansible is more reliable for rare changes
 - Easier to debug when run locally
 
 **"Set and Forget" means:**
+
 - Terraform Cloud auto-manages infrastructure
 - Secrets stored securely
 - No manual Terraform commands
 - Email alerts if infrastructure fails
 
 **NOT "automate everything":**
+
 - Manual Ansible when you actually need it
 - Simpler = fewer things to break
 - Better for 1-2 changes/month frequency
@@ -1074,6 +1099,7 @@ Ansible MANUAL (when needed)
 **Status:** Production-ready
 
 **Related Documentation:**
+
 - [COMPLETE_TESTING_GUIDE.md](COMPLETE_TESTING_GUIDE.md) - Detailed testing procedures
 - [CLOUDFLARE_SETUP.md](../infrastructure/CLOUDFLARE_SETUP.md) - DNS migration guide
 - [SYSTEM_OVERVIEW.md](../architecture/SYSTEM_OVERVIEW.md) - Architecture documentation

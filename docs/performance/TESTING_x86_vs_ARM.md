@@ -7,6 +7,7 @@ Quick reference for testing CX23 (x86) vs CAX11 (ARM) to decide production archi
 ## Current Status
 
 ✅ `terraform.staging.tfvars` configured with:
+
 - Architecture: **x86 (CX23)** - ready for TEST 1
 - API Token: Using "Default" Hetzner project
 - SSH Key: Regular ED25519 (WSL2 compatible)
@@ -24,6 +25,7 @@ Quick reference for testing CX23 (x86) vs CAX11 (ARM) to decide production archi
 ## TEST 1: x86 Cost-Optimized (CX23)
 
 ### Current Config
+
 ```hcl
 architecture = "x86"    # CX series
 server_size  = "small"  # cx23: 2 vCPU, 4GB RAM, €3.68/mo
@@ -31,6 +33,7 @@ location     = "nbg1"   # Nuremberg
 ```
 
 ### Step 1: Deploy Server
+
 ```bash
 cd terraform
 terraform init  # If first time
@@ -39,6 +42,7 @@ terraform apply -var-file=terraform.staging.tfvars
 ```
 
 **Expected Output:**
+
 ```
 server_type      = "cx23"
 architecture     = "x86"
@@ -52,12 +56,15 @@ server_specs     = {
 ```
 
 **If CX23 unavailable:**
+
 ```
 Error: server type 'cx23' is not available in location 'nbg1'
 ```
+
 → Skip to TEST 2 (ARM)
 
 ### Step 2: Wait for Cloud-Init
+
 ```bash
 # Get server IP from terraform output
 SERVER_IP=$(terraform output -raw server_ipv4)
@@ -67,6 +74,7 @@ ssh malpanez@$SERVER_IP "cloud-init status --wait"
 ```
 
 ### Step 3: Run Ansible
+
 ```bash
 cd ../ansible
 
@@ -78,6 +86,7 @@ ansible-playbook -i inventory/staging.yml playbooks/wordpress.yml
 ```
 
 ### Step 4: Validate WordPress
+
 ```bash
 # Check HTTP response
 curl -I http://$SERVER_IP
@@ -91,6 +100,7 @@ curl http://$SERVER_IP | grep -i wordpress
 ```
 
 ### Step 5: Benchmark
+
 ```bash
 # Install Apache Bench if needed
 sudo apt-get install apache2-utils -y
@@ -103,6 +113,7 @@ cat ~/test_x86_benchmark.txt | grep -E "Requests per second|Time per request|Tra
 ```
 
 **Example Output:**
+
 ```
 Requests per second:    150.32 [#/sec] (mean)
 Time per request:       66.53 [ms] (mean)
@@ -110,6 +121,7 @@ Time per request:       6.653 [ms] (mean, across all concurrent requests)
 ```
 
 ### Step 6: Check Logs & Resource Usage
+
 ```bash
 ssh malpanez@$SERVER_IP
 
@@ -131,6 +143,7 @@ exit
 ```
 
 ### Step 7: Document Results
+
 ```bash
 cat > ~/test_x86_results.txt <<EOF
 === x86 (CX23) Test Results ===
@@ -171,6 +184,7 @@ cat ~/test_x86_results.txt
 ```
 
 ### Step 8: Destroy
+
 ```bash
 cd ../terraform
 terraform destroy -var-file=terraform.staging.tfvars
@@ -181,6 +195,7 @@ terraform destroy -var-file=terraform.staging.tfvars
 ## TEST 2: ARM (CAX11)
 
 ### Update Config
+
 Edit `terraform/terraform.staging.tfvars`:
 
 ```hcl
@@ -196,6 +211,7 @@ location     = "fsn1"   # Falkenstein
 ```
 
 ### Repeat All Steps
+
 Run same commands as TEST 1, but save results to `~/test_arm_results.txt`:
 
 ```bash
@@ -239,16 +255,19 @@ paste ~/test_x86_results.txt ~/test_arm_results.txt | column -t
 ### Decision Rules
 
 **Choose x86 (CX23) if:**
+
 - ✅ CX23 deployed successfully (stock available)
 - ✅ Performance similar to ARM (within 10%)
 - ✅ No compatibility issues
 
 **Choose ARM (CAX11) if:**
+
 - ❌ CX23 stock unavailable
 - ✅ Performance equal or better than x86
 - ✅ Better long-term availability
 
 **Default recommendation:** ARM (CAX11)
+
 - Reason: Only €0.37/mo more expensive (€4.44/year)
 - Always available (no stock issues)
 - Modern ARM64 architecture
@@ -259,7 +278,8 @@ paste ~/test_x86_results.txt ~/test_arm_results.txt | column -t
 
 After testing, update production config:
 
-### If choosing x86 (CX23):
+### If choosing x86 (CX23)
+
 ```hcl
 # terraform.production.tfvars
 architecture = "x86"
@@ -267,7 +287,8 @@ server_size  = "small"  # cx23: €3.68/mo
 location     = "nbg1"
 ```
 
-### If choosing ARM (CAX11):
+### If choosing ARM (CAX11)
+
 ```hcl
 # terraform.production.tfvars
 architecture = "arm"
@@ -291,12 +312,15 @@ location     = "fsn1"
 ## Troubleshooting
 
 ### CX23 not available
+
 ```
 Error: server type 'cx23' is not available in location 'nbg1'
 ```
+
 → Normal, limited stock. Skip to ARM test.
 
 ### Ansible connection timeout
+
 ```bash
 # Check if cloud-init finished
 ssh malpanez@$SERVER_IP "cloud-init status"
@@ -306,6 +330,7 @@ ssh malpanez@$SERVER_IP "cloud-init status --wait"
 ```
 
 ### WordPress not responding
+
 ```bash
 # Check Nginx status
 ssh malpanez@$SERVER_IP "sudo systemctl status nginx"
@@ -341,6 +366,7 @@ cd ../terraform && terraform destroy -var-file=terraform.staging.tfvars
 ---
 
 Ready to start? Run:
+
 ```bash
 cd /home/malpanez/repos/hetzner-secure-infrastructure/terraform
 terraform plan -var-file=terraform.staging.tfvars

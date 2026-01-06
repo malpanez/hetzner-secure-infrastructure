@@ -1,7 +1,8 @@
 # Security Repository Integration Analysis
 
 ## Repositorio Analizado
-**Source**: https://github.com/malpanez/security
+
+**Source**: <https://github.com/malpanez/security>
 **Descripción**: Ansible collection de seguridad nivel empresarial con hardening SSH y automatización de compliance
 
 ---
@@ -25,12 +26,14 @@ El repositorio `malpanez/security` contiene componentes de grado empresarial que
 **Qué hace**: Detecta capacidades del sistema antes de configurar seguridad
 
 **Valor para tu infraestructura**:
+
 - Detecta versión de OpenSSH automáticamente
 - Identifica disponibilidad de PAM U2F/FIDO2
 - Detecta soporte para Security Keys (SK)
 - Determina disponibilidad de SELinux
 
 **Tareas principales**:
+
 ```yaml
 1. Recolectar facts mínimos del sistema
 2. Inventariar paquetes instalados
@@ -46,6 +49,7 @@ El repositorio `malpanez/security` contiene componentes de grado empresarial que
 ```
 
 **Aplicación recomendada**:
+
 - Ejecutar ANTES de cualquier configuración de seguridad
 - Usar para determinar qué features activar
 - Integrar en playbook principal como primer role
@@ -59,6 +63,7 @@ El repositorio `malpanez/security` contiene componentes de grado empresarial que
 **Características CRÍTICAS que necesitas**:
 
 #### A. Validación Pre-Despliegue
+
 ```yaml
 - name: Deploy hardened sshd_config
   ansible.builtin.template:
@@ -71,6 +76,7 @@ El repositorio `malpanez/security` contiene componentes de grado empresarial que
 **Valor**: Previene aplicar configuraciones rotas. SSH valida ANTES de aplicar.
 
 #### B. Detección de Versión SSH
+
 ```yaml
 - name: Detect OpenSSH version
   ansible.builtin.command: "{{ sshd_binary_path }} -V"
@@ -86,6 +92,7 @@ El repositorio `malpanez/security` contiene componentes de grado empresarial que
 **Valor**: Adapta configuración a versión instalada automáticamente.
 
 #### C. Algoritmos Adaptativos
+
 ```yaml
 - name: Select algorithm profile
   ansible.builtin.set_fact:
@@ -93,6 +100,7 @@ El repositorio `malpanez/security` contiene componentes de grado empresarial que
 ```
 
 **Perfiles disponibles**:
+
 - **Modern** (OpenSSH >= 7.8):
   - Ciphers: chacha20-poly1305, aes256-gcm, aes128-gcm
   - MACs: hmac-sha2-512-etm, hmac-sha2-256-etm
@@ -107,6 +115,7 @@ El repositorio `malpanez/security` contiene componentes de grado empresarial que
 #### D. Match Blocks por Tipo de Usuario
 
 **Template `sshd_config.j2`**:
+
 ```jinja2
 # Human users - with MFA
 {% if sshd_hardening_human_groups | length > 0 %}
@@ -128,6 +137,7 @@ Match Group {{ sshd_hardening_service_groups | join(',') }}
 **Valor**: Separa usuarios humanos (MFA) de cuentas de servicio (key-only).
 
 #### E. Session Limits
+
 ```jinja2
 LoginGraceTime {{ sshd_hardening_login_grace_time }}
 ClientAliveInterval {{ sshd_hardening_client_alive_interval }}
@@ -148,6 +158,7 @@ MaxStartups {{ sshd_hardening_max_startups }}
 **Características CRÍTICAS**:
 
 #### A. Bypass de Cuentas de Servicio
+
 ```yaml
 # Defaults
 pam_mfa_service_accounts:
@@ -162,6 +173,7 @@ pam_mfa_service_bypass_group: mfa-bypass
 **Valor**: Evita bloquear automatización mientras protege usuarios humanos.
 
 #### B. Grupos de Seguridad
+
 ```yaml
 - name: Create breakglass group
   ansible.builtin.group:
@@ -175,10 +187,12 @@ pam_mfa_service_bypass_group: mfa-bypass
 ```
 
 **Valor**:
+
 - `mfa-breakglass`: Acceso de emergencia sin MFA
 - `mfa-bypass`: Cuentas de servicio sin MFA
 
 #### C. Multi-método (YubiKey + TOTP Fallback)
+
 ```yaml
 pam_mfa_primary_method: yubikey  # U2F/FIDO2
 pam_mfa_totp_enabled: true       # Google Authenticator como backup
@@ -192,6 +206,7 @@ pam_mfa_totp_dir: /etc/google-authenticator.d
 **Valor**: Flexibilidad - YubiKey cuando disponible, TOTP como fallback.
 
 #### D. Directorios Securizados
+
 ```yaml
 - name: Create U2F keys directory
   ansible.builtin.file:
@@ -229,6 +244,7 @@ pam_mfa_totp_dir: /etc/google-authenticator.d
 ## Modos de Ejecución: Review vs Enforce
 
 ### Review Mode (SEGURO)
+
 ```yaml
 - hosts: all
   vars:
@@ -239,6 +255,7 @@ pam_mfa_totp_dir: /etc/google-authenticator.d
 ```
 
 **Comportamiento**:
+
 - Solo detecta capacidades
 - Solo genera reportes
 - NO modifica servicios
@@ -248,6 +265,7 @@ pam_mfa_totp_dir: /etc/google-authenticator.d
 **Uso recomendado**: SIEMPRE ejecutar review ANTES de enforce.
 
 ### Enforce Mode (APLICACIÓN)
+
 ```yaml
 - hosts: all
   vars:
@@ -259,6 +277,7 @@ pam_mfa_totp_dir: /etc/google-authenticator.d
 ```
 
 **Comportamiento**:
+
 - Aplica todas las configuraciones
 - Reinicia servicios
 - Ejecuta validación pre-aplicación
@@ -270,36 +289,47 @@ pam_mfa_totp_dir: /etc/google-authenticator.d
 ## Playbooks Disponibles
 
 ### 1. `preflight-check.yml` ⭐⭐⭐
+
 Valida prerequisites ANTES de deployment:
+
 - Versión SSH compatible
 - Paquetes requeridos instalados
 - Permisos correctos
 - Conectividad
 
 ### 2. `review.yml` ⭐⭐⭐
+
 Ejecuta solo detección y reporting:
+
 ```bash
 ansible-playbook playbooks/review.yml --tags review
 ```
 
 ### 3. `dry-run.yml` ⭐⭐
+
 Test run con `check_mode`:
+
 ```bash
 ansible-playbook playbooks/dry-run.yml --check
 ```
 
 ### 4. `enforce-staging.yml` ⭐⭐
+
 Deployment a staging first:
+
 - Prueba en staging
 - Valida antes de producción
 
 ### 5. `enforce-production-gradual.yml` ⭐
+
 Rollout gradual:
+
 - Serial: 1 (uno a la vez)
 - Max_fail_percentage: 0
 - Pausa entre servers
 
 ### 6. `generate-compliance-report.yml` ⭐
+
 Genera reportes detallados de compliance.
 
 ---
@@ -323,9 +353,11 @@ Genera reportes detallados de compliance.
 ## Problemas Actuales Resueltos por Security Repo
 
 ### Problema #1: AppArmor Bloqueando SSH ✅
+
 **Estado actual**: Cambiado a complain mode (workaround)
 
 **Solución Security Repo**:
+
 - No usa AppArmor (usa SELinux en RHEL)
 - Confía en SSH hardening + PAM MFA + auditd
 - Enfoque: Configuración correcta > MAC enforcement
@@ -335,6 +367,7 @@ Genera reportes detallados de compliance.
 ---
 
 ### Problema #2: Reboot No Ejecutado ✅ (YA RESUELTO)
+
 **Estado**: Arreglado en tu código
 
 **Security Repo approach**: Similar pero con mejor consistency.
@@ -342,6 +375,7 @@ Genera reportes detallados de compliance.
 ---
 
 ### Problema #3: Orden de Roles ✅ (YA RESUELTO)
+
 **Estado**: SSH 2FA antes de firewall
 
 **Security Repo approach**: Similar - configuración antes de enforcement.
@@ -349,14 +383,17 @@ Genera reportes detallados de compliance.
 ---
 
 ### Problema #4: UFW Race Condition ⚠️
+
 **Estado**: Parcialmente mitigado
 
 **Security Repo approach**:
+
 - No usa UFW (usa firewalld en RHEL)
 - En Debian: asume SSH permitido por defecto
 - Confía en validación de conectividad POST-deployment
 
 **Solución mejor**:
+
 ```yaml
 - name: Verify SSH connectivity before enabling firewall
   ansible.builtin.wait_for:
@@ -371,20 +408,24 @@ Genera reportes detallados de compliance.
 ---
 
 ### Problema #5: PAM 2FA Module Misconfiguration ✅ ⭐⭐⭐
+
 **Estado actual**: Identificado pero no arreglado (crítico)
 
 **Tu configuración actual** (INCORRECTA):
+
 ```
 auth required pam_google_authenticator.so
 ```
 
 **Problemas**:
+
 1. `required` = si falla, sigue procesando pero SIEMPRE deniega
 2. Insertado después de pam_unix.so (orden incorrecto)
 3. No bypass para cuentas de servicio
 4. Puede causar loops de autenticación
 
 **Security Repo approach** (CORRECTO):
+
 ```
 # NO aplica MFA a cuentas en mfa-bypass group
 # Usa control [default=ignore] en vez de required
@@ -392,6 +433,7 @@ auth required pam_google_authenticator.so
 ```
 
 **Ejemplo correcto PAM stack**:
+
 ```
 # /etc/pam.d/sshd
 
@@ -414,12 +456,14 @@ auth required pam_unix.so
 ### Opción A: Integración Completa (RECOMENDADO) ⭐⭐⭐
 
 **Paso 1**: Instalar la collection
+
 ```bash
 # En tu proyecto
 ansible-galaxy collection install git+https://github.com/malpanez/security.git
 ```
 
 **Paso 2**: Crear nuevo playbook híbrido
+
 ```yaml
 # playbooks/secure-deployment.yml
 ---
@@ -489,6 +533,7 @@ ansible-galaxy collection install git+https://github.com/malpanez/security.git
 ```
 
 **Ventajas**:
+
 - ✅ Resuelve TODOS los problemas críticos
 - ✅ Validación pre-aplicación (previene lockouts)
 - ✅ PAM MFA correctamente configurado
@@ -496,6 +541,7 @@ ansible-galaxy collection install git+https://github.com/malpanez/security.git
 - ✅ Código battle-tested (usado en producción)
 
 **Desventajas**:
+
 - Requiere learning curve de la collection
 - Dependencia externa (pero es TU repositorio)
 
@@ -506,6 +552,7 @@ ansible-galaxy collection install git+https://github.com/malpanez/security.git
 **Solo tomar elementos específicos que necesitas**:
 
 #### 1. Validación SSH Pre-Aplicación
+
 Agregar a tu role `ssh_2fa/tasks/configure.yml`:
 
 ```yaml
@@ -524,6 +571,7 @@ Agregar a tu role `ssh_2fa/tasks/configure.yml`:
 **Impacto**: Previene aplicar configuraciones SSH rotas.
 
 #### 2. Detección de Versión SSH
+
 Agregar al principio de `ssh_2fa/tasks/main.yml`:
 
 ```yaml
@@ -546,6 +594,7 @@ Agregar al principio de `ssh_2fa/tasks/main.yml`:
 **Uso**: Condicionar features basado en versión.
 
 #### 3. Grupo de Bypass para Cuentas de Servicio
+
 Agregar a `ssh_2fa/tasks/configure.yml`:
 
 ```yaml
@@ -565,6 +614,7 @@ Agregar a `ssh_2fa/tasks/configure.yml`:
 ```
 
 Modificar template `sshd_2fa.conf.j2`:
+
 ```jinja2
 # Service accounts bypass (no MFA)
 Match Group mfa-bypass
@@ -580,6 +630,7 @@ Match Group sudo
 **Impacto**: Permite despliegues automatizados sin bloquear MFA.
 
 #### 4. PAM Stack Correcto
+
 **CRÍTICO** - Arregla tu problema #5
 
 Modificar `ssh_2fa/tasks/configure.yml`:
@@ -601,6 +652,7 @@ Modificar `ssh_2fa/tasks/configure.yml`:
 ```
 
 **Cambios clave**:
+
 - Bypass para grupo `mfa-bypass` ANTES de requerir MFA
 - Control `[success=done default=ignore]` en vez de `required`
 - Insert BEFORE common-auth (orden correcto)
@@ -641,6 +693,7 @@ cat /tmp/compliance_reports/*.json
 ### Para Mañana - Plan Paso a Paso
 
 #### Fase 1: Testing Seguro (30 min)
+
 ```bash
 # 1. Clonar security repo
 cd ~/repos
@@ -658,13 +711,16 @@ ansible-playbook \
 ```
 
 #### Fase 2: Cherry-Pick Crítico (1 hora)
+
 Aplicar SOLO los 4 cambios de Opción B:
+
 1. ✅ Validación SSH pre-aplicación
 2. ✅ Detección de versión SSH
 3. ✅ Grupo bypass MFA
 4. ✅ **PAM stack correcto** (CRÍTICO)
 
 #### Fase 3: Deploy y Test (1 hora)
+
 ```bash
 # 1. Deploy Terraform
 cd terraform
@@ -682,6 +738,7 @@ ssh -i ~/.ssh/github_ed25519 root@<SERVER_IP>
 ```
 
 #### Fase 4: Configurar TOTP (30 min)
+
 ```bash
 # Como root en el servidor
 google-authenticator
@@ -695,16 +752,19 @@ google-authenticator
 ## Archivos a Modificar
 
 ### 1. `ansible/roles/ssh_2fa/tasks/configure.yml`
+
 - Agregar validación SSH (`validate:`)
 - Agregar detección de versión
 - Crear grupo mfa-bypass
 - ARREGLAR PAM stack (CRÍTICO)
 
 ### 2. `ansible/roles/ssh_2fa/templates/sshd_2fa.conf.j2`
+
 - Agregar Match block para mfa-bypass group
 - Separar humanos de service accounts
 
 ### 3. `ansible/playbooks/site.yml`
+
 - Considerar agregar preflight checks
 - Opcional: integrar roles de security repo
 
@@ -713,19 +773,25 @@ google-authenticator
 ## Riesgos y Mitigación
 
 ### Riesgo 1: Lockout durante cambio de PAM
+
 **Mitigación**:
+
 - Mantener sesión root abierta durante cambios
 - Usar Hetzner Console como backup
 - Aplicar `nullok` en Google Authenticator temporalmente
 
 ### Riesgo 2: Dependencia de repositorio externo
+
 **Mitigación**:
+
 - Es TU repositorio, tienes control total
 - Puede vendorizar en tu proyecto
 - Cherry-pick elimina dependencia
 
 ### Riesgo 3: Incompatibilidad con código actual
+
 **Mitigación**:
+
 - Review mode testing primero
 - Cherry-pick individual de features
 - Testing en staging (ARM CAX11 barato)

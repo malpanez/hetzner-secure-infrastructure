@@ -5,12 +5,14 @@
 ### Problem: "Network is unreachable" when installing Ansible collections
 
 **Error**:
+
 ```
 ERROR! Unknown error when attempting to call Galaxy at 'https://galaxy.ansible.com/api/':
 <urlopen error [Errno 101] Network is unreachable>
 ```
 
 **Causes**:
+
 1. WSL2 networking issues
 2. VPN interference
 3. DNS resolution problems
@@ -66,6 +68,7 @@ Vagrant provisions with Ansible automatically and has better network stability.
 ### Problem: Cannot pull Debian image
 
 **Error**:
+
 ```
 Unable to find image 'debian:12' locally
 docker: Error response from daemon: failed to resolve reference
@@ -74,18 +77,21 @@ docker: Error response from daemon: failed to resolve reference
 **Solutions**:
 
 1. **Check Docker daemon**:
+
 ```bash
 docker info
 systemctl status docker
 ```
 
-2. **Pull image manually**:
+1. **Pull image manually**:
+
 ```bash
 docker pull debian:13  # Latest stable (Trixie)
 docker pull debian:12  # LTS (Bookworm)
 ```
 
-3. **Use local image**:
+1. **Use local image**:
+
 ```bash
 # Check available images
 docker images | grep debian
@@ -99,12 +105,14 @@ docker run -d --name wordpress-test --privileged -p 8080:80 debian:latest /sbin/
 ### Missing Collections
 
 **Required**:
+
 - `prometheus.prometheus`
 - `grafana.grafana`
 - `community.general`
 - `ansible.posix`
 
 **Required Roles**:
+
 - `geerlingguy.mysql`
 
 ### Install All Requirements
@@ -139,11 +147,13 @@ geerlingguy.mysql     4.x.x
 ### VirtualBox Not Found
 
 **From WSL2**:
+
 ```
 Vagrant can only be run from Windows, not WSL2
 ```
 
 **Solution**: Run from Windows PowerShell:
+
 ```powershell
 cd C:\Users\YourUser\path\to\repo
 vagrant up wordpress-aio
@@ -256,6 +266,7 @@ ERROR! the role 'prometheus.prometheus.prometheus' was not found
 ```
 
 **Fix**: Install Galaxy requirements
+
 ```bash
 ansible-galaxy install -r ansible/requirements.yml
 ```
@@ -267,6 +278,7 @@ FAILED! => {"changed": false, "msg": "/usr/bin/python3: not found"}
 ```
 
 **Fix**: Install Python in container
+
 ```bash
 docker exec wordpress-test apt-get update
 docker exec wordpress-test apt-get install -y python3
@@ -279,6 +291,7 @@ fatal: [host]: UNREACHABLE! => {"msg": "Failed to connect to the host via ssh"}
 ```
 
 **Checks**:
+
 1. SSH service running?
 2. Correct IP address?
 3. Firewall blocking?

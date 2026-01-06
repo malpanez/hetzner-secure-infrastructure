@@ -8,6 +8,7 @@
 ## Understanding the Setup
 
 When Ansible configures SSH 2FA on your server, it:
+
 1. Installs Google Authenticator (`libpam-google-authenticator`)
 2. Configures SSH to require both SSH key + TOTP code
 3. Generates a TOTP secret for your user
@@ -127,12 +128,14 @@ scp -i ~/.ssh/github_ed25519 malpanez@YOUR_SERVER_IP:~/2fa-qr.png .
 ```
 
 **How to use**:
+
 1. SSH to server: `ssh -i ~/.ssh/github_ed25519 malpanez@YOUR_SERVER_IP`
 2. When prompted for "Verification code:", enter one of these codes
 3. Code is consumed - can't be reused
 4. Generate new codes: `google-authenticator -r`
 
 **Where to store**:
+
 - ✅ Password manager (1Password, Bitwarden, LastPass)
 - ✅ Encrypted file on USB drive
 - ✅ Printed paper in safe
@@ -253,12 +256,14 @@ echo "otpauth://totp/malpanez@hetzner?secret=JBSWY3DPEHPK3PXP&issuer=Hetzner"
 ### Lost Phone / Can't Access 2FA
 
 **Option 1: Use Emergency Scratch Code**
+
 ```bash
 ssh -i ~/.ssh/github_ed25519 malpanez@YOUR_SERVER_IP
 # Enter scratch code when prompted
 ```
 
 **Option 2: Use Ansible User**
+
 ```bash
 # Login with ansible user (no 2FA)
 ssh -i ~/.ssh/ansible_automation ansible@YOUR_SERVER_IP
@@ -273,6 +278,7 @@ google-authenticator
 ```
 
 **Option 3: Break-Glass SSH (if configured)**
+
 ```bash
 # Use emergency SSH key (if you set one up)
 ssh -i ~/.ssh/emergency_key malpanez@YOUR_SERVER_IP
@@ -281,6 +287,7 @@ ssh -i ~/.ssh/emergency_key malpanez@YOUR_SERVER_IP
 ### 2FA Codes Not Working
 
 **Check time sync**:
+
 ```bash
 # On server
 timedatectl
@@ -291,9 +298,11 @@ sudo timedatectl set-ntp true
 ```
 
 **Check phone time**:
+
 - Settings → Date & Time → Set Automatically
 
 **Regenerate if needed**:
+
 ```bash
 # Remove old config
 rm ~/.google_authenticator
@@ -311,11 +320,13 @@ google-authenticator
 ### Before Losing Access to Old Phone
 
 **Method 1: Transfer Within App (Authy only)**
+
 - Authy has cloud backup
 - Login on new phone with same account
 - Codes transfer automatically
 
 **Method 2: Re-scan QR Code**
+
 ```bash
 # SSH to server
 ssh -i ~/.ssh/github_ed25519 malpanez@YOUR_SERVER_IP
@@ -327,6 +338,7 @@ qrencode -t UTF8 "$(cat ~/.google_authenticator | head -1 | sed 's/^/otpauth:\/\
 ```
 
 **Method 3: Generate New Secret**
+
 ```bash
 # Regenerate entirely
 google-authenticator
@@ -393,12 +405,14 @@ grep -r "AuthenticationMethods" /etc/ssh/sshd_config.d/
 ## Summary
 
 **What you need**:
+
 1. ✅ SSH key (`~/.ssh/github_ed25519`)
 2. ✅ Google Authenticator app on phone
 3. ✅ Emergency scratch codes saved safely
 4. ✅ Ansible automation key for break-glass access
 
 **Setup process**:
+
 1. Run Ansible playbook (configures 2FA)
 2. SSH to server manually
 3. Run `google-authenticator`
@@ -407,6 +421,7 @@ grep -r "AuthenticationMethods" /etc/ssh/sshd_config.d/
 6. Test login
 
 **In case of emergency**:
+
 1. Use scratch code to login
 2. Or use ansible user to regain access
 3. Regenerate 2FA with `google-authenticator`
@@ -414,5 +429,6 @@ grep -r "AuthenticationMethods" /etc/ssh/sshd_config.d/
 ---
 
 **Related Documentation**:
+
 - [SSH 2FA Break-Glass Procedure](SSH_2FA_BREAK_GLASS.md)
 - [Deployment Automation Setup](../guides/DEPLOYMENT_AUTOMATION_SETUP.md)

@@ -130,6 +130,7 @@ echo "Diagnostics saved to: $LOG_DIR.tar.gz"
 ### Issue: "Connection refused" or "Connection timed out"
 
 **Symptoms:**
+
 ```
 ssh: connect to host X.X.X.X port 22: Connection refused
 # or
@@ -139,12 +140,14 @@ ssh: connect to host X.X.X.X port 22: Connection timed out
 **Diagnosis:**
 
 1. **Check if SSH service is running:**
+
    ```bash
    # Via Hetzner Console
    sudo systemctl status sshd
    ```
 
 2. **Check firewall rules:**
+
    ```bash
    # UFW
    sudo ufw status verbose
@@ -155,6 +158,7 @@ ssh: connect to host X.X.X.X port 22: Connection timed out
    ```
 
 3. **Check SSH is listening:**
+
    ```bash
    sudo ss -tlnp | grep :22
    ```
@@ -162,12 +166,14 @@ ssh: connect to host X.X.X.X port 22: Connection timed out
 **Solutions:**
 
 **Solution 1: Restart SSH service**
+
 ```bash
 sudo systemctl restart sshd
 sudo systemctl status sshd
 ```
 
 **Solution 2: Fix firewall rules**
+
 ```bash
 # UFW
 sudo ufw allow 22/tcp
@@ -178,6 +184,7 @@ sudo ufw status verbose
 ```
 
 **Solution 3: Check Hetzner Cloud Firewall**
+
 ```bash
 # Via Terraform
 cd terraform/environments/production
@@ -189,6 +196,7 @@ hcloud firewall add-rule <firewall-id> --direction in --protocol tcp --port 22 -
 ```
 
 **Solution 4: Fix SSH configuration**
+
 ```bash
 # Validate SSH config
 sudo sshd -t
@@ -200,6 +208,7 @@ sudo sshd -T | grep -i port
 ### Issue: "Permission denied (publickey)"
 
 **Symptoms:**
+
 ```
 miguel@X.X.X.X: Permission denied (publickey).
 ```
@@ -207,6 +216,7 @@ miguel@X.X.X.X: Permission denied (publickey).
 **Diagnosis:**
 
 1. **Check authorized_keys:**
+
    ```bash
    # Via Hetzner Console
    cat ~/.ssh/authorized_keys
@@ -214,12 +224,14 @@ miguel@X.X.X.X: Permission denied (publickey).
    ```
 
 2. **Check SSH logs:**
+
    ```bash
    sudo journalctl -u ssh -n 50 | grep "Authentication"
    sudo tail -f /var/log/auth.log
    ```
 
 3. **Verify SSH key locally:**
+
    ```bash
    # On your local machine
    ssh-add -l
@@ -229,12 +241,14 @@ miguel@X.X.X.X: Permission denied (publickey).
 **Solutions:**
 
 **Solution 1: Re-deploy authorized_keys via Ansible**
+
 ```bash
 cd ansible
 ansible-playbook -i inventory/hetzner.yml playbooks/site.yml --tags ssh
 ```
 
 **Solution 2: Fix permissions**
+
 ```bash
 # Via Hetzner Console
 chmod 700 ~/.ssh
@@ -243,6 +257,7 @@ chown -R $USER:$USER ~/.ssh
 ```
 
 **Solution 3: Add key manually (temporary)**
+
 ```bash
 # Via Hetzner Console
 echo "YOUR_PUBLIC_KEY" >> ~/.ssh/authorized_keys
@@ -250,6 +265,7 @@ chmod 600 ~/.ssh/authorized_keys
 ```
 
 **Solution 4: Check AppArmor isn't blocking**
+
 ```bash
 sudo aa-status | grep sshd
 sudo aa-notify -s 1 -v
@@ -265,15 +281,18 @@ sudo aa-enforce /etc/apparmor.d/usr.sbin.sshd
 ### Issue: "Keyboard-interactive authentication failed"
 
 **Symptoms:**
+
 ```
 Authenticated with partial success.
 keyboard-interactive/pam:
 ```
+
 Then hangs or fails.
 
 **Diagnosis:**
 
 1. **Check 2FA is properly configured:**
+
    ```bash
    # Via Hetzner Console
    test -f ~/.google_authenticator && echo "TOTP configured" || echo "TOTP NOT configured"
@@ -281,6 +300,7 @@ Then hangs or fails.
    ```
 
 2. **Check PAM configuration:**
+
    ```bash
    sudo cat /etc/pam.d/sshd | grep google_authenticator
    ```
@@ -288,12 +308,14 @@ Then hangs or fails.
 **Solutions:**
 
 **Solution 1: Re-run 2FA setup**
+
 ```bash
 # Via Hetzner Console
 sudo /usr/local/bin/setup-2fa-yubikey.sh $USER
 ```
 
 **Solution 2: Temporarily disable 2FA**
+
 ```bash
 # EMERGENCY ONLY - Re-enable immediately after fixing
 sudo sed -i 's/^auth required pam_google_authenticator.so/#&/' /etc/pam.d/sshd
@@ -305,6 +327,7 @@ sudo systemctl restart sshd
 ```
 
 **Solution 3: Check Yubikey permissions**
+
 ```bash
 # Add user to plugdev group
 sudo usermod -aG plugdev $USER
@@ -316,6 +339,7 @@ sudo chmod 666 /dev/hidraw*
 ### Issue: "Too many authentication failures"
 
 **Symptoms:**
+
 ```
 Received disconnect from X.X.X.X port 22:2: Too many authentication failures
 ```
@@ -327,11 +351,13 @@ SSH is trying too many keys before the correct one.
 **Solutions:**
 
 **Solution 1: Specify the key explicitly**
+
 ```bash
 ssh -i ~/.ssh/id_ed25519_sk miguel@X.X.X.X
 ```
 
 **Solution 2: Configure SSH client**
+
 ```bash
 # ~/.ssh/config
 Host hetzner-server
@@ -342,11 +368,13 @@ Host hetzner-server
 ```
 
 Then connect:
+
 ```bash
 ssh hetzner-server
 ```
 
 **Solution 3: Clear SSH agent**
+
 ```bash
 ssh-add -D  # Remove all keys
 ssh-add ~/.ssh/id_ed25519_sk  # Add only the needed key
@@ -360,6 +388,7 @@ Cannot SSH into server, no alternative access method.
 **Solutions:**
 
 **Solution 1: Use Hetzner Console (Web-based)**
+
 1. Log into Hetzner Cloud Console
 2. Select your server
 3. Click "Console" button
@@ -367,6 +396,7 @@ Cannot SSH into server, no alternative access method.
 5. Fix SSH configuration
 
 **Solution 2: Enable Rescue Mode**
+
 ```bash
 # Via Hetzner CLI
 hcloud server enable-rescue <server-id>
@@ -388,6 +418,7 @@ reboot
 ```
 
 **Solution 3: Rebuild from Terraform**
+
 ```bash
 cd terraform/environments/production
 tofu destroy -target=hcloud_server.main
@@ -401,6 +432,7 @@ tofu apply
 ### Issue: "Error: Backend initialization required"
 
 **Symptoms:**
+
 ```
 Error: Backend initialization required, please run "tofu init"
 ```
@@ -415,6 +447,7 @@ tofu init -reconfigure
 ### Issue: "Error: Backend configuration changed"
 
 **Symptoms:**
+
 ```
 Error: Backend configuration changed
 
@@ -424,16 +457,19 @@ The backend configuration has changed. Run "tofu init" to migrate the state.
 **Solutions:**
 
 **Solution 1: Migrate state**
+
 ```bash
 tofu init -migrate-state
 ```
 
 **Solution 2: Reconfigure backend**
+
 ```bash
 tofu init -reconfigure
 ```
 
 **Solution 3: Force copy**
+
 ```bash
 tofu init -force-copy
 ```
@@ -441,6 +477,7 @@ tofu init -force-copy
 ### Issue: "Error: Invalid provider credentials"
 
 **Symptoms:**
+
 ```
 Error: error getting server: invalid input in 'Authorization' header (invalid_input)
 ```
@@ -469,6 +506,7 @@ direnv allow
 ### Issue: "Error: Resource already exists"
 
 **Symptoms:**
+
 ```
 Error: server with name "prod-server-1" already exists
 ```
@@ -480,11 +518,13 @@ Resource exists in Hetzner but not in Terraform state.
 **Solutions:**
 
 **Solution 1: Import existing resource**
+
 ```bash
 tofu import hcloud_server.main <server-id>
 ```
 
 **Solution 2: Remove from Hetzner Cloud**
+
 ```bash
 # Via CLI
 hcloud server delete <server-id>
@@ -494,6 +534,7 @@ hcloud server delete <server-id>
 ```
 
 **Solution 3: Use unique names**
+
 ```bash
 # terraform.tfvars
 server_name = "prod-server-2"
@@ -502,6 +543,7 @@ server_name = "prod-server-2"
 ### Issue: State lock error
 
 **Symptoms:**
+
 ```
 Error: Error acquiring the state lock
 Lock Info:
@@ -513,12 +555,14 @@ Lock Info:
 **Solutions:**
 
 **Solution 1: Wait for lock to release**
+
 ```bash
 # Another process may be running
 # Wait and retry
 ```
 
 **Solution 2: Force unlock (DANGEROUS)**
+
 ```bash
 # Only if you're SURE no other process is running
 tofu force-unlock <lock-id>
@@ -531,6 +575,7 @@ tofu force-unlock <lock-id>
 ### Issue: "Host unreachable"
 
 **Symptoms:**
+
 ```
 fatal: [X.X.X.X]: UNREACHABLE! => {"changed": false, "msg": "Failed to connect to the host via ssh"}
 ```
@@ -538,11 +583,13 @@ fatal: [X.X.X.X]: UNREACHABLE! => {"changed": false, "msg": "Failed to connect t
 **Diagnosis:**
 
 1. **Test SSH manually:**
+
    ```bash
    ssh miguel@X.X.X.X
    ```
 
 2. **Check inventory:**
+
    ```bash
    ansible-inventory -i inventory/hetzner.yml --list
    ```
@@ -550,6 +597,7 @@ fatal: [X.X.X.X]: UNREACHABLE! => {"changed": false, "msg": "Failed to connect t
 **Solutions:**
 
 **Solution 1: Update inventory**
+
 ```bash
 cd terraform/environments/production
 tofu output -json > ../../../ansible/inventory/terraform-output.json
@@ -559,12 +607,14 @@ ansible-inventory -i inventory/hetzner.yml --list
 ```
 
 **Solution 2: Specify SSH key**
+
 ```bash
 ansible-playbook -i inventory/hetzner.yml playbooks/site.yml \
   --private-key ~/.ssh/id_ed25519_sk
 ```
 
 **Solution 3: Test connectivity**
+
 ```bash
 ansible all -i inventory/hetzner.yml -m ping
 ```
@@ -572,6 +622,7 @@ ansible all -i inventory/hetzner.yml -m ping
 ### Issue: "Authentication or permission failure"
 
 **Symptoms:**
+
 ```
 fatal: [X.X.X.X]: FAILED! => {"msg": "to use the 'ssh' connection type with passwords, you must install the sshpass program"}
 ```
@@ -587,6 +638,7 @@ private_key_file = ~/.ssh/id_ed25519_sk
 ```
 
 Or specify on command line:
+
 ```bash
 ansible-playbook ... --private-key ~/.ssh/id_ed25519_sk
 ```
@@ -594,6 +646,7 @@ ansible-playbook ... --private-key ~/.ssh/id_ed25519_sk
 ### Issue: "Privilege escalation required"
 
 **Symptoms:**
+
 ```
 fatal: [X.X.X.X]: FAILED! => {"msg": "Missing sudo password"}
 ```
@@ -601,11 +654,13 @@ fatal: [X.X.X.X]: FAILED! => {"msg": "Missing sudo password"}
 **Solutions:**
 
 **Solution 1: Provide sudo password**
+
 ```bash
 ansible-playbook -i inventory/hetzner.yml playbooks/site.yml --ask-become-pass
 ```
 
 **Solution 2: Configure passwordless sudo**
+
 ```bash
 # Via sudo config (already done by common role)
 # Verify:
@@ -615,6 +670,7 @@ ssh miguel@X.X.X.X "sudo -n true" && echo "Passwordless sudo works" || echo "Sud
 ### Issue: "Tasks timing out"
 
 **Symptoms:**
+
 ```
 fatal: [X.X.X.X]: FAILED! => {"msg": "Timeout (12s) waiting for privilege escalation prompt"}
 ```
@@ -622,6 +678,7 @@ fatal: [X.X.X.X]: FAILED! => {"msg": "Timeout (12s) waiting for privilege escala
 **Solutions:**
 
 **Solution 1: Increase timeout**
+
 ```bash
 # ansible.cfg
 [defaults]
@@ -629,6 +686,7 @@ timeout = 60
 ```
 
 **Solution 2: Check SSH multiplexing**
+
 ```bash
 # ansible.cfg
 [ssh_connection]
@@ -639,6 +697,7 @@ pipelining = True
 ### Issue: AppArmor role fails
 
 **Symptoms:**
+
 ```
 TASK [apparmor : Load AppArmor profiles] ***
 fatal: [X.X.X.X]: FAILED! => {"changed": false, "msg": "apparmor_parser: Unable to replace ..."}
@@ -654,6 +713,7 @@ sudo apparmor_parser -QK /etc/apparmor.d/usr.sbin.sshd
 **Solutions:**
 
 **Solution 1: Fix profile syntax**
+
 ```bash
 # Test profile
 sudo apparmor_parser -QK /etc/apparmor.d/usr.sbin.sshd
@@ -663,6 +723,7 @@ sudo dmesg | grep -i apparmor
 ```
 
 **Solution 2: Run in complain mode first**
+
 ```bash
 # ansible/roles/apparmor/defaults/main.yml
 apparmor_enforce: false  # Use complain mode
@@ -684,6 +745,7 @@ apparmor_enforce: true
 ### Issue: Service denied by AppArmor
 
 **Symptoms:**
+
 ```
 apparmor="DENIED" operation="open" profile="/usr/sbin/sshd" name="/some/file" pid=1234
 ```
@@ -691,6 +753,7 @@ apparmor="DENIED" operation="open" profile="/usr/sbin/sshd" name="/some/file" pi
 **Diagnosis:**
 
 1. **Check AppArmor logs:**
+
    ```bash
    sudo dmesg | grep -i apparmor
    sudo journalctl | grep -i apparmor
@@ -698,6 +761,7 @@ apparmor="DENIED" operation="open" profile="/usr/sbin/sshd" name="/some/file" pi
    ```
 
 2. **Check profile mode:**
+
    ```bash
    sudo aa-status | grep sshd
    ```
@@ -705,6 +769,7 @@ apparmor="DENIED" operation="open" profile="/usr/sbin/sshd" name="/some/file" pi
 **Solutions:**
 
 **Solution 1: Put profile in complain mode**
+
 ```bash
 sudo aa-complain /etc/apparmor.d/usr.sbin.sshd
 sudo systemctl restart sshd
@@ -721,6 +786,7 @@ sudo aa-enforce /etc/apparmor.d/usr.sbin.sshd
 ```
 
 **Solution 2: Update profile**
+
 ```bash
 # Add missing rules
 sudo nano /etc/apparmor.d/usr.sbin.sshd
@@ -733,6 +799,7 @@ sudo apparmor_parser -r /etc/apparmor.d/usr.sbin.sshd
 ```
 
 **Solution 3: Use aa-logprof**
+
 ```bash
 # Generate rules from logs
 sudo aa-logprof
@@ -744,6 +811,7 @@ sudo aa-logprof
 ### Issue: Profile won't load
 
 **Symptoms:**
+
 ```
 AppArmor parser error for /etc/apparmor.d/usr.sbin.sshd in profile /usr/sbin/sshd at line XX: syntax error
 ```
@@ -771,6 +839,7 @@ sudo apparmor_parser -QK /etc/apparmor.d/bin.ping
 ### Issue: TOTP code not accepted
 
 **Symptoms:**
+
 ```
 Password:
 Verification code:
@@ -780,12 +849,14 @@ Permission denied, please try again.
 **Diagnosis:**
 
 1. **Check time synchronization:**
+
    ```bash
    # TOTP requires accurate time
    timedatectl status
    ```
 
 2. **Verify Google Authenticator is configured:**
+
    ```bash
    test -f ~/.google_authenticator && echo "Configured" || echo "Not configured"
    cat ~/.google_authenticator
@@ -794,6 +865,7 @@ Permission denied, please try again.
 **Solutions:**
 
 **Solution 1: Sync time**
+
 ```bash
 # On server
 sudo systemctl restart systemd-timesyncd
@@ -805,6 +877,7 @@ w32tm /resync
 ```
 
 **Solution 2: Use backup codes**
+
 ```bash
 # Backup codes are in ~/.google_authenticator
 # Via Hetzner Console:
@@ -812,6 +885,7 @@ cat ~/.google_authenticator | grep "^[0-9]"
 ```
 
 **Solution 3: Regenerate 2FA**
+
 ```bash
 # Via Hetzner Console
 rm ~/.google_authenticator
@@ -821,6 +895,7 @@ rm ~/.google_authenticator
 ### Issue: Yubikey not detected
 
 **Symptoms:**
+
 ```
 Enter authenticator response:
 [No response when touching Yubikey]
@@ -839,6 +914,7 @@ getfacl /dev/hidraw0
 **Solutions:**
 
 **Solution 1: Fix permissions**
+
 ```bash
 sudo chmod 666 /dev/hidraw*
 
@@ -847,6 +923,7 @@ sudo usermod -aG plugdev $USER
 ```
 
 **Solution 2: Check udev rules**
+
 ```bash
 # Create udev rule for Yubikey
 sudo nano /etc/udev/rules.d/70-yubikey.rules
@@ -860,6 +937,7 @@ sudo udevadm trigger
 ```
 
 **Solution 3: Verify AppArmor allows hidraw**
+
 ```bash
 sudo aa-status | grep sshd
 
@@ -873,6 +951,7 @@ sudo grep hidraw /etc/apparmor.d/usr.sbin.sshd
 ### Issue: 2FA breaks sudo
 
 **Symptoms:**
+
 ```
 sudo: PAM account management error: Authentication service cannot retrieve authentication info
 ```
@@ -880,6 +959,7 @@ sudo: PAM account management error: Authentication service cannot retrieve authe
 **Solutions:**
 
 **Solution 1: Fix PAM config for sudo**
+
 ```bash
 # /etc/pam.d/sudo should NOT have google_authenticator
 sudo nano /etc/pam.d/sudo
@@ -889,6 +969,7 @@ sudo nano /etc/pam.d/sudo
 ```
 
 **Solution 2: Use nullok for sudo**
+
 ```bash
 # /etc/pam.d/sudo
 auth required pam_google_authenticator.so nullok
@@ -916,12 +997,14 @@ sudo ufw status numbered
 **Solutions:**
 
 **Solution 1: Add missing rule**
+
 ```bash
 sudo ufw allow <port>/tcp comment 'Service description'
 sudo ufw reload
 ```
 
 **Solution 2: Verify rule order**
+
 ```bash
 # Rules are processed in order
 # More specific rules should come before general ones
@@ -937,6 +1020,7 @@ sudo ufw insert 1 allow from <specific-ip> to any port 22
 ### Issue: Cannot enable UFW
 
 **Symptoms:**
+
 ```
 ERROR: problem running ufw-init
 ```
@@ -959,6 +1043,7 @@ sudo ufw enable
 **Solutions:**
 
 **Via Hetzner Console:**
+
 ```bash
 # Disable UFW
 sudo ufw disable
@@ -993,6 +1078,7 @@ sudo fail2ban-regex /var/log/auth.log /etc/fail2ban/filter.d/sshd.conf
 **Solutions:**
 
 **Solution 1: Verify configuration**
+
 ```bash
 # Check jail
 sudo fail2ban-client get sshd maxretry
@@ -1006,6 +1092,7 @@ sudo fail2ban-client get sshd bantime
 ```
 
 **Solution 2: Restart Fail2ban**
+
 ```bash
 sudo systemctl restart fail2ban
 sudo fail2ban-client status
@@ -1053,6 +1140,7 @@ journalctl -u <service> -n 50
 **Solutions:**
 
 **Solution 1: Identify culprit**
+
 ```bash
 # Top CPU consumers
 ps aux --sort=-%cpu | head -10
@@ -1062,6 +1150,7 @@ sudo systemctl stop <service>
 ```
 
 **Solution 2: Check for attacks**
+
 ```bash
 # SSH brute force
 sudo fail2ban-client status sshd
@@ -1188,17 +1277,18 @@ Gather this information:
 
 ### Support Channels
 
-- **Codeberg Issues**: https://codeberg.org/malpanez/twomindstrading_hetzner/issues
-- **Hetzner Support**: https://www.hetzner.com/support
+- **Codeberg Issues**: <https://codeberg.org/malpanez/twomindstrading_hetzner/issues>
+- **Hetzner Support**: <https://www.hetzner.com/support>
 - **Community Forums**: Reddit /r/hetzner, /r/selfhosted
 
 ### Reporting Security Issues
 
 **DO NOT** open public issues for security vulnerabilities.
 
-Email: security@codeberg.org (Codeberg security team)
+Email: <security@codeberg.org> (Codeberg security team)
 
 Include:
+
 - Vulnerability description
 - Steps to reproduce
 - Potential impact

@@ -88,9 +88,11 @@ User Request
 ### 1. Performance Plugins ❌ ALL REDUNDANT
 
 #### W3 Total Cache / WP Super Cache / WP Rocket
+
 **Status**: ❌ **REMOVE - Completely Redundant**
 
 **Why?**
+
 ```
 ┌─────────────────────────────────────────┐
 │ What these plugins do:                  │
@@ -104,6 +106,7 @@ User Request
 ```
 
 **Performance Impact**:
+
 - These plugins ADD overhead (PHP processing)
 - Your stack does caching at LOWER layers (faster)
 - No benefit, only maintenance burden
@@ -113,14 +116,17 @@ User Request
 ---
 
 #### Autoptimize
+
 **Status**: ❌ **REMOVE - Cloudflare does this**
 
 **What it does**:
+
 - Minify CSS/JS/HTML
 - Combine CSS/JS files
 - Defer/async JS
 
 **Cloudflare Alternative** (FREE):
+
 ```yaml
 # Cloudflare Dashboard → Speed → Optimization
 Auto Minify:
@@ -133,6 +139,7 @@ Early Hints: ON
 ```
 
 **Why Cloudflare is better**:
+
 - Minification at EDGE (before reaching server)
 - Zero server CPU usage
 - Cached globally across 300+ PoPs
@@ -144,9 +151,11 @@ Early Hints: ON
 ### 2. Security Plugins ⚠️ MOSTLY REDUNDANT
 
 #### Wordfence
+
 **Status**: ⚠️ **REMOVE - Redundant with Cloudflare WAF**
 
 **What it does**:
+
 ```
 Wordfence                          Your Stack
 ─────────────────────────────────────────────────
@@ -161,6 +170,7 @@ Country blocking              →    Cloudflare (better)
 **CPU Usage**: High (scans every request)
 
 **Alternative**: Use Cloudflare WAF Rules (free):
+
 ```yaml
 # Cloudflare → Security → WAF
 Custom Rules:
@@ -177,9 +187,11 @@ Custom Rules:
 ---
 
 #### All-in-One WP Security
+
 **Status**: ❌ **REMOVE - Redundant**
 
 **What it does**:
+
 ```
 AIOS Plugin                    Your Stack
 ─────────────────────────────────────────────────
@@ -197,15 +209,18 @@ Firewall                 →    Cloudflare + UFW
 ### 3. SEO Plugins 🤔 EVALUATE
 
 #### Yoast SEO
+
 **Status**: ⚠️ **HEAVY - Consider lighter alternative**
 
 **Pros**:
+
 - ✅ Comprehensive SEO
 - ✅ XML sitemaps
 - ✅ Schema markup
 - ✅ Content analysis
 
 **Cons**:
+
 - ❌ Heavy (500KB+ JS on admin)
 - ❌ Slow admin panel
 - ❌ Many features unused
@@ -213,6 +228,7 @@ Firewall                 →    Cloudflare + UFW
 **Lighter Alternative**: **Rank Math** (faster, more modern)
 
 **DIY Alternative**: Manual SEO
+
 ```yaml
 # No plugin needed for:
 - Meta descriptions → Add manually
@@ -227,20 +243,24 @@ Firewall                 →    Cloudflare + UFW
 ### 4. Page Builders 🤔 EVALUATE
 
 #### Elementor
+
 **Status**: ⚠️ **HEAVY - Consider Gutenberg**
 
 **Pros**:
+
 - ✅ Visual page building
 - ✅ No coding required
 - ✅ Many templates
 
 **Cons**:
+
 - ❌ Very heavy (500KB+ JS/CSS per page)
 - ❌ Adds 15-20 DB queries per page
 - ❌ Slows down even cached pages
 - ❌ Vendor lock-in
 
 **Alternative 1**: **Gutenberg** (WordPress native)
+
 - ✅ Fast (built-in)
 - ✅ No extra queries
 - ✅ Modern block editor
@@ -249,6 +269,7 @@ Firewall                 →    Cloudflare + UFW
 **Alternative 2**: **Bricks Builder** (paid, faster than Elementor)
 
 **Alternative 3**: **Custom Theme** (fastest)
+
 - Build landing pages with pure HTML/CSS
 - Use Gutenberg for course content
 
@@ -315,6 +336,7 @@ wordpress_plugins:
 ## 📊 Before vs After Comparison
 
 ### Before (Bloated)
+
 ```
 Plugins: 12+
 - W3 Total Cache
@@ -336,6 +358,7 @@ Page Load: 2-3s (even with cache)
 ```
 
 ### After (Minimal)
+
 ```
 Plugins: 4-6
 - Redis Cache (required)
@@ -409,6 +432,7 @@ Enable WAF Rules (replaces Wordfence)
 ## 💰 Cost Analysis
 
 ### With Redundant Plugins
+
 ```
 Plugins: 12
 Update time: ~30 min/month
@@ -418,6 +442,7 @@ Performance: Slow
 ```
 
 ### With Minimal Plugins
+
 ```
 Plugins: 4-6
 Update time: ~10 min/month
@@ -434,6 +459,7 @@ Performance: Fast
 ## ✅ Final Recommendation
 
 ### REMOVE Immediately
+
 - ❌ W3 Total Cache / WP Super Cache / WP Rocket
 - ❌ Wordfence (use Cloudflare WAF)
 - ❌ All-in-One WP Security
@@ -441,12 +467,14 @@ Performance: Fast
 - ❌ Akismet (use Cloudflare Turnstile)
 
 ### KEEP (Essential)
+
 - ✅ Redis Object Cache
 - ✅ Nginx Helper
 - ✅ Cloudflare
 - ✅ LearnDash Pro
 
 ### EVALUATE (Optional)
+
 - 🤔 Yoast SEO → Replace with Rank Math or remove
 - 🤔 Elementor → Replace with Gutenberg or custom theme
 - 🤔 Contact Form 7 → Keep if needed

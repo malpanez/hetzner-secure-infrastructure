@@ -56,6 +56,7 @@
 ### Recommended: Restic
 
 **Why Restic?**
+
 - Encrypted backups
 - Deduplication
 - Incremental backups
@@ -76,6 +77,7 @@ restic version
 ### Alternative: Hetzner Cloud Backups
 
 **Features:**
+
 - Automated weekly snapshots
 - 7 daily backups retained
 - Managed by Hetzner
@@ -575,18 +577,21 @@ echo "=== DR Drill Completed ==="
 ## Recovery Checklist
 
 **Pre-Recovery:**
+
 - [ ] Identify recovery scope (file, system, infrastructure)
 - [ ] Verify backup integrity
 - [ ] Prepare target environment
 - [ ] Notify stakeholders
 
 **During Recovery:**
+
 - [ ] Document start time
 - [ ] Follow runbook procedures
 - [ ] Verify each restoration step
 - [ ] Monitor for errors
 
 **Post-Recovery:**
+
 - [ ] Verify system functionality
 - [ ] Check application data integrity
 - [ ] Reconfigure services (2FA, etc.)

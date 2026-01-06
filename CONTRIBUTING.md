@@ -41,7 +41,7 @@ git clone https://codeberg.org/YOUR-USERNAME/twomindstrading_hetzner.git
 cd twomindstrading_hetzner
 ```
 
-3. Add upstream remote:
+1. Add upstream remote:
 
 ```bash
 git remote add upstream https://codeberg.org/malpanez/twomindstrading_hetzner.git
@@ -56,6 +56,7 @@ make install-deps
 ```
 
 This will install:
+
 - Python dependencies (Ansible, Molecule, etc.)
 - Go dependencies (Terratest)
 - Ansible Galaxy collections
@@ -90,6 +91,7 @@ git checkout -b fix/bug-description
 ```
 
 Branch naming conventions:
+
 - `feature/` - New features
 - `fix/` - Bug fixes
 - `docs/` - Documentation updates
@@ -131,6 +133,7 @@ git commit -m "test(molecule): add tests for fail2ban role"
 ```
 
 **Commit Types:**
+
 - `feat:` - New feature
 - `fix:` - Bug fix
 - `docs:` - Documentation only
@@ -141,6 +144,7 @@ git commit -m "test(molecule): add tests for fail2ban role"
 - `ci:` - CI/CD changes
 
 **Pre-commit hooks will automatically:**
+
 - Format your code
 - Run linters
 - Check for secrets
@@ -201,6 +205,7 @@ make docs-check
 ### 1. Update Documentation
 
 Ensure documentation is up to date:
+
 - Update README.md if adding features
 - Update relevant docs/ files
 - Add/update code comments
@@ -221,6 +226,7 @@ git push origin your-branch-name
 5. Link related issues
 
 **PR Title Format:**
+
 ```
 <type>(<scope>): <description>
 
@@ -347,6 +353,7 @@ echo "Deploying server type: $server_type"
 ### README Updates
 
 When adding features, update:
+
 - Features list
 - Quick start guide
 - Architecture diagrams (if applicable)
@@ -355,6 +362,7 @@ When adding features, update:
 ### Documentation Files
 
 Create/update docs in `docs/` directory:
+
 - Architecture decisions → `ARCHITECTURE_DECISIONS.md`
 - Deployment guides → `DEPLOYMENT_GUIDE.md`
 - Troubleshooting → `TROUBLESHOOTING.md`
@@ -372,11 +380,12 @@ Maintainers will handle releases:
 
 - **Issues**: [Project Issues](https://codeberg.org/malpanez/twomindstrading_hetzner/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/malpanez/hetzner-secure-infrastructure/discussions)
-- **Email**: malpanez@codeberg.org
+- **Email**: <malpanez@codeberg.org>
 
 ## Recognition
 
 Contributors will be recognized in:
+
 - CHANGELOG.md
 - GitHub releases
 - README.md (for significant contributions)

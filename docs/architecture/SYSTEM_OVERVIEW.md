@@ -121,6 +121,7 @@ User Browser
 ```
 
 **Latency Breakdown** (CX23 x86 tested):
+
 - Cloudflare edge cache HIT: **~10-20ms** (global)
 - Nginx FastCGI cache HIT: **~10ms** (server)
 - Full PHP execution: **~100-300ms** (first request)
@@ -171,6 +172,7 @@ User Dashboard (Browser)
 ### Cloudflare Integration
 
 **DNS Configuration**:
+
 ```
 @ (root)       → Hetzner Server IP (Proxied)
 www            → Hetzner Server IP (Proxied)
@@ -178,6 +180,7 @@ grafana        → Hetzner Server IP (DNS Only - optional)
 ```
 
 **Cloudflare Features Enabled**:
+
 - ✅ Proxy (orange cloud) - hides real server IP
 - ✅ WAF (Web Application Firewall)
 - ✅ DDoS protection (automatic)
@@ -313,6 +316,7 @@ Permissions-Policy: geolocation=(), microphone=(), camera=()
 | **Memory Usage** | 866 MB / 4 GB (23%) | A+ |
 
 **Throughput Capacity**:
+
 - Light load (< 500 req/s): ✅ Current server perfect
 - Medium load (500-2,000 req/s): ✅ Current server sufficient
 - Heavy load (2,000-5,000 req/s): ⚠️ Upgrade to CX33 or add server
@@ -358,10 +362,12 @@ Permissions-Policy: geolocation=(), microphone=(), camera=()
 ### Current Architecture Decision
 
 **Test Results** (as of 2024-12-30):
+
 - ✅ **x86 (CX23)**: Tested, 3,114 req/s, €5.04/mo
 - ⏳ **ARM (CAX11)**: Pending test
 
 **Production Recommendation**: **CAX11 (ARM64)**
+
 - **Why**: Always available (no stock issues), modern architecture, €0.59/mo cheaper
 - **Note**: Pending performance test confirmation
 
@@ -428,6 +434,7 @@ Ansible (Configuration Management)
 ### Current Capacity (CX23 tested)
 
 **With current configuration** (WordPress + Monitoring):
+
 - **Max throughput**: ~3,100 req/s
 - **Concurrent users**: ~600-800
 - **Database connections**: 150 (MariaDB max_connections)
@@ -436,6 +443,7 @@ Ansible (Configuration Management)
 ### Scaling Strategy
 
 **Vertical Scaling** (Upgrade server):
+
 ```
 CX23 (€5/mo) → CX33 (€11/mo)
     ├─ CPUs: 2 → 4
@@ -444,6 +452,7 @@ CX23 (€5/mo) → CX33 (€11/mo)
 ```
 
 **Horizontal Scaling** (Add servers):
+
 ```
 1 server → 2 servers + Load Balancer
     ├─ Load Balancer: Hetzner LB (€5/mo)
@@ -453,6 +462,7 @@ CX23 (€5/mo) → CX33 (€11/mo)
 ```
 
 **Recommended approach**:
+
 1. Start with 1 server (current)
 2. Add Cloudflare (free) - reduces origin load 80-90%
 3. If needed, vertical scale to CX33
@@ -484,24 +494,28 @@ Detailed rationale in [`docs/decisions/`](../decisions/) directory.
 ## 📚 Related Documentation
 
 ### Architecture Details
+
 - [Infrastructure](INFRASTRUCTURE.md) - Terraform, networking, Hetzner details
 - [Application Stack](APPLICATION_STACK.md) - WordPress, PHP, Nginx, MariaDB
 - [Monitoring Stack](MONITORING_STACK.md) - Prometheus, Grafana, Loki
 - [Security](SECURITY.md) - Firewall, fail2ban, AppArmor, headers
 
 ### Guides
+
 - [Deployment Guide](../guides/DEPLOYMENT.md) - How to deploy from scratch
 - [Testing Guide](../guides/TESTING.md) - x86 vs ARM testing
 - [Operations Guide](../guides/OPERATIONS.md) - Day-to-day operations
 - [Nginx Explained](../guides/NGINX_CONFIGURATION_EXPLAINED.md) - Educational deep-dive
 
 ### Reference
+
 - [Hetzner Pricing](../reference/HETZNER_PRICING.md) - Cost calculations
 - [Performance Benchmarks](../reference/BENCHMARKS.md) - Test results
 - [Ansible Roles](../reference/ANSIBLE_ROLES.md) - Role documentation
 - [Variables Reference](../reference/VARIABLES.md) - Terraform/Ansible vars
 
 ### Decisions
+
 - [Why ARM over x86](../decisions/WHY_ARM.md)
 - [Why Valkey over Redis](../decisions/WHY_VALKEY.md)
 - [Why Modular Nginx](../decisions/WHY_MODULAR_NGINX.md)
@@ -514,6 +528,7 @@ Detailed rationale in [`docs/decisions/`](../decisions/) directory.
 **Current Status**: 95% Complete
 
 ### Completed ✅
+
 - ✅ Infrastructure as Code (Terraform + Ansible)
 - ✅ Full WordPress stack deployment
 - ✅ Complete monitoring stack (Prometheus + Grafana + Loki)
@@ -524,6 +539,7 @@ Detailed rationale in [`docs/decisions/`](../decisions/) directory.
 - ✅ Documentation (architecture, guides, reference)
 
 ### Pending ⏳
+
 - ⏳ ARM architecture testing (CAX11)
 - ⏳ Production deployment
 - ⏳ Cloudflare DNS configuration
@@ -532,6 +548,7 @@ Detailed rationale in [`docs/decisions/`](../decisions/) directory.
 - ⏳ Backup automation
 
 ### Future Enhancements 🔮
+
 - 🔮 Terraform Cloud migration (state management, CI/CD)
 - 🔮 Automated backups (Hetzner Storage Box)
 - 🔮 Multi-region failover

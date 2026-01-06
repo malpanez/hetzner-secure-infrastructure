@@ -54,11 +54,13 @@ When Ansible runs, these templates deploy to:
 ## Key Benefits
 
 ### 1. **Clarity** - Easy to Understand
+
 - Main WordPress config: **~200 lines** (down from 460)
 - Each file has **single responsibility**
 - Clear **section headers** and **extensive comments**
 
 ### 2. **Reusability** - DRY Principle
+
 | File | Used By |
 |------|---------|
 | `ssl-params.conf` | WordPress, Grafana, Prometheus |
@@ -67,6 +69,7 @@ When Ansible runs, these templates deploy to:
 | `static-assets.conf` | All sites serving static files |
 
 ### 3. **Flexibility** - Feature Toggles
+
 Control features via Ansible variables in `defaults/main.yml`:
 
 ```yaml
@@ -79,6 +82,7 @@ nginx_wordpress_woocommerce_enabled: false       # WooCommerce cache bypass
 ```
 
 **Examples**:
+
 ```yaml
 # Disable Cloudflare (not using it yet)
 nginx_wordpress_cloudflare_enabled: false
@@ -93,15 +97,19 @@ nginx_wordpress_woocommerce_enabled: true
 ### 4. **Maintainability** - Update Once, Apply Everywhere
 
 **Scenario**: Update SSL ciphers
+
 - **Before**: Edit 3 files (WordPress, Grafana, Prometheus)
 - **After**: Edit `ssl-params.conf` → affects all sites
 
 **Scenario**: Add Cloudflare IP range
+
 - **Before**: Find and edit all nginx configs
 - **After**: Edit `cloudflare-real-ip.conf`
 
 ### 5. **Educational** - Learn by Reading
+
 Every file includes:
+
 - **What** it does
 - **Why** it's configured that way
 - **Performance impact** or security benefit
@@ -124,6 +132,7 @@ http {
 ```
 
 **What gets loaded**:
+
 1. `fastcgi-cache.conf` - Sets up FastCGI cache zones
 2. `rate-limits.conf` - Defines rate limiting zones
 3. `cloudflare-real-ip.conf` - Configures real IP detection
@@ -183,6 +192,7 @@ The `configure.yml` task file now deploys all modular configurations:
 ```
 
 Each task includes:
+
 - **Conditional deployment** via `when:` based on feature toggles
 - **Change tracking** via `register:`
 - **Proper ownership** and permissions
@@ -205,18 +215,21 @@ nginx_wordpress_woocommerce_enabled: false       # WooCommerce cache bypass
 ## Testing Plan
 
 ### 1. Syntax Validation
+
 ```bash
 # On the server after Ansible deployment
 sudo nginx -t
 ```
 
 **Expected output**:
+
 ```
 nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
 nginx: configuration file /etc/nginx/nginx.conf test is successful
 ```
 
 ### 2. Verify File Deployment
+
 ```bash
 # Check conf.d files
 ls -la /etc/nginx/conf.d/
@@ -231,6 +244,7 @@ cat /etc/nginx/sites-available/wordpress.conf | head -50
 ### 3. Test Feature Toggles
 
 **Disable Cloudflare**:
+
 ```yaml
 # terraform/terraform.staging.tfvars or group_vars
 nginx_wordpress_cloudflare_enabled: false
@@ -239,6 +253,7 @@ nginx_wordpress_cloudflare_enabled: false
 Run Ansible, verify `/etc/nginx/conf.d/cloudflare-real-ip.conf` is not created.
 
 **Disable Rate Limiting**:
+
 ```yaml
 nginx_wordpress_enable_rate_limiting: false
 ```
@@ -248,6 +263,7 @@ Run Ansible, verify no `limit_req` directives in WordPress config.
 ### 4. Functional Testing
 
 **Test FastCGI Cache**:
+
 ```bash
 # First request (cache miss)
 curl -I https://yoursite.com/blog/
@@ -259,6 +275,7 @@ curl -I https://yoursite.com/blog/
 ```
 
 **Test Rate Limiting**:
+
 ```bash
 # Try 10 rapid login attempts
 for i in {1..10}; do
@@ -268,11 +285,13 @@ done
 ```
 
 **Test Security Headers**:
+
 ```bash
 curl -I https://yoursite.com/ | grep -E "X-Frame|X-Content|CSP"
 ```
 
 Should see:
+
 ```
 X-Frame-Options: SAMEORIGIN
 X-Content-Type-Options: nosniff
@@ -282,11 +301,13 @@ Content-Security-Policy: default-src 'self' https:; ...
 ### 5. Performance Benchmark
 
 Run the same benchmark as before:
+
 ```bash
 ab -n 1000 -c 10 https://yoursite.com/
 ```
 
 **Expected results** (same as monolithic config):
+
 - Requests per second: ~3,000+
 - Time per request: ~30-40ms
 - No errors
@@ -324,6 +345,7 @@ Then run Ansible to redeploy old config.
 ### Cleanup Later
 
 After confirming modular config works:
+
 ```bash
 # Remove old template files
 rm ansible/roles/nginx_wordpress/templates/nginx-wordpress.conf.j2
@@ -362,6 +384,7 @@ server {
 ### 2. Additional Snippets
 
 Create more reusable snippets:
+
 - `proxy-params.conf` - Standard reverse proxy settings
 - `cors-headers.conf` - CORS configuration for APIs
 - `bot-protection.conf` - Advanced bot blocking
@@ -399,12 +422,14 @@ Created comprehensive guides:
 ## Next Steps
 
 1. **Deploy to staging server** (x86 or ARM)
+
    ```bash
    cd terraform
    ansible-playbook -i inventory/staging ../ansible/playbook.yml --tags nginx-wordpress
    ```
 
 2. **Verify deployment**
+
    ```bash
    ssh <server>
    sudo nginx -t

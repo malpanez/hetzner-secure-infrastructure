@@ -1,6 +1,7 @@
 # Cherry-Pick Plan: Elementos Seguros del Security Repo
 
 ## Contexto
+
 El repositorio `malpanez/security` **no está 100% terminado**, pero contiene patrones probados que podemos aplicar de forma selectiva.
 
 **Estrategia**: Tomar SOLO elementos específicos y probados, no integración completa.
@@ -141,11 +142,13 @@ Match All
 **Qué es**: Arregla configuración PAM incorrecta actual
 
 **Problema actual** en tu código:
+
 ```
 auth required pam_google_authenticator.so
 ```
 
 **Problemas**:
+
 - No hay bypass para service accounts
 - Control flag `required` puede causar loops
 - Podría estar en orden incorrecto
@@ -195,24 +198,28 @@ ssh -i ~/.ssh/github_ed25519 root@<IP>
 ### DESPUÉS del Deploy Básico - Mejoras Incrementales
 
 #### Mejora 1: Validación SSH (SEGURO) ✅
+
 - Aplicar cambio #1 (validate SSH config)
 - Commit
 - Redeploy
 - Verificar logs muestran "validation passed"
 
 #### Mejora 2: Version Detection (SEGURO) ✅
+
 - Aplicar cambio #2 (detect SSH version)
 - Commit
 - Redeploy
 - Verificar logs muestran versión correcta
 
 #### Mejora 3: Grupo Bypass Fase 1 (BAJO RIESGO) ✅
+
 - Aplicar cambio #3 Fase 1 (solo crear grupo)
 - Commit
 - Redeploy
 - Verificar grupo existe: `getent group mfa-bypass`
 
 #### Mejora 4: Match Blocks (MEDIO RIESGO) ⚠️
+
 - Aplicar cambio #3 Fase 2 (SSH match blocks)
 - **MANTENER sesión SSH root abierta**
 - Commit
@@ -221,6 +228,7 @@ ssh -i ~/.ssh/github_ed25519 root@<IP>
 - Si falla: usar sesión abierta para revertir
 
 #### Mejora 5: PAM Fix (ALTO RIESGO) ⚠️⚠️
+
 - **PRIMERO**: Leer configuración PAM actual completa
 - **SEGUNDO**: Crear backup manual
 - **TERCERO**: Aplicar cambios PAM incrementalmente
