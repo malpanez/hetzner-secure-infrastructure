@@ -27,7 +27,7 @@ jobs:
       - name: Install tools with UV
         run: |
           export PATH="$HOME/.cargo/bin:$PATH"
-          uv pip install --system ansible yamllint
+          uv pip install --break-system-packages ansible yamllint
 
       - name: Check Ansible version
         run: ansible --version
@@ -71,7 +71,7 @@ jobs:
       - name: Install ansible-lint with UV
         run: |
           export PATH="$HOME/.cargo/bin:$PATH"
-          uv pip install --system ansible ansible-lint
+          uv pip install --break-system-packages ansible ansible-lint
 
       - name: Run ansible-lint
         run: |

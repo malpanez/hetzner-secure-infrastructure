@@ -73,7 +73,7 @@ jobs:
       - name: Install Ansible with UV
         run: |
           export PATH="$HOME/.cargo/bin:$PATH"
-          uv pip install --system ansible ansible-lint yamllint
+          uv pip install --break-system-packages ansible ansible-lint yamllint
 
       - name: Install Ansible Galaxy requirements
         run: |
@@ -131,7 +131,7 @@ jobs:
       - name: Install Molecule with UV
         run: |
           export PATH="$HOME/.cargo/bin:$PATH"
-          uv pip install --system 'ansible-core>=2.15,<2.18' 'ansible>=8.0,<10.0' molecule 'molecule-plugins[docker]' ansible-lint
+          uv pip install --break-system-packages 'ansible-core>=2.15,<2.18' 'ansible>=8.0,<10.0' molecule 'molecule-plugins[docker]' ansible-lint
 
       - name: Run Molecule Test
         run: |
@@ -255,7 +255,7 @@ jobs:
       - name: Install pre-commit with UV
         run: |
           export PATH="$HOME/.cargo/bin:$PATH"
-          uv pip install --system pre-commit
+          uv pip install --break-system-packages pre-commit
 
       - name: Cache pre-commit environments
         uses: actions/cache@v4
