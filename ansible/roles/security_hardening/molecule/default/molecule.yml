@@ -23,7 +23,6 @@ provisioner:
     defaults:
       callbacks_enabled: profile_tasks, timer
       stdout_callback: yaml
-      remote_tmp: /tmp
   env:
     ANSIBLE_ROLES_PATH: ../../
 
