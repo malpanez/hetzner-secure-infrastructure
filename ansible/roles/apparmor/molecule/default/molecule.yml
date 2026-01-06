@@ -25,6 +25,8 @@ provisioner:
       stdout_callback: yaml
   env:
     ANSIBLE_ROLES_PATH: ../../
+    ANSIBLE_REMOTE_TMP: ${ANSIBLE_REMOTE_TMP:-/tmp/ansible-tmp}
+    ANSIBLE_LOCAL_TMP: ${ANSIBLE_LOCAL_TMP:-/tmp/ansible-tmp}
 
 verifier:
   name: ansible
