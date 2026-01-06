@@ -67,15 +67,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
+      - name: Install UV
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
-      - name: Install Ansible
+      - name: Install Ansible with UV
         run: |
-          pip install ansible ansible-lint yamllint
+          export PATH="$HOME/.cargo/bin:$PATH"
+          uv pip install --system ansible ansible-lint yamllint
 
       - name: Install Ansible Galaxy requirements
         run: |
@@ -127,15 +125,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
+      - name: Install UV
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
-      - name: Install Molecule
+      - name: Install Molecule with UV
         run: |
-          pip install 'ansible-core>=2.15,<2.18' 'ansible>=8.0,<10.0' molecule 'molecule-plugins[docker]' ansible-lint
+          export PATH="$HOME/.cargo/bin:$PATH"
+          uv pip install --system 'ansible-core>=2.15,<2.18' 'ansible>=8.0,<10.0' molecule 'molecule-plugins[docker]' ansible-lint
 
       - name: Run Molecule Test
         run: |
@@ -253,14 +249,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
+      - name: Install UV
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
-      - name: Install pre-commit
-        run: pip install pre-commit
+      - name: Install pre-commit with UV
+        run: |
+          export PATH="$HOME/.cargo/bin:$PATH"
+          uv pip install --system pre-commit
 
       - name: Cache pre-commit environments
         uses: actions/cache@v4

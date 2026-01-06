@@ -48,15 +48,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
+      - name: Install UV
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
-      - name: Install Checkov
+      - name: Install Checkov with UV
         run: |
-          pip install checkov
+          export PATH="$HOME/.cargo/bin:$PATH"
+          uv pip install --system checkov
           checkov --version
 
       - name: Run Checkov
@@ -111,14 +109,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+      - name: Install UV
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
-      - name: Install Ansible and ansible-lint
+      - name: Install Ansible and ansible-lint with UV
         run: |
-          pip install ansible ansible-lint
+          export PATH="$HOME/.cargo/bin:$PATH"
+          uv pip install --system ansible ansible-lint
 
       - name: Run ansible-lint
         run: |
@@ -164,18 +161,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+      - name: Install UV
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
-      - name: Install dependencies
+      - name: Install safety with UV
         run: |
-          pip install safety
+          export PATH="$HOME/.cargo/bin:$PATH"
+          uv pip install --system safety
 
       - name: Check Python dependencies
         run: |
-          pip freeze | safety check --stdin || true
+          export PATH="$HOME/.cargo/bin:$PATH"
+          uv pip list | safety check --stdin || true
 
   markdown-lint:
     name: Markdown Lint
