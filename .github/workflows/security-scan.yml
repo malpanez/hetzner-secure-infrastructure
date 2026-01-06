@@ -17,7 +17,7 @@ permissions:
 jobs:
   tfsec:
     name: TFSec - Terraform Security Scanner
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
 
     steps:
       - name: Checkout code
@@ -41,7 +41,7 @@ jobs:
 
   checkov:
     name: Checkov - IaC Security Scanner
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
 
     steps:
       - name: Checkout code
@@ -65,7 +65,7 @@ jobs:
 
   trivy:
     name: Trivy - Vulnerability Scanner
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
 
     steps:
       - name: Checkout code
@@ -97,7 +97,7 @@ jobs:
 
   ansible-lint:
     name: Ansible Lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
 
     steps:
       - name: Checkout code
@@ -119,7 +119,7 @@ jobs:
 
   shellcheck:
     name: ShellCheck - Shell Script Linter
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
 
     steps:
       - name: Checkout code
@@ -134,7 +134,7 @@ jobs:
 
   secret-scan:
     name: GitLeaks - Secret Detection
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
 
     steps:
       - name: Checkout code
@@ -150,7 +150,7 @@ jobs:
 
   dependency-check:
     name: Dependency Check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
 
     steps:
       - name: Checkout code
@@ -171,7 +171,7 @@ jobs:
 
   markdown-lint:
     name: Markdown Lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
 
     steps:
       - name: Checkout code
@@ -187,7 +187,7 @@ jobs:
 
   summary:
     name: Security Summary
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     needs: [tfsec, checkov, trivy, ansible-lint, shellcheck, secret-scan]
     if: always()
 

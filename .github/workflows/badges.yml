@@ -11,7 +11,7 @@ on:
 jobs:
   coverage:
     name: Generate Coverage Badge
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     if: false  # Disabled: Requires GIST_SECRET configuration
 
     steps:
@@ -30,7 +30,7 @@ jobs:
 
   security:
     name: Generate Security Badge
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     if: false  # Disabled: Requires GIST_SECRET configuration
 
     steps:
@@ -49,7 +49,7 @@ jobs:
 
   infrastructure:
     name: Generate Infrastructure Badge
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     if: false  # Disabled: Requires GIST_SECRET configuration
 
     steps:
