@@ -15,31 +15,29 @@ permissions:
   pull-requests: write
 
 jobs:
-  tfsec:
-    name: TFSec - Terraform Security Scanner
+  terraform-security:
+    name: Terraform Security Scanner (Trivy)
     runs-on: ubuntu-slim
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install tfsec
-        run: |
-          curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
-          sudo mv ./tfsec /usr/local/bin/
-          tfsec --version
+      - name: Run Trivy for Terraform
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: 'terraform'
+          format: 'sarif'
+          output: 'terraform-trivy.sarif'
+          severity: 'MEDIUM,HIGH,CRITICAL'
+          exit-code: '0'
 
-      - name: Run tfsec
-        run: |
-          cd terraform
-          tfsec . --format sarif --minimum-severity MEDIUM --out tfsec.sarif || true
-        continue-on-error: true
-
-      - name: Upload tfsec SARIF
+      - name: Upload Terraform Trivy SARIF
         uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
-          sarif_file: terraform/tfsec.sarif
+          sarif_file: terraform-trivy.sarif
         continue-on-error: true
 
   checkov:
@@ -203,7 +201,7 @@ jobs:
   summary:
     name: Security Summary
     runs-on: ubuntu-slim
-    needs: [tfsec, checkov, trivy, ansible-lint, shellcheck, secret-scan]
+    needs: [terraform-security, checkov, trivy, ansible-lint, shellcheck, secret-scan]
     if: always()
 
     steps:
@@ -213,9 +211,9 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Scanner | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|---------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| TFSec | ${{ needs.tfsec.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Terraform (Trivy) | ${{ needs.terraform-security.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Checkov | ${{ needs.checkov.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Trivy | ${{ needs.trivy.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Trivy (Full Scan) | ${{ needs.trivy.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Ansible Lint | ${{ needs.ansible-lint.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| ShellCheck | ${{ needs.shellcheck.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| GitLeaks | ${{ needs.secret-scan.result }} |" >> $GITHUB_STEP_SUMMARY
