@@ -50,6 +50,7 @@
         enabled: true
         state: started
         daemon_reload: true
+      tags: [molecule-notest]
   when: common_ntp_enabled
   tags: [common, ntp]
 
