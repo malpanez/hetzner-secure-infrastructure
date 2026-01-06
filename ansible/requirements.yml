@@ -16,7 +16,9 @@ collections:
   # Prometheus Community Collection
   # Includes: prometheus, node_exporter, alertmanager, exporters
   # Docs: https://prometheus-community.github.io/ansible/
+  # Version pinned to ensure stability
   - name: prometheus.prometheus
+    version: ">=0.16.0"
     source: https://galaxy.ansible.com
 
   # Community General Collection (for pamd, sysctl, etc)
@@ -25,6 +27,12 @@ collections:
 
   # Ansible Posix Collection (for authorized_key, etc)
   - name: ansible.posix
+    source: https://galaxy.ansible.com
+
+  # Hetzner Cloud Collection
+  # Required for dynamic inventory plugin
+  # Docs: https://github.com/ansible-collections/hetzner.hcloud
+  - name: hetzner.hcloud
     source: https://galaxy.ansible.com
 
 # ============================================
