@@ -9,11 +9,13 @@ Quick access to all project documentation.
 ## 🚀 Quick Start
 
 ### New Users
+
 1. [README](../README.md) - Project overview
 2. [Quick Start (Spanish)](guides/QUICK_START_ES.md) - Guía rápida en español
 3. [Go Live Today Checklist](../GO_LIVE_TODAY_CHECKLIST.md) - Production deployment
 
 ### Existing Users
+
 - [Deployment Guide](guides/DEPLOYMENT.md) - Standard deployment process
 - [Troubleshooting](guides/TROUBLESHOOTING.md) - Common issues and solutions
 
@@ -22,6 +24,7 @@ Quick access to all project documentation.
 ## 📚 Documentation Categories
 
 ### Architecture & Infrastructure
+
 - [System Overview](architecture/SYSTEM_OVERVIEW.md) - High-level architecture
 - [Architecture Decisions](infrastructure/ARCHITECTURE_DECISIONS.md) - Why we chose these technologies
 - [Architecture Summary](infrastructure/ARCHITECTURE_SUMMARY.md) - Technical architecture details
@@ -35,6 +38,7 @@ Quick access to all project documentation.
 - [Why Not Varnish](infrastructure/WHY_NOT_VARNISH.md) - Technology decisions
 
 ### Deployment & Operations
+
 - [Deployment Automation Setup](guides/DEPLOYMENT_AUTOMATION_SETUP.md) - **Complete production guide**
 - [Deployment Guide](guides/DEPLOYMENT_GUIDE.md) - Standard deployment
 - [Production Readiness Plan](guides/PRODUCTION_READINESS_PLAN.md) - Pre-launch checklist
@@ -44,6 +48,7 @@ Quick access to all project documentation.
 - [Grafana Alerts Troubleshooting](guides/GRAFANA_ALERTS_TROUBLESHOOTING.md) - Alert management
 
 ### Security
+
 - [SSH 2FA Initial Setup](security/SSH_2FA_INITIAL_SETUP.md) - **How to setup 2FA** (QR code capture)
 - [SSH 2FA Break-Glass](security/SSH_2FA_BREAK_GLASS.md) - Emergency access procedures
 - [SSH Key Strategy](security/SSH_KEY_STRATEGY.md) - Key management
