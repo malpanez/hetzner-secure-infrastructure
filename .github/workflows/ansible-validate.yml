@@ -21,16 +21,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install UV
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
-
-      - name: Install tools with UV
+      - name: Install UV and tools
         run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
           export PATH="$HOME/.cargo/bin:$PATH"
-          uv pip install --system --break-system-packages ansible yamllint
+          uv venv
+          source .venv/bin/activate
+          uv pip install ansible yamllint
 
       - name: Check Ansible version
-        run: ansible --version
+        run: |
+          source .venv/bin/activate
+          ansible --version
 
       - name: Install Ansible Galaxy dependencies
         run: |
@@ -43,16 +45,19 @@ jobs:
 
       - name: Ansible Syntax Check
         run: |
+          source .venv/bin/activate
           cd ansible
           ansible-playbook playbooks/site.yml --syntax-check
 
       - name: YAML Lint
         run: |
+          source .venv/bin/activate
           yamllint -c .yamllint.yml ansible/
         continue-on-error: true
 
       - name: Validate inventory structure
         run: |
+          source .venv/bin/activate
           cd ansible
           ansible-inventory -i inventory/hetzner.yml --list || true
 
@@ -65,16 +70,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install UV
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
-
-      - name: Install ansible-lint with UV
+      - name: Install UV and ansible-lint
         run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
           export PATH="$HOME/.cargo/bin:$PATH"
-          uv pip install --system --break-system-packages ansible ansible-lint
+          uv venv
+          source .venv/bin/activate
+          uv pip install ansible ansible-lint
 
       - name: Run ansible-lint
         run: |
+          source .venv/bin/activate
           cd ansible
           ansible-lint playbooks/ roles/ -v
         continue-on-error: true
@@ -82,6 +88,7 @@ jobs:
       - name: Generate lint report
         if: always()
         run: |
+          source .venv/bin/activate
           cd ansible
           ansible-lint playbooks/ roles/ --parseable > ../ansible-lint-report.txt || true
 
