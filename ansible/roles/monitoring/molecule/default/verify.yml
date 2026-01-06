@@ -5,38 +5,31 @@
   gather_facts: true
 
   tasks:
-    - name: Check if Node Exporter is installed
+    - name: Check if logrotate security config exists
       ansible.builtin.stat:
-        path: /usr/local/bin/node_exporter
-      register: node_exporter_binary
-      failed_when: not node_exporter_binary.stat.exists
+        path: /etc/logrotate.d/security
+      register: logrotate_config
+      failed_when: not logrotate_config.stat.exists
 
-    - name: Check if Node Exporter service is running
-      ansible.builtin.service:
-        name: node_exporter
-        state: started
-        enabled: true
+    - name: Check if monitoring scripts directory exists
+      ansible.builtin.stat:
+        path: /usr/local/bin/monitoring
+      register: monitoring_dir
+      failed_when: not monitoring_dir.stat.exists or not monitoring_dir.stat.isdir
+
+    - name: Check if security-check script exists
+      ansible.builtin.stat:
+        path: /usr/local/bin/security-check
+      register: security_check_script
+      failed_when: not security_check_script.stat.exists or not security_check_script.stat.executable
+
+    - name: Verify rsyslog package is installed
+      ansible.builtin.package:
+        name: rsyslog
+        state: present
       check_mode: true
-      register: node_exporter_service
-      failed_when: node_exporter_service.changed
-
-    - name: Verify Node Exporter is listening on port 9100
-      ansible.builtin.wait_for:
-        port: 9100
-        timeout: 5
-
-    - name: Test Node Exporter metrics endpoint
-      ansible.builtin.uri:
-        url: http://localhost:9100/metrics
-        return_content: true
-      register: metrics_response
-      failed_when: "'node_' not in metrics_response.content"
-
-    - name: Check if Promtail is installed (if configured)
-      ansible.builtin.stat:
-        path: /usr/local/bin/promtail
-      register: promtail_binary
-      ignore_errors: true
+      register: rsyslog_check
+      failed_when: rsyslog_check.changed
 
     - name: Display test results
       ansible.builtin.debug:
