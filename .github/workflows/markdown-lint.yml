@@ -14,7 +14,7 @@ on:
 jobs:
   markdownlint:
     name: Markdown Lint
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
@@ -30,7 +30,7 @@ jobs:
 
   markdown-link-check:
     name: Check Markdown Links
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
@@ -46,7 +46,7 @@ jobs:
 
   markdown-toc:
     name: Check Table of Contents
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
