@@ -3,6 +3,11 @@
   hosts: all
   become: true
 
+  vars:
+    # Disable transit for molecule tests (don't need auto-unseal in CI)
+    openbao_transit_instance_enabled: false
+    openbao_transit_enabled: false
+
   pre_tasks:
     - name: Update apt cache
       ansible.builtin.apt:

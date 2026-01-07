@@ -1,6 +1,19 @@
 # OpenBao Configuration
 # Managed by Ansible - DO NOT EDIT MANUALLY
 
+{% if openbao_transit_enabled %}
+# Transit Auto-Unseal Configuration
+# This OpenBao instance will auto-unseal using a separate Transit instance
+seal "transit" {
+  address            = "{{ openbao_transit_address }}"
+  token              = "{{ openbao_transit_token }}"
+  disable_renewal    = "false"
+  key_name           = "{{ openbao_transit_key_name }}"
+  mount_path         = "{{ openbao_transit_mount_path }}/"
+  tls_skip_verify    = "{{ openbao_transit_tls_skip_verify | lower }}"
+}
+{% endif %}
+
 # Storage backend
 storage "{{ openbao_storage_backend }}" {
 {% if openbao_storage_backend == 'file' %}

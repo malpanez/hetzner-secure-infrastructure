@@ -7,8 +7,27 @@
     state: restarted
     daemon_reload: true
   tags: [openbao]
+
 - name: reload openbao
   ansible.builtin.systemd:
     name: openbao
     state: reloaded
   tags: [openbao]
+
+- name: restart openbao-transit
+  ansible.builtin.systemd:
+    name: openbao-transit
+    state: restarted
+    daemon_reload: true
+  tags: [openbao, transit]
+
+- name: reload openbao-transit
+  ansible.builtin.systemd:
+    name: openbao-transit
+    state: reloaded
+  tags: [openbao, transit]
+
+- name: reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+  tags: [openbao, systemd]

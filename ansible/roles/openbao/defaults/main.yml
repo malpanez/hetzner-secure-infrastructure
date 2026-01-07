@@ -81,6 +81,23 @@ openbao_systemd_limit_memlock: infinity
 
 # Auto-unseal (requires additional setup)
 openbao_auto_unseal_enabled: false
+openbao_auto_unseal_type: transit # transit, awskms, gcpckms
+
+# Transit auto-unseal configuration
+# Uses a separate OpenBao instance to auto-unseal the primary
+openbao_transit_enabled: false
+openbao_transit_address: "https://127.0.0.1:8201"
+openbao_transit_token: "" # Set in vault or group_vars
+openbao_transit_key_name: autounseal
+openbao_transit_mount_path: transit
+openbao_transit_tls_skip_verify: true
+
+# Transit instance configuration (if deploying transit unsealer)
+openbao_transit_instance_enabled: false
+openbao_transit_instance_port: 8201
+openbao_transit_instance_data_dir: /var/lib/openbao-transit
+openbao_transit_instance_config_dir: /etc/openbao-transit.d
+openbao_transit_instance_tls_dir: /etc/openbao-transit.d/tls
 
 # Key shares for Shamir's Secret Sharing
 openbao_key_shares: 5

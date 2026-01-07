@@ -1,0 +1,34 @@
+# OpenBao Transit Instance Configuration
+# Managed by Ansible - DO NOT EDIT MANUALLY
+# Purpose: Provides auto-unseal capability for primary OpenBao instance
+
+# Storage backend
+storage "file" {
+  path = "{{ openbao_transit_instance_data_dir }}"
+}
+
+# API listener (localhost only - security best practice)
+listener "tcp" {
+  address       = "127.0.0.1:{{ openbao_transit_instance_port }}"
+{% if openbao_tls_enabled %}
+  tls_cert_file = "{{ openbao_transit_instance_tls_dir }}/tls.crt"
+  tls_key_file  = "{{ openbao_transit_instance_tls_dir }}/tls.key"
+{% else %}
+  tls_disable   = true
+{% endif %}
+}
+
+# API addresses
+api_addr     = "https://127.0.0.1:{{ openbao_transit_instance_port }}"
+cluster_addr = "https://127.0.0.1:{{ openbao_transit_instance_port | int + 1 }}"
+
+# UI (disabled for transit - not needed)
+ui = false
+
+# Logging
+log_level  = "{{ openbao_log_level }}"
+log_format = "{{ openbao_log_format }}"
+
+# Performance tuning (transit only needs encryption operations)
+default_lease_ttl = "768h"
+max_lease_ttl     = "8760h"
