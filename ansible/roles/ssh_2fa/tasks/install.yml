@@ -16,6 +16,18 @@
   when: ssh_2fa_break_glass_enabled | default(true)
   tags: [ssh-2fa, users, break-glass]
 
+- name: SSH 2FA | Install | Create dedicated ansible service user
+  ansible.builtin.user:
+    name: "{{ ssh_2fa_ansible_user_name }}"
+    shell: "{{ ssh_2fa_ansible_user_shell }}"
+    groups: "{{ ssh_2fa_ansible_user_groups }}"
+    append: true
+    create_home: true
+    state: present
+    comment: "Ansible automation service account"
+  when: ssh_2fa_create_ansible_user | default(false)
+  tags: [ssh-2fa, users, ansible-user]
+
 - name: SSH 2FA | Install | Add break-glass users to ansible-automation group
   ansible.builtin.user:
     name: "{{ item }}"

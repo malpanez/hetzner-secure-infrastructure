@@ -351,6 +351,152 @@ sudo rm -rf /var/run/faillock/*
    - Cleared on reboot
    - Use persistent directory for production
 
+## Transition from Break-glass to Full 2FA
+
+This section describes how to transition deployment users (like `malpanez`) from break-glass access to full 2FA after infrastructure is deployed and verified.
+
+### Current Setup (During Deployment)
+
+The `malpanez` user is configured as a break-glass user for safe deployment:
+
+```yaml
+ssh_2fa_break_glass_enabled: true
+ssh_2fa_break_glass_users:
+  - malpanez  # Deployment user, no 2FA during setup
+```
+
+**Benefits:**
+- Can deploy and modify infrastructure without 2FA prompts
+- Member of `ansible-automation` group (SSH key only)
+- Fast iteration during development
+- Emergency access if 2FA configuration fails
+
+### Transition Strategy (After Deployment Complete)
+
+Once all infrastructure is deployed, tested, and verified, transition to full security:
+
+**Step 1: Create Dedicated Ansible Service Account (Optional)**
+
+```yaml
+# In your playbook or group_vars
+ssh_2fa_create_ansible_user: true
+ssh_2fa_ansible_user_name: ansible
+```
+
+This creates a dedicated `ansible` user in the `ansible-automation` group with SSH key-only access.
+
+**Step 2: Provision 2FA for malpanez**
+
+```bash
+# Option A: Standard TOTP (Google Authenticator app)
+ssh malpanez@server
+google-authenticator
+# Scan QR code, save emergency codes
+
+# Option B: YubiKey FIDO2 for SSH + OATH for sudo
+# On client: Generate FIDO2 key
+ssh-keygen -t ed25519-sk -O resident -O verify-required -f ~/.ssh/id_fido2_malpanez
+
+# On server: Provision YubiKey OATH for sudo
+sudo /usr/local/bin/provision-yubikey-oath.sh malpanez
+sudo usermod -aG mfa-required malpanez
+```
+
+**Step 3: Test 2FA Works**
+
+```bash
+# Test from a different session (keep current SSH session open!)
+ssh malpanez@server
+# Should prompt for: SSH key + TOTP code
+
+# Test sudo (if root-owned TOTP enabled)
+sudo -v
+# Should prompt for: password + TOTP code
+```
+
+**Step 4: Remove from Break-glass**
+
+Update your inventory or group_vars:
+
+```yaml
+# Remove malpanez from break-glass list
+ssh_2fa_break_glass_users: []
+
+# Or keep for emergencies but with 2FA provisioned
+ssh_2fa_break_glass_users:
+  - emergency_admin  # Different user for true emergencies
+```
+
+Re-run the playbook:
+
+```bash
+ansible-playbook -i inventory/production site.yml --tags ssh-2fa
+```
+
+**Step 5: Verify Full 2FA Enforcement**
+
+```bash
+# Check SSH config
+ssh malpanez@server 'sudo grep -A20 "Match All" /etc/ssh/sshd_config.d/50-2fa.conf'
+# Should show: AuthenticationMethods publickey,keyboard-interactive
+
+# Verify malpanez NOT in break-glass group
+ssh malpanez@server 'groups'
+# Should NOT show ansible-automation group
+```
+
+### Recommended Final Configuration
+
+```yaml
+---
+# Production hardened configuration
+ssh_2fa_enable_ssh: true
+ssh_2fa_enable_sudo: true
+ssh_2fa_faillock_enabled: true
+
+# FIDO2-only SSH (optional)
+ssh_2fa_fido2_only: true
+
+# Root-owned TOTP for sudo
+ssh_2fa_totp_root_owned: true
+ssh_2fa_mfa_required_group: mfa-required
+
+# Create dedicated ansible service user
+ssh_2fa_create_ansible_user: true
+
+# Break-glass: Only dedicated service account
+ssh_2fa_break_glass_enabled: true
+ssh_2fa_break_glass_users: []  # ansible user via ansible-automation group only
+
+# Users requiring sudo TOTP
+ssh_2fa_totp_users:
+  - malpanez
+  - ops_user
+```
+
+### Rollback Procedure
+
+If issues occur after removing break-glass:
+
+```bash
+# Via console/IPMI
+sudo vi /etc/ssh/sshd_config.d/50-2fa.conf
+
+# Add at the top (before Match All):
+# Match User malpanez
+#     AuthenticationMethods publickey
+
+sudo systemctl restart sshd
+```
+
+Or temporarily disable 2FA:
+
+```bash
+# Via console
+sudo mv /etc/ssh/sshd_config.d/50-2fa.conf /etc/ssh/sshd_config.d/50-2fa.conf.disabled
+sudo systemctl restart sshd
+```
+
 ## Security Considerations
 
 ### PAM Stack Ordering
