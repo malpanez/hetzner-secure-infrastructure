@@ -119,6 +119,16 @@ ssh_2fa_require_break_glass_ready: false
 # Break-glass groups (members can login with SSH key only)
 # ansible-automation group is always included in template
 
+# Create dedicated ansible service user (optional)
+ssh_2fa_create_ansible_user: false
+
+# Ansible service user configuration
+ssh_2fa_ansible_user_name: ansible
+ssh_2fa_ansible_user_shell: /bin/bash
+ssh_2fa_ansible_user_groups:
+  - ansible-automation
+  - sudo
+
 # ========================================
 # Banner Configuration
 # ========================================
