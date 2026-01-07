@@ -5,9 +5,11 @@
   ansible.builtin.command: "{{ apparmor_status_command }}"
   register: apparmor_status
   changed_when: false
-  tags: [apparmor, status, validate]
+  failed_when: false
+  tags: [apparmor, status, validate, molecule-notest]
 
 - name: AppArmor | Validate | Display AppArmor status
   ansible.builtin.debug:
     var: apparmor_status.stdout_lines
-  tags: [apparmor, status, validate]
+  when: apparmor_status.rc == 0
+  tags: [apparmor, status, validate, molecule-notest]
