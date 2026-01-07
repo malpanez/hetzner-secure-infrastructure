@@ -7,7 +7,7 @@
   tasks:
     - name: Verify | OpenBao binary exists
       ansible.builtin.stat:
-        path: /usr/local/bin/bao
+        path: /usr/bin/bao
       register: bao_binary
       failed_when: not bao_binary.stat.exists
 

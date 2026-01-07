@@ -38,41 +38,31 @@
     - "{{ openbao_backup_dir }}"
   tags: [openbao, directories]
 
-- name: OpenBao | Install | Check if OpenBao binary exists
-  ansible.builtin.stat:
-    path: "{{ openbao_binary_path }}"
-  register: openbao_binary
+- name: OpenBao | Install | Check if OpenBao is installed
+  ansible.builtin.command: dpkg-query -W bao
+  register: openbao_check
+  failed_when: false
+  changed_when: false
   tags: [openbao, binary]
 
-- name: OpenBao | Install | Download OpenBao binary
+- name: OpenBao | Install | Download OpenBao package
   ansible.builtin.get_url:
-    url: "{{ openbao_download_base_url }}/{{ openbao_binary_archive }}"
-    dest: "/tmp/openbao_{{ openbao_version }}.tar.gz"
+    url: "{{ openbao_download_base_url }}/{{ openbao_package_name }}"
+    dest: "/tmp/{{ openbao_package_name }}"
     mode: '0644'
-  when: not openbao_binary.stat.exists
+  when: openbao_check.rc != 0
   tags: [openbao, binary]
 
-- name: OpenBao | Install | Extract OpenBao binary
-  ansible.builtin.unarchive:
-    src: "/tmp/openbao_{{ openbao_version }}.tar.gz"
-    dest: "{{ openbao_install_dir }}"
-    remote_src: true
-    creates: "{{ openbao_binary_path }}"
-  when: not openbao_binary.stat.exists
-  tags: [openbao, binary]
-
-- name: OpenBao | Install | Set OpenBao binary permissions
-  ansible.builtin.file:
-    path: "{{ openbao_binary_path }}"
-    owner: root
-    group: root
-    mode: '0755'
-  tags: [openbao, binary]
-
-- name: OpenBao | Install | Set OpenBao binary capabilities
-  community.general.capabilities:
-    path: "{{ openbao_binary_path }}"
-    capability: cap_ipc_lock=+ep
+- name: OpenBao | Install | Install OpenBao from .deb package
+  ansible.builtin.apt:
+    deb: "/tmp/{{ openbao_package_name }}"
     state: present
-  when: not openbao_disable_mlock
+  when: openbao_check.rc != 0
+  tags: [openbao, binary]
+
+- name: OpenBao | Install | Clean up downloaded package
+  ansible.builtin.file:
+    path: "/tmp/{{ openbao_package_name }}"
+    state: absent
+  when: openbao_check.rc != 0
   tags: [openbao, binary]

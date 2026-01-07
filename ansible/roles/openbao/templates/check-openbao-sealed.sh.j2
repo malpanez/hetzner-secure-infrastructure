@@ -80,7 +80,7 @@ else
     log "3. Primary OpenBao should auto-unseal once transit is unsealed"
     log "4. If primary doesn't auto-unseal, restart it: systemctl restart openbao"
 {% else %}
-    log "1. SSH to server: ssh -i ~/.ssh/github_ed25519 {{ ansible_user }}@{{ ansible_default_ipv4.address }}"
+    log "1. SSH to server: ssh -i ~/.ssh/github_ed25519 {{ ansible_user | default('USER') }}@{{ ansible_default_ipv4.address | default('SERVER_IP') }}"
     log "2. Set environment: export VAULT_ADDR='{{ openbao_api_addr }}' VAULT_SKIP_VERIFY=1"
     log "3. Unseal with 3 of 5 keys:"
     log "   bao operator unseal <key1>"
