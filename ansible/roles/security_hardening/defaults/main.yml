@@ -18,6 +18,13 @@ security_hardening_aide_enabled: false
 security_hardening_auditd_enabled: true
 security_hardening_manage_grub: true
 
+# Kernel audit parameters (added to GRUB_CMDLINE_LINUX_DEFAULT)
+# audit=1: Enable auditing from boot
+# audit_backlog_limit: Buffer size for audit messages before auditd starts
+#   Default is 64 - too small, causes boot hangs
+#   Recommended: 8192 or higher to prevent buffer overflow during boot
+security_hardening_audit_kernel_params: "audit=1 audit_backlog_limit=8192"
+
 # USB storage disable
 security_hardening_disable_usb_storage: false
 
