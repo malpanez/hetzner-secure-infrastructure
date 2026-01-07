@@ -12,21 +12,14 @@ platforms:
     privileged: true
     command: /lib/systemd/systemd
     volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
-    tmpfs:
-      - /run
-      - /tmp
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    cgroupns_mode: host
 
 provisioner:
   name: ansible
   config_options:
     defaults:
-      callbacks_enabled: profile_tasks, timer
-      stdout_callback: yaml
-  env:
-    ANSIBLE_ROLES_PATH: ../../
-    ANSIBLE_REMOTE_TMP: ${ANSIBLE_REMOTE_TMP:-/var/tmp/ansible-tmp}
-    ANSIBLE_LOCAL_TMP: ${ANSIBLE_LOCAL_TMP:-/var/tmp/ansible-tmp}
+      callbacks_enabled: profile_tasks
 
 verifier:
   name: ansible
