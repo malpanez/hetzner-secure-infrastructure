@@ -28,6 +28,33 @@
   when: ssh_2fa_create_ansible_user | default(false)
   tags: [ssh-2fa, users, ansible-user]
 
+- name: SSH 2FA | Install | Configure NOPASSWD sudo for ansible-automation group
+  ansible.builtin.copy:
+    dest: "{{ ssh_2fa_ansible_user_sudoers_file }}"
+    owner: root
+    group: root
+    mode: '0440'
+    validate: /usr/sbin/visudo -cf %s
+    content: |
+      # Ansible Automation Sudo Configuration
+      # Managed by Ansible - ssh_2fa role
+      # Purpose: Allow ansible-automation group members passwordless sudo
+      #          for automated patching, deployments, and emergency break-glass access
+
+      # NOPASSWD sudo for ansible-automation group
+      # This group includes: ansible service user, malpanez (during deployment)
+      %ansible-automation ALL=(ALL) NOPASSWD: ALL
+
+      # Security Notes:
+      # - SSH access still requires key authentication (no password login possible)
+      # - Break-glass group: SSH key only, no 2FA required for SSH
+      # - Members should be limited to: service accounts + emergency admin access
+      # - malpanez: Has both 'sudo' group (standard) AND 'ansible-automation' (break-glass)
+      # - ansible user: Only 'ansible-automation' group (service account)
+      # - Regular admin users with 2FA should use 'sudo' group (password required)
+  when: ssh_2fa_create_ansible_user | default(false)
+  tags: [ssh-2fa, users, ansible-user, sudo]
+
 - name: SSH 2FA | Install | Add break-glass users to ansible-automation group
   ansible.builtin.user:
     name: "{{ item }}"
