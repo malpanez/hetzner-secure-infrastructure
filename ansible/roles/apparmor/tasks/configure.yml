@@ -8,7 +8,7 @@
   changed_when: false
   failed_when: false
   when: apparmor_manage_grub | default(true)
-  tags: [apparmor, grub, config]
+  tags: [apparmor, grub, config, molecule-notest]
 
 - name: AppArmor | Configure | Append AppArmor flags to GRUB cmdline
   ansible.builtin.lineinfile:
@@ -22,7 +22,7 @@
   notify:
     - update grub
     - reboot required
-  tags: [apparmor, grub, config]
+  tags: [apparmor, grub, config, molecule-notest]
 
 - name: AppArmor | Configure | Create custom profiles directory
   ansible.builtin.file:

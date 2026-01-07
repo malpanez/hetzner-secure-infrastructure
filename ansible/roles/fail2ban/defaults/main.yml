@@ -30,6 +30,9 @@ fail2ban_sender: fail2ban@localhost
 # Action on ban (action_mw = mail with whois, action_mwl = mail with whois and logs)
 fail2ban_action: action_mw
 
+# IP addresses to ignore (whitelist)
+fail2ban_ignoreip: "127.0.0.1/8 ::1"
+
 # ========================================
 # Jails Configuration
 # ========================================
