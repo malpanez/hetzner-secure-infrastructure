@@ -120,14 +120,21 @@ ssh_2fa_require_break_glass_ready: false
 # ansible-automation group is always included in template
 
 # Create dedicated ansible service user (optional)
+# Recommended for production: separate deployment user from admin users
 ssh_2fa_create_ansible_user: false
 
 # Ansible service user configuration
 ssh_2fa_ansible_user_name: ansible
 ssh_2fa_ansible_user_shell: /bin/bash
 ssh_2fa_ansible_user_groups:
-  - ansible-automation
-  - sudo
+  - ansible-automation  # Break-glass group for SSH (no 2FA), includes sudo via group policy
+
+# Ansible user sudo configuration
+# The ansible-automation group gets NOPASSWD sudo via /etc/sudoers.d/
+# This separates service account sudo access from regular admin 'sudo' group
+# malpanez: Has BOTH 'sudo' group (standard admin) AND 'ansible-automation' (break-glass)
+# ansible: Only 'ansible-automation' group (dedicated service account)
+ssh_2fa_ansible_user_sudoers_file: /etc/sudoers.d/ansible-automation
 
 # ========================================
 # Banner Configuration

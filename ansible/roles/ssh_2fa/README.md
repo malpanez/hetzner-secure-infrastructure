@@ -375,15 +375,28 @@ ssh_2fa_break_glass_users:
 
 Once all infrastructure is deployed, tested, and verified, transition to full security:
 
-**Step 1: Create Dedicated Ansible Service Account (Optional)**
+**Step 1: Create Dedicated Ansible Service Account (Recommended)**
 
 ```yaml
 # In your playbook or group_vars
 ssh_2fa_create_ansible_user: true
 ssh_2fa_ansible_user_name: ansible
+ssh_2fa_ansible_sudo_method: group  # Best practice: group-based
+ssh_2fa_ansible_user_sudo_nopasswd: true  # For automation
 ```
 
-This creates a dedicated `ansible` user in the `ansible-automation` group with SSH key-only access.
+This creates a dedicated `ansible` user with:
+- **Break-glass SSH access**: Member of `ansible-automation` group (SSH key only, no 2FA)
+- **NOPASSWD sudo**: Via `/etc/sudoers.d/ansible-automation` for the group
+- **Separate from admin users**: `malpanez` stays in built-in `sudo` group for admin access
+- **Best practice**: Uses custom group instead of polluting `sudo`/`wheel` with service accounts
+
+**Why group-based sudo?**
+- Multiple service accounts can share the same policy
+- `malpanez` user keeps existing `sudo` group membership (unaffected)
+- `ansible` user only needs `ansible-automation` group membership
+- Both users can use the same SSH public key
+- Easier to audit: `getent group ansible-automation` shows all break-glass users
 
 **Step 2: Provision 2FA for malpanez**
 

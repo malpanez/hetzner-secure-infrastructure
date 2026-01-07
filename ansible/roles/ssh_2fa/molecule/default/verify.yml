@@ -196,6 +196,36 @@
       when: ssh_2fa_totp_root_owned | default(false)
 
     # ========================================
+    # Ansible Service User Verification (Optional)
+    # ========================================
+    - name: Verify | Ansible User | Check ansible user exists
+      ansible.builtin.command: id {{ ssh_2fa_ansible_user_name | default('ansible') }}
+      changed_when: false
+      failed_when: false
+      register: ansible_user_check
+      when: ssh_2fa_create_ansible_user | default(false)
+
+    - name: Verify | Ansible User | Check ansible-automation group membership
+      ansible.builtin.command: groups {{ ssh_2fa_ansible_user_name | default('ansible') }}
+      changed_when: false
+      failed_when: false
+      register: ansible_user_groups
+      when: ssh_2fa_create_ansible_user | default(false)
+
+    - name: Verify | Ansible User | Check sudoers file exists
+      ansible.builtin.stat:
+        path: "{{ ssh_2fa_ansible_user_sudoers_file | default('/etc/sudoers.d/ansible-automation') }}"
+      register: ansible_sudoers_file
+      when: ssh_2fa_create_ansible_user | default(false)
+
+    - name: Verify | Ansible User | Validate sudoers file syntax
+      ansible.builtin.command: visudo -cf {{ ssh_2fa_ansible_user_sudoers_file | default('/etc/sudoers.d/ansible-automation') }}
+      changed_when: false
+      failed_when: false
+      register: ansible_sudoers_syntax
+      when: ssh_2fa_create_ansible_user | default(false)
+
+    # ========================================
     # Final Summary
     # ========================================
     - name: Verify | Summary | Display verification results
@@ -219,6 +249,11 @@
           {% if ssh_2fa_totp_root_owned | default(false) %}
           ✅ Root-owned TOTP for sudo MFA configured
           ✅ MFA provisioning scripts deployed
+          {% endif %}
+          {% if ssh_2fa_create_ansible_user | default(false) %}
+          ✅ Dedicated ansible service user created
+          ✅ Group-based NOPASSWD sudo configured
+          ✅ Sudoers file syntax validated
           {% endif %}
 
           Role verification completed successfully!
