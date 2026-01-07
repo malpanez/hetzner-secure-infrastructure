@@ -1,0 +1,156 @@
+# SSH FIDO2 Security Key Configuration
+# Managed by Ansible - ssh_2fa role
+# Purpose: Restrict SSH authentication to FIDO2 security keys only
+# Location: /etc/ssh/sshd_config.d/20-fido2.conf
+#
+# This configuration enforces hardware security key authentication:
+#   - ed25519-sk (Ed25519 with FIDO2/U2F)
+#   - ecdsa-sk (ECDSA with FIDO2/U2F)
+#   - Standard ed25519 and RSA keys (fallback for specific use cases)
+#
+# IMPORTANT: This file loads BEFORE 50-2fa.conf due to lexical ordering
+#            Ensure break-glass users can access the system before enabling
+
+# ========================================
+# Public Key Algorithm Restriction
+# ========================================
+
+# Only allow FIDO2 security keys and strong standard keys
+# Order matters - most preferred first
+PubkeyAcceptedAlgorithms {{ ssh_2fa_fido2_pubkey_algorithms | join(',') }}
+
+# ========================================
+# FIDO2-Specific Options
+# ========================================
+
+# Require user verification (PIN/biometric) for FIDO2 keys
+# Options: required, preferred, discouraged
+# Note: "required" may prevent some keys from working
+PubkeyAuthOptions verify-required
+
+# ========================================
+# Authentication Methods
+# ========================================
+
+# For FIDO2-only mode, we use publickey authentication exclusively
+# Match blocks in 50-2fa.conf will override this for specific users/groups
+
+{% if ssh_2fa_break_glass_enabled | default(true) %}
+# Break-glass users - Standard publickey (defined in 50-2fa.conf)
+# Break-glass group - Standard publickey (defined in 50-2fa.conf)
+{% endif %}
+
+# Default authentication for all users
+# In FIDO2-only mode: just publickey (no keyboard-interactive/TOTP at SSH layer)
+# TOTP is enforced at sudo layer instead
+AuthenticationMethods publickey
+
+# ========================================
+# Enhanced Security for FIDO2
+# ========================================
+
+# Disable password authentication (must be using keys)
+PasswordAuthentication no
+ChallengeResponseAuthentication no
+KbdInteractiveAuthentication no
+
+# Disable methods that could bypass FIDO2
+HostbasedAuthentication no
+GSSAPIAuthentication no
+KerberosAuthentication no
+
+# ========================================
+# Resident Key Support
+# ========================================
+
+# FIDO2 resident keys (keys stored ON the security key itself)
+# are identified by their key handle in authorized_keys
+# No special configuration needed - OpenSSH handles this automatically
+
+# Example authorized_keys entry for FIDO2 resident key:
+#   sk-ssh-ed25519@openssh.com AAAAGnNr...rest_of_key user@host
+
+# ========================================
+# Security Notes
+# ========================================
+#
+# 1. Key Generation:
+#    Generate FIDO2 keys with:
+#      $ ssh-keygen -t ed25519-sk -O resident -O verify-required
+#      $ ssh-keygen -t ecdsa-sk -O resident -O verify-required
+#
+#    Options:
+#      -O resident: Store key on security key (can export to other machines)
+#      -O verify-required: Require PIN/biometric for each use
+#      -O no-touch-required: Don't require physical touch (NOT RECOMMENDED)
+#
+# 2. Multiple Security Keys:
+#    Add multiple FIDO2 keys to authorized_keys for redundancy:
+#      - Primary YubiKey
+#      - Backup YubiKey
+#      - Emergency recovery key (standard ed25519 for break-glass)
+#
+# 3. FIDO2 vs U2F:
+#    - FIDO2 (resident keys): Key stored ON security key, portable
+#    - U2F (non-resident): Key handle stored in authorized_keys only
+#    Both work with OpenSSH's sk-* key types
+#
+# 4. Compatibility:
+#    Requires:
+#      - OpenSSH 8.2+ (server and client)
+#      - libfido2 library
+#      - FIDO2-compliant security key (YubiKey 5+, SoloKey, etc.)
+#
+# 5. Break-glass Access:
+#    CRITICAL: Ensure break-glass users have working keys before deploying
+#    Break-glass users defined in 50-2fa.conf can use standard keys
+#
+# 6. TOTP at Sudo Layer:
+#    This config removes TOTP from SSH authentication
+#    Instead, TOTP is required at sudo layer via /etc/pam.d/mfa-totp
+#    This separates: SSH access (FIDO2) vs privileged operations (TOTP)
+#
+# ========================================
+# Troubleshooting
+# ========================================
+#
+# If authentication fails:
+#   1. Verify key type: ssh-keygen -l -f ~/.ssh/id_ed25519_sk.pub
+#   2. Check key is in authorized_keys
+#   3. Test with verbose: ssh -v user@host
+#   4. Verify PubkeyAcceptedAlgorithms: sshd -T | grep -i pubkey
+#   5. Check security key: ssh-keygen -K (exports resident keys)
+#
+# If "sign_and_send_pubkey: signing failed" error:
+#   1. Security key not plugged in
+#   2. Wrong PIN entered
+#   3. Touch not detected
+#   4. Browser/other process locked the key
+#
+# If "no mutual signature algorithm" error:
+#   1. Client OpenSSH too old (needs 8.2+)
+#   2. PubkeyAcceptedAlgorithms doesn't include sk-* algorithms
+#   3. Server doesn't have libfido2
+#
+# ========================================
+# Example Workflow
+# ========================================
+#
+# 1. Generate FIDO2 key (on client):
+#    $ ssh-keygen -t ed25519-sk -O resident -O verify-required \
+#                 -f ~/.ssh/id_two_minds_fido2 \
+#                 -C "user@two-minds-trading"
+#
+# 2. Export public key:
+#    $ cat ~/.ssh/id_two_minds_fido2.pub
+#
+# 3. Add to server authorized_keys:
+#    $ echo "sk-ssh-ed25519@openssh.com AAAA...key... user@host" >> ~/.ssh/authorized_keys
+#
+# 4. Test authentication:
+#    $ ssh -i ~/.ssh/id_two_minds_fido2 user@server
+#    (Touch YubiKey when LED flashes, enter PIN if prompted)
+#
+# 5. Configure sudo MFA separately:
+#    $ sudo /usr/local/bin/provision-yubikey-oath.sh <username>
+#    $ sudo usermod -aG {{ ssh_2fa_mfa_required_group }} <username>

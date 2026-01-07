@@ -1,0 +1,106 @@
+# PAM Configuration for MFA TOTP (Root-Owned Secrets)
+# Managed by Ansible - ssh_2fa role
+# Location: /etc/pam.d/mfa-totp
+#
+# Purpose: Sudo MFA second factor using TOTP with root-owned secrets
+# Architecture: Substack file called from /etc/pam.d/sudo AFTER common-auth
+#
+# Why substack approach?
+#   Debian's common-auth has "success=1" control flag, which skips the next
+#   line after successful authentication. If we add TOTP as an "Additional"
+#   profile via pam-auth-update, it gets skipped.
+#
+#   Solution: This file is called as a substack AFTER common-auth completes,
+#   guaranteeing TOTP execution for users in {{ ssh_2fa_mfa_required_group }} group.
+#
+# Called by: /etc/pam.d/sudo via "auth substack mfa-totp"
+# Applies to: Users in {{ ssh_2fa_mfa_required_group }} group only
+
+# ========================================
+# Authentication Stack
+# ========================================
+
+# Require Google Authenticator TOTP with root-owned secrets
+# Options explained:
+#   secret=/var/lib/pam-google-authenticator/${USER}/.google_authenticator
+#     - Uses PAM variable ${USER} for per-user secret files
+#     - Secrets stored outside user home directories
+#
+#   user=root
+#     - Read secret files as root user (not as the authenticating user)
+#     - Enables root:root ownership with 0400 permissions
+#     - Users cannot read/modify their own secrets
+#
+#   nullok (OPTIONAL - uncomment for testing)
+#     - Allow users without secrets to authenticate
+#     - REMOVE in production after all users provisioned
+#
+auth required pam_google_authenticator.so {{ ssh_2fa_pam_google_authenticator_root_owned_options }}
+
+# ========================================
+# Account Management
+# ========================================
+
+# Standard account checks
+account required pam_permit.so
+
+# ========================================
+# Session Management
+# ========================================
+
+# Standard session handling
+session optional pam_keyinit.so revoke
+session required pam_limits.so
+session required pam_unix.so
+session optional pam_umask.so
+
+# ========================================
+# Security Notes
+# ========================================
+#
+# 1. Secret Storage Security:
+#    - Secrets in {{ ssh_2fa_totp_secret_base }}/${USER}/.google_authenticator
+#    - Permissions: 0400 (read-only)
+#    - Owner: root:root
+#    - Users cannot tamper with secrets
+#
+# 2. Group-Based Enforcement:
+#    - Only users in {{ ssh_2fa_mfa_required_group }} group enter this substack
+#    - Logic in /etc/pam.d/sudo checks group membership first
+#    - Other users skip TOTP requirement
+#
+# 3. Faillock Integration:
+#    - Faillock (if enabled) protects against brute force
+#    - Failed TOTP attempts count toward faillock threshold
+#    - Lockout applies across SSH, sudo, and console login
+#
+# 4. Provisioning:
+#    - Use: /usr/local/bin/provision-totp-sudo.sh <username>
+#    - Or: /usr/local/bin/provision-yubikey-oath.sh <username>
+#    - Must run as root to create secrets
+#
+# 5. Testing:
+#    - Add user to group: usermod -aG {{ ssh_2fa_mfa_required_group }} <user>
+#    - Test: su - <user> -c 'sudo -v'
+#    - Should prompt for: password + TOTP code
+#
+# ========================================
+# Troubleshooting
+# ========================================
+#
+# If sudo doesn't prompt for TOTP:
+#   1. Verify user in group: groups <username>
+#   2. Check secret exists: ls -la {{ ssh_2fa_totp_secret_base }}/<username>/
+#   3. Verify permissions: should be root:root 0400
+#   4. Check PAM stack: grep -A10 common-auth /etc/pam.d/sudo
+#   5. Test PAM manually: pamtester sudo <username> authenticate
+#
+# If "Permission denied" errors:
+#   1. Verify user=root option present
+#   2. Check secret file permissions
+#   3. Verify PAM can read as root: sudo -u root cat <secret_file>
+#
+# If lockouts occur:
+#   1. Check faillock status: faillock --user <username>
+#   2. Unlock: faillock --user <username> --reset
+#   3. Review: ausearch -k faillock_tally
