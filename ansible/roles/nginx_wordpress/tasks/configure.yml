@@ -224,7 +224,7 @@
   changed_when: false
   failed_when: false
   when: nginx_wordpress_install_wordpress
-  tags: [nginx-wordpress, wordpress]
+  tags: [nginx-wordpress, wordpress, molecule-notest]
 
 - name: Nginx WordPress | Configure | Install WordPress core
   ansible.builtin.command:
@@ -241,7 +241,7 @@
   when:
     - nginx_wordpress_install_wordpress
     - wp_is_installed.rc != 0
-  tags: [nginx-wordpress, wordpress]
+  tags: [nginx-wordpress, wordpress, molecule-notest]
 
 # ========================================
 # Nginx Reverse Proxy for Monitoring
