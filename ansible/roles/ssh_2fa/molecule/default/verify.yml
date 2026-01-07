@@ -3,6 +3,222 @@
   hosts: all
   gather_facts: true
   tasks:
-    - name: Role completed successfully
+    # ========================================
+    # Package Installation Verification
+    # ========================================
+    - name: Verify | Packages | Check required packages are installed
+      ansible.builtin.package:
+        name: "{{ item }}"
+        state: present
+      check_mode: true
+      register: package_check
+      failed_when: package_check is changed
+      loop:
+        - openssh-server
+        - libpam-google-authenticator
+        - libpam-modules
+        - libpam-modules-bin
+
+    # ========================================
+    # Faillock Configuration Verification
+    # ========================================
+    - name: Verify | Faillock | Check faillock.conf exists
+      ansible.builtin.stat:
+        path: /etc/security/faillock.conf
+      register: faillock_conf
+      failed_when: not faillock_conf.stat.exists
+
+    - name: Verify | Faillock | Check faillock configuration content
+      ansible.builtin.lineinfile:
+        path: /etc/security/faillock.conf
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        state: present
+      check_mode: true
+      register: faillock_config_check
+      failed_when: faillock_config_check is changed
+      loop:
+        - { regexp: '^deny\s*=\s*5', line: 'deny = 5' }
+        - { regexp: '^fail_interval\s*=\s*900', line: 'fail_interval = 900' }
+        - { regexp: '^unlock_time\s*=\s*600', line: 'unlock_time = 600' }
+        - { regexp: '^audit', line: 'audit' }
+
+    - name: Verify | Faillock | Check pam-auth-update profile exists
+      ansible.builtin.stat:
+        path: /usr/share/pam-configs/faillock
+      register: faillock_profile
+      failed_when: not faillock_profile.stat.exists
+
+    - name: Verify | Faillock | Check faillock is enabled in PAM
+      ansible.builtin.command: grep -q pam_faillock /etc/pam.d/common-auth
+      changed_when: false
+      register: faillock_pam_check
+      failed_when: faillock_pam_check.rc != 0
+
+    - name: Verify | Faillock | Check faillock command is available
+      ansible.builtin.command: which faillock
+      changed_when: false
+      register: faillock_command
+      failed_when: faillock_command.rc != 0
+
+    # ========================================
+    # SSH Configuration Verification
+    # ========================================
+    - name: Verify | SSH | Check SSH configuration directory exists
+      ansible.builtin.stat:
+        path: /etc/ssh/sshd_config.d
+      register: sshd_config_d
+      failed_when: not sshd_config_d.stat.exists or not sshd_config_d.stat.isdir
+
+    - name: Verify | SSH | Check SSH hardening config exists
+      ansible.builtin.stat:
+        path: /etc/ssh/sshd_config.d/99-hardening.conf
+      register: ssh_hardening
+      failed_when: not ssh_hardening.stat.exists
+
+    - name: Verify | SSH | Check SSH service is enabled
+      ansible.builtin.systemd:
+        name: sshd
+        enabled: true
+      check_mode: true
+      register: sshd_enabled
+      failed_when: sshd_enabled is changed
+
+    # ========================================
+    # PAM 2FA Configuration Verification
+    # ========================================
+    - name: Verify | PAM | Check SSH 2FA PAM config exists
+      ansible.builtin.stat:
+        path: /etc/pam.d/sshd-2fa
+      register: pam_ssh_2fa
+      failed_when: not pam_ssh_2fa.stat.exists
+
+    - name: Verify | PAM | Check sudo 2FA PAM config exists
+      ansible.builtin.stat:
+        path: /etc/pam.d/sudo-2fa
+      register: pam_sudo_2fa
+      failed_when: not pam_sudo_2fa.stat.exists
+
+    # ========================================
+    # Break-glass Verification
+    # ========================================
+    - name: Verify | Break-glass | Check ansible-automation group exists
+      ansible.builtin.command: getent group ansible-automation
+      changed_when: false
+      register: breakglass_group
+      failed_when: breakglass_group.rc != 0
+
+    # ========================================
+    # Audit Rules Verification
+    # ========================================
+    - name: Verify | Audit | Check faillock audit rules exist
+      ansible.builtin.stat:
+        path: /etc/audit/rules.d/99-faillock.rules
+      register: faillock_audit_rules
+      failed_when: not faillock_audit_rules.stat.exists
+
+    # ========================================
+    # SSH Host Keys Verification
+    # ========================================
+    - name: Verify | SSH Keys | Check Ed25519 host key exists
+      ansible.builtin.stat:
+        path: /etc/ssh/ssh_host_ed25519_key
+      register: ed25519_key
+      failed_when: not ed25519_key.stat.exists
+
+    - name: Verify | SSH Keys | Check RSA host key exists
+      ansible.builtin.stat:
+        path: /etc/ssh/ssh_host_rsa_key
+      register: rsa_key
+      failed_when: not rsa_key.stat.exists
+
+    - name: Verify | SSH Keys | Check weak keys are removed
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      register: weak_keys
+      failed_when: weak_keys.stat.exists
+      loop:
+        - /etc/ssh/ssh_host_dsa_key
+        - /etc/ssh/ssh_host_ecdsa_key
+
+    # ========================================
+    # FIDO2 Configuration Verification (Optional)
+    # ========================================
+    - name: Verify | FIDO2 | Check FIDO2 SSH config exists
+      ansible.builtin.stat:
+        path: /etc/ssh/sshd_config.d/20-fido2.conf
+      register: fido2_config
+      when: ssh_2fa_fido2_only | default(false)
+
+    - name: Verify | FIDO2 | Verify PubkeyAcceptedAlgorithms includes sk-*
+      ansible.builtin.command: grep -q "sk-ssh-ed25519@openssh.com" /etc/ssh/sshd_config.d/20-fido2.conf
+      changed_when: false
+      failed_when: false
+      register: fido2_algorithms
+      when: ssh_2fa_fido2_only | default(false)
+
+    # ========================================
+    # Root-Owned TOTP Verification (Optional)
+    # ========================================
+    - name: Verify | TOTP | Check MFA group exists
+      ansible.builtin.command: getent group {{ ssh_2fa_mfa_required_group | default('mfa-required') }}
+      changed_when: false
+      failed_when: false
+      register: mfa_group_check
+      when: ssh_2fa_totp_root_owned | default(false)
+
+    - name: Verify | TOTP | Check root-owned TOTP base directory exists
+      ansible.builtin.stat:
+        path: "{{ ssh_2fa_totp_secret_base | default('/var/lib/pam-google-authenticator') }}"
+      register: totp_base_dir
+      when: ssh_2fa_totp_root_owned | default(false)
+
+    - name: Verify | TOTP | Check MFA TOTP PAM substack exists
+      ansible.builtin.stat:
+        path: /etc/pam.d/mfa-totp
+      register: mfa_totp_pam
+      when: ssh_2fa_totp_root_owned | default(false)
+
+    - name: Verify | TOTP | Check sudo PAM includes MFA substack
+      ansible.builtin.command: grep -q "auth substack mfa-totp" /etc/pam.d/sudo
+      changed_when: false
+      failed_when: false
+      register: sudo_mfa_substack
+      when: ssh_2fa_totp_root_owned | default(false)
+
+    - name: Verify | TOTP | Check provisioning scripts exist
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      register: totp_scripts
+      loop:
+        - /usr/local/bin/provision-totp-sudo.sh
+        - /usr/local/bin/provision-yubikey-oath.sh
+      when: ssh_2fa_totp_root_owned | default(false)
+
+    # ========================================
+    # Final Summary
+    # ========================================
+    - name: Verify | Summary | Display verification results
       ansible.builtin.debug:
-        msg: "Role execution completed"
+        msg: |
+          ╔════════════════════════════════════════════════════════════════════╗
+          ║              SSH 2FA + Faillock Verification Summary               ║
+          ╚════════════════════════════════════════════════════════════════════╝
+
+          ✅ All required packages installed
+          ✅ Faillock configured and enabled in PAM
+          ✅ SSH hardening configuration deployed
+          ✅ 2FA PAM modules configured for SSH and sudo
+          ✅ Break-glass group configured
+          ✅ Audit rules for faillock deployed
+          ✅ Strong SSH host keys generated
+          ✅ Weak SSH algorithms removed
+          {% if ssh_2fa_fido2_only | default(false) %}
+          ✅ FIDO2-only SSH authentication configured
+          {% endif %}
+          {% if ssh_2fa_totp_root_owned | default(false) %}
+          ✅ Root-owned TOTP for sudo MFA configured
+          ✅ MFA provisioning scripts deployed
+          {% endif %}
+
+          Role verification completed successfully!

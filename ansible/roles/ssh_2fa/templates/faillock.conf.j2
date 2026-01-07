@@ -1,0 +1,98 @@
+# PAM Faillock Configuration
+# Managed by Ansible - ssh_2fa role
+# Purpose: Account lockout protection against brute force attacks
+#
+# This configuration protects against:
+#   - Brute force attacks on 2FA tokens (Google Authenticator/Yubikey)
+#   - Repeated SSH authentication failures
+#   - Local console login attacks
+#
+# Documentation: man faillock.conf(5)
+# Break-glass: sudo faillock --user <username> --reset
+
+# ========================================
+# Account Lockout Policy
+# ========================================
+
+# Number of failed authentication attempts before lockout
+# Recommended: 3-5 for production, 5-10 for development
+deny = {{ ssh_2fa_faillock_deny }}
+
+# Time window for counting failed attempts (seconds)
+# If 'deny' failures occur within this interval, account locks
+# 900 = 15 minutes
+fail_interval = {{ ssh_2fa_faillock_interval }}
+
+# Account auto-unlock time (seconds)
+# 0 = manual unlock only (requires admin: sudo faillock --reset)
+# 600 = 10 minutes (account unlocks automatically)
+unlock_time = {{ ssh_2fa_faillock_unlock_time }}
+
+# ========================================
+# Root Account Protection
+# ========================================
+
+{% if ssh_2fa_faillock_even_deny_root | default(false) %}
+# Apply lockout policy to root account
+even_deny_root
+
+# Root account unlock time (typically shorter than regular users)
+root_unlock_time = {{ ssh_2fa_faillock_root_unlock_time }}
+{% else %}
+# Root account is excluded from lockout (default)
+# This provides emergency access via console/IPMI
+{% endif %}
+
+# ========================================
+# Storage Configuration
+# ========================================
+
+# Directory for failed attempt tallies
+# /var/run/faillock (default) - tmpfs, cleared on reboot (non-persistent)
+# /var/log/faillock - persistent across reboots
+{% if ssh_2fa_faillock_dir != '/var/run/faillock' %}
+dir = {{ ssh_2fa_faillock_dir }}
+{% else %}
+# Using default directory: /var/run/faillock (tmpfs - cleared on reboot)
+{% endif %}
+
+# ========================================
+# Audit Configuration
+# ========================================
+
+{% if ssh_2fa_faillock_audit_enabled | default(true) %}
+# Enable audit logging for faillock events
+# Logs to /var/log/audit/audit.log via auditd
+audit
+{% endif %}
+
+# ========================================
+# Additional Options
+# ========================================
+
+# Do not display information about previous failed attempts
+# Prevents information disclosure to attackers
+silent
+
+# Lock administrative users (not just regular users)
+# Comment out to exclude admin users from lockout
+admin_group = sudo
+
+# ========================================
+# Notes
+# ========================================
+#
+# Unlock commands:
+#   - Check user status: faillock --user <username>
+#   - Unlock specific user: sudo faillock --user <username> --reset
+#   - Unlock all users: sudo faillock --reset
+#
+# Emergency access:
+#   - Boot to single-user mode (GRUB: add 'single' to kernel line)
+#   - Use IPMI/console access with root account (if even_deny_root=false)
+#   - Disable faillock: sudo pam-auth-update --disable faillock --package
+#
+# Monitoring:
+#   - View audit logs: sudo ausearch -k faillock_tally
+#   - View tally files: ls -la {{ ssh_2fa_faillock_dir }}/
+#

@@ -29,6 +29,16 @@
   ansible.builtin.import_tasks: install.yml
   tags: [ssh-2fa, install]
 
+- name: SSH 2FA | Main | Include faillock configuration tasks
+  ansible.builtin.import_tasks: faillock.yml
+  when: ssh_2fa_faillock_enabled | default(true)
+  tags: [ssh-2fa, faillock, pam]
+
+- name: SSH 2FA | Main | Include root-owned TOTP sudo MFA tasks
+  ansible.builtin.import_tasks: totp_sudo.yml
+  when: ssh_2fa_totp_root_owned | default(false)
+  tags: [ssh-2fa, totp, sudo, mfa]
+
 - name: SSH 2FA | Main | Include configuration tasks
   ansible.builtin.import_tasks: configure.yml
   tags: [ssh-2fa, config]

@@ -14,6 +14,9 @@ ssh_2fa_enable_sudo: true
 # Enable custom SSH banner
 ssh_2fa_banner_enabled: true
 
+# Enable faillock (account lockout protection)
+ssh_2fa_faillock_enabled: true
+
 # ========================================
 # SSH Configuration
 # ========================================
@@ -140,3 +143,86 @@ ssh_2fa_banner_text: |
   #  Disconnect now if you are not an authorized user.                           #
   #                                                                              #
   ################################################################################
+
+# ========================================
+# Faillock Configuration (Anti-Brute Force)
+# ========================================
+# Protects against brute force attacks on 2FA tokens, SSH keys, and local console
+
+# Enable audit logging for faillock events
+ssh_2fa_faillock_audit_enabled: true
+
+# Number of failed attempts before account lockout
+ssh_2fa_faillock_deny: 5
+
+# Time window for counting failed attempts (seconds)
+# 900s = 15 minutes: if 5 failures occur within 15 min, account locks
+ssh_2fa_faillock_interval: 900
+
+# Account unlock time (seconds)
+# 600s = 10 minutes: account auto-unlocks after 10 min
+# Set to 0 for manual unlock only (requires admin intervention)
+ssh_2fa_faillock_unlock_time: 600
+
+# Apply to root account
+# If true, root can also be locked (but with shorter unlock time)
+ssh_2fa_faillock_even_deny_root: false
+
+# Root unlock time (seconds) - only if even_deny_root is true
+ssh_2fa_faillock_root_unlock_time: 60
+
+# Faillock tally directory (default: /var/run/faillock - tmpfs, cleared on reboot)
+# Set to /var/log/faillock for persistent tracking across reboots
+ssh_2fa_faillock_dir: /var/run/faillock
+
+# ========================================
+# Package Requirements
+# ========================================
+
+# Required packages for SSH hardening, 2FA, and faillock
+ssh_2fa_packages:
+  - openssh-server
+  - libpam-google-authenticator
+  - libpam-modules
+  - libpam-modules-bin
+  - libqrencode4
+  - qrencode
+
+# ========================================
+# FIDO2 Security Key Configuration
+# ========================================
+
+# Enable FIDO2-only SSH authentication (ed25519-sk/ecdsa-sk)
+# When enabled, restricts SSH to hardware security keys only
+ssh_2fa_fido2_only: false
+
+# Allowed public key algorithms for FIDO2
+# Only strong algorithms with security key support
+ssh_2fa_fido2_pubkey_algorithms:
+  - sk-ssh-ed25519@openssh.com
+  - sk-ecdsa-sha2-nistp256@openssh.com
+  - ssh-ed25519
+  - rsa-sha2-512
+  - rsa-sha2-256
+
+# ========================================
+# Root-Owned TOTP Configuration (sudo MFA)
+# ========================================
+
+# Enable root-owned TOTP secrets for sudo MFA
+# When enabled, TOTP secrets are stored in root-owned directory
+# instead of user home directories
+ssh_2fa_totp_root_owned: false
+
+# Base directory for root-owned TOTP secrets
+# Secrets will be in: ${base}/${username}/.google_authenticator
+ssh_2fa_totp_secret_base: /var/lib/pam-google-authenticator
+
+# Group whose members require TOTP for sudo
+# Users in this group must provide TOTP code in addition to password
+ssh_2fa_mfa_required_group: mfa-required
+
+# PAM Google Authenticator options for root-owned TOTP
+# secret: path to secret file (uses ${USER} variable expansion)
+# user=root: read secrets as root user
+ssh_2fa_pam_google_authenticator_root_owned_options: "secret=/var/lib/pam-google-authenticator/${USER}/.google_authenticator user=root"

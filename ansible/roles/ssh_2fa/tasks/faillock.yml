@@ -1,0 +1,145 @@
+---
+# SSH 2FA Role - Faillock Configuration Tasks
+# Purpose: Implement account lockout protection against brute force attacks
+# Applies to: SSH 2FA attempts, sudo 2FA attempts, and local console login
+
+# ========================================
+# PAM Faillock - Anti-Brute Force Protection
+# ========================================
+# Locks accounts after repeated failed authentication attempts
+# Protects against:
+#   - Brute force attacks on 2FA tokens
+#   - Repeated invalid SSH key attempts (if enabled)
+#   - Local console login attacks
+# ========================================
+
+- name: SSH 2FA | Faillock | Ensure pam-configs directory exists
+  ansible.builtin.file:
+    path: /usr/share/pam-configs
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags: [faillock, pam]
+
+- name: SSH 2FA | Faillock | Check current pam-auth-update status
+  ansible.builtin.command: pam-auth-update --list
+  register: pam_auth_list
+  changed_when: false
+  failed_when: false
+  tags: [faillock, pam]
+
+- name: SSH 2FA | Faillock | Deploy faillock profile for pam-auth-update
+  ansible.builtin.copy:
+    dest: /usr/share/pam-configs/faillock
+    owner: root
+    group: root
+    mode: '0644'
+    backup: yes
+    content: |
+      Name: Faillock (account lockout after failed attempts)
+      Default: yes
+      Priority: 900
+      Auth-Type: Primary
+      Auth:
+              requisite pam_faillock.so preauth
+              [default=die] pam_faillock.so authfail
+              sufficient pam_faillock.so authsucc
+      Account-Type: Primary
+      Account:
+              required pam_faillock.so
+  tags: [faillock, pam]
+
+- name: SSH 2FA | Faillock | Deploy faillock configuration
+  ansible.builtin.template:
+    src: faillock.conf.j2
+    dest: /etc/security/faillock.conf
+    owner: root
+    group: root
+    mode: '0644'
+    backup: yes
+  notify: restart sshd
+  tags: [faillock, config]
+
+- name: SSH 2FA | Faillock | Enable faillock via pam-auth-update
+  ansible.builtin.command: pam-auth-update --enable faillock --package
+  register: pam_auth_update_result
+  changed_when: "'faillock [enabled]' not in pam_auth_list.stdout"
+  when: "'faillock [enabled]' not in pam_auth_list.stdout"
+  tags: [faillock, pam]
+
+- name: SSH 2FA | Faillock | Verify faillock is active
+  ansible.builtin.command: grep -q pam_faillock /etc/pam.d/common-auth
+  changed_when: false
+  failed_when: false
+  register: faillock_verification
+  tags: [faillock, verify]
+
+- name: SSH 2FA | Faillock | Display faillock status
+  ansible.builtin.debug:
+    msg: >-
+      Faillock is {{ 'ACTIVE' if faillock_verification.rc == 0 else 'NOT ACTIVE' }}.
+      Configuration: deny={{ ssh_2fa_faillock_deny }},
+      unlock_time={{ ssh_2fa_faillock_unlock_time }}s,
+      fail_interval={{ ssh_2fa_faillock_interval }}s
+  tags: [faillock, verify]
+
+# ========================================
+# Audit Rules for Faillock Events
+# ========================================
+
+- name: SSH 2FA | Faillock | Add audit rules for faillock events
+  ansible.builtin.blockinfile:
+    path: /etc/audit/rules.d/99-faillock.rules
+    create: yes
+    owner: root
+    group: root
+    mode: '0640'
+    marker: "# {mark} ANSIBLE MANAGED - ssh_2fa faillock rules"
+    block: |
+      # Monitor faillock tally directory for failed authentication tracking
+      -w /var/run/faillock/ -p wa -k faillock_tally
+
+      # Monitor faillock configuration changes
+      -w /etc/security/faillock.conf -p wa -k faillock_config
+
+      # Monitor PAM configuration changes that affect faillock
+      -w /usr/share/pam-configs/faillock -p wa -k pam_faillock_profile
+  when: ssh_2fa_faillock_audit_enabled | default(true)
+  notify: restart auditd
+  tags: [faillock, audit]
+
+# ========================================
+# Break-glass Information
+# ========================================
+
+- name: SSH 2FA | Faillock | Display break-glass unlock instructions
+  ansible.builtin.debug:
+    msg: |
+      ╔════════════════════════════════════════════════════════════════════╗
+      ║                    FAILLOCK BREAK-GLASS PROCEDURES                 ║
+      ╚════════════════════════════════════════════════════════════════════╝
+
+      If an account gets locked due to failed attempts:
+
+      1. Check locked users:
+         $ faillock --user <username>
+
+      2. Unlock specific user:
+         $ sudo faillock --user <username> --reset
+
+      3. Unlock ALL users:
+         $ sudo faillock --reset
+
+      4. Emergency console access:
+         - Boot to single-user mode (GRUB: add 'single' to kernel line)
+         - Or use IPMI/console access
+
+      5. Temporarily disable faillock (EMERGENCY ONLY):
+         $ sudo pam-auth-update --disable faillock --package
+
+      Configuration: /etc/security/faillock.conf
+      Tally directory: /var/run/faillock/ (tmpfs - cleared on reboot)
+
+  run_once: true
+  tags: [faillock, documentation]

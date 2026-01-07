@@ -1,0 +1,332 @@
+---
+# SSH 2FA Role - Root-Owned TOTP for Sudo MFA
+# Purpose: Implement sudo multi-factor authentication with TOTP
+#          using root-owned secret storage for enhanced security
+#
+# Architecture: Uses PAM substack approach to guarantee TOTP execution
+#               after successful password authentication for users in mfa-required group
+#
+# Key Differences from Standard 2FA:
+# - TOTP secrets stored in /var/lib/pam-google-authenticator/${USER}/ (root:root 0400)
+# - Only applies to sudo, not SSH (SSH uses FIDO2 keys)
+# - Uses substack to bypass common-auth's success=1 skip behavior
+# - Group-based enforcement (mfa-required group)
+
+# ========================================
+# MFA Required Group
+# ========================================
+
+- name: SSH 2FA | TOTP Sudo | Create mfa-required group
+  ansible.builtin.group:
+    name: "{{ ssh_2fa_mfa_required_group }}"
+    state: present
+  tags: [totp, sudo, mfa, groups]
+
+- name: SSH 2FA | TOTP Sudo | Display group information
+  ansible.builtin.debug:
+    msg: |
+      ╔════════════════════════════════════════════════════════════════════╗
+      ║              Root-Owned TOTP for Sudo MFA - Group Setup            ║
+      ╚════════════════════════════════════════════════════════════════════╝
+
+      Group created: {{ ssh_2fa_mfa_required_group }}
+
+      To require TOTP for a user's sudo commands, add them to this group:
+        $ sudo usermod -aG {{ ssh_2fa_mfa_required_group }} <username>
+
+      Users in this group will need:
+        1. Their password (local authentication)
+        2. TOTP code (from YubiKey OATH or authenticator app)
+
+  run_once: true
+  tags: [totp, sudo, mfa]
+
+# ========================================
+# Root-Owned TOTP Secret Directory
+# ========================================
+
+- name: SSH 2FA | TOTP Sudo | Create root-owned TOTP secret base directory
+  ansible.builtin.file:
+    path: "{{ ssh_2fa_totp_secret_base }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags: [totp, sudo, mfa, secrets]
+
+- name: SSH 2FA | TOTP Sudo | Create per-user TOTP secret directories
+  ansible.builtin.file:
+    path: "{{ ssh_2fa_totp_secret_base }}/{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+  loop: "{{ ssh_2fa_totp_users | default([]) }}"
+  when: ssh_2fa_totp_users is defined and ssh_2fa_totp_users | length > 0
+  tags: [totp, sudo, mfa, secrets]
+
+# ========================================
+# PAM Configuration - Substack Approach
+# ========================================
+# Why substack? Because common-auth has "success=1" which skips the next line.
+# A substack file is executed AFTER common-auth completes, guaranteeing
+# that TOTP is always checked for users in mfa-required group.
+
+- name: SSH 2FA | TOTP Sudo | Deploy MFA TOTP PAM substack
+  ansible.builtin.template:
+    src: pam-mfa-totp.j2
+    dest: /etc/pam.d/mfa-totp
+    owner: root
+    group: root
+    mode: '0644'
+    backup: yes
+  tags: [totp, sudo, mfa, pam]
+
+- name: SSH 2FA | TOTP Sudo | Add substack to /etc/pam.d/sudo
+  ansible.builtin.blockinfile:
+    path: /etc/pam.d/sudo
+    marker: "# {mark} ANSIBLE MANAGED - Root-Owned TOTP MFA for sudo"
+    insertafter: '^@include common-auth'
+    block: |
+      # Substack for MFA TOTP (root-owned secrets)
+      # Executed AFTER common-auth for users in {{ ssh_2fa_mfa_required_group }} group
+      auth [success=ok ignore=ignore default=die] pam_succeed_if.so quiet user ingroup {{ ssh_2fa_mfa_required_group }}
+      auth [success=1 default=ignore] pam_succeed_if.so quiet user notingroup {{ ssh_2fa_mfa_required_group }}
+      auth substack mfa-totp
+    backup: yes
+  tags: [totp, sudo, mfa, pam]
+
+# ========================================
+# TOTP Secret Provisioning Helper Script
+# ========================================
+
+- name: SSH 2FA | TOTP Sudo | Deploy TOTP provisioning script
+  ansible.builtin.copy:
+    dest: /usr/local/bin/provision-totp-sudo.sh
+    owner: root
+    group: root
+    mode: '0750'
+    content: |
+      #!/bin/bash
+      # Root-Owned TOTP Provisioning Script
+      # Usage: sudo /usr/local/bin/provision-totp-sudo.sh <username>
+
+      set -euo pipefail
+
+      USERNAME="${1:-}"
+      if [[ -z "$USERNAME" ]]; then
+          echo "Usage: $0 <username>" >&2
+          exit 1
+      fi
+
+      # Verify user exists
+      if ! id "$USERNAME" &>/dev/null; then
+          echo "Error: User '$USERNAME' does not exist" >&2
+          exit 1
+      fi
+
+      SECRET_DIR="{{ ssh_2fa_totp_secret_base }}/${USERNAME}"
+      SECRET_FILE="${SECRET_DIR}/.google_authenticator"
+
+      # Create directory
+      mkdir -p "$SECRET_DIR"
+      chmod 0700 "$SECRET_DIR"
+      chown root:root "$SECRET_DIR"
+
+      # Generate TOTP secret
+      echo "Generating TOTP secret for user: $USERNAME"
+      echo "Please scan the QR code with your authenticator app or YubiKey Manager"
+      echo ""
+
+      # Run google-authenticator with proper flags
+      google-authenticator \
+          --time-based \
+          --disallow-reuse \
+          --force \
+          --rate-limit=3 \
+          --rate-time=30 \
+          --window-size=3 \
+          --secret="$SECRET_FILE"
+
+      # Secure permissions
+      chmod 0400 "$SECRET_FILE"
+      chown root:root "$SECRET_FILE"
+
+      echo ""
+      echo "╔════════════════════════════════════════════════════════════════════╗"
+      echo "║              TOTP Secret Provisioned Successfully                  ║"
+      echo "╚════════════════════════════════════════════════════════════════════╝"
+      echo ""
+      echo "User: $USERNAME"
+      echo "Secret file: $SECRET_FILE"
+      echo "Permissions: 0400 (read-only by root)"
+      echo ""
+      echo "Next steps:"
+      echo "  1. Add user to MFA group: usermod -aG {{ ssh_2fa_mfa_required_group }} $USERNAME"
+      echo "  2. Test sudo with TOTP: su - $USERNAME -c 'sudo -v'"
+      echo "  3. User must enter password + TOTP code"
+      echo ""
+  tags: [totp, sudo, mfa, scripts]
+
+# ========================================
+# YubiKey OATH Provisioning Helper
+# ========================================
+
+- name: SSH 2FA | TOTP Sudo | Deploy YubiKey OATH provisioning script
+  ansible.builtin.copy:
+    dest: /usr/local/bin/provision-yubikey-oath.sh
+    owner: root
+    group: root
+    mode: '0750'
+    content: |
+      #!/bin/bash
+      # YubiKey OATH Provisioning Script
+      # Prerequisites: ykman (YubiKey Manager CLI)
+      # Usage: sudo /usr/local/bin/provision-yubikey-oath.sh <username>
+
+      set -euo pipefail
+
+      USERNAME="${1:-}"
+      if [[ -z "$USERNAME" ]]; then
+          echo "Usage: $0 <username>" >&2
+          echo "" >&2
+          echo "This script:" >&2
+          echo "  1. Generates a TOTP secret for the user" >&2
+          echo "  2. Stores it in {{ ssh_2fa_totp_secret_base }}/${USERNAME}/" >&2
+          echo "  3. Programs it into the YubiKey OATH applet" >&2
+          exit 1
+      fi
+
+      # Verify user exists
+      if ! id "$USERNAME" &>/dev/null; then
+          echo "Error: User '$USERNAME' does not exist" >&2
+          exit 1
+      fi
+
+      # Check for ykman
+      if ! command -v ykman &>/dev/null; then
+          echo "Error: ykman not found. Install with: pip3 install yubikey-manager" >&2
+          exit 1
+      fi
+
+      SECRET_DIR="{{ ssh_2fa_totp_secret_base }}/${USERNAME}"
+      SECRET_FILE="${SECRET_DIR}/.google_authenticator"
+      ISSUER="two-minds-trading"
+      ACCOUNT="${USERNAME}@$(hostname)"
+
+      # Create directory
+      mkdir -p "$SECRET_DIR"
+      chmod 0700 "$SECRET_DIR"
+      chown root:root "$SECRET_DIR"
+
+      echo "╔════════════════════════════════════════════════════════════════════╗"
+      echo "║            YubiKey OATH Provisioning for Sudo MFA                  ║"
+      echo "╚════════════════════════════════════════════════════════════════════╝"
+      echo ""
+      echo "User: $USERNAME"
+      echo "Account: $ACCOUNT"
+      echo ""
+
+      # Generate secret if doesn't exist
+      if [[ ! -f "$SECRET_FILE" ]]; then
+          echo "Generating new TOTP secret..."
+          google-authenticator \
+              --time-based \
+              --disallow-reuse \
+              --force \
+              --rate-limit=3 \
+              --rate-time=30 \
+              --window-size=3 \
+              --secret="$SECRET_FILE" \
+              --quiet
+
+          chmod 0400 "$SECRET_FILE"
+          chown root:root "$SECRET_FILE"
+          echo "Secret generated: $SECRET_FILE"
+      else
+          echo "Using existing secret: $SECRET_FILE"
+      fi
+
+      # Extract base32 secret
+      SECRET_B32=$(head -n1 "$SECRET_FILE")
+
+      echo ""
+      echo "Detecting YubiKey..."
+      if ! ykman list &>/dev/null; then
+          echo "Error: No YubiKey detected. Please insert YubiKey." >&2
+          exit 1
+      fi
+
+      echo "YubiKey detected."
+      echo ""
+      echo "Programming OATH credential into YubiKey..."
+      echo "  Issuer: $ISSUER"
+      echo "  Account: $ACCOUNT"
+      echo ""
+
+      # Add credential to YubiKey
+      ykman oath accounts add \
+          --touch \
+          --oath-type TOTP \
+          --issuer "$ISSUER" \
+          "$ACCOUNT" \
+          "$SECRET_B32"
+
+      echo ""
+      echo "╔════════════════════════════════════════════════════════════════════╗"
+      echo "║              YubiKey OATH Provisioning Successful                  ║"
+      echo "╚════════════════════════════════════════════════════════════════════╝"
+      echo ""
+      echo "TOTP credential programmed into YubiKey with touch requirement"
+      echo ""
+      echo "To generate codes:"
+      echo "  1. Plug in YubiKey"
+      echo "  2. Run: ykman oath accounts code '$ACCOUNT'"
+      echo "  3. Touch YubiKey when LED flashes"
+      echo ""
+      echo "Next steps:"
+      echo "  1. Add user to MFA group: usermod -aG {{ ssh_2fa_mfa_required_group }} $USERNAME"
+      echo "  2. Test sudo: su - $USERNAME -c 'sudo -v'"
+      echo "  3. Enter password + TOTP code from YubiKey"
+      echo ""
+  tags: [totp, sudo, mfa, yubikey, scripts]
+
+# ========================================
+# Documentation and Verification
+# ========================================
+
+- name: SSH 2FA | TOTP Sudo | Display deployment summary
+  ansible.builtin.debug:
+    msg: |
+      ╔════════════════════════════════════════════════════════════════════╗
+      ║          Root-Owned TOTP for Sudo MFA - Deployment Summary         ║
+      ╚════════════════════════════════════════════════════════════════════╝
+
+      Configuration:
+        - MFA Group: {{ ssh_2fa_mfa_required_group }}
+        - Secret Base: {{ ssh_2fa_totp_secret_base }}
+        - PAM Substack: /etc/pam.d/mfa-totp
+        - Sudo PAM: /etc/pam.d/sudo (modified)
+
+      Provisioning Scripts:
+        - Standard TOTP: /usr/local/bin/provision-totp-sudo.sh <username>
+        - YubiKey OATH: /usr/local/bin/provision-yubikey-oath.sh <username>
+
+      Workflow:
+        1. Provision TOTP secret (run as root)
+        2. Add user to {{ ssh_2fa_mfa_required_group }} group
+        3. User tests with: sudo -v
+
+      Security Features:
+        - Secrets owned by root:root (mode 0400)
+        - Users cannot read/modify their own secrets
+        - Substack ensures TOTP always checked for MFA users
+        - Faillock protection against brute force
+
+      Verification:
+        $ ls -la {{ ssh_2fa_totp_secret_base }}/
+        $ getent group {{ ssh_2fa_mfa_required_group }}
+        $ grep -A5 "common-auth" /etc/pam.d/sudo
+
+  run_once: true
+  tags: [totp, sudo, mfa]

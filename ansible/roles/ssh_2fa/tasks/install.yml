@@ -3,11 +3,7 @@
 
 - name: SSH 2FA | Install | Install SSH and PAM packages
   ansible.builtin.apt:
-    name:
-      - openssh-server
-      - libpam-google-authenticator
-      - libqrencode4
-      - qrencode
+    name: "{{ ssh_2fa_packages }}"
     state: present
     update_cache: true
     cache_valid_time: 3600
