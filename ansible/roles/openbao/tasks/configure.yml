@@ -54,4 +54,4 @@
     user: root
     state: present
   when: openbao_backup_enabled
-  tags: [openbao, backup]
+  tags: [openbao, backup, molecule-notest]

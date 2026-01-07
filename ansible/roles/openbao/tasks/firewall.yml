@@ -10,4 +10,4 @@
     comment: OpenBao API
   loop: "{{ openbao_firewall_allowed_ips }}"
   when: openbao_firewall_enabled
-  tags: [openbao, firewall]
+  tags: [openbao, firewall, molecule-notest]

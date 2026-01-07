@@ -16,12 +16,12 @@ openbao_apt_dependencies:
 # OpenBao Configuration
 # ========================================
 
-openbao_version: 2.0.0
+openbao_version: 2.4.4
 openbao_user: openbao
 openbao_group: openbao
 
 # Directories
-openbao_install_dir: /usr/local/bin
+openbao_install_dir: /usr/bin
 openbao_config_dir: /etc/openbao.d
 openbao_data_dir: /var/lib/openbao
 openbao_tls_dir: /etc/openbao.d/tls
