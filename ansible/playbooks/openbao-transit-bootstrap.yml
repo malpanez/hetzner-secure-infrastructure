@@ -69,6 +69,7 @@
       environment: "{{ openbao_env }}"
       loop: "{{ transit_init.unseal_keys_b64[0:openbao_key_threshold] }}"
       when: transit_init is defined
+      changed_when: true
       no_log: true
       tags: [openbao, transit, bootstrap]
 
@@ -82,31 +83,40 @@
       tags: [openbao, transit, bootstrap]
 
     - name: Create encryption key for auto-unseal
-      ansible.builtin.command: "{{ openbao_cli }} write -f transit/keys/{{ openbao_transit_key_name | default('autounseal') }}"
+      ansible.builtin.command: >-
+        {{ openbao_cli }} write -f
+        transit/keys/{{ openbao_transit_key_name | default('autounseal') }}
       environment: "{{ openbao_env | combine({'VAULT_TOKEN': transit_root_token}) }}"
       when: transit_root_token is defined
+      changed_when: true
       tags: [openbao, transit, bootstrap]
 
     - name: Create policy for primary OpenBao auto-unseal
-      ansible.builtin.shell: |
-        cat <<'EOF' | {{ openbao_cli }} policy write autounseal -
-        path "transit/encrypt/{{ openbao_transit_key_name | default('autounseal') }}" {
-          capabilities = ["update"]
-        }
-        path "transit/decrypt/{{ openbao_transit_key_name | default('autounseal') }}" {
-          capabilities = ["update"]
-        }
-        EOF
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          cat <<'EOF' | {{ openbao_cli }} policy write autounseal -
+          path "transit/encrypt/{{ openbao_transit_key_name | default('autounseal') }}" {
+            capabilities = ["update"]
+          }
+          path "transit/decrypt/{{ openbao_transit_key_name | default('autounseal') }}" {
+            capabilities = ["update"]
+          }
+          EOF
+        executable: /bin/bash
       environment: "{{ openbao_env | combine({'VAULT_TOKEN': transit_root_token}) }}"
       when: transit_root_token is defined
+      changed_when: true
       tags: [openbao, transit, bootstrap]
 
     - name: Create token for primary OpenBao auto-unseal
       ansible.builtin.command: >-
-        {{ openbao_cli }} token create -format=json -orphan -period=87600h -policy=autounseal
+        {{ openbao_cli }} token create -format=json -orphan
+        -period=87600h -policy=autounseal
       environment: "{{ openbao_env | combine({'VAULT_TOKEN': transit_root_token}) }}"
       register: transit_token_cmd
       when: transit_root_token is defined
+      changed_when: transit_token_cmd.rc == 0
       no_log: true
       tags: [openbao, transit, bootstrap]
 
