@@ -1,0 +1,100 @@
+---
+# OpenBao Role - Transit Auto-Unseal Instance Setup
+# This sets up a separate OpenBao instance that provides auto-unseal capability
+
+- name: OpenBao | Transit | Create transit instance directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ openbao_user }}"
+    group: "{{ openbao_group }}"
+    mode: '0750'
+  loop:
+    - "{{ openbao_transit_instance_config_dir }}"
+    - "{{ openbao_transit_instance_data_dir }}"
+    - "{{ openbao_transit_instance_tls_dir }}"
+  tags: [openbao, transit, directories]
+
+- name: OpenBao | Transit | Generate self-signed TLS certificate for transit
+  ansible.builtin.command: >
+    openssl req -x509 -newkey rsa:4096
+    -keyout {{ openbao_transit_instance_tls_dir }}/tls.key
+    -out {{ openbao_transit_instance_tls_dir }}/tls.crt
+    -days 365 -nodes
+    -subj "{{ openbao_tls_self_signed_subject }}"
+  args:
+    creates: "{{ openbao_transit_instance_tls_dir }}/tls.crt"
+  when: openbao_tls_enabled and openbao_tls_self_signed
+  tags: [openbao, transit, tls]
+
+- name: OpenBao | Transit | Set TLS certificate permissions for transit
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: "{{ openbao_user }}"
+    group: "{{ openbao_group }}"
+    mode: "0600"
+  loop:
+    - "{{ openbao_transit_instance_tls_dir }}/tls.crt"
+    - "{{ openbao_transit_instance_tls_dir }}/tls.key"
+  when: openbao_tls_enabled
+  tags: [openbao, transit, tls]
+
+- name: OpenBao | Transit | Deploy transit instance configuration
+  ansible.builtin.template:
+    src: config-transit.hcl.j2
+    dest: "{{ openbao_transit_instance_config_dir }}/config.hcl"
+    owner: "{{ openbao_user }}"
+    group: "{{ openbao_group }}"
+    mode: "0640"
+  notify: restart openbao-transit
+  tags: [openbao, transit, config]
+
+- name: OpenBao | Transit | Deploy transit systemd service
+  ansible.builtin.template:
+    src: openbao-transit.service.j2
+    dest: /etc/systemd/system/openbao-transit.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart openbao-transit
+  tags: [openbao, transit, systemd]
+
+- name: OpenBao | Transit | Enable and start transit service
+  ansible.builtin.systemd:
+    name: openbao-transit
+    enabled: true
+    state: started
+    daemon_reload: true
+  tags: [openbao, transit, service]
+
+- name: OpenBao | Transit | Wait for transit instance to start
+  ansible.builtin.wait_for:
+    port: "{{ openbao_transit_instance_port }}"
+    host: 127.0.0.1
+    delay: 5
+    timeout: 60
+  tags: [openbao, transit, validate]
+
+- name: OpenBao | Transit | Display transit initialization instructions
+  ansible.builtin.debug:
+    msg:
+      - "========================================"
+      - "OpenBao Transit Instance - Installed"
+      - "========================================"
+      - ""
+      - "Transit instance is running at: https://127.0.0.1:{{ openbao_transit_instance_port }}"
+      - ""
+      - "NEXT STEPS (Run via openbao-transit-bootstrap.yml playbook):"
+      - ""
+      - "1. Initialize transit instance (one-time only)"
+      - "2. Unseal transit instance (requires 3 of 5 keys)"
+      - "3. Enable transit secrets engine"
+      - "4. Create encryption key for auto-unseal"
+      - "5. Create policy and token for primary OpenBao"
+      - "6. Configure primary OpenBao with transit token"
+      - ""
+      - "Transit instance must be UNSEALED for primary to auto-unseal!"
+      - "Store transit unseal keys securely - needed after transit reboots."
+      - ""
+      - "========================================"
+  tags: [openbao, transit, info]

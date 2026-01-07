@@ -1,0 +1,94 @@
+#!/bin/bash
+# OpenBao Seal Status Check Script
+# Managed by Ansible - DO NOT EDIT MANUALLY
+# Checks if OpenBao is sealed and alerts if rotation may fail
+
+set -euo pipefail
+
+LOG_FILE="/var/log/openbao/seal-status.log"
+OPENBAO_ADDR="{{ openbao_api_addr }}"
+ALERT_FILE="/var/run/openbao-sealed.alert"
+
+# Logging function
+log() {
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_FILE"
+}
+
+# Check if OpenBao is sealed
+check_seal_status() {
+    local status_code
+    local sealed
+
+    # Query OpenBao health endpoint
+    # HTTP Status codes:
+    #   200 = initialized, unsealed, active
+    #   429 = unsealed, standby
+    #   472 = disaster recovery mode replication secondary, active
+    #   473 = performance standby
+    #   501 = not initialized
+    #   503 = sealed
+
+    status_code=$(curl -s -o /dev/null -w "%{http_code}" -k "$OPENBAO_ADDR/v1/sys/health" || echo "000")
+
+    case "$status_code" in
+        200|429|472|473)
+            log "✅ OpenBao is UNSEALED (status: $status_code)"
+            # Remove alert file if exists
+            [ -f "$ALERT_FILE" ] && rm -f "$ALERT_FILE"
+            return 0
+            ;;
+        503)
+            log "⚠️  OpenBao is SEALED (status: $status_code)"
+            # Create alert file
+            echo "OpenBao sealed at $(date)" > "$ALERT_FILE"
+            return 1
+            ;;
+        501)
+            log "ℹ️  OpenBao NOT INITIALIZED (status: $status_code)"
+            echo "OpenBao not initialized at $(date)" > "$ALERT_FILE"
+            return 2
+            ;;
+        000)
+            log "❌ OpenBao NOT RESPONDING (connection failed)"
+            echo "OpenBao not responding at $(date)" > "$ALERT_FILE"
+            return 3
+            ;;
+        *)
+            log "⚠️  OpenBao UNKNOWN STATUS (status: $status_code)"
+            echo "OpenBao unknown status $status_code at $(date)" > "$ALERT_FILE"
+            return 4
+            ;;
+    esac
+}
+
+# Main execution
+log "==================== OpenBao Seal Status Check ===================="
+
+if check_seal_status; then
+    log "Status: Operational - OpenBao is unsealed and ready"
+    log "Secret rotation will work normally"
+    exit 0
+else
+    exit_code=$?
+    log "Status: CRITICAL - OpenBao is sealed or not operational"
+    log "⚠️  WARNING: Secret rotation will FAIL until OpenBao is unsealed!"
+    log ""
+    log "To unseal OpenBao:"
+{% if openbao_transit_enabled %}
+    log "1. Check transit instance: systemctl status openbao-transit"
+    log "2. If transit is sealed, unseal it first with 3 transit unseal keys"
+    log "3. Primary OpenBao should auto-unseal once transit is unsealed"
+    log "4. If primary doesn't auto-unseal, restart it: systemctl restart openbao"
+{% else %}
+    log "1. SSH to server: ssh -i ~/.ssh/github_ed25519 {{ ansible_user }}@{{ ansible_default_ipv4.address }}"
+    log "2. Set environment: export VAULT_ADDR='{{ openbao_api_addr }}' VAULT_SKIP_VERIFY=1"
+    log "3. Unseal with 3 of 5 keys:"
+    log "   bao operator unseal <key1>"
+    log "   bao operator unseal <key2>"
+    log "   bao operator unseal <key3>"
+    log "4. Verify: bao status"
+{% endif %}
+    log ""
+    log "=================================================================="
+    exit $exit_code
+fi

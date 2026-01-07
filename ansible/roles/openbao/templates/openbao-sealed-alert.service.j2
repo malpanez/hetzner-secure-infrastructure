@@ -1,0 +1,14 @@
+[Unit]
+Description=OpenBao Sealed Alert Handler
+Documentation=https://openbao.org/docs/
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/bin/bash -c 'logger -t openbao-alert -p user.crit "CRITICAL: OpenBao is SEALED! Secret rotation will fail. Unseal required."'
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=openbao-sealed-alert
+
+[Install]
+WantedBy=multi-user.target

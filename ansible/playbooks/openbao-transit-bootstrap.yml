@@ -1,0 +1,174 @@
+---
+# Bootstrap OpenBao Transit Instance for Auto-Unseal
+# This playbook initializes the Transit instance that provides auto-unseal capability
+#
+# Usage:
+#   ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/openbao-transit-bootstrap.yml \
+#     -e openbao_transit_bootstrap_ack=true
+
+- name: Bootstrap OpenBao Transit Instance
+  hosts: secrets_servers
+  become: true
+  gather_facts: false
+
+  vars:
+    openbao_cli: "{{ openbao_binary_path | default('bao') }}"
+    openbao_transit_api_addr: "https://127.0.0.1:{{ openbao_transit_instance_port | default(8201) }}"
+    openbao_env_base:
+      VAULT_ADDR: "{{ openbao_transit_api_addr }}"
+    openbao_env: "{{ openbao_env_base | combine({'VAULT_SKIP_VERIFY': '1'}) }}"
+
+  pre_tasks:
+    - name: Confirm transit bootstrap
+      ansible.builtin.assert:
+        that:
+          - openbao_transit_bootstrap_ack | default(false) | bool
+        fail_msg: "Set -e openbao_transit_bootstrap_ack=true to acknowledge transit init/unseal."
+
+  tasks:
+    - name: Check transit instance status
+      ansible.builtin.command: "{{ openbao_cli }} status -format=json"
+      environment: "{{ openbao_env }}"
+      register: transit_status_cmd
+      changed_when: false
+      failed_when: false
+      tags: [openbao, transit, bootstrap]
+
+    - name: Parse transit status
+      ansible.builtin.set_fact:
+        transit_status: "{{ (transit_status_cmd.stdout | default('{}')) | from_json }}"
+      when: transit_status_cmd.rc == 0
+      tags: [openbao, transit, bootstrap]
+
+    - name: Initialize transit instance (first run only)
+      ansible.builtin.command: >-
+        {{ openbao_cli }} operator init
+        -format=json
+        -key-shares={{ openbao_key_shares }}
+        -key-threshold={{ openbao_key_threshold }}
+      environment: "{{ openbao_env }}"
+      register: transit_init_cmd
+      changed_when: true
+      when: not ((transit_status | default({})).initialized | default(false) | bool)
+      no_log: true
+      tags: [openbao, transit, bootstrap]
+
+    - name: Capture transit init output
+      ansible.builtin.set_fact:
+        transit_init: "{{ (transit_init_cmd.stdout | default('{}')) | from_json }}"
+        transit_root_token: "{{ (transit_init_cmd.stdout | from_json).root_token }}"
+      when:
+        - transit_init_cmd is defined
+        - transit_init_cmd is not skipped
+        - transit_init_cmd.stdout is defined
+      no_log: true
+      tags: [openbao, transit, bootstrap]
+
+    - name: Unseal transit instance (using first threshold keys)
+      ansible.builtin.command: "{{ openbao_cli }} operator unseal {{ item }}"
+      environment: "{{ openbao_env }}"
+      loop: "{{ transit_init.unseal_keys_b64[0:openbao_key_threshold] }}"
+      when: transit_init is defined
+      no_log: true
+      tags: [openbao, transit, bootstrap]
+
+    - name: Enable transit secrets engine
+      ansible.builtin.command: "{{ openbao_cli }} secrets enable transit"
+      environment: "{{ openbao_env | combine({'VAULT_TOKEN': transit_root_token}) }}"
+      register: transit_enable
+      changed_when: transit_enable.rc == 0
+      failed_when: false
+      when: transit_root_token is defined
+      tags: [openbao, transit, bootstrap]
+
+    - name: Create encryption key for auto-unseal
+      ansible.builtin.command: "{{ openbao_cli }} write -f transit/keys/{{ openbao_transit_key_name | default('autounseal') }}"
+      environment: "{{ openbao_env | combine({'VAULT_TOKEN': transit_root_token}) }}"
+      when: transit_root_token is defined
+      tags: [openbao, transit, bootstrap]
+
+    - name: Create policy for primary OpenBao auto-unseal
+      ansible.builtin.shell: |
+        cat <<'EOF' | {{ openbao_cli }} policy write autounseal -
+        path "transit/encrypt/{{ openbao_transit_key_name | default('autounseal') }}" {
+          capabilities = ["update"]
+        }
+        path "transit/decrypt/{{ openbao_transit_key_name | default('autounseal') }}" {
+          capabilities = ["update"]
+        }
+        EOF
+      environment: "{{ openbao_env | combine({'VAULT_TOKEN': transit_root_token}) }}"
+      when: transit_root_token is defined
+      tags: [openbao, transit, bootstrap]
+
+    - name: Create token for primary OpenBao auto-unseal
+      ansible.builtin.command: >-
+        {{ openbao_cli }} token create -format=json -orphan -period=87600h -policy=autounseal
+      environment: "{{ openbao_env | combine({'VAULT_TOKEN': transit_root_token}) }}"
+      register: transit_token_cmd
+      when: transit_root_token is defined
+      no_log: true
+      tags: [openbao, transit, bootstrap]
+
+    - name: Capture transit auto-unseal token
+      ansible.builtin.set_fact:
+        transit_autounseal_token: "{{ (transit_token_cmd.stdout | from_json).auth.client_token }}"
+      when: transit_token_cmd is defined and transit_token_cmd.stdout is defined
+      no_log: true
+      tags: [openbao, transit, bootstrap]
+
+    - name: Display transit init keys and tokens
+      ansible.builtin.debug:
+        msg: "{{ transit_init_message.split('\n') }}"
+      vars:
+        transit_init_message: |
+          ========================================
+          🔐 TRANSIT INSTANCE INITIALIZED
+          ========================================
+
+          Transit Unseal Keys (SAVE SECURELY!):
+          {% for key in transit_init.unseal_keys_b64 %}
+          - {{ key }}
+          {% endfor %}
+
+          Transit Root Token:
+          - {{ transit_init.root_token }}
+
+          Auto-Unseal Token (for primary OpenBao):
+          - {{ transit_autounseal_token }}
+
+          ========================================
+          CRITICAL - SAVE THESE CREDENTIALS!
+          ========================================
+
+          1. Store Transit unseal keys in password manager
+             (Needed to unseal Transit after reboot)
+
+          2. Add auto-unseal token to Ansible Vault:
+             ansible-vault edit inventory/group_vars/secrets_servers/openbao.yml
+
+             Add:
+             openbao_transit_enabled: true
+             openbao_transit_token: "{{ transit_autounseal_token }}"
+
+          3. Re-run site.yml to deploy primary with auto-unseal:
+             ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml --tags openbao
+
+          4. Bootstrap primary OpenBao (will auto-unseal):
+             ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/openbao-bootstrap.yml \
+               -e openbao_bootstrap_ack=true
+
+          ========================================
+      when: transit_init is defined and transit_autounseal_token is defined
+      tags: [openbao, transit, bootstrap]
+
+    - name: Display next steps if already initialized
+      ansible.builtin.debug:
+        msg:
+          - "Transit instance is already initialized."
+          - "If you need to regenerate the auto-unseal token:"
+          - "1. SSH to server and set VAULT_ADDR=https://127.0.0.1:{{ openbao_transit_instance_port | default(8201) }}"
+          - "2. Login: bao login -method=token"
+          - "3. Create token: bao token create -orphan -period=87600h -policy=autounseal"
+      when: (transit_status | default({})).initialized | default(false) | bool
+      tags: [openbao, transit, bootstrap]

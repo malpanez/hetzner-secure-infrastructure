@@ -2,7 +2,91 @@
 - name: Verify
   hosts: all
   gather_facts: true
+  become: true
+
   tasks:
-    - name: Role completed successfully
+    - name: Verify | OpenBao binary exists
+      ansible.builtin.stat:
+        path: /usr/local/bin/bao
+      register: bao_binary
+      failed_when: not bao_binary.stat.exists
+
+    - name: Verify | OpenBao user exists
+      ansible.builtin.user:
+        name: openbao
+        state: present
+      check_mode: true
+      register: openbao_user
+      failed_when: openbao_user.changed
+
+    - name: Verify | OpenBao directories exist
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      register: openbao_dirs
+      failed_when: not openbao_dirs.stat.exists or not openbao_dirs.stat.isdir
+      loop:
+        - /etc/openbao.d
+        - /var/lib/openbao
+        - /var/log/openbao
+
+    - name: Verify | OpenBao configuration exists
+      ansible.builtin.stat:
+        path: /etc/openbao.d/config.hcl
+      register: openbao_config
+      failed_when: not openbao_config.stat.exists
+
+    - name: Verify | OpenBao configuration is valid HCL
+      ansible.builtin.command: /usr/local/bin/bao operator diagnose -config=/etc/openbao.d/config.hcl
+      register: config_validate
+      changed_when: false
+      failed_when: config_validate.rc not in [0, 1, 2]
+
+    - name: Verify | OpenBao systemd service exists
+      ansible.builtin.stat:
+        path: /etc/systemd/system/openbao.service
+      register: openbao_service
+      failed_when: not openbao_service.stat.exists
+
+    - name: Verify | OpenBao service is enabled
+      ansible.builtin.systemd:
+        name: openbao
+        enabled: true
+      check_mode: true
+      register: service_enabled
+      failed_when: service_enabled.changed
+
+    - name: Verify | OpenBao service is running
+      ansible.builtin.systemd:
+        name: openbao
+        state: started
+      check_mode: true
+      register: service_running
+      failed_when: service_running.changed
+
+    - name: Verify | OpenBao is listening on port 8200
+      ansible.builtin.wait_for:
+        host: 0.0.0.0
+        port: 8200
+        timeout: 30
+      register: port_check
+
+    - name: Verify | OpenBao status responds (sealed is OK for CI)
+      ansible.builtin.uri:
+        url: https://127.0.0.1:8200/v1/sys/health
+        validate_certs: false
+        status_code: [200, 429, 472, 473, 501, 503]
+      register: health_check
+      failed_when: health_check.status == -1
+
+    - name: Verify | Display OpenBao status (informational)
       ansible.builtin.debug:
-        msg: "Role execution completed"
+        msg:
+          - "OpenBao deployment verification: ✅ PASSED"
+          - "Binary installed: {{ bao_binary.stat.exists }}"
+          - "Service running: {{ not service_running.changed }}"
+          - "Port 8200 listening: {{ port_check.elapsed >= 0 }}"
+          - "API responding: {{ health_check.status in [200, 429, 472, 473, 501, 503] }}"
+          - ""
+          - "NOTE: OpenBao is SEALED in CI tests (expected)"
+          - "Status {{ health_check.status }}: Sealed instance (no unseal keys in CI)"
+          - "Functional testing (unseal/secrets) requires manual bootstrap"

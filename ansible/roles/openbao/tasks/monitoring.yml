@@ -1,0 +1,80 @@
+---
+# OpenBao Role - Monitoring and Alerting Tasks
+# Monitors OpenBao seal status and alerts when sealed
+
+- name: OpenBao | Monitoring | Deploy seal status check script
+  ansible.builtin.template:
+    src: check-openbao-sealed.sh.j2
+    dest: /usr/local/bin/check-openbao-sealed.sh
+    owner: root
+    group: root
+    mode: '0755'
+  tags: [openbao, monitoring, scripts]
+
+- name: OpenBao | Monitoring | Deploy seal check systemd service
+  ansible.builtin.template:
+    src: openbao-seal-check.service.j2
+    dest: /etc/systemd/system/openbao-seal-check.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: reload systemd
+  tags: [openbao, monitoring, systemd]
+
+- name: OpenBao | Monitoring | Deploy seal check timer
+  ansible.builtin.template:
+    src: openbao-seal-check.timer.j2
+    dest: /etc/systemd/system/openbao-seal-check.timer
+    owner: root
+    group: root
+    mode: '0644'
+  notify: reload systemd
+  tags: [openbao, monitoring, systemd]
+
+- name: OpenBao | Monitoring | Deploy sealed alert service
+  ansible.builtin.template:
+    src: openbao-sealed-alert.service.j2
+    dest: /etc/systemd/system/openbao-sealed-alert.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: reload systemd
+  tags: [openbao, monitoring, systemd]
+
+- name: OpenBao | Monitoring | Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+  tags: [openbao, monitoring, systemd]
+
+- name: OpenBao | Monitoring | Enable and start seal check timer
+  ansible.builtin.systemd:
+    name: openbao-seal-check.timer
+    enabled: true
+    state: started
+  tags: [openbao, monitoring, systemd]
+
+- name: OpenBao | Monitoring | Display monitoring status
+  ansible.builtin.debug:
+    msg:
+      - "========================================"
+      - "OpenBao Monitoring - Configured"
+      - "========================================"
+      - ""
+      - "Seal status checks: Every 15 minutes"
+      - "Log file: /var/log/openbao/seal-status.log"
+      - "Alert file: /var/run/openbao-sealed.alert (created when sealed)"
+      - ""
+      - "Manual check:"
+      - "  /usr/local/bin/check-openbao-sealed.sh"
+      - ""
+      - "View timer status:"
+      - "  systemctl status openbao-seal-check.timer"
+      - ""
+      - "View check logs:"
+      - "  journalctl -u openbao-seal-check.service -f"
+      - ""
+      - "View alert logs:"
+      - "  journalctl -t openbao-alert -p crit"
+      - ""
+      - "========================================"
+  tags: [openbao, monitoring, info]
