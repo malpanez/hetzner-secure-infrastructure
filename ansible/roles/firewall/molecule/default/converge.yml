@@ -11,3 +11,5 @@
 
   roles:
     - role: firewall
+      vars:
+        firewall_relax_idempotence: true

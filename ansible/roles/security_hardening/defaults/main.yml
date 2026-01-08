@@ -13,6 +13,7 @@ security_hardening_unattended_upgrades_enabled: true
 
 # AIDE File Integrity Monitoring
 security_hardening_aide_enabled: false
+security_hardening_aide_async: true
 
 # Auditd Configuration
 security_hardening_auditd_enabled: true
