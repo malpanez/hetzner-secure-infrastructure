@@ -60,7 +60,7 @@ jobs:
         run: |
           source .venv/bin/activate
           cd ansible
-          ansible-inventory -i inventory/hetzner.yml --list || true
+          ansible-inventory --list || true
 
   # Ansible lint runs separately (slower)
   ansible-lint:
@@ -80,31 +80,22 @@ jobs:
           source .venv/bin/activate
           uv pip install ansible ansible-lint
 
-      - name: Run ansible-lint (playbooks only)
-        run: |
-          source .venv/bin/activate
-          cd ansible
-          ansible-lint playbooks/ --parseable || true
-        continue-on-error: true
+      - name: Cache UV and pip
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/uv
+            ~/.cache/pip
+          key: ansible-lint-${{ runner.os }}-${{ hashFiles('ansible/requirements.yml') }}
+          restore-keys: |
+            ansible-lint-${{ runner.os }}-
 
-      - name: Run ansible-lint (roles - limited scope)
+      - name: Run ansible-lint (all files)
         run: |
           source .venv/bin/activate
           cd ansible
-          # Run lint on roles individually to avoid memory issues
-          for role in roles/*/; do
-            echo "Linting $role"
-            ansible-lint "$role" --parseable || true
-          done
+          ansible-lint . --parseable | tee ../ansible-lint-report.txt || true
         continue-on-error: true
-
-      - name: Generate lint report
-        if: always()
-        run: |
-          source .venv/bin/activate
-          cd ansible
-          # Generate report with limited scope to avoid timeout
-          timeout 5m ansible-lint playbooks/ --parseable > ../ansible-lint-report.txt 2>&1 || echo "Lint report generation completed with warnings" >> ../ansible-lint-report.txt
 
       - name: Upload lint report
         if: always()

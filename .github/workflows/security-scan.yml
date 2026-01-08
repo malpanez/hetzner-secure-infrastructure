@@ -102,28 +102,6 @@ jobs:
           format: 'table'
           severity: 'CRITICAL,HIGH'
 
-  ansible-lint:
-    name: Ansible Lint
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install UV and Ansible
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          export PATH="$HOME/.cargo/bin:$PATH"
-          uv venv
-          source .venv/bin/activate
-          uv pip install ansible ansible-lint
-
-      - name: Run ansible-lint
-        run: |
-          source .venv/bin/activate
-          ansible-lint ansible/
-        continue-on-error: true
-
   shellcheck:
     name: ShellCheck - Shell Script Linter
     runs-on: ubuntu-slim
@@ -202,7 +180,7 @@ jobs:
   summary:
     name: Security Summary
     runs-on: ubuntu-slim
-    needs: [terraform-security, checkov, trivy, ansible-lint, shellcheck, secret-scan]
+    needs: [terraform-security, checkov, trivy, shellcheck, secret-scan]
     if: always()
 
     steps:
@@ -215,6 +193,5 @@ jobs:
           echo "| Terraform (Trivy) | ${{ needs.terraform-security.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Checkov | ${{ needs.checkov.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Trivy (Full Scan) | ${{ needs.trivy.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Ansible Lint | ${{ needs.ansible-lint.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| ShellCheck | ${{ needs.shellcheck.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| GitLeaks | ${{ needs.secret-scan.result }} |" >> $GITHUB_STEP_SUMMARY
