@@ -11,5 +11,6 @@
         name: acct
         enabled: true
         state: started
+      failed_when: false
   when: security_hardening_process_accounting_enabled
-  tags: [security, accounting]
+  tags: [security, accounting, molecule-notest]

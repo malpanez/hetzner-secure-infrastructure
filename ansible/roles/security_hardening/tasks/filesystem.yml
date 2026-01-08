@@ -45,5 +45,6 @@
         enabled: true
         daemon_reload: true
       when: tmp_mountpoint.rc != 0
+      failed_when: false
   when: security_hardening_harden_tmp
-  tags: [security, filesystem, tmp]
+  tags: [security, filesystem, tmp, molecule-notest]

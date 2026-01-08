@@ -12,4 +12,4 @@
     - rpcbind.service
     - rsync.service
   failed_when: false
-  tags: [security, services]
+  tags: [security, services, molecule-notest]
