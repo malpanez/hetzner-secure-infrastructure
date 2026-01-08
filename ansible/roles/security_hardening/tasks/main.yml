@@ -244,7 +244,8 @@
 - name: Security Hardening | Auditd | Update GRUB configuration
   ansible.builtin.command: update-grub
   when:
-    - grub_audit_enabled is changed
+    - grub_audit_enabled is defined
+    - grub_audit_enabled.changed
   tags: [security, auditd]
 
 - name: Security Hardening | Auditd | Set reboot required fact
@@ -252,7 +253,8 @@
     ansible_reboot_required: true
     cacheable: true
   when:
-    - grub_audit_enabled is changed
+    - grub_audit_enabled is defined
+    - grub_audit_enabled.changed
   tags: [security, auditd]
 
 - name: Security Hardening | Auditd | Enable and start service
