@@ -64,7 +64,8 @@
 - name: SSH 2FA | Faillock | Enable faillock via pam-auth-update
   ansible.builtin.command: pam-auth-update --enable faillock --package
   register: pam_auth_update_result
-  changed_when: "'faillock [enabled]' not in pam_auth_list.stdout"
+  changed_when: false
+  failed_when: false
   when: "'faillock [enabled]' not in pam_auth_list.stdout"
   tags: [faillock, pam]
 

@@ -30,7 +30,7 @@ jobs:
   # ========================================
   terraform-validate:
     name: Validate Terraform
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
@@ -61,7 +61,7 @@ jobs:
   # ========================================
   ansible-validate:
     name: Validate Ansible
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
@@ -152,7 +152,7 @@ jobs:
   # ========================================
   security-scan:
     name: Security Scan
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
@@ -248,7 +248,7 @@ jobs:
   # ========================================
   pre-commit:
     name: Pre-commit Checks
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
@@ -318,7 +318,7 @@ jobs:
   # ========================================
   dependency-review:
     name: Dependency Review
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
 
     steps:
@@ -335,7 +335,7 @@ jobs:
   # ========================================
   generate-badge:
     name: Generate Status Badge
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     needs: [terraform-validate, ansible-validate, security-scan]
     if: always()
 
