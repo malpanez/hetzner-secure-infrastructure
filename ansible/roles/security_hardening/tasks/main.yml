@@ -228,7 +228,7 @@
     - kernel_audit_check.rc != 0
     - grub_audit_flag.rc != 0
   register: grub_audit_enabled
-  tags: [security, auditd]
+  tags: [security, auditd, molecule-notest]
 
 - name: Security Hardening | Auditd | Warn when audit=1 missing and GRUB not managed
   ansible.builtin.debug:
