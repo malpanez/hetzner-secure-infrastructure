@@ -11,7 +11,9 @@
 - name: Firewall | Configure | Disable UFW for batch configuration
   community.general.ufw:
     state: disabled
-  when: "'Status: active' in ufw_status_check.stdout"
+  when:
+    - firewall_disable_for_batch | default(false)
+    - "'Status: active' in ufw_status_check.stdout"
   tags: [firewall, policy]
 
 - name: Firewall | Configure | Set UFW default policies
