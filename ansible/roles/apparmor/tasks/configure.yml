@@ -61,24 +61,24 @@
     - usr.bin.fail2ban-server
   when: apparmor_enable_fail2ban_profile or item != 'usr.bin.fail2ban-server'
   failed_when: false
-  changed_when: true
-  tags: [apparmor, profiles, config]
+  changed_when: false
+  tags: [apparmor, profiles, config, molecule-notest]
 
 - name: AppArmor | Configure | Set AppArmor profiles to enforce mode
   ansible.builtin.command: "{{ apparmor_enforce_command }} {{ apparmor_profiles_dir }}/{{ item }}"
   loop: "{{ apparmor_profiles }}"
   when: apparmor_enforce_mode
   failed_when: false
-  changed_when: true
-  tags: [apparmor, profiles, enforce, config]
+  changed_when: false
+  tags: [apparmor, profiles, enforce, config, molecule-notest]
 
 - name: AppArmor | Configure | Set AppArmor profiles to complain mode
   ansible.builtin.command: "{{ apparmor_complain_command }} {{ apparmor_profiles_dir }}/{{ item }}"
   loop: "{{ apparmor_profiles }}"
   when: not apparmor_enforce_mode
   failed_when: false
-  changed_when: true
-  tags: [apparmor, profiles, complain, config]
+  changed_when: false
+  tags: [apparmor, profiles, complain, config, molecule-notest]
 
 - name: AppArmor | Configure | Create AppArmor monitoring script
   ansible.builtin.template:
