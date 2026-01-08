@@ -45,3 +45,14 @@ fail2ban_ssh_bantime: 3600
 
 # Enable HTTP auth jail
 fail2ban_http_auth_enabled: false
+
+# Service configurations
+fail2ban_services:
+  - name: sshd
+    enabled: "{{ fail2ban_ssh_enabled }}"
+    port: "{{ fail2ban_ssh_port }}"
+    filter: sshd
+    logpath: /var/log/auth.log
+    maxretry: "{{ fail2ban_ssh_maxretry }}"
+    bantime: "{{ fail2ban_ssh_bantime }}"
+    findtime: "{{ fail2ban_findtime }}"
