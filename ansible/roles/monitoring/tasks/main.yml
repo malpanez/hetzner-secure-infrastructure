@@ -6,16 +6,16 @@
   tags: [monitoring, always]
 
 - name: Monitoring | Main | Include installation tasks
-  ansible.builtin.import_tasks: install.yml
+  ansible.builtin.include_tasks: install.yml
   when: monitoring_enabled
   tags: [monitoring, install]
 
 - name: Monitoring | Main | Include configuration tasks
-  ansible.builtin.import_tasks: configure.yml
+  ansible.builtin.include_tasks: configure.yml
   when: monitoring_enabled
   tags: [monitoring, config]
 
 - name: Monitoring | Main | Include service tasks
-  ansible.builtin.import_tasks: service.yml
+  ansible.builtin.include_tasks: service.yml
   when: monitoring_enabled
   tags: [monitoring, service]

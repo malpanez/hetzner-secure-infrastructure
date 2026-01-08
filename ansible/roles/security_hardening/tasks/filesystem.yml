@@ -1,0 +1,49 @@
+---
+- name: Security Hardening | Filesystem | Secure shared memory
+  ansible.builtin.lineinfile:
+    path: /etc/fstab
+    line: tmpfs /run/shm tmpfs defaults,noexec,nosuid 0 0
+    state: present
+  tags: filesystem
+
+- name: Security Hardening | Filesystem | Harden /tmp directory
+  block:
+    - name: Security Hardening | Filesystem | Check if /tmp is separate mount
+      ansible.builtin.command: mountpoint -q /tmp
+      register: tmp_mountpoint
+      failed_when: false
+      changed_when: false
+
+    - name: Security Hardening | Filesystem | Create /tmp systemd mount unit
+      ansible.builtin.copy:
+        content: |
+          [Unit]
+          Description=Temporary Directory /tmp
+          ConditionPathIsSymbolicLink=!/tmp
+          DefaultDependencies=no
+          Conflicts=umount.target
+          Before=local-fs.target umount.target
+          After=swap.target
+
+          [Mount]
+          What=tmpfs
+          Where=/tmp
+          Type=tmpfs
+          Options=mode=1777,strictatime,noexec,nodev,nosuid,size=2G
+
+          [Install]
+          WantedBy=local-fs.target
+        dest: /etc/systemd/system/tmp.mount
+        owner: root
+        group: root
+        mode: "0644"
+      when: tmp_mountpoint.rc != 0
+
+    - name: Security Hardening | Filesystem | Enable tmp.mount
+      ansible.builtin.systemd:
+        name: tmp.mount
+        enabled: true
+        daemon_reload: true
+      when: tmp_mountpoint.rc != 0
+  when: security_hardening_harden_tmp
+  tags: [security, filesystem, tmp]

@@ -6,17 +6,17 @@
   tags: [common, always]
 
 - name: Common | Main | Include system configuration tasks
-  ansible.builtin.import_tasks: system.yml
+  ansible.builtin.include_tasks: system.yml
   tags: [common, system]
 
 - name: Common | Main | Include package management tasks
-  ansible.builtin.import_tasks: packages.yml
+  ansible.builtin.include_tasks: packages.yml
   tags: [common, packages]
 
 - name: Common | Main | Include user management tasks
-  ansible.builtin.import_tasks: users.yml
+  ansible.builtin.include_tasks: users.yml
   tags: [common, users]
 
 - name: Common | Main | Include cleanup tasks
-  ansible.builtin.import_tasks: cleanup.yml
+  ansible.builtin.include_tasks: cleanup.yml
   tags: [common, cleanup]

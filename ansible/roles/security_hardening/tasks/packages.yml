@@ -1,0 +1,6 @@
+---
+- name: Security Hardening | Packages | Install security packages
+  ansible.builtin.apt:
+    name: "{{ security_hardening_packages }}"
+    state: present
+  tags: packages

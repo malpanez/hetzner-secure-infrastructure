@@ -16,17 +16,17 @@
   tags: [firewall]
 
 - name: Firewall | Main | Include installation tasks
-  ansible.builtin.import_tasks: install.yml
+  ansible.builtin.include_tasks: install.yml
   tags: [firewall, install]
 
 - name: Firewall | Main | Include configuration tasks
-  ansible.builtin.import_tasks: configure.yml
+  ansible.builtin.include_tasks: configure.yml
   tags: [firewall, config]
 
 - name: Firewall | Main | Include firewall rules tasks
-  ansible.builtin.import_tasks: rules.yml
+  ansible.builtin.include_tasks: rules.yml
   tags: [firewall, rules]
 
 - name: Firewall | Main | Include validation tasks
-  ansible.builtin.import_tasks: validate.yml
+  ansible.builtin.include_tasks: validate.yml
   tags: [firewall, validate]

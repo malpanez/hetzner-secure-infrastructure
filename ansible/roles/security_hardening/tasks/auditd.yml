@@ -1,0 +1,93 @@
+---
+- name: Security Hardening | Auditd | Configure auditd
+  ansible.builtin.template:
+    src: auditd.conf.j2
+    dest: /etc/audit/auditd.conf
+    owner: root
+    group: root
+    mode: "0640"
+  when: security_hardening_auditd_enabled | default(true)
+  notify: restart auditd
+  tags: [security, auditd]
+
+- name: Security Hardening | Auditd | Deploy audit rules
+  ansible.builtin.template:
+    src: audit.rules.j2
+    dest: /etc/audit/rules.d/hardening.rules
+    owner: root
+    group: root
+    mode: "0640"
+  when: security_hardening_auditd_enabled | default(true)
+  notify: restart auditd
+  tags: [security, auditd]
+
+- name: Security Hardening | Auditd | Check if kernel has audit enabled
+  ansible.builtin.command: grep -q 'audit=' /proc/cmdline
+  register: kernel_audit_check
+  failed_when: false
+  changed_when: false
+  tags: [security, auditd]
+
+- name: Security Hardening | Auditd | Check GRUB cmdline for audit flag
+  ansible.builtin.command: >-
+    grep -Eq 'GRUB_CMDLINE_LINUX_DEFAULT="[^"]*audit=1' /etc/default/grub
+  register: grub_audit_flag
+  changed_when: false
+  failed_when: false
+  when:
+    - security_hardening_auditd_enabled | default(true)
+    - security_hardening_manage_grub | default(true)
+  tags: [security, auditd]
+
+- name: Security Hardening | Auditd | Append audit parameters to GRUB cmdline
+  ansible.builtin.lineinfile:
+    path: /etc/default/grub
+    regexp: '^GRUB_CMDLINE_LINUX_DEFAULT="(.*)"'
+    line: 'GRUB_CMDLINE_LINUX_DEFAULT="\1 {{ security_hardening_audit_kernel_params }}"'
+    backrefs: true
+    backup: true
+  when:
+    - security_hardening_auditd_enabled | default(true)
+    - security_hardening_manage_grub | default(true)
+    - kernel_audit_check.rc != 0
+    - grub_audit_flag.rc != 0
+  register: grub_audit_enabled
+  tags: [security, auditd, molecule-notest]
+
+- name: Security Hardening | Auditd | Warn when audit=1 missing and GRUB not managed
+  ansible.builtin.debug:
+    msg: >-
+      audit=1 is missing in /proc/cmdline and security_hardening_manage_grub=false.
+      Skipping auditd enablement to avoid unsafe reboot. Configure GRUB manually if needed.
+  when:
+    - security_hardening_auditd_enabled | default(true)
+    - not security_hardening_manage_grub | default(true)
+    - kernel_audit_check.rc != 0
+  tags: [security, auditd]
+
+- name: Security Hardening | Auditd | Update GRUB configuration
+  ansible.builtin.command: update-grub
+  changed_when: true
+  when:
+    - grub_audit_enabled is defined
+    - grub_audit_enabled.changed
+  tags: [security, auditd]
+
+- name: Security Hardening | Auditd | Set reboot required fact
+  ansible.builtin.set_fact:
+    ansible_reboot_required: true
+    cacheable: true
+  when:
+    - grub_audit_enabled is defined
+    - grub_audit_enabled.changed
+  tags: [security, auditd]
+
+- name: Security Hardening | Auditd | Enable and start service
+  ansible.builtin.systemd:
+    name: auditd
+    enabled: true
+    state: started
+  when:
+    - security_hardening_auditd_enabled | default(true)
+    - kernel_audit_check.rc == 0
+  tags: [security, auditd]

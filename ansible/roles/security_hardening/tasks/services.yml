@@ -1,0 +1,15 @@
+---
+- name: Security Hardening | Services | Disable unnecessary services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: false
+    state: stopped
+  loop:
+    - avahi-daemon.service
+    - cups.service
+    - isc-dhcp-server.service
+    - isc-dhcp-server6.service
+    - rpcbind.service
+    - rsync.service
+  failed_when: false
+  tags: [security, services]

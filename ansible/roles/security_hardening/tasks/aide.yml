@@ -1,0 +1,81 @@
+---
+- name: Security Hardening | AIDE | Configure file integrity monitoring
+  block:
+    - name: Security Hardening | AIDE | Create configuration directory
+      ansible.builtin.file:
+        path: /etc/aide
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Security Hardening | AIDE | Create database directory
+      ansible.builtin.file:
+        path: /var/lib/aide
+        state: directory
+        owner: root
+        group: root
+        mode: "0700"
+
+    - name: Security Hardening | AIDE | Create log directory
+      ansible.builtin.file:
+        path: /var/log/aide
+        state: directory
+        owner: root
+        group: root
+        mode: "0750"
+
+    - name: Security Hardening | AIDE | Deploy configuration
+      ansible.builtin.template:
+        src: aide.conf.j2
+        dest: /etc/aide/aide.conf
+        owner: root
+        group: root
+        mode: "0600"
+
+    - name: Security Hardening | AIDE | Check database status
+      ansible.builtin.stat:
+        path: /var/lib/aide/aide.db
+      register: aide_db_status
+
+    - name: Security Hardening | AIDE | Initialize database in background (async)
+      ansible.builtin.shell: aide --config=/etc/aide/aide.conf --init && mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db
+      args:
+        creates: /var/lib/aide/aide.db
+      async: 1800  # 30 minutes timeout
+      poll: 0      # Don't wait, run in background
+      register: aide_init_job
+      when:
+        - security_hardening_aide_async | default(true)
+        - not aide_db_status.stat.exists
+
+    - name: Security Hardening | AIDE | Initialize database
+      ansible.builtin.shell: aide --config=/etc/aide/aide.conf --init && mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db
+      args:
+        creates: /var/lib/aide/aide.db
+      when:
+        - not security_hardening_aide_async | default(true)
+        - not aide_db_status.stat.exists
+  when: security_hardening_aide_enabled | default(false)
+  tags: [security, aide]
+
+- name: Security Hardening | AIDE | Check initialization status
+  ansible.builtin.async_status:
+    jid: "{{ aide_init_job.ansible_job_id }}"
+  register: aide_result
+  until: aide_result.finished
+  retries: 60     # Wait up to 10 minutes (60 * 10s)
+  delay: 10       # Check every 10 seconds
+  when:
+    - security_hardening_aide_enabled | default(false)
+    - aide_init_job.ansible_job_id is defined
+  tags: [security, aide]
+
+- name: Security Hardening | AIDE | Display initialization result
+  ansible.builtin.debug:
+    msg: "AIDE database initialized successfully: {{ aide_result.stdout | default('No output') }}"
+  when:
+    - security_hardening_aide_enabled | default(false)
+    - aide_result is defined
+    - aide_result.finished | default(false)
+  tags: [security, aide]

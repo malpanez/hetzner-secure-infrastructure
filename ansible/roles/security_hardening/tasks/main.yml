@@ -5,561 +5,59 @@
   ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
   tags: [security-hardening, always]
 
-# Security Hardening Role
+- name: Security Hardening | Main | Packages
+  ansible.builtin.include_tasks: packages.yml
 
-- name: Security Hardening | Packages | Install security packages
-  ansible.builtin.apt:
-    name: "{{ security_hardening_packages }}"
-    state: present
-  tags: packages
+- name: Security Hardening | Main | Sysctl
+  ansible.builtin.include_tasks: sysctl.yml
 
-- name: Security Hardening | Sysctl | Deploy configuration file
-  ansible.builtin.template:
-    src: 99-hardening.conf.j2
-    dest: /etc/sysctl.d/99-hardening.conf
-    owner: root
-    group: root
-    mode: "0644"
-  when: security_hardening_kernel_enabled
-  notify: reload sysctl
-  tags: sysctl
+- name: Security Hardening | Main | Auto Updates
+  ansible.builtin.include_tasks: auto_updates.yml
 
-- name: Security Hardening | Auto-Updates | Configure unattended-upgrades
-  ansible.builtin.template:
-    src: 50unattended-upgrades.j2
-    dest: /etc/apt/apt.conf.d/50unattended-upgrades
-    owner: root
-    group: root
-    mode: "0644"
-  when: security_hardening_unattended_upgrades_enabled | default(true)
-  tags: auto-updates
+- name: Security Hardening | Main | Filesystem
+  ansible.builtin.include_tasks: filesystem.yml
 
-- name: Security Hardening | Auto-Updates | Enable unattended-upgrades
-  ansible.builtin.template:
-    src: 20auto-upgrades.j2
-    dest: /etc/apt/apt.conf.d/20auto-upgrades
-    owner: root
-    group: root
-    mode: "0644"
-  when: security_hardening_unattended_upgrades_enabled | default(true)
-  tags: auto-updates
+- name: Security Hardening | Main | Core Dumps
+  ansible.builtin.include_tasks: core_dumps.yml
 
-- name: Security Hardening | Filesystem | Secure shared memory
-  ansible.builtin.lineinfile:
-    path: /etc/fstab
-    line: tmpfs /run/shm tmpfs defaults,noexec,nosuid 0 0
-    state: present
-  tags: filesystem
+- name: Security Hardening | Main | Passwords
+  ansible.builtin.include_tasks: passwords.yml
 
-- name: Security Hardening | Core Dumps | Disable core dumps
-  block:
-    - name: Security Hardening | Core Dumps | Disable via limits
-      community.general.pam_limits:
-        domain: "*"
-        limit_type: hard
-        limit_item: core
-        value: "0"
+- name: Security Hardening | Main | Modules
+  ansible.builtin.include_tasks: modules.yml
 
-    - name: Security Hardening | Core Dumps | Disable via sysctl
-      ansible.posix.sysctl:
-        name: fs.suid_dumpable
-        value: "0"
-        state: present
-        reload: true
-  tags: security
+- name: Security Hardening | Main | Login
+  ansible.builtin.include_tasks: login.yml
 
-- name: Security Hardening | Password | Configure quality requirements
-  ansible.builtin.apt:
-    name: libpam-pwquality
-    state: present
-  tags: [security, password]
+- name: Security Hardening | Main | Cron
+  ansible.builtin.include_tasks: cron.yml
 
-- name: Security Hardening | Password | Set quality policy
-  ansible.builtin.template:
-    src: pwquality.conf.j2
-    dest: /etc/security/pwquality.conf
-    owner: root
-    group: root
-    mode: "0644"
-  tags: [security, password]
+- name: Security Hardening | Main | Permissions
+  ansible.builtin.include_tasks: permissions.yml
 
-- name: Security Hardening | Modules | Ensure modprobe.d directory exists
-  ansible.builtin.file:
-    path: /etc/modprobe.d
-    state: directory
-    owner: root
-    group: root
-    mode: '0755'
-  tags: [security, modules]
+- name: Security Hardening | Main | Auditd
+  ansible.builtin.include_tasks: auditd.yml
 
-- name: Security Hardening | Modules | Disable insecure filesystems
-  ansible.builtin.copy:
-    content: |
-      # Disable insecure/unused filesystems
-      # Managed by Ansible - security_hardening role
-      {% for fs in security_hardening_disabled_filesystems %}
-      install {{ fs }} /bin/true
-      {% endfor %}
-    dest: /etc/modprobe.d/disable-filesystems.conf
-    owner: root
-    group: root
-    mode: '0644'
-  tags: [security, modules, filesystems]
+- name: Security Hardening | Main | AIDE
+  ansible.builtin.include_tasks: aide.yml
 
-- name: Security Hardening | Modules | Disable insecure network protocols
-  ansible.builtin.copy:
-    content: |
-      # Disable insecure network protocols
-      # Managed by Ansible - security_hardening role
-      {% for proto in security_hardening_disabled_network_protocols %}
-      install {{ proto }} /bin/true
-      {% endfor %}
-    dest: /etc/modprobe.d/disable-network-protocols.conf
-    owner: root
-    group: root
-    mode: '0644'
-  tags: [security, modules, network]
+- name: Security Hardening | Main | Banners
+  ansible.builtin.include_tasks: banners.yml
 
-- name: Security Hardening | USB | Disable USB storage
-  ansible.builtin.copy:
-    content: |
-      # Disable USB storage
-      install usb-storage /bin/true
-    dest: /etc/modprobe.d/disable-usb-storage.conf
-    owner: root
-    group: root
-    mode: '0644'
-  when: security_hardening_disable_usb_storage
-  tags: [security, usb]
+- name: Security Hardening | Main | Accounting
+  ansible.builtin.include_tasks: accounting.yml
 
-- name: Security Hardening | Login | Configure login.defs
-  ansible.builtin.lineinfile:
-    path: /etc/login.defs
-    regexp: "{{ item.regexp }}"
-    line: "{{ item.line }}"
-    state: present
-  loop:
-    - { regexp: ^PASS_MAX_DAYS, line: PASS_MAX_DAYS   90 }
-    - { regexp: ^PASS_MIN_DAYS, line: PASS_MIN_DAYS   1 }
-    - { regexp: ^PASS_WARN_AGE, line: PASS_WARN_AGE   7 }
-    - { regexp: ^UMASK, line: UMASK           027 }
-  tags: [security, password]
-- name: Security Hardening | Cron | Restrict to authorized users
-  block:
-    - name: Security Hardening | Cron | Create cron.allow
-      ansible.builtin.file:
-        path: /etc/cron.allow
-        state: file
-        owner: root
-        group: root
-        mode: "0640"
+- name: Security Hardening | Main | Compilers
+  ansible.builtin.include_tasks: compilers.yml
 
-    - name: Security Hardening | Cron | Add admin user to cron.allow
-      ansible.builtin.lineinfile:
-        path: /etc/cron.allow
-        line: "{{ security_hardening_admin_username }}"
-        state: present
-        create: true
+- name: Security Hardening | Main | Services
+  ansible.builtin.include_tasks: services.yml
 
-    - name: Security Hardening | Cron | Remove cron.deny if exists
-      ansible.builtin.file:
-        path: /etc/cron.deny
-        state: absent
-  tags: [security, cron]
-- name: Security Hardening | Permissions | Set permissions on sensitive files
-  ansible.builtin.file:
-    path: "{{ item }}"
-    mode: "0600"
-    owner: root
-    group: root
-  loop:
-    - /etc/crontab
-    - /etc/ssh/sshd_config
-  failed_when: false
-  tags: permissions
+- name: Security Hardening | Main | Session
+  ansible.builtin.include_tasks: session.yml
 
-- name: Security Hardening | Auditd | Configure auditd
-  ansible.builtin.template:
-    src: auditd.conf.j2
-    dest: /etc/audit/auditd.conf
-    owner: root
-    group: root
-    mode: "0640"
-  when: security_hardening_auditd_enabled | default(true)
-  notify: restart auditd
-  tags: [security, auditd]
+- name: Security Hardening | Main | PAM
+  ansible.builtin.include_tasks: pam.yml
 
-- name: Security Hardening | Auditd | Deploy audit rules
-  ansible.builtin.template:
-    src: audit.rules.j2
-    dest: /etc/audit/rules.d/hardening.rules
-    owner: root
-    group: root
-    mode: "0640"
-  when: security_hardening_auditd_enabled | default(true)
-  notify: restart auditd
-  tags: [security, auditd]
-
-- name: Security Hardening | Auditd | Check if kernel has audit enabled
-  ansible.builtin.command: grep -q 'audit=' /proc/cmdline
-  register: kernel_audit_check
-  failed_when: false
-  changed_when: false
-  tags: [security, auditd]
-
-- name: Security Hardening | Auditd | Check GRUB cmdline for audit flag
-  ansible.builtin.command: >-
-    grep -Eq 'GRUB_CMDLINE_LINUX_DEFAULT="[^"]*audit=1' /etc/default/grub
-  register: grub_audit_flag
-  changed_when: false
-  failed_when: false
-  when:
-    - security_hardening_auditd_enabled | default(true)
-    - security_hardening_manage_grub | default(true)
-  tags: [security, auditd]
-
-- name: Security Hardening | Auditd | Append audit parameters to GRUB cmdline
-  ansible.builtin.lineinfile:
-    path: /etc/default/grub
-    regexp: '^GRUB_CMDLINE_LINUX_DEFAULT="(.*)"'
-    line: 'GRUB_CMDLINE_LINUX_DEFAULT="\1 {{ security_hardening_audit_kernel_params }}"'
-    backrefs: true
-    backup: true
-  when:
-    - security_hardening_auditd_enabled | default(true)
-    - security_hardening_manage_grub | default(true)
-    - kernel_audit_check.rc != 0
-    - grub_audit_flag.rc != 0
-  register: grub_audit_enabled
-  tags: [security, auditd, molecule-notest]
-
-- name: Security Hardening | Auditd | Warn when audit=1 missing and GRUB not managed
-  ansible.builtin.debug:
-    msg: >-
-      audit=1 is missing in /proc/cmdline and security_hardening_manage_grub=false.
-      Skipping auditd enablement to avoid unsafe reboot. Configure GRUB manually if needed.
-  when:
-    - security_hardening_auditd_enabled | default(true)
-    - not security_hardening_manage_grub | default(true)
-    - kernel_audit_check.rc != 0
-  tags: [security, auditd]
-
-- name: Security Hardening | Auditd | Update GRUB configuration
-  ansible.builtin.command: update-grub
-  when:
-    - grub_audit_enabled is defined
-    - grub_audit_enabled.changed
-  tags: [security, auditd]
-
-- name: Security Hardening | Auditd | Set reboot required fact
-  ansible.builtin.set_fact:
-    ansible_reboot_required: true
-    cacheable: true
-  when:
-    - grub_audit_enabled is defined
-    - grub_audit_enabled.changed
-  tags: [security, auditd]
-
-- name: Security Hardening | Auditd | Enable and start service
-  ansible.builtin.systemd:
-    name: auditd
-    enabled: true
-    state: started
-  when:
-    - security_hardening_auditd_enabled | default(true)
-    - kernel_audit_check.rc == 0
-  tags: [security, auditd]
-
-- name: Security Hardening | AIDE | Configure file integrity monitoring
-  block:
-    - name: Security Hardening | AIDE | Create configuration directory
-      ansible.builtin.file:
-        path: /etc/aide
-        state: directory
-        owner: root
-        group: root
-        mode: "0755"
-
-    - name: Security Hardening | AIDE | Create database directory
-      ansible.builtin.file:
-        path: /var/lib/aide
-        state: directory
-        owner: root
-        group: root
-        mode: "0700"
-
-    - name: Security Hardening | AIDE | Create log directory
-      ansible.builtin.file:
-        path: /var/log/aide
-        state: directory
-        owner: root
-        group: root
-        mode: "0750"
-
-    - name: Security Hardening | AIDE | Deploy configuration
-      ansible.builtin.template:
-        src: aide.conf.j2
-        dest: /etc/aide/aide.conf
-        owner: root
-        group: root
-        mode: "0600"
-
-    - name: Security Hardening | AIDE | Check database status
-      ansible.builtin.stat:
-        path: /var/lib/aide/aide.db
-      register: aide_db_status
-
-    - name: Security Hardening | AIDE | Initialize database in background (async)
-      ansible.builtin.shell: aide --config=/etc/aide/aide.conf --init && mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db
-      args:
-        creates: /var/lib/aide/aide.db
-      async: 1800  # 30 minutes timeout
-      poll: 0      # Don't wait, run in background
-      register: aide_init_job
-      when:
-        - security_hardening_aide_async | default(true)
-        - not aide_db_status.stat.exists
-
-    - name: Security Hardening | AIDE | Initialize database
-      ansible.builtin.shell: aide --config=/etc/aide/aide.conf --init && mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db
-      args:
-        creates: /var/lib/aide/aide.db
-      when:
-        - not security_hardening_aide_async | default(true)
-        - not aide_db_status.stat.exists
-  when: security_hardening_aide_enabled | default(false)
-  tags: [security, aide]
-
-- name: Security Hardening | Banners | Configure login banners
-  block:
-    - name: Security Hardening | Banners | Set login banner for SSH
-      ansible.builtin.copy:
-        content: "{{ security_hardening_login_banner_text }}"
-        dest: /etc/issue.net
-        owner: root
-        group: root
-        mode: "0644"
-
-    - name: Security Hardening | Banners | Set login banner for local logins
-      ansible.builtin.copy:
-        content: "{{ security_hardening_login_banner_text }}"
-        dest: /etc/issue
-        owner: root
-        group: root
-        mode: "0644"
-
-    - name: Security Hardening | Banners | Disable default Ubuntu MOTD scripts
-      ansible.builtin.file:
-        path: "{{ item }}"
-        mode: "0644"
-      loop:
-        - /etc/update-motd.d/10-help-text
-        - /etc/update-motd.d/50-motd-news
-        - /etc/update-motd.d/88-esm-announce
-        - /etc/update-motd.d/91-contract-ua-esm-status
-        - /etc/update-motd.d/95-hwe-eol
-      failed_when: false
-
-    - name: Security Hardening | Banners | Create dynamic MOTD script
-      ansible.builtin.template:
-        src: motd.sh.j2
-        dest: /etc/update-motd.d/99-custom-info
-        owner: root
-        group: root
-        mode: "0755"
-  when: security_hardening_login_banner_enabled
-  tags: [security, banner]
-
-- name: Security Hardening | Accounting | Enable process accounting
-  block:
-    - name: Security Hardening | Accounting | Install acct package
-      ansible.builtin.apt:
-        name: acct
-        state: present
-
-    - name: Security Hardening | Accounting | Enable and start acct service
-      ansible.builtin.systemd:
-        name: acct
-        enabled: true
-        state: started
-  when: security_hardening_process_accounting_enabled
-  tags: [security, accounting]
-
-- name: Security Hardening | Compilers | Restrict compiler access
-  block:
-    - name: Security Hardening | Compilers | Create compilers group
-      ansible.builtin.group:
-        name: compilers
-        state: present
-
-    - name: Security Hardening | Compilers | Restrict permissions on compilers
-      ansible.builtin.file:
-        path: "{{ item }}"
-        mode: "0750"
-        group: compilers
-      loop:
-        - /usr/bin/gcc
-        - /usr/bin/g++
-        - /usr/bin/cc
-        - /usr/bin/c++
-        - /usr/bin/make
-        - /usr/bin/as
-      failed_when: false
-  when: security_hardening_restrict_compilers
-  tags: [security, compilers]
-
-- name: Security Hardening | Filesystem | Harden /tmp directory
-  block:
-    - name: Security Hardening | Filesystem | Check if /tmp is separate mount
-      ansible.builtin.command: mountpoint -q /tmp
-      register: tmp_mountpoint
-      failed_when: false
-      changed_when: false
-
-    - name: Security Hardening | Filesystem | Create /tmp systemd mount unit
-      ansible.builtin.copy:
-        content: |
-          [Unit]
-          Description=Temporary Directory /tmp
-          ConditionPathIsSymbolicLink=!/tmp
-          DefaultDependencies=no
-          Conflicts=umount.target
-          Before=local-fs.target umount.target
-          After=swap.target
-
-          [Mount]
-          What=tmpfs
-          Where=/tmp
-          Type=tmpfs
-          Options=mode=1777,strictatime,noexec,nodev,nosuid,size=2G
-
-          [Install]
-          WantedBy=local-fs.target
-        dest: /etc/systemd/system/tmp.mount
-        owner: root
-        group: root
-        mode: "0644"
-      when: tmp_mountpoint.rc != 0
-
-    - name: Security Hardening | Filesystem | Enable tmp.mount
-      ansible.builtin.systemd:
-        name: tmp.mount
-        enabled: true
-        daemon_reload: true
-      when: tmp_mountpoint.rc != 0
-  when: security_hardening_harden_tmp
-  tags: [security, filesystem, tmp]
-
-- name: Security Hardening | Permissions | Set strict permissions on critical directories
-  ansible.builtin.file:
-    path: "{{ item.path }}"
-    mode: "{{ item.mode }}"
-    owner: root
-    group: root
-    state: directory
-  loop:
-    - { path: /boot, mode: "0700" }
-    - { path: /etc/cron.d, mode: "0700" }
-    - { path: /etc/cron.daily, mode: "0700" }
-    - { path: /etc/cron.hourly, mode: "0700" }
-    - { path: /etc/cron.weekly, mode: "0700" }
-    - { path: /etc/cron.monthly, mode: "0700" }
-    - { path: /var/log/audit, mode: "0700" }
-  failed_when: false
-  tags: [security, permissions]
-
-- name: Security Hardening | At Daemon | Configure restrictions
-  block:
-    - name: Security Hardening | At Daemon | Create at.allow
-      ansible.builtin.file:
-        path: /etc/at.allow
-        state: file
-        owner: root
-        group: root
-        mode: "0640"
-
-    - name: Security Hardening | At Daemon | Add admin user to at.allow
-      ansible.builtin.lineinfile:
-        path: /etc/at.allow
-        line: "{{ security_hardening_admin_username }}"
-        state: present
-        create: true
-
-    - name: Security Hardening | At Daemon | Remove at.deny if exists
-      ansible.builtin.file:
-        path: /etc/at.deny
-        state: absent
-  tags: [security, at]
-
-- name: Security Hardening | Services | Disable unnecessary services
-  ansible.builtin.systemd:
-    name: "{{ item }}"
-    enabled: false
-    state: stopped
-  loop:
-    - avahi-daemon.service
-    - cups.service
-    - isc-dhcp-server.service
-    - isc-dhcp-server6.service
-    - rpcbind.service
-    - rsync.service
-  failed_when: false
-  tags: [security, services]
-
-- name: Security Hardening | Session | Configure stronger timeouts
-  ansible.builtin.lineinfile:
-    path: /etc/profile.d/timeout.sh
-    line: "{{ item }}"
-    create: true
-    owner: root
-    group: root
-    mode: "0644"
-  loop:
-    - "# Managed by Ansible - security_hardening role"
-    - "TMOUT=900"
-    - "readonly TMOUT"
-    - "export TMOUT"
-  tags: [security, session]
-
-- name: Security Hardening | PAM | Restrict su command to wheel group
-  ansible.builtin.lineinfile:
-    path: /etc/pam.d/su
-    line: "auth required pam_wheel.so use_uid"
-    insertafter: "^# auth\\s+required\\s+pam_wheel.so"
-  tags: [security, pam]
-
-- name: Security Hardening | Limits | Set additional security limits
-  community.general.pam_limits:
-    domain: "{{ item.domain }}"
-    limit_type: "{{ item.limit_type }}"
-    limit_item: "{{ item.limit_item }}"
-    value: "{{ item.value }}"
-  loop:
-    - { domain: "*", limit_type: hard, limit_item: maxlogins, value: "10" }
-    - { domain: "*", limit_type: hard, limit_item: nproc, value: "1000" }
-  tags: [security, limits]
-
-# ============================================================================
-# AIDE Async Status Check (runs at the end of playbook)
-# ============================================================================
-
-- name: Security Hardening | AIDE | Check initialization status
-  ansible.builtin.async_status:
-    jid: "{{ aide_init_job.ansible_job_id }}"
-  register: aide_result
-  until: aide_result.finished
-  retries: 60     # Wait up to 10 minutes (60 * 10s)
-  delay: 10       # Check every 10 seconds
-  when:
-    - security_hardening_aide_enabled | default(false)
-    - aide_init_job.ansible_job_id is defined
-  tags: [security, aide]
-
-- name: Security Hardening | AIDE | Display initialization result
-  ansible.builtin.debug:
-    msg: "AIDE database initialized successfully: {{ aide_result.stdout | default('No output') }}"
-  when:
-    - security_hardening_aide_enabled | default(false)
-    - aide_result is defined
-    - aide_result.finished | default(false)
-  tags: [security, aide]
+- name: Security Hardening | Main | Limits
+  ansible.builtin.include_tasks: limits.yml

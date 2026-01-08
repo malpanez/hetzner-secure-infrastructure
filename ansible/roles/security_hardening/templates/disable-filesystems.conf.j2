@@ -1,0 +1,5 @@
+# Disable insecure/unused filesystems
+# Managed by Ansible - security_hardening role
+{% for fs in security_hardening_disabled_filesystems %}
+install {{ fs }} /bin/true
+{% endfor %}
