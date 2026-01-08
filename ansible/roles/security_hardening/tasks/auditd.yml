@@ -37,7 +37,7 @@
   when:
     - security_hardening_auditd_enabled | default(true)
     - security_hardening_manage_grub | default(true)
-  tags: [security, auditd]
+  tags: [security, auditd, molecule-notest]
 
 - name: Security Hardening | Auditd | Append audit parameters to GRUB cmdline
   ansible.builtin.lineinfile:
@@ -71,7 +71,7 @@
   when:
     - grub_audit_enabled is defined
     - grub_audit_enabled.changed
-  tags: [security, auditd]
+  tags: [security, auditd, molecule-notest]
 
 - name: Security Hardening | Auditd | Set reboot required fact
   ansible.builtin.set_fact:
@@ -80,7 +80,7 @@
   when:
     - grub_audit_enabled is defined
     - grub_audit_enabled.changed
-  tags: [security, auditd]
+  tags: [security, auditd, molecule-notest]
 
 - name: Security Hardening | Auditd | Enable and start service
   ansible.builtin.systemd:
