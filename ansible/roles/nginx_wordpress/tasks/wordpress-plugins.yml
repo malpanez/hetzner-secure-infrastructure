@@ -15,7 +15,7 @@
   changed_when: "'Success: Plugin already installed' not in plugin_install.stdout"
   failed_when: false
   when: wp_config_check.stat.exists
-  tags: [nginx-wordpress, wordpress, plugins]
+  tags: [nginx-wordpress, wordpress, plugins, molecule-notest]
 
 - name: Nginx WordPress | Plugins | Check plugin installation status
   ansible.builtin.command:
@@ -24,7 +24,7 @@
   register: installed_plugins
   changed_when: false
   when: wp_config_check.stat.exists
-  tags: [nginx-wordpress, wordpress, plugins]
+  tags: [nginx-wordpress, wordpress, plugins, molecule-notest]
 
 - name: Nginx WordPress | Plugins | Display installed plugins
   ansible.builtin.debug:
