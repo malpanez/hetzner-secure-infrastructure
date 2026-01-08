@@ -147,7 +147,7 @@
     - name: Security Hardening | Cron | Create cron.allow
       ansible.builtin.file:
         path: /etc/cron.allow
-        state: touch
+        state: file
         owner: root
         group: root
         mode: "0640"
@@ -301,6 +301,11 @@
         group: root
         mode: "0600"
 
+    - name: Security Hardening | AIDE | Check database status
+      ansible.builtin.stat:
+        path: /var/lib/aide/aide.db
+      register: aide_db_status
+
     - name: Security Hardening | AIDE | Initialize database in background (async)
       ansible.builtin.shell: aide --config=/etc/aide/aide.conf --init && mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db
       args:
@@ -308,6 +313,17 @@
       async: 1800  # 30 minutes timeout
       poll: 0      # Don't wait, run in background
       register: aide_init_job
+      when:
+        - security_hardening_aide_async | default(true)
+        - not aide_db_status.stat.exists
+
+    - name: Security Hardening | AIDE | Initialize database
+      ansible.builtin.shell: aide --config=/etc/aide/aide.conf --init && mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db
+      args:
+        creates: /var/lib/aide/aide.db
+      when:
+        - not security_hardening_aide_async | default(true)
+        - not aide_db_status.stat.exists
   when: security_hardening_aide_enabled | default(false)
   tags: [security, aide]
 
@@ -454,7 +470,7 @@
     - name: Security Hardening | At Daemon | Create at.allow
       ansible.builtin.file:
         path: /etc/at.allow
-        state: touch
+        state: file
         owner: root
         group: root
         mode: "0640"

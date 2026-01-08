@@ -16,6 +16,7 @@ firewall_apt_packages:
 
 firewall_enabled: true
 firewall_disable_for_batch: false
+firewall_relax_idempotence: false
 
 # ========================================
 # UFW Default Policies
