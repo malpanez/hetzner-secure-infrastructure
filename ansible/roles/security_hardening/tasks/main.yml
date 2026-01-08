@@ -81,6 +81,16 @@
     group: root
     mode: "0644"
   tags: [security, password]
+
+- name: Security Hardening | Modules | Ensure modprobe.d directory exists
+  ansible.builtin.file:
+    path: /etc/modprobe.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags: [security, modules]
+
 - name: Security Hardening | Modules | Disable insecure filesystems
   ansible.builtin.copy:
     content: |
