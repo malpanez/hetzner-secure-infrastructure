@@ -1,0 +1,40 @@
+---
+- name: Security Hardening | Banners | Configure login banners
+  block:
+    - name: Security Hardening | Banners | Set login banner for SSH
+      ansible.builtin.copy:
+        content: "{{ security_hardening_login_banner_text }}"
+        dest: /etc/issue.net
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Security Hardening | Banners | Set login banner for local logins
+      ansible.builtin.copy:
+        content: "{{ security_hardening_login_banner_text }}"
+        dest: /etc/issue
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Security Hardening | Banners | Disable default Ubuntu MOTD scripts
+      ansible.builtin.file:
+        path: "{{ item }}"
+        mode: "0644"
+      loop:
+        - /etc/update-motd.d/10-help-text
+        - /etc/update-motd.d/50-motd-news
+        - /etc/update-motd.d/88-esm-announce
+        - /etc/update-motd.d/91-contract-ua-esm-status
+        - /etc/update-motd.d/95-hwe-eol
+      failed_when: false
+
+    - name: Security Hardening | Banners | Create dynamic MOTD script
+      ansible.builtin.template:
+        src: motd.sh.j2
+        dest: /etc/update-motd.d/99-custom-info
+        owner: root
+        group: root
+        mode: "0755"
+  when: security_hardening_login_banner_enabled
+  tags: [security, banner]

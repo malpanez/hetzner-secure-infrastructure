@@ -1,0 +1,11 @@
+---
+- name: Security Hardening | Sysctl | Deploy configuration file
+  ansible.builtin.template:
+    src: 99-hardening.conf.j2
+    dest: /etc/sysctl.d/99-hardening.conf
+    owner: root
+    group: root
+    mode: "0644"
+  when: security_hardening_kernel_enabled
+  notify: reload sysctl
+  tags: sysctl

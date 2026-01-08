@@ -16,30 +16,30 @@
   tags: [openbao]
 
 - name: OpenBao | Main | Include installation tasks
-  ansible.builtin.import_tasks: install.yml
+  ansible.builtin.include_tasks: install.yml
   tags: [openbao, install]
 
 - name: OpenBao | Main | Include configuration tasks
-  ansible.builtin.import_tasks: configure.yml
+  ansible.builtin.include_tasks: configure.yml
   tags: [openbao, config]
 
 - name: OpenBao | Main | Include transit auto-unseal instance tasks
-  ansible.builtin.import_tasks: transit.yml
+  ansible.builtin.include_tasks: transit.yml
   when: openbao_transit_instance_enabled | default(false) | bool
   tags: [openbao, transit]
 
 - name: OpenBao | Main | Include service tasks
-  ansible.builtin.import_tasks: service.yml
+  ansible.builtin.include_tasks: service.yml
   tags: [openbao, service]
 
 - name: OpenBao | Main | Include firewall tasks
-  ansible.builtin.import_tasks: firewall.yml
+  ansible.builtin.include_tasks: firewall.yml
   tags: [openbao, firewall]
 
 - name: OpenBao | Main | Include validation tasks
-  ansible.builtin.import_tasks: validate.yml
+  ansible.builtin.include_tasks: validate.yml
   tags: [openbao, validate]
 
 - name: OpenBao | Main | Include monitoring tasks
-  ansible.builtin.import_tasks: monitoring.yml
+  ansible.builtin.include_tasks: monitoring.yml
   tags: [openbao, monitoring]

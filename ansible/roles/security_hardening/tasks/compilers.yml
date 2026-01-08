@@ -1,0 +1,23 @@
+---
+- name: Security Hardening | Compilers | Restrict compiler access
+  block:
+    - name: Security Hardening | Compilers | Create compilers group
+      ansible.builtin.group:
+        name: compilers
+        state: present
+
+    - name: Security Hardening | Compilers | Restrict permissions on compilers
+      ansible.builtin.file:
+        path: "{{ item }}"
+        mode: "0750"
+        group: compilers
+      loop:
+        - /usr/bin/gcc
+        - /usr/bin/g++
+        - /usr/bin/cc
+        - /usr/bin/c++
+        - /usr/bin/make
+        - /usr/bin/as
+      failed_when: false
+  when: security_hardening_restrict_compilers
+  tags: [security, compilers]

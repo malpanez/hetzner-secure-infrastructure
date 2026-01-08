@@ -6,21 +6,21 @@
   tags: [apparmor, always]
 
 - name: AppArmor | Main | Include installation tasks
-  ansible.builtin.import_tasks: install.yml
+  ansible.builtin.include_tasks: install.yml
   when: apparmor_enabled
   tags: [apparmor, install]
 
 - name: AppArmor | Main | Include service tasks
-  ansible.builtin.import_tasks: service.yml
+  ansible.builtin.include_tasks: service.yml
   when: apparmor_enabled
   tags: [apparmor, service]
 
 - name: AppArmor | Main | Include configuration tasks
-  ansible.builtin.import_tasks: configure.yml
+  ansible.builtin.include_tasks: configure.yml
   when: apparmor_enabled
   tags: [apparmor, config]
 
 - name: AppArmor | Main | Include validation tasks
-  ansible.builtin.import_tasks: validate.yml
+  ansible.builtin.include_tasks: validate.yml
   when: apparmor_enabled
   tags: [apparmor, validate]

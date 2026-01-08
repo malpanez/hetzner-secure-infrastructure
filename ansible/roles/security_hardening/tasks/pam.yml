@@ -1,0 +1,7 @@
+---
+- name: Security Hardening | PAM | Restrict su command to wheel group
+  ansible.builtin.lineinfile:
+    path: /etc/pam.d/su
+    line: "auth required pam_wheel.so use_uid"
+    insertafter: "^# auth\\s+required\\s+pam_wheel.so"
+  tags: [security, pam]

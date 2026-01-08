@@ -6,16 +6,16 @@
   tags: [fail2ban, always]
 
 - name: Fail2Ban | Main | Include installation tasks
-  ansible.builtin.import_tasks: install.yml
+  ansible.builtin.include_tasks: install.yml
   when: fail2ban_enabled
   tags: [fail2ban, install]
 
 - name: Fail2Ban | Main | Include configuration tasks
-  ansible.builtin.import_tasks: configure.yml
+  ansible.builtin.include_tasks: configure.yml
   when: fail2ban_enabled
   tags: [fail2ban, config]
 
 - name: Fail2Ban | Main | Include service tasks
-  ansible.builtin.import_tasks: service.yml
+  ansible.builtin.include_tasks: service.yml
   when: fail2ban_enabled
   tags: [fail2ban, service]

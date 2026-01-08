@@ -1,0 +1,39 @@
+---
+- name: Security Hardening | Modules | Ensure modprobe.d directory exists
+  ansible.builtin.file:
+    path: /etc/modprobe.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  tags: [security, modules]
+
+- name: Security Hardening | Modules | Disable insecure filesystems
+  ansible.builtin.template:
+    src: disable-filesystems.conf.j2
+    dest: /etc/modprobe.d/disable-filesystems.conf
+    owner: root
+    group: root
+    mode: "0644"
+  tags: [security, modules, filesystems]
+
+- name: Security Hardening | Modules | Disable insecure network protocols
+  ansible.builtin.template:
+    src: disable-network-protocols.conf.j2
+    dest: /etc/modprobe.d/disable-network-protocols.conf
+    owner: root
+    group: root
+    mode: "0644"
+  tags: [security, modules, network]
+
+- name: Security Hardening | USB | Disable USB storage
+  ansible.builtin.copy:
+    content: |
+      # Disable USB storage
+      install usb-storage /bin/true
+    dest: /etc/modprobe.d/disable-usb-storage.conf
+    owner: root
+    group: root
+    mode: "0644"
+  when: security_hardening_disable_usb_storage
+  tags: [security, usb]

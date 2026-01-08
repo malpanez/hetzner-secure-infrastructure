@@ -1,0 +1,5 @@
+# Disable insecure network protocols
+# Managed by Ansible - security_hardening role
+{% for proto in security_hardening_disabled_network_protocols %}
+install {{ proto }} /bin/true
+{% endfor %}
