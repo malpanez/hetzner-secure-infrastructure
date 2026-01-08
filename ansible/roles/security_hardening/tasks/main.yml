@@ -73,6 +73,7 @@
     name: libpam-pwquality
     state: present
   tags: [security, password]
+
 - name: Security Hardening | Password | Set quality policy
   ansible.builtin.template:
     src: pwquality.conf.j2
@@ -130,6 +131,7 @@
     mode: '0644'
   when: security_hardening_disable_usb_storage
   tags: [security, usb]
+
 - name: Security Hardening | Login | Configure login.defs
   ansible.builtin.lineinfile:
     path: /etc/login.defs
@@ -157,6 +159,7 @@
         path: /etc/cron.allow
         line: "{{ security_hardening_admin_username }}"
         state: present
+        create: true
 
     - name: Security Hardening | Cron | Remove cron.deny if exists
       ansible.builtin.file:
@@ -480,6 +483,7 @@
         path: /etc/at.allow
         line: "{{ security_hardening_admin_username }}"
         state: present
+        create: true
 
     - name: Security Hardening | At Daemon | Remove at.deny if exists
       ansible.builtin.file:
