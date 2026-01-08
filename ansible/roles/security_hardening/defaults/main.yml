@@ -182,3 +182,9 @@ security_hardening_packages:
   - libpam-pwquality
   - needrestart
   - unattended-upgrades
+
+# Unattended upgrades configuration
+unattended_upgrades_origins:
+  - '${distro_id}:${distro_codename}-security'
+  - '${distro_id}ESMApps:${distro_codename}-apps-security'
+  - '${distro_id}ESM:${distro_codename}-infra-security'
