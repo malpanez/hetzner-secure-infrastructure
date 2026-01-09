@@ -6,6 +6,20 @@
 
 ---
 
+## 🎨 Accessibility Note
+
+This document uses an accessible color palette in all diagrams, designed for neurodivergent users and following WCAG AAA guidelines:
+
+- **Light Blue** (#E8F4FD): Cloudflare/Edge services - Calming, reduces cognitive load
+- **Light Green** (#E8F5E9): Nginx/Application servers - Natural, easy to distinguish
+- **Light Orange** (#FFF3E0): WordPress/Data layer - Warm, maintains readability
+- **Light Purple** (#F3E5F5): Monitoring/Secrets - Distinct without being harsh
+- **Light Pink** (#FCE4EC): Security services - Soft, avoids red/green confusion
+
+All colors have high contrast borders (stroke-width: 2-3px) and black text for optimal readability.
+
+---
+
 ## 🎯 Purpose
 
 This document provides a complete architectural overview of the Hetzner-based WordPress LMS infrastructure, including all components, data flows, security layers, and operational considerations.
@@ -85,11 +99,12 @@ graph TB
     WP -->|Secret Rotation| OB
     OB -->|Auto-Unseal| TRANS
 
-    style CF fill:#f96,stroke:#333,stroke-width:2px
-    style NGINX fill:#9f6,stroke:#333,stroke-width:2px
-    style WP fill:#69f,stroke:#333,stroke-width:2px
-    style PROM fill:#f93,stroke:#333,stroke-width:2px
-    style OB fill:#c9f,stroke:#333,stroke-width:2px
+    %% Accessible color palette for neurodivergent users (WCAG AAA compliant)
+    style CF fill:#E8F4FD,stroke:#0D47A1,stroke-width:3px,color:#000
+    style NGINX fill:#E8F5E9,stroke:#2E7D32,stroke-width:3px,color:#000
+    style WP fill:#FFF3E0,stroke:#E65100,stroke-width:3px,color:#000
+    style PROM fill:#F3E5F5,stroke:#6A1B9A,stroke-width:3px,color:#000
+    style OB fill:#FCE4EC,stroke:#C2185B,stroke-width:3px,color:#000
 ```
 
 ---
@@ -296,9 +311,10 @@ graph TB
     ROOT -->|Proxied ☁️| IP
     WWW -->|Proxied ☁️| IP
 
-    style ROOT fill:#f96
-    style WWW fill:#f96
-    style IP fill:#9f6
+    %% Accessible colors
+    style ROOT fill:#E8F4FD,stroke:#0D47A1,stroke-width:2px,color:#000
+    style WWW fill:#E8F4FD,stroke:#0D47A1,stroke-width:2px,color:#000
+    style IP fill:#E8F5E9,stroke:#2E7D32,stroke-width:2px,color:#000
 ```
 
 **DNS Configuration**:
@@ -427,10 +443,11 @@ graph TB
     SSH2FA --> SECRETS
     SECRETS --> ROTATION --> ENCRYPT
 
-    style CF_WAF fill:#f96
-    style UFW fill:#fc6
-    style AA fill:#9f6
-    style SECRETS fill:#c9f
+    %% Accessible security layer colors
+    style CF_WAF fill:#E8F4FD,stroke:#0D47A1,stroke-width:2px,color:#000
+    style UFW fill:#FFF3E0,stroke:#E65100,stroke-width:2px,color:#000
+    style AA fill:#E8F5E9,stroke:#2E7D32,stroke-width:2px,color:#000
+    style SECRETS fill:#FCE4EC,stroke:#C2185B,stroke-width:2px,color:#000
 ```
 
 ### Security Headers
@@ -491,10 +508,11 @@ graph LR
     VALKEY -.->|HIT 5ms| PHP
     MARIA -.->|HIT 1ms| VALKEY
 
-    style CF fill:#f96
-    style NGX fill:#9f6
-    style VALKEY fill:#69f
-    style MARIA fill:#fc6
+    %% Accessible caching layer colors
+    style CF fill:#E8F4FD,stroke:#0D47A1,stroke-width:2px,color:#000
+    style NGX fill:#E8F5E9,stroke:#2E7D32,stroke-width:2px,color:#000
+    style VALKEY fill:#F3E5F5,stroke:#6A1B9A,stroke-width:2px,color:#000
+    style MARIA fill:#FFF3E0,stroke:#E65100,stroke-width:2px,color:#000
 ```
 
 **Cache TTLs**:
@@ -651,9 +669,10 @@ graph TB
     TF --> ANSIBLE
     ANSIBLE --> MOLECULE
 
-    style TF fill:#c9f
-    style ANSIBLE fill:#9f6
-    style MOLECULE fill:#fc6
+    %% Accessible IaC layer colors
+    style TF fill:#F3E5F5,stroke:#6A1B9A,stroke-width:2px,color:#000
+    style ANSIBLE fill:#E8F5E9,stroke:#2E7D32,stroke-width:2px,color:#000
+    style MOLECULE fill:#FFF3E0,stroke:#E65100,stroke-width:2px,color:#000
 ```
 
 ### Deployment Flow
