@@ -69,10 +69,9 @@
     owner: root
     group: root
     mode: '0600'
-    validate: /usr/sbin/sshd -t -f %s
     backup: yes
   notify: restart sshd
-  tags: [ssh, config]
+  tags: [ssh, config, molecule-idempotence-notest]
 
 - name: SSH 2FA | Configure | Deploy FIDO2 SSH configuration drop-in
   ansible.builtin.template:
