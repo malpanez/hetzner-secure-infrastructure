@@ -824,4 +824,3 @@ Date: 2026-01-07
 - [pam_faillock(8)](https://man7.org/linux/man-pages/man8/pam_faillock.8.html)
 - [Google Authenticator PAM](https://github.com/google/google-authenticator-libpam)
 - [OpenSSH Security Best Practices](https://www.openssh.com/security.html)
-- [Curso Avanzado de PAM en Linux](docs/2025-10-16_MIGUEL_PAM_Linux_Advanced_Course_Material.pdf)

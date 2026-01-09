@@ -34,6 +34,11 @@ nginx_wordpress_nginx_sites_available: /etc/nginx/sites-available
 nginx_wordpress_nginx_sites_enabled: /etc/nginx/sites-enabled
 nginx_wordpress_php_fpm_config_dir: "/etc/php/{{ nginx_wordpress_php_version }}/fpm"
 nginx_wordpress_php_fpm_pool_dir: "/etc/php/{{ nginx_wordpress_php_version }}/fpm/pool.d"
+nginx_wordpress_nginx_repo_key_url: "https://nginx.org/keys/nginx_signing.key"
+nginx_wordpress_nginx_repo_keyring_path: "/etc/apt/keyrings/nginx.asc"
+nginx_wordpress_nginx_repo_arch: "amd64"
+nginx_wordpress_nginx_repo_filename: "nginx-official"
+nginx_wordpress_nginx_repo_pin_priority: "900"
 
 # WP-CLI
 nginx_wordpress_wpcli_url: https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
