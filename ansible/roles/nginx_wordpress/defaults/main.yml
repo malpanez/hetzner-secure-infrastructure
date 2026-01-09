@@ -26,6 +26,11 @@ nginx_wordpress_woocommerce_enabled: false       # WooCommerce cache bypass
 # Nginx Repository Configuration
 nginx_wordpress_use_official_nginx_repo: true   # Use nginx.org official repo (recommended)
 nginx_wordpress_nginx_version: "1.28.1"         # Stable version with security fixes
+nginx_wordpress_nginx_repo_key_url: "https://nginx.org/keys/nginx_signing.key"
+nginx_wordpress_nginx_repo_keyring_path: "/etc/apt/keyrings/nginx-archive-keyring.gpg"
+nginx_wordpress_nginx_repo_filename: "nginx-official"
+nginx_wordpress_nginx_repo_arch: "amd64"
+nginx_wordpress_nginx_repo_pin_priority: 900
 
 nginx_wordpress_server_name: example.com
 nginx_wordpress_server_aliases:
