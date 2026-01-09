@@ -87,32 +87,28 @@ nginx_wordpress_logged_in_salt: ""
 nginx_wordpress_nonce_salt: ""
 
 # ========================================
-# WordPress Plugins
+# WordPress Plugins - OPTIMIZED
 # ========================================
-
-# Mandatory plugins (installed automatically)
-# NOTE: Infrastructure handles most security/performance
-# - Cloudflare WAF: Security, rate limiting, bot protection
-# - Nginx FastCGI: Full page caching
-# - Valkey: Object/database caching
-# - Cloudflare: CDN, minification, compression
+#
+# Infrastructure already provides (NO PLUGINS NEEDED):
+# ❌ Caching: Nginx FastCGI + Valkey → NO WP Super Cache/W3 Total Cache
+# ❌ Security: Cloudflare WAF + Fail2ban → NO Wordfence Full/Sucuri
+# ❌ CDN: Cloudflare → NO Jetpack CDN
+# ❌ Rate Limiting: Nginx + Cloudflare → Built-in
+#
+# ONLY install these essential plugins (4 mandatory):
 nginx_wordpress_plugins_mandatory:
-  # CRITICAL - Infrastructure Integration
-  - redis-cache                  # Valkey (Redis) object cache - REQUIRED
-  - nginx-helper                 # Purge FastCGI cache on updates - REQUIRED
+  # Infrastructure Integration (2 plugins)
+  - redis-cache                      # Valkey object cache - CRITICAL
+  - nginx-helper                     # FastCGI cache purging - CRITICAL
 
-  # Optional - Cloudflare Integration
-  - cloudflare                   # Auto-purge Cloudflare cache (if using CF)
+  # Application Security (2 plugins)
+  - wordfence-login-security         # 2FA/MFA for admin - ESSENTIAL
+  - limit-login-attempts-reloaded    # Login rate limiting - ESSENTIAL
 
-  # Admin & Maintenance
-  - wp-mail-smtp               # Reliable transactional email delivery
-  - health-check               # Site health & environment monitoring
-
-# Optional plugins (install manually or set to true)
+# Optional (only if specifically needed)
 nginx_wordpress_plugins_optional:
-  - contact-form-7             # Contact forms
-  - elementor                  # Page builder
-  - woocommerce               # E-commerce (if needed)
+  - contact-form-7                   # Contact forms (if needed beyond LearnDash)
 
 # LMS Plugin (install manually - requires license)
 # LearnDash Pro - Commercial plugin, must be installed manually
