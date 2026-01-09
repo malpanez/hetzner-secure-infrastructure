@@ -2,6 +2,7 @@
 - name: reload sysctl
   ansible.builtin.command: sysctl -p /etc/sysctl.d/99-hardening.conf
   changed_when: true
+  failed_when: false  # Don't fail if some kernel parameters don't exist (Docker containers)
 
 - name: restart auditd
   ansible.builtin.service:
