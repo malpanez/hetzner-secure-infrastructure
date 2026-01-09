@@ -22,4 +22,7 @@ provisioner:
       callbacks_enabled: profile_tasks
 
 verifier:
-  name: ansible
+  name: testinfra
+  directory: tests/
+  options:
+    v: 1
