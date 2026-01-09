@@ -4,10 +4,12 @@
     - name: Security Hardening | Cron | Create cron.allow
       ansible.builtin.file:
         path: /etc/cron.allow
-        state: file
+        state: touch
         owner: root
         group: root
         mode: "0640"
+        modification_time: preserve
+        access_time: preserve
 
     - name: Security Hardening | Cron | Add admin user to cron.allow
       ansible.builtin.lineinfile:
