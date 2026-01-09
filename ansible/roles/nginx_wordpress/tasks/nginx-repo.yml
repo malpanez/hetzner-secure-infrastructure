@@ -1,0 +1,72 @@
+---
+# Nginx WordPress Role - Official nginx.org Repository Setup
+
+- name: Nginx Repo | Add nginx.org GPG signing key
+  ansible.builtin.apt_key:
+    url: https://nginx.org/keys/nginx_signing.key
+    state: present
+  when:
+    - nginx_wordpress_use_official_nginx_repo
+    - ansible_os_family == 'Debian'
+  tags: [nginx-wordpress, nginx, repo]
+
+- name: Nginx Repo | Add official nginx.org repository (stable)
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64] https://nginx.org/packages/{{ ansible_distribution|lower }}/ {{ ansible_distribution_release }} nginx"
+    state: present
+    filename: nginx-official
+    update_cache: true
+  when:
+    - nginx_wordpress_use_official_nginx_repo
+    - ansible_os_family == 'Debian'
+  tags: [nginx-wordpress, nginx, repo]
+
+- name: Nginx Repo | Pin nginx version from official repository
+  ansible.builtin.copy:
+    content: |
+      Package: nginx
+      Pin: release o=nginx
+      Pin-Priority: 900
+    dest: /etc/apt/preferences.d/nginx-official
+    owner: root
+    group: root
+    mode: '0644'
+  when:
+    - nginx_wordpress_use_official_nginx_repo
+    - ansible_os_family == 'Debian'
+  tags: [nginx-wordpress, nginx, repo]
+
+- name: Nginx Repo | Install nginx from official repository
+  ansible.builtin.apt:
+    name: "nginx={{ nginx_wordpress_nginx_version }}-*"
+    state: present
+    update_cache: true
+  when:
+    - nginx_wordpress_use_official_nginx_repo
+    - nginx_wordpress_nginx_version is defined
+    - ansible_os_family == 'Debian'
+  register: nginx_official_install
+  tags: [nginx-wordpress, nginx, packages]
+
+- name: Nginx Repo | Fallback to Debian repository if official fails
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+    update_cache: true
+  when:
+    - not nginx_wordpress_use_official_nginx_repo or nginx_official_install is failed
+    - ansible_os_family == 'Debian'
+  tags: [nginx-wordpress, nginx, packages]
+
+- name: Nginx Repo | Display installed nginx version
+  ansible.builtin.command: nginx -v
+  register: nginx_version_output
+  changed_when: false
+  failed_when: false
+  tags: [nginx-wordpress, nginx]
+
+- name: Nginx Repo | Show nginx version
+  ansible.builtin.debug:
+    msg: "Installed nginx version: {{ nginx_version_output.stderr }}"
+  when: nginx_version_output.rc == 0
+  tags: [nginx-wordpress, nginx]
