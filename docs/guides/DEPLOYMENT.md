@@ -1095,7 +1095,7 @@ Ansible MANUAL (when needed)
 ---
 
 **Documentation Version:** 1.0
-**Last Updated:** 2025-01-01
+**Last Updated:** 2026-01-09
 **Status:** Production-ready
 
 **Related Documentation:**

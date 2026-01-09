@@ -136,8 +136,8 @@ We have 2 pre-configured dashboards from Grafana.com:
 3. **Check WordPress/PHP-FPM**
 
    ```bash
-   systemctl status php8.2-fpm
-   journalctl -u php8.2-fpm -n 50 --no-pager
+   systemctl status php8.4-fpm
+   journalctl -u php8.4-fpm -n 50 --no-pager
    ```
 
 **Common Causes and Fixes**:
@@ -154,7 +154,7 @@ We have 2 pre-configured dashboards from Grafana.com:
 
 ```bash
 # Restart PHP-FPM to clear worker pool
-sudo systemctl restart php8.2-fpm
+sudo systemctl restart php8.4-fpm
 
 # Clear WordPress cache
 sudo rm -rf /var/www/*/wp-content/cache/*
@@ -220,7 +220,7 @@ sudo sync && sudo sysctl -w vm.drop_caches=3
 
 # Restart memory-hungry services
 sudo systemctl restart mariadb
-sudo systemctl restart php8.2-fpm
+sudo systemctl restart php8.4-fpm
 
 # Check for zombie processes
 ps aux | grep defunct

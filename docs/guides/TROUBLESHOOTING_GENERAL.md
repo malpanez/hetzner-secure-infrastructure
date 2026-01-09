@@ -342,13 +342,13 @@ sudo journalctl -f
 ```bash
 # In Docker container
 docker exec wordpress-test systemctl status nginx
-docker exec wordpress-test systemctl status php8.2-fpm
+docker exec wordpress-test systemctl status php8.4-fpm
 docker exec wordpress-test systemctl status mysql
 docker exec wordpress-test systemctl status valkey
 
 # In Vagrant
 vagrant ssh wordpress-aio
-sudo systemctl status nginx php8.2-fpm mysql valkey
+sudo systemctl status nginx php8.4-fpm mysql valkey
 ```
 
 ## Next Steps After Fixing
@@ -361,4 +361,4 @@ sudo systemctl status nginx php8.2-fpm mysql valkey
 
 ---
 
-**Last Updated**: December 29, 2025
+**Last Updated**: January 9, 2026

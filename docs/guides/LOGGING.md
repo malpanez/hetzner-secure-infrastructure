@@ -556,7 +556,7 @@ curl http://localhost:3100/ready
 **PHP-FPM logs:**
 
 ```bash
-/etc/logrotate.d/php8.2-fpm
+/etc/logrotate.d/php8.4-fpm
 ```
 
 **MariaDB logs:**

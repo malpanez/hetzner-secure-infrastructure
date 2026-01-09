@@ -467,7 +467,7 @@ cat > RESULTS_x86_CX23.md <<EOF
 - **Precio**: €5.04/mes
 
 ## Stack Desplegado
-- Nginx 1.27
+- Nginx 1.28.1
 - PHP 8.4-FPM
 - MariaDB 11.4
 - Valkey 8.0

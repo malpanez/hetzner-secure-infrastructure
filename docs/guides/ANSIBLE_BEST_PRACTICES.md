@@ -2,7 +2,7 @@
 
 > **Guía de las mejores prácticas de Ansible y Red Hat implementadas en este proyecto**
 
-Última actualización: 2025-12-28
+Última actualización: 2026-01-09
 
 ---
 
@@ -1014,5 +1014,5 @@ ansible-lint --fix ansible/roles/prometheus/
 
 ---
 
-**Última actualización**: 2025-12-28
+**Última actualización**: 2026-01-09
 **Estado**: 70% completo (variables corregidas, tasks names pendientes)

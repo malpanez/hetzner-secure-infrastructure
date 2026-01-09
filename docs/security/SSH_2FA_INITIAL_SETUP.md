@@ -1,7 +1,7 @@
 # SSH 2FA Initial Setup Guide
 
 **Purpose**: How to capture and configure your 2FA for SSH access
-**Date**: 2026-01-02
+**Date**: 2026-01-09
 
 ---
 
