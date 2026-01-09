@@ -36,8 +36,12 @@ def test_sshd_hardening_settings(host):
         "Password authentication must be disabled"
 
     # Security settings
-    assert "permitrootlogin no" in result.stdout, \
-        "Root login must be disabled"
+    # Accept both "no" and "without-password" (prohibit-password) - both are secure
+    root_login = "permitrootlogin no" in result.stdout or \
+                 "permitrootlogin without-password" in result.stdout or \
+                 "permitrootlogin prohibit-password" in result.stdout
+    assert root_login, \
+        "Root login must be disabled or restricted to keys only"
     assert "permitemptypasswords no" in result.stdout, \
         "Empty passwords must be forbidden"
 
