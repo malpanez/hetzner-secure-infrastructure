@@ -1,7 +1,7 @@
 # Nginx Configuration Explained - Educational Guide
 
 **For**: LearnDash LMS WordPress + Cloudflare + High Performance
-**Last Updated**: 2024-12-31
+**Last Updated**: 2026-01-09
 
 ---
 
@@ -1064,7 +1064,7 @@ if ($http_cookie ~* "wordpress_logged_in|wp-postpass") {
 ```nginx
 location ~ \.php$ {
     include snippets/fastcgi-php.conf;
-    fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+    fastcgi_pass unix:/run/php/php8.4-fpm.sock;
     fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
 
     # FastCGI cache
@@ -1092,11 +1092,11 @@ location ~ \.php$ {
 
 ### FastCGI Connection
 
-**`fastcgi_pass unix:/run/php/php8.3-fpm.sock`**
+**`fastcgi_pass unix:/run/php/php8.4-fpm.sock`**
 
 **Unix Socket vs TCP**:
 
-- **Unix socket**: `/run/php/php8.3-fpm.sock` (faster, same machine)
+- **Unix socket**: `/run/php/php8.4-fpm.sock` (faster, same machine)
 - **TCP**: `127.0.0.1:9000` (network overhead, can be remote)
 
 **Performance**:
@@ -1238,7 +1238,7 @@ location = /wp-login.php {
     limit_req zone=login burst=3 nodelay;
 
     include snippets/fastcgi-php.conf;
-    fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+    fastcgi_pass unix:/run/php/php8.4-fpm.sock;
     fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
 
     # Never cache login page
@@ -1599,6 +1599,6 @@ location ~* ^/(readme|license)\.(html|txt)$ {
 
 ---
 
-**Last Updated**: 2024-12-31
+**Last Updated**: 2026-01-09
 **Configuration File**: `ansible/roles/nginx_wordpress/templates/nginx-wordpress-optimized.conf.j2`
 **Tested On**: Hetzner CX23 (x86) - 3,114 req/s, 32ms latency, A+ grade

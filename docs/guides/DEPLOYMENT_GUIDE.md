@@ -1527,7 +1527,7 @@ server {
 
     # Proxy a PHP-FPM para WordPress
     location ~ \.php$ {
-        fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+        fastcgi_pass unix:/run/php/php8.4-fpm.sock;
         fastcgi_index index.php;
         include fastcgi_params;
     }
@@ -2006,7 +2006,7 @@ echo "[6/8] Verificando servicios..."
 ssh malpanez@${SERVER_IP} '
   systemctl is-active --quiet nginx && echo "✓ Nginx activo" || echo "✗ Nginx inactivo"
   systemctl is-active --quiet mariadb && echo "✓ MariaDB activo" || echo "✗ MariaDB inactivo"
-  systemctl is-active --quiet php8.2-fpm && echo "✓ PHP-FPM activo" || echo "✗ PHP-FPM inactivo"
+  systemctl is-active --quiet php8.4-fpm && echo "✓ PHP-FPM activo" || echo "✗ PHP-FPM inactivo"
   systemctl is-active --quiet prometheus && echo "✓ Prometheus activo" || echo "✗ Prometheus inactivo"
   systemctl is-active --quiet grafana-server && echo "✓ Grafana activo" || echo "✗ Grafana inactivo"
 '
@@ -2212,7 +2212,7 @@ dmesg -T
 | Problema | Diagnóstico | Solución |
 |----------|-------------|----------|
 | **WordPress lento** | `top`, `htop` | Aumentar cache, optimizar DB |
-| **502 Bad Gateway** | `systemctl status php8.2-fpm` | Reiniciar PHP-FPM |
+| **502 Bad Gateway** | `systemctl status php8.4-fpm` | Reiniciar PHP-FPM |
 | **SSH bloqueado** | Acceder via Hetzner Console | `sudo fail2ban-client unban TU_IP` |
 | **Disco lleno** | `df -h`, `du -sh /*` | Limpiar backups antiguos |
 | **SSL error** | Verificar Cloudflare SSL mode | Cambiar a "Full (strict)" |
@@ -2250,7 +2250,7 @@ ansible-playbook -i ansible/inventory/production/hosts.yml \
   ansible/playbooks/site.yml --ask-vault-pass
 
 # Verificar servicios
-ssh malpanez@tudominio.com 'systemctl status nginx mariadb php8.2-fpm'
+ssh malpanez@tudominio.com 'systemctl status nginx mariadb php8.4-fpm'
 
 # Ver logs
 ssh malpanez@tudominio.com 'sudo tail -f /var/log/nginx/error.log'
@@ -2269,5 +2269,5 @@ terraform destroy
 
 ---
 
-**Última actualización:** 2025-12-27
+**Última actualización:** 2026-01-09
 **Versión:** 1.0.0
