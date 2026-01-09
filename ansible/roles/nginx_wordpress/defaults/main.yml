@@ -23,6 +23,10 @@ nginx_wordpress_woocommerce_enabled: false       # WooCommerce cache bypass
 # Nginx Configuration
 # ========================================
 
+# Nginx Repository Configuration
+nginx_wordpress_use_official_nginx_repo: true   # Use nginx.org official repo (recommended)
+nginx_wordpress_nginx_version: "1.28.1"         # Stable version with security fixes
+
 nginx_wordpress_server_name: example.com
 nginx_wordpress_server_aliases:
   - www.example.com

@@ -5,6 +5,13 @@
   ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
   tags: [nginx-wordpress, always]
 
+- name: Nginx WordPress | Main | Setup nginx.org official repository
+  ansible.builtin.include_tasks: nginx-repo.yml
+  when:
+    - nginx_wordpress_enabled
+    - nginx_wordpress_use_official_nginx_repo
+  tags: [nginx-wordpress, nginx, repo]
+
 - name: Nginx WordPress | Main | Include installation tasks
   ansible.builtin.include_tasks: install.yml
   when: nginx_wordpress_enabled

@@ -1,13 +1,15 @@
 ---
 # Nginx WordPress Role - Debian/Ubuntu Installation Tasks
 
-- name: Nginx WordPress | Install | Install Nginx packages
+- name: Nginx WordPress | Install | Install Nginx packages (Debian repository)
   ansible.builtin.apt:
     name: "{{ nginx_wordpress_nginx_packages }}"
     state: present
     update_cache: true
     cache_valid_time: 3600
-  when: nginx_wordpress_install_nginx
+  when:
+    - nginx_wordpress_install_nginx
+    - not nginx_wordpress_use_official_nginx_repo
   tags: [nginx-wordpress, nginx, packages]
 
 - name: Nginx WordPress | Install | Install PHP packages
