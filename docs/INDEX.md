@@ -69,6 +69,7 @@ Quick access to all project documentation.
 - [Nginx Configuration Explained](guides/NGINX_CONFIGURATION_EXPLAINED.md) - Deep dive into Nginx setup
 - [Ansible Best Practices](guides/ANSIBLE_BEST_PRACTICES.md) - Coding standards
 - [Terraform Cloud Migration](guides/TERRAFORM_CLOUD_MIGRATION.md) - Terraform setup
+- [Mermaid Diagrams Best Practices](guides/MERMAID_BEST_PRACTICES.md) - **Neurodivergent-friendly diagram standards**
 
 ### Reference
 
