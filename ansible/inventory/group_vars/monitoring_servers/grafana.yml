@@ -83,6 +83,10 @@ grafana_datasources:
 # ========================================
 grafana_dashboards_enabled: true
 grafana_dashboards:
+  # ==================
+  # Metrics Dashboards
+  # ==================
+
   # Node Exporter Full (System metrics)
   - dashboard_id: "1860"
     revision_id: "37"
@@ -92,6 +96,25 @@ grafana_dashboards:
   - dashboard_id: "3662"
     revision_id: "2"
     datasource: "Prometheus"
+
+  # ==================
+  # Logs Dashboards
+  # ==================
+
+  # Loki Dashboard Quick Search
+  - dashboard_id: "12019"
+    revision_id: "2"
+    datasource: "Loki"
+
+  # Loki Logs Dashboard with filters
+  - dashboard_id: "13639"
+    revision_id: "2"
+    datasource: "Loki"
+
+  # Loki & Promtail - Advanced
+  - dashboard_id: "14055"
+    revision_id: "5"
+    datasource: "Loki"
 
 # ========================================
 # Grafana Plugins

@@ -1,5 +1,6 @@
 ---
 # Promtail Configuration for Monitoring Servers
+# Official grafana.grafana.promtail role configuration
 
 # Deployment control
 deploy_promtail: true
@@ -7,36 +8,120 @@ deploy_promtail: true
 # Version
 promtail_version: "latest"
 
-# Loki connection
-promtail_loki_url: "http://localhost:3100/loki/api/v1/push"
+# Server configuration - bind to localhost only for security
+promtail_http_listen_address: "127.0.0.1"
+promtail_http_listen_port: 9080
+promtail_expose_port: false
 
-# Log sources to scrape
-promtail_scrape_nginx: true
-promtail_scrape_php: true
-promtail_scrape_mariadb: true
-promtail_scrape_wordpress: true
-promtail_scrape_syslog: true
-promtail_scrape_auth: true
-promtail_scrape_fail2ban: true
+# Runtime mode - use ACL for file access without root
+promtail_runtime_mode: "acl"
 
-# Log file paths (adjust if needed)
-promtail_nginx_access_log: "/var/log/nginx/access.log"
-promtail_nginx_error_log: "/var/log/nginx/error.log"
-promtail_php_fpm_log: "/var/log/php*.fpm.log"
-promtail_mariadb_error_log: "/var/log/mysql/error.log"
-promtail_mariadb_slow_log: "/var/log/mysql/slow.log"
-promtail_wordpress_debug_log: "/var/www/html/wp-content/debug.log"
-promtail_syslog: "/var/log/syslog"
-promtail_auth_log: "/var/log/auth.log"
-promtail_fail2ban_log: "/var/log/fail2ban.log"
+# Add promtail user to systemd-journal group for log access
+promtail_user_append_groups:
+  - "systemd-journal"
+  - "adm"  # For access to /var/log files
 
-# Logrotate
-promtail_logrotate_enabled: true
-promtail_logrotate_size: "50M"
-promtail_logrotate_rotate: 7
-promtail_logrotate_compress: true
+# Server settings
+promtail_server:
+  http_listen_port: 9080
+  http_listen_address: "127.0.0.1"
 
-# Firewall (only localhost)
-promtail_firewall_allowed_ips:
-  - "127.0.0.1"
-  - "::1"
+# Positions file to track log reading progress
+promtail_positions:
+  filename: "/var/lib/promtail/positions.yaml"
+
+# Loki client configuration
+promtail_clients:
+  - url: "http://127.0.0.1:3100/loki/api/v1/push"
+
+# Scrape configurations for different log sources
+promtail_scrape_configs:
+  # System logs
+  - job_name: syslog
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: syslog
+          instance: "{{ ansible_facts['fqdn'] }}"
+          __path__: /var/log/syslog
+
+  # Authentication logs
+  - job_name: auth
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: auth
+          instance: "{{ ansible_facts['fqdn'] }}"
+          __path__: /var/log/auth.log
+
+  # Nginx access logs
+  - job_name: nginx_access
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: nginx_access
+          instance: "{{ ansible_facts['fqdn'] }}"
+          __path__: /var/log/nginx/access.log
+
+  # Nginx error logs
+  - job_name: nginx_error
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: nginx_error
+          instance: "{{ ansible_facts['fqdn'] }}"
+          __path__: /var/log/nginx/error.log
+
+  # PHP-FPM logs (all versions)
+  - job_name: php_fpm
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: php_fpm
+          instance: "{{ ansible_facts['fqdn'] }}"
+          __path__: /var/log/php*-fpm.log
+
+  # MariaDB error logs
+  - job_name: mariadb_error
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: mariadb_error
+          instance: "{{ ansible_facts['fqdn'] }}"
+          __path__: /var/log/mysql/error.log
+
+  # MariaDB slow query logs
+  - job_name: mariadb_slow
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: mariadb_slow
+          instance: "{{ ansible_facts['fqdn'] }}"
+          __path__: /var/log/mysql/slow.log
+
+  # WordPress debug logs
+  - job_name: wordpress
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: wordpress
+          instance: "{{ ansible_facts['fqdn'] }}"
+          __path__: /var/www/html/wp-content/debug.log
+
+  # Fail2ban logs
+  - job_name: fail2ban
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: fail2ban
+          instance: "{{ ansible_facts['fqdn'] }}"
+          __path__: /var/log/fail2ban.log

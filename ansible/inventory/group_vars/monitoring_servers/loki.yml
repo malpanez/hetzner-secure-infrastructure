@@ -1,5 +1,6 @@
 ---
 # Loki Configuration for Monitoring Servers
+# Official grafana.grafana.loki role configuration
 
 # Deployment control
 deploy_loki: true
@@ -7,33 +8,80 @@ deploy_loki: true
 # Version
 loki_version: "latest"
 
-# Retention (30 days recommended)
-loki_retention_period: "720h"  # 30 days
-loki_reject_old_samples_max_age: "720h"
+# Server configuration - bind to localhost only for security
+loki_http_listen_address: "127.0.0.1"
+loki_http_listen_port: 3100
+loki_expose_port: false
 
-# For extended retention, use 90 days:
-# loki_retention_period: "2160h"  # 90 days (~1.8-2.7 GB)
+# Server settings
+loki_server:
+  http_listen_address: "127.0.0.1"
+  http_listen_port: 3100
+  grpc_listen_port: 9096
 
-# Ingestion limits
-loki_ingestion_rate_mb: 4
-loki_ingestion_burst_size_mb: 6
+# Common configuration
+loki_common:
+  instance_addr: 127.0.0.1
+  path_prefix: "/var/lib/loki"
+  storage:
+    filesystem:
+      chunks_directory: "/var/lib/loki/chunks"
+      rules_directory: "/var/lib/loki/rules"
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
 
-# Query limits
-loki_max_query_series: 500
-loki_max_query_parallelism: 32
+# Query cache configuration
+loki_query_range:
+  results_cache:
+    cache:
+      embedded_cache:
+        enabled: true
+        max_size_mb: 100
 
-# Logrotate
-loki_logrotate_enabled: true
-loki_logrotate_size: "100M"
-loki_logrotate_rotate: 7
-loki_logrotate_compress: true
+# Schema configuration
+loki_schema_config:
+  configs:
+    - from: 2020-10-24
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
 
-# Backup
-loki_backup_enabled: true
-loki_backup_schedule: "0 3 * * *"  # Daily at 3 AM
-loki_backup_retention_days: 7
+# Limits configuration - ingestion and retention
+loki_limits_config:
+  retention_period: 720h  # 30 days
+  reject_old_samples: true
+  reject_old_samples_max_age: 720h
+  ingestion_rate_mb: 4
+  ingestion_burst_size_mb: 6
+  max_query_series: 500
+  max_query_parallelism: 32
 
-# Firewall (only localhost can access)
-loki_firewall_allowed_ips:
-  - "127.0.0.1"
-  - "::1"
+# Compactor for log retention enforcement
+loki_compactor:
+  working_directory: "/var/lib/loki/compactor"
+  retention_enabled: true
+  retention_delete_delay: 2h
+  retention_delete_worker_count: 150
+
+# Ruler configuration
+loki_ruler:
+  storage:
+    type: local
+    local:
+      directory: "/var/lib/loki/rules"
+  rule_path: "/var/lib/loki/rules_tmp"
+  ring:
+    kvstore:
+      store: inmemory
+  enable_api: true
+  enable_alertmanager_v2: true
+  alertmanager_url: http://localhost:9093
+
+# Disable analytics
+loki_analytics:
+  reporting_enabled: false
