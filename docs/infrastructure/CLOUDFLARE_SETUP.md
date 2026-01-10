@@ -87,41 +87,66 @@ graph LR
     style ddos fill:#9c27b0,color:#fff
 ```
 
-### Capas de Protección
+### Capas de Protección (4 Niveles)
+
+El tráfico pasa por 4 capas de seguridad antes de llegar a WordPress.
+
+#### Diagrama de Capas
 
 ```mermaid
 graph TB
-    internet["🌐 Internet<br/>(Atacantes + Usuarios)"]
+    Internet[Internet]
+    CF[Cloudflare Edge]
+    FW[Firewall Server]
+    WP[WordPress]
 
-    subgraph cloudflare_protection["☁️ Cloudflare Protection (Free Tier)"]
-        layer_ddos["🚫 Layer 1: DDoS Mitigation<br/>• Hasta 1 Tbps<br/>• Siempre activo"]
-        layer_bot["🤖 Layer 2: Bot Fight Mode<br/>• Challenge pages<br/>• JS/Captcha"]
-        layer_waf["🛡️ Layer 3: WAF Rules<br/>• OWASP Top 10<br/>• SQL Injection<br/>• XSS Protection"]
-        layer_rate["⏱️ Layer 4: Rate Limiting<br/>• 10 req/10s por IP<br/>• Login protection"]
-        layer_ssl["🔐 Layer 5: SSL/TLS<br/>• Full (strict)<br/>• Always HTTPS"]
-    end
+    Internet -->|Traffic| CF
+    CF -->|Filtered| FW
+    FW -->|Protected| WP
 
-    subgraph server_protection["🖥️ Server Protection"]
-        layer_cf_tunnel["🔒 Layer 6: Cloudflare IPs Only<br/>• UFW whitelist<br/>• Fail2ban"]
-        layer_nginx["⚡ Layer 7: Nginx<br/>• Rate limiting<br/>• Security headers"]
-        layer_wp["📝 Layer 8: WordPress<br/>• 2FA Admin (plugin)<br/>• Login rate limiting"]
-    end
-
-    internet --> layer_ddos
-    layer_ddos --> layer_bot
-    layer_bot --> layer_waf
-    layer_waf --> layer_rate
-    layer_rate --> layer_ssl
-    layer_ssl --> layer_cf_tunnel
-    layer_cf_tunnel --> layer_nginx
-    layer_nginx --> layer_wp
-
-    style cloudflare_protection fill:#ff9800,color:#fff
-    style server_protection fill:#e8f5e9
-    style layer_ddos fill:#9c27b0,color:#fff
-    style layer_waf fill:#f44336,color:#fff
-    style layer_ssl fill:#4caf50,color:#fff
+    style Internet fill:#FCE4EC,stroke:#C2185B
+    style CF fill:#FFF3E0,stroke:#E65100
+    style FW fill:#E8F5E9,stroke:#2E7D32
+    style WP fill:#E8F4FD,stroke:#1565C0
 ```
+
+#### Detalles por Capa
+
+**Capa 1: Cloudflare Edge (DDoS + Bot Protection)**
+
+| Protección | Tipo | Plan Free |
+|------------|------|-----------|
+| DDoS Mitigation | Hasta 1 Tbps | Incluido |
+| Bot Fight Mode | Challenge pages, CAPTCHA | Incluido |
+| Geographic blocks | Por país | Incluido |
+| IP reputation | Automatic blocking | Incluido |
+
+**Capa 2: Cloudflare WAF (Web Application Firewall)**
+
+| Protección | Ataques bloqueados | Configuración |
+|------------|-------------------|---------------|
+| OWASP Top 10 | SQL Injection, XSS | Reglas predefinidas |
+| WordPress específico | xmlrpc.php, wp-config.php | Custom rules |
+| Rate Limiting | Login brute force | 5 intentos/10 segundos |
+| SSL/TLS | Man-in-the-middle | Full strict mode |
+
+**Capa 3: Server Firewall (UFW + Fail2ban)**
+
+| Componente | Función | Configuración |
+|------------|---------|---------------|
+| UFW | Port filtering | Solo 22, 80, 443 |
+| Cloudflare IPs | IP whitelist | Solo tráfico desde Cloudflare |
+| Fail2ban | Intrusion detection | Ban tras 3 intentos fallidos |
+| SSH 2FA | Authentication | TOTP + opcional Yubikey |
+
+**Capa 4: Application Layer (Nginx + WordPress)**
+
+| Componente | Protección | Implementación |
+|------------|------------|----------------|
+| Nginx | Rate limiting | wp-login.php: 10 req/5min |
+| Security headers | XSS, Clickjacking | X-Frame-Options, CSP |
+| WordPress 2FA | Admin access | Plugin wordfence-login-security |
+| Login attempts | Brute force | Plugin limit-login-attempts |
 
 ---
 
