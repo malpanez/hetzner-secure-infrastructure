@@ -369,4 +369,4 @@ cat ~/.ssh/id_ed25519_sk.pub
 3. **Usa ssh-agent para clave normal** ✅ (comodidad)
 4. **NO uses ssh-agent para Yubikey** ✅ (mantener touch físico)
 
-**Última actualización**: 29 Diciembre 2025
+**Última actualización**: 09 Enero 2026

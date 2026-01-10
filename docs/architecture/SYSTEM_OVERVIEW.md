@@ -601,14 +601,14 @@ graph LR
 | **RAM** | 4 GB DDR4 |
 | **Disk** | 40 GB NVMe SSD |
 | **Network** | 20 TB traffic/mo |
-| **Price** | €4.45/month |
+| **Price** | €4.05/month |
 | **Availability** | Always available ✅ |
 | **Architecture** | ARM64 (aarch64) |
 
 **Why ARM over x86**:
 - ✅ Always available (no stock issues)
 - ✅ Modern Ampere Altra processors
-- ✅ €0.59/mo cheaper than CX23
+- ✅ Mejor rendimiento por €0.37/mo extra vs CX23
 - ✅ Better power efficiency
 - ✅ Compatible with Debian 13 ARM64
 
@@ -620,7 +620,7 @@ graph LR
 | **RAM** | 4 GB DDR4 |
 | **Disk** | 40 GB NVMe SSD |
 | **Network** | 20 TB traffic/mo |
-| **Price** | €5.04/month |
+| **Price** | €3.68/month |
 | **Availability** | Limited stock ⚠️ |
 | **Architecture** | x86_64 (AMD64) |
 
@@ -688,18 +688,18 @@ graph TB
 2. **Server Configuration** (Ansible)
    ```bash
    cd ansible
-   ansible-playbook -i inventory/production site.yml
+   ansible-playbook playbooks/site.yml
    ```
 
 3. **OpenBao Setup** (First-time only)
    ```bash
-   ansible-playbook -i inventory/production openbao-bootstrap.yml
+   ansible-playbook playbooks/openbao-bootstrap.yml
    # Save unseal keys and root token securely
    ```
 
 4. **Secret Rotation Setup**
    ```bash
-   ansible-playbook -i inventory/production setup-openbao-rotation.yml
+   ansible-playbook playbooks/setup-openbao-rotation.yml
    ```
 
 5. **WordPress Configuration** (Manual)
@@ -712,20 +712,20 @@ graph TB
 
 | Environment | Purpose | Server | Cost |
 |-------------|---------|--------|------|
-| **Staging** | Testing & validation | CAX11 | €4.45/mo |
-| **Production** | Live site | CAX11 | €4.45/mo |
+| **Staging** | Testing & validation | CAX11 | €4.05/mo |
+| **Production** | Live site | CAX11 | €4.05/mo |
 
-**Total Infrastructure Cost**: **€8.90/month** (2 servers)
+**Total Infrastructure Cost**: **€8.10/month** (2 servers)
 
 ---
 
 ## 📊 Capacity Planning
 
-### Current Capacity (CX23 tested)
+### Current Capacity (CAX11 tested)
 
 **With current configuration** (WordPress + Monitoring + OpenBao):
 
-- **Max throughput**: ~3,100 req/s
+- **Max throughput**: ~8,300 req/s
 - **Concurrent users**: ~600-800
 - **Database connections**: 150 (MariaDB max_connections)
 - **PHP-FPM workers**: 30 (max_children)
@@ -735,7 +735,7 @@ graph TB
 **Vertical Scaling** (Upgrade server):
 
 ```
-CAX11 (€4.45/mo) → CAX21 (€8.49/mo)
+CAX11 (€4.05/mo) → CAX21 (~€8.10/mo)
     ├─ CPUs: 2 → 4
     ├─ RAM: 4 GB → 8 GB
     └─ Expected throughput: 3,100 → 6,000+ req/s
@@ -745,10 +745,10 @@ CAX11 (€4.45/mo) → CAX21 (€8.49/mo)
 
 ```
 1 server → 2 servers + Load Balancer
-    ├─ Load Balancer: Hetzner LB (€5.83/mo)
-    ├─ 2x CAX11: €8.90/mo
-    ├─ Total: €14.73/mo
-    └─ Expected throughput: 3,100 → 6,000+ req/s
+    ├─ Load Balancer: Hetzner LB (ver pricing)
+    ├─ 2x CAX11: €8.10/mo
+    ├─ Total: €8.10/mo + LB
+    └─ Expected throughput: 8,300 → 16,000+ req/s
 ```
 
 **Recommended approach**:
@@ -767,7 +767,7 @@ CAX11 (€4.45/mo) → CAX21 (€8.49/mo)
 | Technology | Alternative Considered | Why Chosen |
 |------------|----------------------|------------|
 | **Hetzner Cloud** | AWS, DigitalOcean | 50-70% cheaper, European data residency, GDPR compliant |
-| **ARM (CAX11)** | x86 (CX23) | Always available, modern Ampere Altra, €0.59/mo cheaper |
+| **ARM (CAX11)** | x86 (CX23) | Always available, modern Ampere Altra, €0.37/mo more |
 | **Debian 13** | Ubuntu 24.04 | Latest packages (PHP 8.4, nginx 1.28.1), stable |
 | **Nginx 1.28.1** | Apache, nginx 1.26 | CVE fixes, HTTP/3, better performance, lower memory |
 | **PHP 8.4** | PHP 8.2 | JIT improvements, performance gains, latest features |
@@ -854,4 +854,3 @@ CAX11 (€4.45/mo) → CAX21 (€8.49/mo)
 **Last Updated**: 2026-01-09
 **Maintained By**: Infrastructure Team
 **Repository**: https://github.com/malpanez/hetzner-secure-infrastructure
-

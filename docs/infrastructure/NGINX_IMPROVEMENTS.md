@@ -372,7 +372,7 @@ if ($bad_bot = 1) {
 ### Step 1: Backup Current Config
 
 ```bash
-ansible-playbook -i inventory/production.yml playbooks/site.yml --tags nginx-wordpress --check
+ansible-playbook playbooks/site.yml --tags nginx-wordpress --check
 ```
 
 ### Step 2: Update Templates
@@ -460,6 +460,10 @@ Watch logs and Grafana for:
 
 ---
 
+**Validation:** Siempre prueba con `sudo nginx -t` antes de recargar.
+
 **Ready to implement?** I can create the updated configuration files for you!
 
 **Want to see the complete improved config?** Let me know and I'll generate the full nginx-wordpress.conf.j2 with all improvements integrated.
+
+**Last Updated:** 2026-01-09

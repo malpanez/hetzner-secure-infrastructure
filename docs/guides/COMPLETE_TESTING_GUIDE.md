@@ -1,6 +1,6 @@
 # Guía Completa de Testing - x86 vs ARM con Stack Completo
 
-**Última actualización**: 2024-12-31
+**Última actualización**: 2026-01-09
 **Propósito**: Testing completo de arquitectura x86 vs ARM con WordPress + Monitorización
 
 ---
@@ -27,10 +27,10 @@ Esta guía te lleva paso a paso para:
 - Rendimiento: 3,114 req/s, 32ms latencia, A+ grade
 - Destruido: Sí
 
-⏳ **ARM (CAX11) - PENDIENTE**
+✅ **ARM (CAX11) - COMPLETADO**
 
-- Siguiente paso: Desplegar y testear con stack completo
-- Comparar con resultados de x86
+- Resultados comparados en: [docs/performance/ARM64_vs_X86_COMPARISON.md](docs/performance/ARM64_vs_X86_COMPARISON.md)
+- Ganador: ARM64 (CAX11) por mejor rendimiento y coste/beneficio
 
 ---
 
@@ -46,7 +46,7 @@ Esta guía te lleva paso a paso para:
 
 ## Pre-requisitos
 
-### En tu máquina local (WSL2)
+### En tu máquina local (Linux/macOS/WSL2)
 
 ```bash
 # Verificar que tienes todo instalado
@@ -83,7 +83,7 @@ Edita `terraform.staging.tfvars`:
 ```hcl
 # Servidor x86
 architecture = "x86"
-server_size  = "small"  # CX23: 2 vCPU, 4GB RAM, €5.04/mo
+server_size  = "small"  # CX23: 2 vCPU, 4GB RAM, €3.68/mo
 location     = "nbg1"   # Nuremberg
 
 # Proyecto Hetzner
@@ -158,7 +158,7 @@ echo $HCLOUD_TOKEN
 # Debe mostrar: tu token (si no, ejecutar: export HCLOUD_TOKEN="tu-token")
 
 # 2. Listar servidores descubiertos automáticamente
-ansible-inventory -i inventory/hetzner.hcloud.yml --graph
+ansible-inventory --graph
 
 # Debe mostrar:
 # @all:
@@ -211,14 +211,14 @@ ansible/inventory/group_vars/
 ├── all.yml              → Se aplica a TODOS los servidores
 ├── staging.yml          → Se aplica solo a staging
 ├── production.yml       → Se aplica solo a production
-└── hetzner.yml          → Se aplica a todos los de Hetzner
+└── hetzner.hcloud.yml   → Se aplica a todos los de Hetzner
 ```
 
 ### Paso 5: Probar Conexión Ansible
 
 ```bash
 # Ping test usando grupos dinámicos
-ansible -i inventory/hetzner.hcloud.yml staging -m ping
+ansible staging -m ping
 
 # Debe responder:
 # stag-de-wp-01 | SUCCESS => {
@@ -227,7 +227,7 @@ ansible -i inventory/hetzner.hcloud.yml staging -m ping
 # }
 
 # Ver detalles del servidor descubierto
-ansible-inventory -i inventory/hetzner.hcloud.yml --host stag-de-wp-01
+ansible-inventory --host stag-de-wp-01
 
 # Debe mostrar (JSON):
 # {
@@ -244,18 +244,18 @@ ansible-inventory -i inventory/hetzner.hcloud.yml --host stag-de-wp-01
 
 ### Paso 6: Desplegar Stack Completo con Ansible
 
-**IMPORTANTE**: Usamos inventario dinámico en todos los comandos.
+**IMPORTANTE**: Usamos inventario dinámico vía `ansible.cfg` (no hace falta `-i`).
 
 ```bash
 # Opción 1: Playbook completo (RECOMENDADO)
-ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml
+ansible-playbook playbooks/site.yml
 
 # Opción 2: Solo WordPress + Monitorización (por separado)
-ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/wordpress.yml
-ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/monitoring.yml
+ansible-playbook playbooks/wordpress-only.yml
+ansible-playbook playbooks/site.yml --tags monitoring
 
 # Opción 3: Limitar a grupo staging específicamente
-ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml --limit staging
+ansible-playbook playbooks/site.yml --limit staging
 ```
 
 **Duración esperada**: 10-15 minutos
@@ -266,7 +266,7 @@ ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml --limit stag
 
 - ✅ Nginx (web server)
 - ✅ PHP 8.4-FPM (application)
-- ✅ MariaDB 11.4 (database)
+- ✅ MariaDB 11.8 (database)
 - ✅ Valkey 8.0 (cache Redis fork)
 - ✅ WordPress (latest)
 - ✅ Firewall (UFW)
@@ -275,7 +275,7 @@ ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml --limit stag
 
 **Stack Monitorización** (añade ~400MB RAM overhead):
 
-- ✅ Prometheus 3.8+ (metrics collection)
+- ✅ Prometheus 2.48 (metrics collection)
 - ✅ Grafana (dashboards)
 - ✅ Loki (log aggregation)
 - ✅ Promtail (log shipping)
@@ -464,15 +464,15 @@ cat > RESULTS_x86_CX23.md <<EOF
 - **CPU**: 2 vCPUs (AMD EPYC)
 - **RAM**: 4 GB
 - **Disco**: 40 GB NVMe
-- **Precio**: €5.04/mes
+- **Precio**: €3.68/mes
 
 ## Stack Desplegado
 - Nginx 1.28.1
 - PHP 8.4-FPM
-- MariaDB 11.4
+- MariaDB 11.8
 - Valkey 8.0
 - WordPress latest
-- Prometheus 3.8
+- Prometheus 2.48
 - Grafana latest
 - Loki latest
 
@@ -533,8 +533,8 @@ Edita `terraform.staging.tfvars`:
 ```hcl
 # CAMBIAR a ARM
 architecture = "arm"
-server_size  = "small"  # CAX11: 2 vCPU ARM, 4GB RAM, €4.45/mo
-location     = "fsn1"   # Falkenstein (ARM solo en fsn1, hel1, nbg1)
+server_size  = "small"  # CAX11: 2 vCPU ARM, 4GB RAM, €4.05/mo
+location     = "nbg1"   # ARM disponible en nbg1, fsn1, hel1
 
 # Resto igual...
 ```
@@ -554,7 +554,7 @@ location     = "fsn1"   # Falkenstein (ARM solo en fsn1, hel1, nbg1)
 
 - Server type: `cax11` (en vez de `cx23`)
 - Architecture: `aarch64` (en vez de `x86_64`)
-- Resultados de rendimiento: **por determinar**
+- Resultados de rendimiento: **medidos y comparados**
 
 ---
 
@@ -564,24 +564,24 @@ location     = "fsn1"   # Falkenstein (ARM solo en fsn1, hel1, nbg1)
 
 | Métrica | x86 (CX23) | ARM (CAX11) | Ganador |
 |---------|------------|-------------|---------|
-| **Precio** | €5.04/mo | €4.45/mo | ARM ✓ |
+| **Precio** | €3.68/mo | €4.05/mo | x86 ✓ |
 | **Disponibilidad** | Stock limitado | Siempre disponible | ARM ✓ |
-| **Requests/sec** | 3,114 | ??? | TBD |
-| **Latency p95** | 57ms | ??? | TBD |
-| **Latency p99** | 76ms | ??? | TBD |
-| **CPU Load (1m)** | 0.66 | ??? | TBD |
-| **RAM Usage** | 866 MB | ??? | TBD |
-| **Failed Requests** | 0 | ??? | TBD |
+| **Requests/sec** | 3,114 | 8,338.55 | ARM ✓ |
+| **Latency p95** | 57ms | 16ms | ARM ✓ |
+| **Latency p99** | 76ms | 18ms | ARM ✓ |
+| **CPU Load (1m)** | 0.66 | 0.19 | ARM ✓ |
+| **RAM Usage** | 866 MB | 736 MB | ARM ✓ |
+| **Failed Requests** | 0 | 0 | Tie |
 | **Compatibilidad** | 100% | 100% | Tie |
 
 ### Cálculo Cost per 1000 Requests
 
 ```bash
 # x86 CX23
-€5.04/mes ÷ (3,114 req/s × 2,592,000 seg/mes) = €0.00000062 per 1000 req
+€3.68/mes ÷ (3,114 req/s × 2,592,000 seg/mes) = €0.000000456 per 1000 req
 
 # ARM CAX11
-€4.45/mes ÷ (??? req/s × 2,592,000 seg/mes) = €??? per 1000 req
+€4.05/mes ÷ (8,338.55 req/s × 2,592,000 seg/mes) = €0.000000187 per 1000 req
 ```
 
 ### Criterios de Decisión
@@ -590,7 +590,7 @@ location     = "fsn1"   # Falkenstein (ARM solo en fsn1, hel1, nbg1)
 
 - ✅ Stock disponible cuando necesites desplegar
 - ✅ Rendimiento >= ARM (dentro del 10%)
-- ✅ Quieres ahorrar €0.59/mes (€7.08/año)
+- ✅ Quieres ahorrar €0.37/mes (€4.44/año)
 
 **Elige ARM (CAX11) si**:
 
@@ -601,10 +601,10 @@ location     = "fsn1"   # Falkenstein (ARM solo en fsn1, hel1, nbg1)
 
 **Recomendación por defecto**: **ARM (CAX11)**
 
-- Razón: Solo €0.59/mes más caro (€7.08/año)
-- Siempre disponible (no hay riesgo de stock)
-- Rendimiento esperado similar o mejor
-- Arquitectura moderna
+- Razón: Rendimiento claramente superior y disponibilidad garantizada
+- Diferencia de coste: €0.37/mes (≈ €4.44/año)
+- Menor latencia y mejor coste por request
+- Arquitectura moderna (ARM64)
 
 ---
 
@@ -635,7 +635,7 @@ Crear `terraform/terraform.production.tfvars`:
 environment  = "production"
 architecture = "arm"
 server_size  = "small"
-location     = "fsn1"
+location     = "nbg1"
 
 # Resto de configuración...
 ```
@@ -657,7 +657,7 @@ ssh malpanez@$SERVER_IP "cloud-init status --wait"
 
 # Ansible con inventario dinámico (stack completo)
 cd ../ansible
-ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml
+ansible-playbook playbooks/site.yml
 ```
 
 ### Verificar
@@ -712,7 +712,7 @@ ssh malpanez@$SERVER_IP "whoami"
 ssh malpanez@$SERVER_IP "python3 --version"
 
 # Test Ansible
-ansible -i inventory/staging.yml wordpress_servers -m ping -vvv
+ansible wordpress_servers -m ping -vvv
 ```
 
 ### Servicios no arrancan

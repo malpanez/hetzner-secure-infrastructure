@@ -52,7 +52,7 @@ func TestTerraformInfrastructure(t *testing.T) {
 
     // Test server type
     serverType := terraform.Output(t, terraformOptions, "wordpress_server_type")
-    assert.Equal(t, "cx21", serverType)
+    assert.Equal(t, "cax11", serverType)
 
     // Test server created
     ipv4 := terraform.Output(t, terraformOptions, "wordpress_ipv4")
@@ -220,7 +220,7 @@ done
 
 # 5. Run Ansible configuration
 cd ../../ansible
-ansible-playbook -i inventory/hetzner.yml playbooks/site.yml \
+ansible-playbook playbooks/site.yml \
   --ask-vault-pass \
   --limit wordpress_servers
 
@@ -507,7 +507,7 @@ for role in nginx-wordpress valkey prometheus grafana; do
 done
 
 # 5. Dry-run Ansible
-ansible-playbook -i inventory/hetzner.yml playbooks/site.yml --check
+ansible-playbook playbooks/site.yml --check
 ```
 
 ### Post-Deployment Validation
@@ -566,7 +566,7 @@ NEW_IP=$(terraform output -raw wordpress_ipv4)
 
 # 2. Configure (15 min)
 cd ../../ansible
-ansible-playbook -i inventory/hetzner.yml playbooks/site.yml \
+ansible-playbook playbooks/site.yml \
   --limit wordpress_servers
 
 # 3. Restore data (10 min)

@@ -101,7 +101,7 @@ ssh -V            # OpenSSH >= 8.0
 
 ```
 ┌─────────────────────────────────────┐
-│  Hetzner CX23 (€5.04/mo)           │
+│  Hetzner CAX11 (€4.05/mo)          │
 │  ┌─────────────────────────────┐   │
 │  │  WordPress + MariaDB         │   │
 │  │  Nginx + PHP 8.4-FPM         │   │
@@ -112,7 +112,7 @@ ssh -V            # OpenSSH >= 8.0
 └─────────────────────────────────────┘
 ```
 
-**Cost:** €5.04/month (x86) or €4.45/month (ARM)
+**Cost:** €3.68/month (x86) or €4.05/month (ARM)
 
 ### Scenario 2: Separated Monitoring (2 Servers)
 
@@ -121,7 +121,7 @@ ssh -V            # OpenSSH >= 8.0
 ```
 ┌──────────────────────┐  ┌──────────────────────┐
 │  WordPress Server    │  │  Monitoring Server   │
-│  CX23 (€5.04/mo)     │  │  CX23 (€5.04/mo)     │
+│  CAX11 (€4.05/mo)    │  │  CAX11 (€4.05/mo)    │
 │  ├─ WordPress        │  │  ├─ Prometheus       │
 │  ├─ Nginx            │  │  ├─ Grafana          │
 │  ├─ MariaDB          │  │  ├─ Loki             │
@@ -130,7 +130,7 @@ ssh -V            # OpenSSH >= 8.0
 └──────────────────────┘  └──────────────────────┘
 ```
 
-**Cost:** €10.08/month
+**Cost:** €8.10/month
 
 ### Scenario 3: Full 3-Tier (3+ Servers)
 
@@ -139,12 +139,12 @@ ssh -V            # OpenSSH >= 8.0
 ```
 ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
 │  WordPress  │  │  Monitoring │  │   OpenBao   │
-│  CX33       │  │  CX23       │  │   CX11      │
-│  €12.90/mo  │  │  €5.04/mo   │  │   €4.15/mo  │
+│  CAX21      │  │  CAX11      │  │   CAX11     │
+│  ~€8.10/mo  │  │  €4.05/mo   │  │   €4.05/mo  │
 └─────────────┘  └─────────────┘  └─────────────┘
 ```
 
-**Cost:** €22.09/month
+**Cost:** ~€16.20/month
 
 ---
 
@@ -178,7 +178,7 @@ hcloud_token = "your-hetzner-api-token"
 
 # Server Configuration
 server_name = "stag-de-wp-01"
-server_type = "cx23"        # or "cax11" for ARM
+server_type = "cax11"        # ARM64 production default
 server_location = "nbg1"    # Nuremberg, Germany
 server_image = "debian-13"  # Debian Trixie
 
@@ -219,6 +219,8 @@ terraform output server_ipv4
 
 ### Step 4: Configure Dynamic Inventory
 
+**Note**: The Hetzner dynamic inventory is already configured in `ansible.cfg` (no `-i` needed).
+
 ```bash
 cd ../../ansible
 
@@ -226,7 +228,7 @@ cd ../../ansible
 export HCLOUD_TOKEN="your-hetzner-api-token"
 
 # Test dynamic inventory discovery
-ansible-inventory -i inventory/hetzner.hcloud.yml --graph
+ansible-inventory --graph
 
 # Expected output:
 # @all:
@@ -235,11 +237,11 @@ ansible-inventory -i inventory/hetzner.hcloud.yml --graph
 #   |  |  |--stag-de-wp-01
 #   |  |--@staging:
 #   |  |  |--stag-de-wp-01
-#   |  |--@type_cx23:
+#   |  |--@type_cax11:
 #   |  |  |--stag-de-wp-01
 
 # List detailed inventory
-ansible-inventory -i inventory/hetzner.hcloud.yml --list
+ansible-inventory --list
 ```
 
 ### Step 5: Configure Ansible Variables
@@ -299,7 +301,7 @@ openssl rand -base64 32
 
 ```bash
 # Test connection first
-ansible -i inventory/hetzner.hcloud.yml staging -m ping
+ansible staging -m ping
 
 # Expected output:
 # stag-de-wp-01 | SUCCESS => {
@@ -307,11 +309,11 @@ ansible -i inventory/hetzner.hcloud.yml staging -m ping
 # }
 
 # Run full deployment (20-30 minutes)
-ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml \
+ansible-playbook playbooks/site.yml \
   --ask-vault-pass
 
 # Or deploy specific tags
-ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml \
+ansible-playbook playbooks/site.yml \
   --tags wordpress \
   --ask-vault-pass
 ```
@@ -445,7 +447,7 @@ In Terraform Cloud workspace > Variables:
 |----------|-------|-----------|----------|
 | `hcloud_token` | your-hetzner-api-token | ✅ Yes | Terraform |
 | `environment` | production | ❌ No | Terraform |
-| `server_type` | cx23 | ❌ No | Terraform |
+| `server_type` | cax11 | ❌ No | Terraform |
 | `server_location` | nbg1 | ❌ No | Terraform |
 | `architecture` | x86 | ❌ No | Terraform |
 | `project_name` | wordpress-lms | ❌ No | Terraform |
@@ -483,7 +485,7 @@ terraform {
 
 # Server Configuration (CHANGE after ARM testing)
 server_name = "prod-de-wp-01"
-server_type = "cx23"        # or "cax11" if ARM wins
+server_type = "cax11"        # ARM64 winner
 server_location = "nbg1"    # Nuremberg, Germany
 server_image = "debian-13"
 
@@ -538,7 +540,7 @@ terraform init
 git add terraform/environments/production/
 
 # Commit with clear message
-git commit -m "Configure production environment for x86 CX23"
+git commit -m "Configure production environment for ARM CAX11"
 
 # Push to Codeberg
 git push origin main
@@ -637,20 +639,20 @@ vault_wordpress_admin_email: "your-email@example.com"
 export HCLOUD_TOKEN="your-hetzner-api-token"
 
 # Test connection
-ansible -i inventory/hetzner.hcloud.yml production -m ping
+ansible production -m ping
 
 # Deploy full stack
-ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml \
+ansible-playbook playbooks/site.yml \
   --limit production \
   --ask-vault-pass
 
 # Or deploy incrementally
-ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml \
+ansible-playbook playbooks/site.yml \
   --limit production \
   --tags common,security \
   --ask-vault-pass
 
-ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml \
+ansible-playbook playbooks/site.yml \
   --limit production \
   --tags wordpress \
   --ask-vault-pass
@@ -677,10 +679,10 @@ If you choose this path, you'd need to:
 
 | Factor | x86 (CX23) | ARM (CAX11) | Winner |
 |--------|------------|-------------|--------|
-| **Price** | €5.04/mo | €4.45/mo | ARM (-12%) |
-| **Performance** | Tested: 3,114 req/s | TBD | TBD |
+| **Price** | €3.68/mo | €4.05/mo | x86 (-9%) |
+| **Performance** | Tested: 3,114 req/s | Tested: 8,338 req/s | ARM |
 | **Availability** | Limited stock | Always available | ARM |
-| **Compatibility** | 100% | ~95% (some packages) | x86 |
+| **Compatibility** | 100% | 100% | Tie |
 
 ### Testing Process
 
@@ -694,7 +696,7 @@ If you choose this path, you'd need to:
 2. **Run benchmarks** (see [docs/performance/X86_STAGING_BENCHMARK_WITH_MONITORING.md](../performance/X86_STAGING_BENCHMARK_WITH_MONITORING.md)):
    - Result: 3,114 req/s, 32ms latency, A+ grade
 
-3. **Deploy ARM staging**:
+3. **Deploy ARM staging** (done):
 
    ```bash
    # Destroy x86
@@ -731,7 +733,7 @@ If you choose this path, you'd need to:
 
    ```bash
    # Edit terraform/environments/production/terraform.production.tfvars
-   server_type = "cax11"  # or "cx23"
+   server_type = "cax11"  # ARM64 production
    architecture = "arm64"  # or "x86"
    ```
 
@@ -819,24 +821,39 @@ See detailed guide: [docs/infrastructure/CLOUDFLARE_SETUP.md](../infrastructure/
 3. **Configure plugins**:
    - Redis Cache: Enable object caching
    - Nginx Helper: Configure FastCGI cache purging
-   - Cloudflare: Connect API (optional)
 
 ### Set Up Monitoring Dashboards
 
 1. **Access Grafana**:
 
    ```
-   URL: http://<production-ip>:3000
+   URL: https://grafana.yourdomain.com
    User: admin
    Pass: <vault_grafana_admin_password>
    ```
 
-2. **Import dashboards**:
+   **Optional (local-only access):**
+
+   ```bash
+   # SSH tunnel to Grafana + Prometheus
+   ssh -L 3000:localhost:3000 -L 9090:localhost:9090 malpanez@yourdomain.com
+
+   # Grafana:   http://localhost:3000
+   # Prometheus: http://localhost:9090
+   ```
+
+2. **Optional subdomains (if you enable Nginx vhosts + auth):**
+
+   - Grafana: `https://grafana.yourdomain.com`
+   - Prometheus: `https://prometheus.yourdomain.com` (recommended with basic auth)
+   - Loki: `https://loki.yourdomain.com` (recommended with basic auth)
+
+3. **Import dashboards**:
    - Node Exporter Full: Dashboard ID `1860`
    - Nginx Stats: Dashboard ID `12708`
    - MariaDB: Dashboard ID `7362`
 
-3. **Configure alerts** (optional):
+4. **Configure alerts** (optional):
    - Grafana > Alerting > Contact Points
    - Add email, Slack, or other notification channel
 
@@ -959,7 +976,7 @@ See detailed guide: [docs/infrastructure/CLOUDFLARE_SETUP.md](../infrastructure/
 4. **Re-run Ansible with specific role**:
 
    ```bash
-   ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml \
+   ansible-playbook playbooks/site.yml \
      --tags nginx_wordpress \
      --limit production \
      --ask-vault-pass

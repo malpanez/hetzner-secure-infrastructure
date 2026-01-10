@@ -1601,4 +1601,4 @@ location ~* ^/(readme|license)\.(html|txt)$ {
 
 **Last Updated**: 2026-01-09
 **Configuration File**: `ansible/roles/nginx_wordpress/templates/nginx-wordpress-optimized.conf.j2`
-**Tested On**: Hetzner CX23 (x86) - 3,114 req/s, 32ms latency, A+ grade
+**Tested On**: Hetzner CAX11 (ARM64) - 8,339 req/s, 12ms latency, S-tier; baseline CX23 (x86) - 3,114 req/s, 32ms

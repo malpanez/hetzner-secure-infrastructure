@@ -1,6 +1,6 @@
 # Documentation Index
 
-**Last Updated**: $(date +%Y-%m-%d)
+**Last Updated**: 2026-01-09
 
 Quick access to all project documentation.
 
@@ -60,7 +60,7 @@ Quick access to all project documentation.
 ### Performance
 
 - [ARM64 vs x86 Comparison](performance/ARM64_vs_X86_COMPARISON.md) - **Performance benchmarks**
-- [ARM64 Staging Benchmark](performance/ARM64_STAGING_BENCHMARK.md) - CAX11 test results
+- [ARM64 Staging Benchmark](performance/ARM64_STAGING_BENCHMARK.md) - Legacy CAX21 test results
 - [x86 Staging Benchmark](performance/X86_STAGING_BENCHMARK_WITH_MONITORING.md) - CX23 test results
 - [Testing x86 vs ARM](performance/TESTING_x86_vs_ARM.md) - Methodology
 

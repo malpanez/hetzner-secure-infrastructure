@@ -1,5 +1,7 @@
 # ARM64 Staging Server Performance Benchmark
 
+**Status**: Legacy CAX21 run (superseded by CAX11 results in `docs/performance/ARM64_vs_X86_COMPARISON.md`).
+
 **Date**: 2026-01-01
 **Server**: stag-de-wp-01 (Hetzner CAX21)
 **Architecture**: ARM64 (aarch64)

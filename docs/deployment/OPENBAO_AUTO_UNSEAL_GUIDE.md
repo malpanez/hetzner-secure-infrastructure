@@ -107,13 +107,13 @@
 
 ```bash
 # 1. Deploy Infrastructure (includes both OpenBao instances)
-ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml
+ansible-playbook playbooks/site.yml
 
 # Output: Both Transit (8201) and Primary (8200) OpenBao deployed
 #         Both are SEALED and need initialization
 
 # 2. Bootstrap Transit Instance
-ansible-playbook -i inventory/hetzner.hcloud.yml \
+ansible-playbook \
   playbooks/openbao-transit-bootstrap.yml \
   -e openbao_transit_bootstrap_ack=true
 
@@ -128,14 +128,14 @@ ansible-vault edit inventory/group_vars/secrets_servers/vault.yml
 # vault_openbao_transit_token: "hvs.XXXXXXXXXXXX"
 
 # 4. Re-deploy Primary with Auto-Unseal
-ansible-playbook -i inventory/hetzner.hcloud.yml \
+ansible-playbook \
   playbooks/site.yml --tags openbao
 
 # Output: Primary OpenBao reconfigured with Transit seal stanza
 #         Primary will auto-unseal on next initialization
 
 # 5. Bootstrap Primary OpenBao
-ansible-playbook -i inventory/hetzner.hcloud.yml \
+ansible-playbook \
   playbooks/openbao-bootstrap.yml \
   -e openbao_bootstrap_ack=true
 
@@ -144,7 +144,7 @@ ansible-playbook -i inventory/hetzner.hcloud.yml \
 #         Creates WordPress rotation token
 
 # 6. Setup WordPress DB Rotation
-ansible-playbook -i inventory/hetzner.hcloud.yml \
+ansible-playbook \
   playbooks/setup-openbao-rotation.yml
 
 # Output: Daily WordPress DB credential rotation configured
@@ -158,7 +158,7 @@ ansible-playbook -i inventory/hetzner.hcloud.yml \
 ### Step 1: Deploy Infrastructure
 
 ```bash
-ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml
+ansible-playbook playbooks/site.yml
 ```
 
 **What this does**:
@@ -175,7 +175,7 @@ ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml
 ### Step 2: Bootstrap Transit Instance
 
 ```bash
-ansible-playbook -i inventory/hetzner.hcloud.yml \
+ansible-playbook \
   playbooks/openbao-transit-bootstrap.yml \
   -e openbao_transit_bootstrap_ack=true
 ```
@@ -228,7 +228,7 @@ vault_openbao_transit_token: "hvs.XXXXXXXXXXXXXXXXXXXXXXXXXX"
 ### Step 4: Re-deploy Primary with Auto-Unseal Configuration
 
 ```bash
-ansible-playbook -i inventory/hetzner.hcloud.yml \
+ansible-playbook \
   playbooks/site.yml --tags openbao
 ```
 
@@ -244,7 +244,7 @@ ansible-playbook -i inventory/hetzner.hcloud.yml \
 ### Step 5: Bootstrap Primary OpenBao
 
 ```bash
-ansible-playbook -i inventory/hetzner.hcloud.yml \
+ansible-playbook \
   playbooks/openbao-bootstrap.yml \
   -e openbao_bootstrap_ack=true
 ```
@@ -282,7 +282,7 @@ WordPress Rotation Token:
 ### Step 6: Setup WordPress Database Rotation
 
 ```bash
-ansible-playbook -i inventory/hetzner.hcloud.yml \
+ansible-playbook \
   playbooks/setup-openbao-rotation.yml
 ```
 
@@ -494,5 +494,5 @@ Tests now verify:
 ---
 
 **Status**: Production-Ready ✅
-**Last Updated**: 2026-01-07
+**Last Updated**: 2026-01-09
 **Maintained By**: Ansible automation (do not edit configurations manually)

@@ -260,9 +260,9 @@ Go to: Workspace > Variables > Add variable
 |--------------|-------|------|-----------|-----|-------------|
 | `hcloud_token` | `your-hetzner-api-token` | Terraform | ✅ Yes | ❌ No | Hetzner Cloud API token |
 | `environment` | `production` | Terraform | ❌ No | ❌ No | Environment name |
-| `server_type` | `cx23` | Terraform | ❌ No | ❌ No | Server type (change after ARM testing) |
+| `server_type` | `cax11` | Terraform | ❌ No | ❌ No | Server type (ARM64 baseline) |
 | `server_location` | `nbg1` | Terraform | ❌ No | ❌ No | Hetzner datacenter |
-| `architecture` | `x86` | Terraform | ❌ No | ❌ No | CPU architecture |
+| `architecture` | `arm64` | Terraform | ❌ No | ❌ No | CPU architecture |
 | `project_name` | `wordpress-lms` | Terraform | ❌ No | ❌ No | Project label |
 | `server_image` | `debian-13` | Terraform | ❌ No | ❌ No | OS image |
 | `deploy_monitoring_server` | `false` | Terraform | ❌ No | ✅ **Yes** | Deploy dedicated monitoring |
@@ -718,7 +718,7 @@ git push origin main
 
 3. **Review plan**:
    - Shows: Will create new server
-   - Review cost impact (additional €5.04/month)
+   - Review cost impact (additional €3.68/month)
 
 4. **Apply**:
    - Confirm & Apply
@@ -728,7 +728,7 @@ git push origin main
 
    ```bash
    cd ansible
-   ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml \
+   ansible-playbook playbooks/site.yml \
      --limit monitoring_servers \
      --ask-vault-pass
    ```
@@ -985,7 +985,7 @@ These remain manual for simplicity and reliability:
 ---
 
 **Documentation Version:** 1.0
-**Last Updated:** 2025-01-01
+**Last Updated:** 2026-01-09
 **Author:** Infrastructure Team
 
 **Related Documentation:**

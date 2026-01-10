@@ -268,8 +268,8 @@ ansible-vault edit inventory/group_vars/all/secrets.yml
 # 3. Change vault password (optional)
 ansible-vault rekey inventory/group_vars/all/secrets.yml
 
-# 4. Update services
-ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml --tags passwords
+# 4. Update services (inventory is configured in ansible.cfg)
+ansible-playbook playbooks/site.yml --tags passwords
 ```
 
 ---
@@ -550,25 +550,10 @@ From your Ansible configuration:
 
 ```yaml
 wordpress_plugins:
-  # LMS Platform
-  - name: learndash
-    source: premium  # Requires license
-    version: latest
-
-  # Security
-  - name: wordfence
-    source: wordpress.org
-    state: present
-
-  # Performance
-  - name: wp-rocket
-    source: premium  # Requires license
-    version: latest
-
-  # Cloudflare
-  - name: cloudflare
-    source: wordpress.org
-    state: present
+  - redis-cache                      # Valkey object cache
+  - nginx-helper                     # FastCGI cache purging
+  - wordfence-login-security         # Admin 2FA/MFA
+  - limit-login-attempts-reloaded    # Login rate limiting
 ```
 
 ### LearnDash Security Configuration
@@ -605,35 +590,20 @@ sudo -u www-data wp learndash license activate LICENSE_KEY --path=/var/www/wordp
    - Cloudflare Stream (paid) or Vimeo/YouTube private
    - Disable right-click on course pages
 
-### Wordfence Configuration
+### Admin 2FA Configuration
 
-**Wordfence** provides firewall and malware scanning:
+**wordfence-login-security** provides admin 2FA without duplicating WAF features:
 
 ```bash
 # Install and activate
-sudo -u www-data wp plugin install wordfence --activate --path=/var/www/wordpress
-
-# Configure via WP-CLI
-sudo -u www-data wp wordfence enable-firewall --path=/var/www/wordpress
-sudo -u www-data wp wordfence set-learning-mode off --path=/var/www/wordpress
+sudo -u www-data wp plugin install wordfence-login-security --activate --path=/var/www/wordpress
 ```
 
 **Recommended Settings:**
 
-1. **Firewall → Protection Level**: Extended Protection
-2. **Scan → Schedule**: Daily at 3 AM
-3. **Login Security**:
-   - ✅ Enable 2FA for all users
-   - ✅ Limit login attempts (5 tries, 20 min lockout)
-   - ✅ Block admin username
-   - ✅ Disable XML-RPC (unless needed)
-
-4. **Rate Limiting**:
-
-   ```
-   Human verification: 5 min for 100+ page views
-   Crawler verification: Block aggressive crawlers
-   ```
+1. **Enable 2FA** for all admin users
+2. **Limit login attempts** (5 tries, 20 min lockout)
+3. **Disable XML-RPC** (unless needed)
 
 ### Security Headers (Nginx)
 
@@ -673,33 +643,9 @@ Add:
 2. Backup database and files
 3. Check plugin changelogs for breaking changes
 
-### Recommended Additional Plugins
+### Plugins to Avoid
 
-```yaml
-# Add to ansible/roles/nginx_wordpress/defaults/main.yml
-wordpress_plugins:
-  # ... existing plugins ...
-
-  # Security hardening
-  - name: wp-force-ssl
-    source: wordpress.org
-    state: present
-
-  # Backup (important!)
-  - name: updraftplus
-    source: wordpress.org
-    state: present
-
-  # Anti-spam (if you have forms)
-  - name: akismet
-    source: wordpress.org
-    state: present
-
-  # Database optimization
-  - name: wp-optimize
-    source: wordpress.org
-    state: present
-```
+Evita plugins que dupliquen la infraestructura (caché, WAF, CDN). Mantén el stack mínimo y añade solo lo imprescindible.
 
 ---
 

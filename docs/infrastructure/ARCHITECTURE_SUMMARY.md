@@ -2,7 +2,7 @@
 
 > **Resumen completo de la arquitectura de infraestructura segura para WordPress LMS en Hetzner Cloud**
 
-Última actualización: 2025-12-28
+Última actualización: 2026-01-09
 
 ---
 
@@ -78,7 +78,7 @@ graph TB
             fw_rules["Rules:<br/>- SSH: Admin IP only<br/>- HTTPS: Cloudflare IPs<br/>- Monitoring: localhost"]
         end
 
-        subgraph wordpress_server["🖥️ WordPress Server (cx21)"]
+        subgraph wordpress_server["🖥️ WordPress Server (CAX11)"]
             nginx["Nginx :80,:443"]
             php["PHP-FPM 8.3"]
             mariadb["MariaDB 10.11"]
@@ -101,7 +101,7 @@ graph TB
             grafana["Grafana :3000"]
         end
 
-        subgraph openbao_server["🔐 OpenBao Server (cx11 - Optional)"]
+        subgraph openbao_server["🔐 OpenBao Server (CAX11 - Optional)"]
             openbao["OpenBao :8200"]
             consul["Consul :8500<br/>(HA Backend)"]
         end
@@ -151,7 +151,7 @@ graph TB
 
 ## Componentes Principales
 
-### 1. WordPress Server (cx21)
+### 1. WordPress Server (CAX11)
 
 **Especificaciones:**
 
@@ -159,7 +159,7 @@ graph TB
 - **RAM**: 4 GB
 - **Disco**: 40 GB SSD (+ 20 GB volume)
 - **Tráfico**: 20 TB/mes
-- **Costo**: €5.83/mes + €2.40/mes volume = **€8.23/mes**
+- **Costo**: €4.05/mes + €2.40/mes volume = **€6.45/mes**
 
 **Servicios instalados:**
 
@@ -180,7 +180,7 @@ graph TB
 - Valkey Exporter :9121 (cache hits, evictions, memoria)
 - Blackbox Exporter :9115 (SSL expiry, HTTP health)
 
-### 2. Monitoring Stack (mismo servidor cx21)
+### 2. Monitoring Stack (mismo servidor CAX11)
 
 **Prometheus**
 
@@ -274,7 +274,7 @@ graph TB
 
 #### Opción 1: Servidor separado (Recomendado para producción)
 
-- **Server**: cx11 (€3.79/mes)
+- **Server**: CAX11 (€4.05/mes)
 - **Volume**: 10 GB (€1.20/mes)
 - **Backups**: €0.76/mes
 - **Total**: €5.75/mes
@@ -531,44 +531,44 @@ ansible-playbook site.yml --ask-vault-pass
 
 | Componente | Especificaciones | Costo |
 |------------|-----------------|-------|
-| WordPress Server (cx21) | 2 vCPU, 4 GB RAM, 40 GB | €5.83 |
+| WordPress Server (CAX11) | 2 vCPU, 4 GB RAM, 40 GB | €4.05 |
 | Volume (WordPress data) | 20 GB SSD | €2.40 |
 | Backups | 7 snapshots | €1.17 |
 | Domain | Cloudflare (transferido) | €13.05/año = €1.09/mes |
-| **TOTAL** | | **€10.49/mes** |
+| **TOTAL** | | **€8.71/mes** |
 
 ### Opción 2: Con OpenBao Separado (Production)
 
 | Componente | Especificaciones | Costo |
 |------------|-----------------|-------|
-| WordPress Server (cx21) | 2 vCPU, 4 GB RAM, 40 GB | €5.83 |
+| WordPress Server (CAX11) | 2 vCPU, 4 GB RAM, 40 GB | €4.05 |
 | Volume (WordPress data) | 20 GB SSD | €2.40 |
-| OpenBao Server (cx11) | 1 vCPU, 2 GB RAM, 20 GB | €3.79 |
+| OpenBao Server (CAX11) | 2 vCPU, 4 GB RAM, 20 GB | €4.05 |
 | Volume (OpenBao data) | 10 GB SSD | €1.20 |
 | Backups (WordPress) | 7 snapshots | €1.17 |
 | Backups (OpenBao) | 7 snapshots | €0.76 |
 | Domain | Cloudflare (transferido) | €13.05/año = €1.09/mes |
-| **TOTAL** | | **€16.24/mes** |
+| **TOTAL** | | **€14.72/mes** |
 
 ### Opción 3: Escalado (3-4 servidores)
 
 | Componente | Especificaciones | Costo |
 |------------|-----------------|-------|
-| Load Balancer | Hetzner LB | €5.39 |
-| WordPress Servers (2x cx21) | 2 vCPU, 4 GB cada uno | €11.66 |
-| Database Server (cx21) | Dedicated MariaDB | €5.83 |
-| Monitoring Server (cx11) | Prometheus + Grafana | €3.79 |
-| OpenBao Server (cx11) | Secrets management | €3.79 |
+| Load Balancer | Hetzner LB | Ver pricing |
+| WordPress Servers (2x CAX11) | 2 vCPU, 4 GB cada uno | €8.10 |
+| Database Server (CAX11) | Dedicated MariaDB | €4.05 |
+| Monitoring Server (CAX11) | Prometheus + Grafana | €4.05 |
+| OpenBao Server (CAX11) | Secrets management | €4.05 |
 | Volumes (60 GB total) | SSD storage | €7.20 |
 | Backups | Multiple snapshots | €4.50 |
 | Domain | Cloudflare | €1.09/mes |
-| **TOTAL** | | **€43.25/mes** |
+| **TOTAL** | | **€33.04/mes + LB** |
 
 ### Comparativa con Alternativas
 
 | Proveedor | Configuración similar | Costo/mes |
 |-----------|----------------------|-----------|
-| **Hetzner (nuestra config)** | cx21 + monitoring | **€10.49** |
+| **Hetzner (nuestra config)** | CAX11 + monitoring | **€8.71** |
 | AWS | t3.medium + RDS + CloudWatch | ~€65 |
 | DigitalOcean | Droplet + DB + Monitoring | ~€45 |
 | GCP | e2-medium + Cloud SQL | ~€70 |
@@ -616,7 +616,7 @@ ansible-playbook site.yml --ask-vault-pass
 - ❌ Elasticsearch: 2-4 GB RAM mínimo
 - ❌ Kibana: 1-2 GB RAM adicional
 - ❌ Logstash: Complejo de configurar
-- ❌ Total: ~4-6 GB RAM solo para logs (insostenible en cx21)
+- ❌ Total: ~4-6 GB RAM solo para logs (insostenible en CAX11)
 
 ### 3. ¿Por qué DEB822 format?
 
@@ -920,12 +920,12 @@ tofu apply
 
 # 4. Deploy con Ansible
 cd ../../../ansible
-ansible-playbook -i inventory/hetzner.yml playbooks/site.yml --ask-vault-pass
+ansible-playbook playbooks/site.yml --ask-vault-pass
 
 # 5. Verificar monitoring
-# - Prometheus: http://YOUR_IP:9090
-# - Grafana: http://YOUR_IP:3000 (admin/admin)
-# - Loki: http://YOUR_IP:3100/ready
+# - Grafana: https://grafana.tudominio.com (admin/<vault>)
+# - Prometheus: http://YOUR_IP:9090 (local/SSH tunnel)
+# - Loki: http://YOUR_IP:3100/ready (local/SSH tunnel)
 
 # 6. Post-deployment
 # Seguir POST_DEPLOYMENT.md para:
@@ -982,5 +982,5 @@ Esta arquitectura proporciona:
 
 ---
 
-**Última actualización**: 2025-12-28
+**Última actualización**: 2026-01-09
 **Versión**: 2.0 (Post-migraciones DEB822 + Valkey + Loki)

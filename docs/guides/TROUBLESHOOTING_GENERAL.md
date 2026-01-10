@@ -302,7 +302,7 @@ fatal: [host]: UNREACHABLE! => {"msg": "Failed to connect to the host via ssh"}
 ssh -vvv user@host
 
 # Check from Ansible
-ansible all -i inventory/your-inv.yml -m ping
+ansible all -m ping
 ```
 
 ## Getting Help

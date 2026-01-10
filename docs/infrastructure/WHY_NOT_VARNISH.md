@@ -520,5 +520,5 @@ Tu stack actual (Cloudflare + Nginx FastCGI + Valkey) es la elección correcta p
 
 **Documento**: Why NOT Varnish
 **Versión**: 1.0
-**Fecha**: 2025-12-26
+**Fecha**: 2026-01-09
 **Próxima revisión**: Cuando tengas 500+ estudiantes activos

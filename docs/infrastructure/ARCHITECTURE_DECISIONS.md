@@ -5,7 +5,7 @@
 **Project**: Trading Course Platform ($3,000/student)
 **Target**: 10-200 students (Year 1)
 **Budget**: Minimal CapEx, scalable OpEx
-**Last Updated**: 2025-12-26
+**Last Updated**: 2026-01-09
 
 ---
 
@@ -32,17 +32,17 @@
 
 ```yaml
 Option A: 1 Server (All-in-one) ✅ SELECTED
-  - Cost: €9.40/mes
+  - Cost: €4.05/mes
   - Complexity: Low
   - Capacity: 50-100 concurrent students
 
 Option B: 2 Servers (Frontend + Backend)
-  - Cost: €18.80/mes
+  - Cost: €8.10/mes
   - Complexity: Medium
   - Capacity: 200-500 concurrent students
 
 Option C: 4 Servers (Fully separated)
-  - Cost: €22.36/mes
+  - Cost: ~€20/mes + LB
   - Complexity: High
   - Capacity: 500+ concurrent students
 ```
@@ -79,9 +79,9 @@ Option C: 4 Servers (Fully separated)
 **Migration Path**:
 
 ```
-Month 1-6:  1 server (cx21)
-Month 6-12: Upgrade to cx31 if needed (4 vCPU, 8 GB) - €17.90/mes
-Month 12+:  Split to 2 servers (Frontend + Backend) - €18.80/mes
+Month 1-6:  1 server (CAX11)
+Month 6-12: Upgrade to CAX21 if needed (4 vCPU, 8 GB) - ~€8.10/mes
+Month 12+:  Split to 2 servers (Frontend + Backend) - €8.10/mes
 ```
 
 **Triggers for Scaling**:
@@ -96,19 +96,19 @@ Month 12+:  Split to 2 servers (Frontend + Backend) - €18.80/mes
 
 ### 1.2 Server Specifications
 
-**Decision**: Hetzner cx21
+**Decision**: Hetzner CAX11 (ARM64)
 
 ```yaml
 Provider: Hetzner Cloud
-Type: cx21
+Type: cax11
 Specs:
-  CPU: 2 vCPU (AMD EPYC or Intel Xeon)
+  CPU: 2 vCPU (Ampere Altra)
   RAM: 4 GB DDR4
   Storage: 40 GB NVMe SSD
   Bandwidth: 20 TB/month
   Network: 1 Gbit/s
-Location: Falkenstein, Germany (EU)
-Cost: €9.40/month
+Location: Nuremberg, Germany (EU)
+Cost: €4.05/month
 ```
 
 **Why Hetzner**:
@@ -659,7 +659,7 @@ Resource Usage:
 
 - Only 1 server to monitor
 - Resources: <400 MB RAM
-- Cost: €3.79/mes saved
+- Cost: €4.05/mes saved
 - Complexity: Simpler
 
 **When to Separate**:
@@ -679,7 +679,7 @@ Resource Usage:
 
 ```yaml
 Infrastructure:
-├── Hetzner cx21: €9.40/mes
+├── Hetzner CAX11: €4.05/mes
 └── Cloudflare FREE: €0
 
 Software (One-time):
@@ -692,16 +692,16 @@ Video Hosting:
 
 TOTAL YEAR 1:
 ├── CapEx: €192 (LearnDash + domain)
-├── OpEx: €9.40/mes × 12 = €112.80
+├── OpEx: €4.05/mes × 12 = €48.60
 ├── Video: €30
-└── TOTAL: €334.80/year (€27.90/mes avg)
+└── TOTAL: €270.60/year (€22.55/mes avg)
 ```
 
 **Phase 2 (Months 6-12): Growth**
 
 ```yaml
 Infrastructure:
-├── Hetzner cx21: €9.40/mes
+├── Hetzner CAX11: €4.05/mes
 └── Cloudflare PRO: €20/mes
 
 Software:
@@ -711,10 +711,10 @@ Video Hosting:
 └── InfoProtector: €18/mes = €216/year
 
 TOTAL YEAR 2:
-├── OpEx: €29.40/mes × 12 = €352.80
+├── OpEx: €24.05/mes × 12 = €288.60
 ├── Software: €180
 ├── Video: €216
-└── TOTAL: €748.80/year (€62.40/mes)
+└── TOTAL: €684.60/year (€57.05/mes)
 ```
 
 ### 8.2 ROI Analysis
@@ -761,7 +761,7 @@ Layer 2: UFW Firewall
 └── Fail2ban for brute-force protection
 
 Layer 3: Application Security
-├── Wordfence (WordPress WAF)
+├── Admin 2FA plugin (wordfence-login-security)
 ├── Security headers (Nginx)
 ├── CSP (Content Security Policy)
 └── XSS/CSRF protection
@@ -821,8 +821,8 @@ Off-site (Future):
 
 | Decision | Choice | Cost | Rationale |
 |----------|--------|------|-----------|
-| **Topology** | 1 server (All-in-one) | €9.40/mes | Sufficient for 100 students, simple |
-| **Server** | Hetzner cx21 | €9.40/mes | Best price/performance EU |
+| **Topology** | 1 server (All-in-one) | €4.05/mes | Sufficient for 100 students, simple |
+| **Server** | Hetzner CAX11 | €4.05/mes | Best price/performance EU |
 | **OS** | Debian 13 | FREE | Stable, secure, long-term support |
 | **Database** | MariaDB 10.11 | FREE | 30% faster than MySQL, open source |
 | **Object Cache** | Valkey 8.0 | FREE | Better than Redis, truly open source |
@@ -834,7 +834,7 @@ Off-site (Future):
 | **Monitoring** | Prometheus + Grafana | FREE | Open source, powerful, same server |
 | **Backups** | Automated daily | FREE | Included in Ansible roles |
 
-**Total Year 1**: €334.80 (€27.90/mes average)
+**Total Year 1**: €270.60 (€22.55/mes average)
 **Breakeven**: 0.11 students (11% of one $3,000 sale)
 **Expected ROI**: 3,973% - 16,193% (5-20 students)
 
@@ -844,25 +844,25 @@ Off-site (Future):
 
 ```yaml
 Current (Month 1):
-└── 1× cx21 (€9.40/mes)
+└── 1× CAX11 (€4.05/mes)
     Capacity: 100 students
 
 Month 6-12 (if needed):
-└── 1× cx31 upgrade (€17.90/mes)
+└── 1× CAX21 upgrade (~€8.10/mes)
     Capacity: 300 students
     Trigger: CPU >70%, RAM >85%
 
 Month 12+ (if needed):
-├── 1× cx21 Frontend (€9.40/mes)
-└── 1× cx21 Backend (€9.40/mes)
-    Total: €18.80/mes
+├── 1× CAX11 Frontend (€4.05/mes)
+└── 1× CAX11 Backend (€4.05/mes)
+    Total: €8.10/mes
     Capacity: 1,000 students
 
 Month 18+ (success scenario):
-├── 2× cx21 Frontend + Load Balancer
-├── 1× cx31 Database (replicated)
-└── 1× cx11 Monitoring
-    Total: €35-50/mes
+├── 2× CAX11 Frontend + Load Balancer
+├── 1× CAX21 Database (replicated)
+└── 1× CAX11 Monitoring
+    Total: ~€20/mes + LB
     Capacity: 5,000+ students
     Revenue: >€100,000/mes
 ```
@@ -870,6 +870,6 @@ Month 18+ (success scenario):
 ---
 
 **Document Version**: 1.0
-**Last Review**: 2025-12-26
+**Last Review**: 2026-01-09
 **Next Review**: After 6 months or 100 students
 **Owner**: Infrastructure Team

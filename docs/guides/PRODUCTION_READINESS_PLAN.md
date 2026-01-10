@@ -1,10 +1,10 @@
 # Production Readiness Plan - Updated 9 Enero 2026
 
-> **Current Status**: Infrastructure is 95% complete with x86 testing completed. ARM testing and final production deployment pending.
+> **Current Status**: Infrastructure is 95% complete with x86 + ARM testing completed and ARM selected. Production deployment pending.
 
 **Last Updated**: 9 Enero 2026
-**Current Status**: 95% complete - x86 tested, monitoring deployed, optimization complete
-**Target**: Production-ready for 2 Enero 2025
+**Current Status**: 95% complete - x86 + ARM tested, ARM chosen, monitoring deployed
+**Target**: Production-ready for 9 Enero 2026
 
 ---
 
@@ -13,6 +13,8 @@
 ### What's Done ✅
 
 - ✅ **Full x86 (CX23) deployment tested** - 3,114 req/s, 32ms latency, A+ grade
+- ✅ **ARM (CAX11) testing completed** - 8,338 req/s, 12ms latency, S-tier
+- ✅ **Architecture decision** - ARM64 wins on performance
 - ✅ **Complete monitoring stack** - Prometheus, Grafana, Loki, Promtail (400MB overhead)
 - ✅ **10 Ansible roles modularized** - Following best practices with proper structure
 - ✅ **Performance optimizations** - FastCGI caching, gzip, PHP-FPM tuning, Valkey configuration
@@ -22,8 +24,6 @@
 
 ### What's Pending ⏳
 
-- ⏳ **ARM (CAX11) testing** - Deploy, benchmark, compare with x86
-- ⏳ **Architecture decision** - Choose x86 vs ARM based on test results
 - ⏳ **Production deployment** - Deploy chosen architecture to production
 - ⏳ **DNS migration** - Cloudflare setup (optional, can be done post-deployment)
 - ⏳ **SSL/TLS** - Let's Encrypt automation (optional, can be done post-deployment)
@@ -32,16 +32,16 @@
 
 ## 📋 Current Infrastructure Status
 
-### Server Configuration (Staging - x86 Tested)
+### Server Configuration (Staging - ARM Tested)
 
 | Component | Status | Details |
 |-----------|--------|---------|
-| **Terraform** | ✅ Complete | x86 (CX23) deployed successfully in nbg1 |
-| **Server Type** | ✅ Tested | CX23 (2 vCPU, 4GB RAM, €5.04/mo) |
+| **Terraform** | ✅ Complete | ARM (CAX11) deployed successfully in nbg1 |
+| **Server Type** | ✅ Tested | CAX11 (2 vCPU, 4GB RAM, €4.05/mo) |
 | **Operating System** | ✅ Deployed | Debian 13 (Trixie) |
 | **Web Server** | ✅ Optimized | Nginx 1.28.1 with FastCGI cache, gzip |
 | **PHP** | ✅ Tuned | PHP 8.4-FPM with optimized worker pools |
-| **Database** | ✅ Running | MariaDB 11.4 (geerlingguy.mysql role) |
+| **Database** | ✅ Running | MariaDB 11.8 (geerlingguy.mysql role) |
 | **Cache** | ✅ Configured | Valkey 8.0.1 with memory optimization |
 | **Monitoring** | ✅ Full Stack | Prometheus + Grafana + Loki + Promtail |
 
@@ -132,41 +132,11 @@ Memory Usage:     866 MB / 4GB (23% - excellent)
 
 ---
 
-### ARM (CAX11) - PENDING ⏳
+### ARM (CAX11) - COMPLETED ✅
 
-**Status**: Ready to deploy
-**Config File**: [terraform/terraform.staging.tfvars](terraform/terraform.staging.tfvars)
-**Action Required**: Switch architecture variable and re-deploy
-
-#### Test Plan
-
-```bash
-# 1. Update terraform.staging.tfvars
-architecture = "arm"    # Change from x86
-server_size  = "small"  # CAX11: 2 vCPU, 4GB RAM, €4.05/mo
-location     = "fsn1"   # Falkenstein (ARM always available)
-
-# 2. Deploy
-cd terraform
-terraform apply -var-file=terraform.staging.tfvars
-
-# 3. Run Ansible (same playbooks)
-cd ../ansible
-ansible-playbook -i inventory/staging.yml playbooks/wordpress.yml
-
-# 4. Benchmark (same parameters)
-scripts/load-test.py --url http://$SERVER_IP --requests 100000 --concurrency 100
-
-# 5. Compare results
-# - Throughput (req/s)
-# - Latency (response times)
-# - Resource usage (CPU, memory)
-# - Cost per request
-
-# 6. Destroy
-cd ../terraform
-terraform destroy -var-file=terraform.staging.tfvars
-```
+**Status**: Completed and documented  
+**Results**: 8,338 req/s, 12ms mean latency, 0 failed requests  
+**Full Report**: [docs/performance/ARM64_vs_X86_COMPARISON.md](docs/performance/ARM64_vs_X86_COMPARISON.md)
 
 #### Decision Criteria
 
@@ -202,11 +172,11 @@ terraform destroy -var-file=terraform.staging.tfvars
 - [x] Monitor with Grafana
 - [x] Document results
 - [x] Destroy x86 staging
-- [ ] Deploy ARM (CAX11) staging
-- [ ] Run identical tests
-- [ ] Compare x86 vs ARM results
-- [ ] Make architecture decision
-- [ ] Destroy ARM staging
+- [x] Deploy ARM (CAX11) staging
+- [x] Run identical tests
+- [x] Compare x86 vs ARM results
+- [x] Make architecture decision
+- [x] Destroy ARM staging
 
 ### Phase 2: Production Deployment
 
@@ -349,7 +319,7 @@ terraform destroy -var-file=terraform.staging.tfvars
 **Horizontal Scaling** (Add servers):
 
 - Deploy second WordPress server
-- Add Hetzner Load Balancer (€5.39/mo)
+- Add Hetzner Load Balancer (ver pricing)
 - Separate database server (MariaDB on dedicated server)
 
 **CDN Integration** (Recommended first step):
@@ -400,7 +370,7 @@ terraform destroy -var-file=terraform.staging.tfvars
 
    # Deploy, test, compare with x86 results
    cd terraform && terraform apply -var-file=terraform.staging.tfvars
-   cd ../ansible && ansible-playbook -i inventory/staging.yml playbooks/wordpress.yml
+   cd ../ansible && ansible-playbook playbooks/wordpress.yml
    scripts/load-test.py --url http://$SERVER_IP --requests 100000 --concurrency 100
    cd ../terraform && terraform destroy -var-file=terraform.staging.tfvars
    ```
@@ -419,7 +389,7 @@ terraform destroy -var-file=terraform.staging.tfvars
 
    # Run production Ansible
    cd ../ansible
-   ansible-playbook -i inventory/production.yml playbooks/wordpress.yml
+   ansible-playbook playbooks/wordpress.yml
 
    # Verify monitoring
    # Access Grafana at http://$SERVER_IP:3000
@@ -539,17 +509,17 @@ terraform destroy -var-file=terraform.staging.tfvars
 
 ### Current Staging (x86 - DESTROYED)
 
-- CX23 (2 vCPU, 4 GB RAM): €5.04/mo
+- CX23 (2 vCPU, 4 GB RAM): €3.68/mo
 - **Total staging cost**: €0 (destroyed after testing)
 
 ### Production (Pending Architecture Decision)
 
 **Option 1: x86 (CX23)**
 
-- Server: €5.04/mo
+- Server: €3.68/mo
 - Traffic: Included (20 TB)
 - Backups (optional): €2.52/mo (50% of server price)
-- **Total**: €5.04/mo (€7.56/mo with backups)
+- **Total**: €3.68/mo (€4.42/mo with backups)
 
 **Option 2: ARM (CAX11)** - RECOMMENDED
 
@@ -563,7 +533,7 @@ terraform destroy -var-file=terraform.staging.tfvars
 ### Future Optional Costs
 
 - Cloudflare: €0/mo (free tier sufficient)
-- Load Balancer: €5.39/mo (only if needed)
+- Load Balancer: ver pricing (only if needed)
 - Hetzner Volume: €0.05/GB/mo (for offsite backups)
 - Additional servers: €5.67/mo each (horizontal scaling)
 
@@ -671,7 +641,7 @@ See [docs/guides/TROUBLESHOOTING.md](docs/guides/TROUBLESHOOTING.md) for:
 
 ```bash
 # Check all services
-ansible-playbook -i inventory/production.yml playbooks/validate.yml
+ansible-playbook playbooks/validate.yml
 
 # View logs
 ssh user@server "journalctl -xe"
@@ -688,4 +658,4 @@ scripts/load-test.py --url http://SERVER_IP --requests 10000 --concurrency 50
 
 **Last Updated**: 9 Enero 2026 23:50 UTC
 **Next Review**: After ARM testing completion
-**Status**: 🟢 On track for 2 Enero 2025 production deployment
+**Status**: 🟢 On track for 9 Enero 2026 production deployment

@@ -366,5 +366,5 @@ grep hcloud_token terraform/terraform.staging.tfvars
 
 ---
 
-**Última actualización**: 29 Diciembre 2025
+**Última actualización**: 09 Enero 2026
 **Documentación oficial**: <https://docs.hetzner.cloud/#authentication>

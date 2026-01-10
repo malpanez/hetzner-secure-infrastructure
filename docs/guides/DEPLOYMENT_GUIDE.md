@@ -382,11 +382,11 @@ graph TB
 
 ```mermaid
 flowchart TD
-    A[Gastos para Deployment] --> B[OBLIGATORIOS<br/>$210 USD / €191]
+    A[Gastos para Deployment] --> B[OBLIGATORIOS<br/>$205 USD / €190]
     A --> C[OPCIONALES<br/>€0 - €infinito]
 
     B --> B1[LearnDash: $199]
-    B --> B2[Hetzner CX22: €5.39/mes]
+    B --> B2[Hetzner CAX11: €4.05/mes]
     B --> B3[Dominio: €0 ya tienes]
     B --> B4[Cloudflare Free: €0]
 
@@ -407,17 +407,17 @@ flowchart TD
 | Servicio | Obligatorio | Opcional | Costo | Notas |
 |----------|-------------|----------|-------|-------|
 | **LearnDash** | ✅ SÍ | | $199/año | SIN ESTO NO HAY LMS - WordPress solo es un blog |
-| **Hetzner CX22** | ✅ SÍ | | €5.39/mes | Servidor mínimo funcional |
+| **Hetzner CAX11** | ✅ SÍ | | €4.05/mes | Servidor mínimo funcional (ARM64) |
 | **Dominio** | ✅ SÍ | | €0 (ya tienes) | Ya pagado en GoDaddy |
 | **Cloudflare Free** | ✅ SÍ | | €0 gratis | CDN, SSL, DNS - Plan Free suficiente |
 | **Hetzner Volume 20GB** | | ⚠️ Depende | €2.40/mes | Solo si >10GB uploads/videos |
 | **Hetzner Backup** | | ✅ Recomendado | €1.08/mes | Backups automáticos diarios |
 | **Cloudflare Pro** | | ❌ NO necesario | $20/mes | Solo si >100k visitas/mes |
-| **WP Plugins (gratis)** | | ✅ Recomendado | €0 | Wordfence, UpdraftPlus, etc. |
+| **WP Plugins (esenciales)** | | ✅ Recomendado | €0 | 4 plugins esenciales instalados automáticamente |
 | **WP Rocket** | | ❌ NO necesario | $59/año | Nginx ya cachea |
 | **SMTP Gratis** | | ✅ Recomendado | €0 | SendGrid/Mailgun free tier |
 
-**TOTAL OBLIGATORIO:** $199 + €5.39/mes = **~$210 inicial + €65/año**
+**TOTAL OBLIGATORIO:** $199 + €4.05/mes = **~$205 inicial + €49/año**
 
 #### Timeline de Pagos - ¿Cuándo y Dónde Pagar?
 
@@ -444,11 +444,11 @@ gantt
 | Paso | Concepto | Dónde | Cuándo | Costo | Obligatorio |
 |------|----------|-------|--------|-------|-------------|
 | **1** | **LearnDash License** | [learndash.com/pricing](https://www.learndash.com/pricing/) | **ANTES de terraform** | $199 USD | ✅ SÍ |
-| **2** | **Hetzner Cloud** | [console.hetzner.cloud](https://console.hetzner.cloud) | Durante `terraform apply` | €5.39 | ✅ SÍ |
+| **2** | **Hetzner Cloud** | [console.hetzner.cloud](https://console.hetzner.cloud) | Durante `terraform apply` | €4.05 | ✅ SÍ |
 | **3** | **Transferir dominio a Cloudflare** | [dash.cloudflare.com](https://dash.cloudflare.com) | Durante/después deployment | €9-10 | ⚠️ RECOMENDADO |
 | **4** | **Cloudflare DNS/CDN/SSL** | [dash.cloudflare.com](https://dash.cloudflare.com) | Durante DNS setup | €0 (gratis) | ✅ SÍ |
-| | **TOTAL MÍNIMO** | | | **~$210 / €191** | Sin transferencia |
-| | **TOTAL RECOMENDADO** | | | **~$220 / €200** | Con transferencia dominio |
+| | **TOTAL MÍNIMO** | | | **~$205 / €190** | Sin transferencia |
+| | **TOTAL RECOMENDADO** | | | **~$215 / €200** | Con transferencia dominio |
 
 **IMPORTANTE:**
 
@@ -468,22 +468,17 @@ flowchart TD
     A[WordPress Plugins] --> B[Instalación Automática<br/>via Ansible]
     A --> C[Instalación Manual<br/>Requerida]
 
-    B --> B1[❌ NINGUNO<br/>Ansible instala SOLO WordPress Core]
+    B --> B1[✅ Plugins esenciales<br/>redis-cache, nginx-helper,<br/>wordfence-login-security,<br/>limit-login-attempts-reloaded]
 
     C --> C1[✅ LearnDash - OBLIGATORIO<br/>$199/año]
     C --> C2[⚠️ Otros plugins - OPCIONALES<br/>Instalar según necesidad]
 
     C1 --> C1A[Debes comprarlo y subirlo<br/>manualmente via wp-admin]
 
-    C2 --> C2A[Wordfence Security Gratis]
-    C2 --> C2B[UpdraftPlus Backups Gratis]
-    C2 --> C2C[WP Mail SMTP Gratis]
-    C2 --> C2D[Imagify Gratis hasta 20MB/mes]
+    C2 --> C2A[Opcionales según necesidad]
 
     style C1 fill:#ffe1e1
     style C1A fill:#ffe1e1
-    style C2A fill:#e1ffe1
-    style C2B fill:#e1ffe1
 ```
 
 **CLARIFICACIÓN IMPORTANTE:**
@@ -494,24 +489,17 @@ flowchart TD
 | **Nginx + PHP** | ✅ Automática (Ansible) | Gratis | Durante `ansible-playbook` |
 | **MariaDB** | ✅ Automática (Ansible) | Gratis | Durante `ansible-playbook` |
 | **Prometheus + Grafana** | ✅ Automática (Ansible) | Gratis | Durante `ansible-playbook` |
+| **Plugins esenciales (4)** | ✅ Automática (Ansible) | Gratis | Durante `ansible-playbook` |
 | **LearnDash Plugin** | ❌ MANUAL | $199/año | Después deployment, via WP Admin |
-| **Otros plugins WP** | ❌ Manual | Gratis/Pago | Después deployment, según necesidad |
+| **Otros plugins WP** | ❌ Manual | Gratis/Pago | Solo si hay necesidad específica |
 
 **WordPress Plugins (Instalación Manual Después de Deployment):**
 
 1. **OBLIGATORIO:**
    - LearnDash LMS (~$199/año) - Comprar antes, instalar después del deployment
 
-2. **RECOMENDADOS (Gratis):**
-   - Wordfence Security - Firewall + malware scanner
-   - UpdraftPlus - Backups a cloud (Cloudflare R2, Google Drive, etc.)
-   - WP Mail SMTP - Configurar email via SendGrid/Mailgun
-   - Imagify - Optimización automática de imágenes
-
-3. **OPCIONALES (Pago):**
-   - WP Rocket (~$59/año) - Caché avanzado (Nginx ya cachea, no crítico)
-   - Uncanny Toolkit Pro (~$119/año) - Mejoras UI para LearnDash
-   - GamiPress Pro (~$79/año) - Gamificación avanzada
+2. **OPCIONALES (solo si necesitas algo específico):**
+   - Formularios, LMS extras, email transaccional, etc.
 
 ### 📦 ¿Qué es el Hetzner Volume y lo necesito?
 
@@ -564,29 +552,29 @@ volume_size = 0  # Cambiar de 20 a 0 = sin volume extra
 
 ```mermaid
 pie title Distribución de Costos Mensuales (Configuración MÍNIMA)
-    "Hetzner Server CX22" : 5.39
+    "Hetzner Server CAX11" : 4.05
     "Cloudflare CDN" : 0
-    "Total" : 5.39
+    "Total" : 4.05
 ```
 
 **Configuración MÍNIMA (Recomendada para empezar):**
 
 | Componente | Especificaciones | Costo Mensual | Costo Anual |
 |-----------|------------------|---------------|-------------|
-| **Hetzner CX22** | 2 vCPU, 4GB RAM, 40GB SSD | €5.39 | €64.68 |
+| **Hetzner CAX11** | 2 vCPU, 4GB RAM, 40GB SSD | €4.05 | €48.60 |
 | **Cloudflare** | CDN, DNS, SSL, DDoS protection | €0.00 | €0.00 |
-| **SUBTOTAL MENSUAL** | | **€5.39** | **€64.68** |
+| **SUBTOTAL MENSUAL** | | **€4.05** | **€48.60** |
 
 **Configuración COMPLETA (Con todas las opciones):**
 
 | Componente | Especificaciones | Costo Mensual | Costo Anual |
 |-----------|------------------|---------------|-------------|
-| **Hetzner CX22** | 2 vCPU, 4GB RAM, 40GB SSD | €5.39 | €64.68 |
+| **Hetzner CAX11** | 2 vCPU, 4GB RAM, 40GB SSD | €4.05 | €48.60 |
 | **Hetzner Volume** | 20 GB almacenamiento adicional | €2.40 | €28.80 |
 | **Hetzner Backup** | Backups automáticos (20% del servidor) | €1.08 | €12.96 |
 | **Floating IP** | IP estática (opcional) | €1.19 | €14.28 |
 | **Cloudflare** | CDN, DNS, SSL, DDoS protection | €0.00 | €0.00 |
-| **SUBTOTAL MENSUAL** | | **€10.06** | **€120.72** |
+| **SUBTOTAL MENSUAL** | | **€8.72** | **€104.64** |
 
 ### Costos Anuales Recurrentes
 
@@ -604,20 +592,20 @@ pie title Distribución de Costos Mensuales (Configuración MÍNIMA)
 ```
 GASTOS INICIALES:
 LearnDash:              $199 USD (~€186)
-Hetzner primer mes:     €5.39
+Hetzner primer mes:     €4.05
 ─────────────────────────────────
-TOTAL INICIAL:          ~€191 / $210 USD
+TOTAL INICIAL:          ~€190 / $205 USD
 
 GASTOS MENSUALES:
-Hetzner CX22:           €5.39/mes
+Hetzner CAX11:          €4.05/mes
 
 GASTOS ANUALES:
-Infraestructura:        €64.68
+Infraestructura:        €48.60
 Dominio:                €12
 LearnDash renovación:   €186
 ─────────────────────────────────
-TOTAL PRIMER AÑO:       €262.68 (~$287 USD)
-AÑOS SIGUIENTES:        €262.68/año
+TOTAL PRIMER AÑO:       €246.60 (~$270 USD)
+AÑOS SIGUIENTES:        €246.60/año
 ```
 
 #### Opción 2: CONFIGURACIÓN COMPLETA (Con backups y volume)
@@ -625,20 +613,20 @@ AÑOS SIGUIENTES:        €262.68/año
 ```
 GASTOS INICIALES:
 LearnDash:              $199 USD (~€186)
-Hetzner primer mes:     €10.06
+Hetzner primer mes:     €8.72
 ─────────────────────────────────
-TOTAL INICIAL:          ~€196 / $215 USD
+TOTAL INICIAL:          ~€195 / $215 USD
 
 GASTOS MENSUALES:
-Hetzner completo:       €10.06/mes
+Hetzner completo:       €8.72/mes
 
 GASTOS ANUALES:
-Infraestructura:        €120.72
+Infraestructura:        €104.64
 Dominio:                €12
 LearnDash renovación:   €186
 ─────────────────────────────────
-TOTAL PRIMER AÑO:       €318.72 (~$349 USD)
-AÑOS SIGUIENTES:        €318.72/año
+TOTAL PRIMER AÑO:       €302.64 (~$330 USD)
+AÑOS SIGUIENTES:        €302.64/año
 ```
 
 ### Costos Opcionales
@@ -646,9 +634,9 @@ AÑOS SIGUIENTES:        €318.72/año
 | Componente | Costo | Cuándo Necesario |
 |-----------|-------|------------------|
 | **SendGrid/Mailgun SMTP** | €0-10/mes | Envío masivo de emails (>100/día) |
-| **Servidor más potente (CPX31)** | €14.28/mes | >10,000 usuarios activos/mes |
-| **Firewall adicional** | €5.39/mes | Múltiples servidores |
-| **Load Balancer** | €5.39/mes | Alta disponibilidad / redundancia |
+| **Servidor más potente (CAX21/CX23)** | Ver pricing Hetzner | >10,000 usuarios activos/mes |
+| **Firewall adicional** | €0 | Firewall de Hetzner Cloud |
+| **Load Balancer** | Ver pricing Hetzner | Alta disponibilidad / redundancia |
 | **Cloudflare Pro** | $20/mes | WAF avanzado, Image optimization |
 
 ---
@@ -809,7 +797,7 @@ nano terraform/environments/production/terraform.tfvars
 # Información básica
 server_name  = "wordpress-prod"
 environment  = "production"
-server_type  = "cx22"  # 2 vCPU, 4GB RAM
+server_type  = "cax11"  # 2 vCPU, 4GB RAM (ARM64)
 location     = "nbg1"  # Nuremberg (o "fsn1", "hel1")
 
 # Usuario admin (mismo que en .env)
@@ -1184,12 +1172,15 @@ En Cloudflare Dashboard → DNS → Records:
 |------|--------|-----------|-------|-----|-------|
 | A | @ | `TU.IP.SERVIDOR` | ✅ Proxied | Auto | WordPress root |
 | A | www | `TU.IP.SERVIDOR` | ✅ Proxied | Auto | WordPress www |
-| A | monitoring | `TU.IP.SERVIDOR` | ❌ DNS only | Auto | Grafana (sin proxy) |
+| A | grafana | `TU.IP.SERVIDOR` | ❌ DNS only | Auto | Grafana (sin proxy) |
+| A | prometheus | `TU.IP.SERVIDOR` | ❌ DNS only | Auto | Prometheus (opcional, con auth) |
+| A | loki | `TU.IP.SERVIDOR` | ❌ DNS only | Auto | Loki (opcional, con auth) |
 
 **IMPORTANTE sobre Proxy:**
 
 - ✅ **WordPress (@, www): PROXIED** - Cloudflare cachea y protege con CDN
-- ❌ **Grafana (monitoring): DNS ONLY** - Acceso directo sin proxy
+- ❌ **Grafana (grafana): DNS ONLY** - Acceso directo sin proxy
+- ❌ **Prometheus/Loki (opcional): DNS ONLY** - Exponer solo si añades auth
 
 **Paso 4: Configurar SSL/TLS manualmente**
 
@@ -1226,7 +1217,7 @@ Cloudflare Dashboard → Security → WAF:
 dig tudominio.com +short
 # Debe mostrar IP de Cloudflare (si proxy on)
 
-dig monitoring.tudominio.com +short
+dig grafana.tudominio.com +short
 # Debe mostrar tu SERVER_IP directamente
 
 # Verificar propagación global
@@ -1259,7 +1250,7 @@ flowchart LR
 
 #### Opción 1: Inventario Dinámico (RECOMENDADO)
 
-El plugin de Hetzner Cloud ya está configurado en [`ansible/inventory/hetzner.yml`](ansible/inventory/hetzner.yml)
+El plugin de Hetzner Cloud ya está configurado en `ansible.cfg` y apunta a `ansible/inventory/hetzner.hcloud.yml`.
 
 **Ventajas:**
 
@@ -1274,7 +1265,7 @@ El plugin de Hetzner Cloud ya está configurado en [`ansible/inventory/hetzner.y
 cd ansible
 
 # Verificar que el plugin funciona
-ansible-inventory -i inventory/hetzner.yml --graph
+ansible-inventory --graph
 
 # Debe mostrar:
 # @all:
@@ -1284,10 +1275,10 @@ ansible-inventory -i inventory/hetzner.yml --graph
 #   |--@ungrouped:
 
 # Ver todas las variables descubiertas
-ansible-inventory -i inventory/hetzner.yml --host wordpress-prod
+ansible-inventory --host wordpress-prod
 
 # Test de conectividad
-ansible -i inventory/hetzner.yml hetzner -m ping
+ansible hetzner -m ping
 ```
 
 **Configurar variables de grupo:**
@@ -1311,7 +1302,7 @@ wordpress_db_name: "wordpress_prod"
 wordpress_db_user: "wordpress"
 
 # Monitoring
-grafana_domain: "monitoring.tudominio.com"
+grafana_domain: "grafana.tudominio.com"
 prometheus_retention: "30d"
 
 # SSH config
@@ -1323,23 +1314,20 @@ ansible_python_interpreter: /usr/bin/python3
 **Ejecutar playbook con inventario dinámico:**
 
 ```bash
-ansible-playbook -i inventory/hetzner.yml \
-  playbooks/site.yml \
-  --ask-vault-pass
+ansible-playbook playbooks/site.yml --ask-vault-pass
 ```
 
 **OpenBao bootstrap (si aplica):**
 
 ```bash
-ansible-playbook -i inventory/hetzner.yml \
-  playbooks/openbao-bootstrap.yml \
+ansible-playbook playbooks/openbao-bootstrap.yml \
   -e openbao_bootstrap_ack=true \
   --ask-vault-pass
 ```
 
-#### Opción 2: Inventario Estático (Alternativa Simple)
+#### Opción 2: Inventario Estático (LEGACY)
 
-Si prefieres control manual o no quieres usar el plugin dinámico:
+Solo si necesitas control manual. Para usarlo, cambia el `inventory` en `ansible.cfg` a `ansible/inventory/production/hosts.yml`.
 
 ```bash
 # Editar inventario de producción
@@ -1371,16 +1359,14 @@ all:
         wordpress_db_user: "wordpress"
 
         # Monitoring
-        grafana_domain: "monitoring.tudominio.com"
+        grafana_domain: "grafana.tudominio.com"
         prometheus_retention: "30d"
 ```
 
 **Ejecutar playbook con inventario estático:**
 
 ```bash
-ansible-playbook -i inventory/production/hosts.yml \
-  playbooks/site.yml \
-  --ask-vault-pass
+ansible-playbook playbooks/site.yml --ask-vault-pass
 ```
 
 #### ¿Cuál usar?
@@ -1432,12 +1418,10 @@ sequenceDiagram
 cd ansible
 
 # Test de conectividad
-ansible -i inventory/production/hosts.yml wordpress_servers -m ping
+ansible wordpress_servers -m ping
 
 # Ejecutar deployment completo
-ansible-playbook -i inventory/production/hosts.yml \
-  playbooks/site.yml \
-  --ask-vault-pass
+ansible-playbook playbooks/site.yml --ask-vault-pass
 
 # Se te pedirá la contraseña del vault
 # Tiempo estimado: 15-25 minutos (primera ejecución)
@@ -1447,28 +1431,24 @@ ansible-playbook -i inventory/production/hosts.yml \
 
 ```bash
 # Fase 1: Hardening de seguridad
-ansible-playbook -i inventory/production/hosts.yml \
-  playbooks/site.yml \
+ansible-playbook playbooks/site.yml \
   --tags security,hardening \
   --ask-vault-pass
 
 # Verificar y continuar si OK
 
 # Fase 2: Base de datos
-ansible-playbook -i inventory/production/hosts.yml \
-  playbooks/site.yml \
+ansible-playbook playbooks/site.yml \
   --tags mariadb \
   --ask-vault-pass
 
 # Fase 3: Web server
-ansible-playbook -i inventory/production/hosts.yml \
-  playbooks/site.yml \
+ansible-playbook playbooks/site.yml \
   --tags nginx,wordpress \
   --ask-vault-pass
 
 # Fase 4: Monitoring
-ansible-playbook -i inventory/production/hosts.yml \
-  playbooks/site.yml \
+ansible-playbook playbooks/site.yml \
   --tags monitoring \
   --ask-vault-pass
 ```
@@ -1487,10 +1467,10 @@ flowchart TB
 
     CF --> |tudominio.com| Nginx[Nginx Reverse Proxy<br/>:443 HTTPS<br/>:80 HTTP]
     CF --> |www.tudominio.com| Nginx
-    CF --> |monitoring.tudominio.com| Nginx
+    CF --> |grafana.tudominio.com| Nginx
 
     Nginx --> |Host: tudominio.com<br/>Host: www.tudominio.com| WP[WordPress<br/>via PHP-FPM :9000]
-    Nginx --> |Host: monitoring.tudominio.com| Graf[Grafana<br/>:3000 HTTP]
+    Nginx --> |Host: grafana.tudominio.com| Graf[Grafana<br/>:3000 HTTP]
 
     WP --> DB[(MariaDB<br/>:3306)]
     WP --> Cache[(Valkey Cache<br/>:6379)]
@@ -1555,7 +1535,7 @@ server {
 ```nginx
 server {
     listen 443 ssl http2;
-    server_name monitoring.tudominio.com;
+    server_name grafana.tudominio.com;
 
     # SSL configurado por Ansible
     ssl_certificate /etc/letsencrypt/live/tudominio.com/fullchain.pem;
@@ -1575,7 +1555,7 @@ server {
 **¿Qué hace?**
 
 - Escucha en puerto 443 (HTTPS)
-- Responde SOLO si el dominio es `monitoring.tudominio.com`
+- Responde SOLO si el dominio es `grafana.tudominio.com`
 - Reenvía TODO el tráfico a Grafana (localhost:3000)
 - Preserva headers originales (IP del cliente, etc.)
 
@@ -1602,8 +1582,8 @@ sequenceDiagram
     CF-->>User: Página cached
 
     Note over User,DB: Petición a Grafana
-    User->>CF: GET https://monitoring.tudominio.com/
-    CF->>Nginx: GET / (Host: monitoring.tudominio.com)
+    User->>CF: GET https://grafana.tudominio.com/
+    CF->>Nginx: GET / (Host: grafana.tudominio.com)
     Nginx->>Nginx: Coincide virtual host Grafana
     Nginx->>Graf: Proxy a :3000
     Graf-->>Nginx: Dashboard HTML
@@ -1644,7 +1624,7 @@ ssh malpanez@tudominio.com
 sudo nginx -T | grep server_name
 # Debe mostrar:
 # server_name tudominio.com www.tudominio.com;
-# server_name monitoring.tudominio.com;
+# server_name grafana.tudominio.com;
 
 # Ver puertos en escucha
 sudo netstat -tlnp | grep nginx
@@ -1667,7 +1647,7 @@ sudo nginx -t
 |-----|--------------|-------------------|---------|--------------|
 | `https://tudominio.com` | Server IP | wordpress | PHP-FPM | 9000 |
 | `https://www.tudominio.com` | Server IP | wordpress | PHP-FPM | 9000 |
-| `https://monitoring.tudominio.com` | Server IP | grafana | Grafana | 3000 |
+| `https://grafana.tudominio.com` | Server IP | grafana | Grafana | 3000 |
 | `http://tudominio.com` | Server IP | redirect | → HTTPS | 443 |
 
 **TODO pasa por Nginx primero. Nginx es el único proceso escuchando en puertos 80/443.**
@@ -1806,7 +1786,7 @@ sequenceDiagram
 
 **Seguridad:**
 
-- **Wordfence Security** (Gratis) - WAF + Malware scanner
+- **wordfence-login-security** (Gratis) - 2FA/MFA para admin
 - **UpdraftPlus** (Gratis) - Backups a Cloudflare R2/S3
 
 **Performance:**
@@ -2030,8 +2010,9 @@ echo "=== Verificación completa ==="
 |----------|-----|--------------|
 | **WordPress Admin** | <https://tudominio.com/wp-admin> | Usuario: admin<br/>Pass: (vault) |
 | **WordPress Site** | <https://tudominio.com> | Público |
-| **Grafana** | <https://monitoring.tudominio.com> | Usuario: admin<br/>Pass: (vault) |
-| **Prometheus** | <http://IP:9090> | Sin auth (local only) |
+| **Grafana** | <https://grafana.tudominio.com> | Usuario: admin<br/>Pass: (vault) |
+| **Prometheus** | <http://IP:9090> | Local only (use SSH tunnel or optional subdomain + auth) |
+| **Loki** | <http://IP:3100/ready> | Local only (use SSH tunnel or optional subdomain + auth) |
 
 ### Tests de Seguridad
 
@@ -2165,9 +2146,7 @@ cd hetzner-secure-infrastructure
 ansible-galaxy install -r ansible/requirements.yml --force
 
 # Re-aplicar configuración
-ansible-playbook -i ansible/inventory/production/hosts.yml \
-  ansible/playbooks/site.yml \
-  --ask-vault-pass
+ansible-playbook ansible/playbooks/site.yml --ask-vault-pass
 ```
 
 ### Monitoreo
@@ -2175,7 +2154,7 @@ ansible-playbook -i ansible/inventory/production/hosts.yml \
 **Grafana Dashboards:**
 
 1. **WordPress Performance:**
-   - Acceder: <https://monitoring.tudominio.com>
+   - Acceder: <https://grafana.tudominio.com>
    - Dashboard: "Node Exporter Full"
    - Métricas clave:
      - CPU usage < 70%
@@ -2246,8 +2225,7 @@ source .env
 cd terraform/environments/production
 terraform init && terraform apply
 cd ../../..
-ansible-playbook -i ansible/inventory/production/hosts.yml \
-  ansible/playbooks/site.yml --ask-vault-pass
+ansible-playbook ansible/playbooks/site.yml --ask-vault-pass
 
 # Verificar servicios
 ssh malpanez@tudominio.com 'systemctl status nginx mariadb php8.4-fpm'
@@ -2259,8 +2237,7 @@ ssh malpanez@tudominio.com 'sudo tail -f /var/log/nginx/error.log'
 ssh malpanez@tudominio.com 'sudo /usr/local/bin/backup.sh'
 
 # Actualizar configuración
-ansible-playbook -i ansible/inventory/production/hosts.yml \
-  ansible/playbooks/site.yml --ask-vault-pass --diff
+ansible-playbook ansible/playbooks/site.yml --ask-vault-pass --diff
 
 # Destruir infraestructura (¡PELIGRO!)
 cd terraform/environments/production
