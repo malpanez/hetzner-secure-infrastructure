@@ -62,6 +62,7 @@ jobs:
   ansible-validate:
     name: Validate Ansible
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout code
@@ -91,12 +92,23 @@ jobs:
           cd ansible
           ansible-playbook playbooks/site.yml --syntax-check
 
-      - name: Ansible Lint
+      - name: Ansible Lint (own code only)
         run: |
           source .venv/bin/activate
           cd ansible
-          ansible-lint playbooks/site.yml
+          # Exclude vendored roles to improve performance and focus on our code
+          ansible-lint playbooks/ roles/ \
+            --exclude roles/geerlingguy.mysql/ \
+            --parseable | tee ../ansible-lint-report.txt || true
         continue-on-error: true
+        timeout-minutes: 8
+
+      - name: Upload lint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ansible-lint-report
+          path: ansible-lint-report.txt
 
       - name: YAML Lint
         run: |
