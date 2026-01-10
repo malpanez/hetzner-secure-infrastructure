@@ -21,7 +21,7 @@ Guía completa sobre el sistema de centralización de logs usando Grafana Loki y
 
 ```
 ┌─────────────────────────────────────────────────┐
-│ SERVIDOR (Hetzner CX22)                         │
+│ SERVIDOR (Hetzner CAX11)                        │
 │                                                  │
 │  ┌──────────────┐         ┌──────────────┐     │
 │  │   Promtail   │────────▶│     Loki     │     │
@@ -116,65 +116,94 @@ Promtail está configurado para recopilar los siguientes logs:
 
 ## Configuración
 
-### Variables principales (en `group_vars/monitoring_servers/`)
+### Roles utilizados
+
+Este proyecto utiliza las **colecciones oficiales de Grafana Labs**:
+
+- **Collection:** `grafana.grafana` (versión 6.0.6)
+- **Roles:**
+  - `grafana.grafana.loki` - Base de datos de logs
+  - `grafana.grafana.promtail` - Agente recolector de logs
+
+### Variables principales (en `ansible/inventory/group_vars/monitoring_servers/`)
 
 **Loki (`loki.yml`):**
 
 ```yaml
-# Despliegue
+# Despliegue y versión
 deploy_loki: true
 loki_version: "latest"
 
-# Retención (ajustar según necesidad)
-loki_retention_period: "720h"  # 30 días (recomendado)
-# Alternativas:
-# - 7 días: "168h" (~140-210 MB)
-# - 90 días: "2160h" (~1.8-2.7 GB)
+# Seguridad - bind solo a localhost
+loki_http_listen_address: "127.0.0.1"
+loki_http_listen_port: 3100
+loki_expose_port: false
 
-# Límites de ingesta
-loki_ingestion_rate_mb: 4
-loki_ingestion_burst_size_mb: 6
+# Límites y retención
+loki_limits_config:
+  retention_period: 720h  # 30 días (recomendado)
+  reject_old_samples: true
+  reject_old_samples_max_age: 720h
+  ingestion_rate_mb: 4
+  ingestion_burst_size_mb: 6
+  max_query_series: 500
+  max_query_parallelism: 32
 
-# Límites de query
-loki_max_query_series: 500
-loki_max_query_parallelism: 32
-
-# Backups
-loki_backup_enabled: true
-loki_backup_schedule: "0 3 * * *"  # Diario 3 AM
-loki_backup_retention_days: 7
+# Compactor para limpieza automática
+loki_compactor:
+  working_directory: "/var/lib/loki/compactor"
+  retention_enabled: true
+  retention_delete_delay: 2h
+  retention_delete_worker_count: 150
 ```
 
 **Promtail (`promtail.yml`):**
 
 ```yaml
-# Despliegue
+# Despliegue y versión
 deploy_promtail: true
 promtail_version: "latest"
 
-# Conexión a Loki
-promtail_loki_url: "http://localhost:3100/loki/api/v1/push"
+# Seguridad - bind solo a localhost
+promtail_http_listen_address: "127.0.0.1"
+promtail_http_listen_port: 9080
+promtail_expose_port: false
 
-# Qué logs recopilar (true/false)
-promtail_scrape_nginx: true
-promtail_scrape_php: true
-promtail_scrape_mariadb: true
-promtail_scrape_wordpress: true
-promtail_scrape_syslog: true
-promtail_scrape_auth: true
-promtail_scrape_fail2ban: true
+# Modo de ejecución - ACL para acceso a logs sin root
+promtail_runtime_mode: "acl"
+
+# Grupos para acceso a logs
+promtail_user_append_groups:
+  - "systemd-journal"
+  - "adm"
+
+# Cliente Loki
+promtail_clients:
+  - url: "http://127.0.0.1:3100/loki/api/v1/push"
+
+# Configuración de scraping (ver archivo completo para detalles)
+promtail_scrape_configs:
+  - job_name: syslog
+    # ... configuración de cada fuente de logs
+  - job_name: auth
+  - job_name: nginx_access
+  - job_name: nginx_error
+  - job_name: php_fpm
+  - job_name: mariadb_error
+  - job_name: wordpress
+  - job_name: fail2ban
 ```
 
 ### Habilitar/deshabilitar en deployment
 
-En `playbooks/site.yml` (ya configurado):
+En `ansible/playbooks/site.yml` (ya configurado):
 
 ```yaml
-- role: loki
+- role: grafana.grafana.loki
   tags: [monitoring, loki, logging]
   when: deploy_loki | default(true) | bool
 
-- role: promtail
+- role: grafana.grafana.promtail
   tags: [monitoring, promtail, logging]
   when: deploy_promtail | default(true) | bool
 ```
@@ -218,21 +247,35 @@ Retención por período:
 Editar `ansible/inventory/group_vars/monitoring_servers/loki.yml`:
 
 ```yaml
-# Para 7 días (mínimo):
-loki_retention_period: "168h"
+loki_limits_config:
+  # Para 7 días (mínimo):
+  retention_period: 168h
 
-# Para 30 días (recomendado):
-loki_retention_period: "720h"
+  # Para 30 días (recomendado):
+  retention_period: 720h
 
-# Para 90 días (extendido):
-loki_retention_period: "2160h"
+  # Para 90 días (extendido):
+  retention_period: 2160h
+
+  # También actualizar:
+  reject_old_samples_max_age: 720h  # Mismo valor que retention_period
+```
+
+Asegurarse de que el compactor esté habilitado para que la limpieza funcione:
+
+```yaml
+loki_compactor:
+  working_directory: "/var/lib/loki/compactor"
+  retention_enabled: true
+  retention_delete_delay: 2h
+  retention_delete_worker_count: 150
 ```
 
 Luego re-ejecutar Ansible:
 
 ```bash
 cd ansible
-ansible-playbook -i inventory/hetzner.yml playbooks/site.yml --tags loki --ask-vault-pass
+ansible-playbook playbooks/site.yml --tags loki --ask-vault-pass
 ```
 
 ---
@@ -243,7 +286,7 @@ ansible-playbook -i inventory/hetzner.yml playbooks/site.yml --tags loki --ask-v
 
 ```bash
 # URL
-https://monitoring.tudominio.com
+https://grafana.tudominio.com
 
 # Credenciales
 Username: admin
@@ -259,19 +302,36 @@ Password: (vault_grafana_admin_password en secrets.yml)
 
 ### Dashboards pre-instalados
 
-Los siguientes dashboards se instalan automáticamente:
+Los siguientes dashboards se instalan automáticamente (configurados en `ansible/inventory/group_vars/monitoring_servers/grafana.yml`):
 
-1. **Loki Logs Dashboard** (ID: 13639)
+#### Dashboards de Métricas (Prometheus)
+
+1. **Node Exporter Full** (ID: 1860)
+   - Métricas completas del sistema
+   - CPU, RAM, Disco, Red, etc.
+
+2. **Prometheus Stats** (ID: 3662)
+   - Estadísticas de Prometheus
+   - Métricas de scraping
+
+#### Dashboards de Logs (Loki)
+
+1. **Loki Dashboard Quick Search** (ID: 12019)
+   - Búsqueda rápida de logs
+   - Filtros por job y level
+   - Vista de timeline
+
+2. **Loki Logs Dashboard with filters** (ID: 13639)
    - Vista general de todos los logs
    - Gráficos de volumen por job
    - Top logs por nivel (ERROR, WARN, INFO)
+   - Filtros avanzados
 
-2. **Nginx Loki Dashboard** (ID: 12559)
-   - Requests por segundo
-   - Top URLs
-   - Errores 4xx/5xx
-   - Top IPs
-   - User agents
+3. **Loki & Promtail - Advanced** (ID: 14055)
+   - Métricas de Loki y Promtail
+   - Rendimiento del sistema de logs
+   - Estadísticas de ingesta
+   - Estado de targets
 
 ---
 
@@ -470,40 +530,47 @@ sudo systemctl start loki
 **Solución:**
 
 ```yaml
-# En loki.yml, aumentar:
-loki_max_query_parallelism: 64  # Default: 32
-loki_max_query_series: 1000     # Default: 500
+# En loki.yml, aumentar dentro de loki_limits_config:
+loki_limits_config:
+  max_query_parallelism: 64  # Default: 32
+  max_query_series: 1000     # Default: 500
 ```
 
 ---
 
 ## Backups
 
-### Backup automático
-
-Configurado en `loki.yml`:
-
-```yaml
-loki_backup_enabled: true
-loki_backup_schedule: "0 3 * * *"  # Diario 3 AM
-loki_backup_retention_days: 7      # Mantener 7 días
-```
-
-Script: `/usr/local/bin/backup-loki.sh`
-
-Backups guardados en: `/var/backups/loki/`
+> **Nota:** La colección oficial `grafana.grafana.loki` no incluye funcionalidad de backup automático. Los backups deben realizarse manualmente.
 
 ### Backup manual
 
-```bash
-# Ejecutar script
-sudo /usr/local/bin/backup-loki.sh
+Para hacer backup de los datos de Loki:
 
-# Ver backups
-ls -lh /var/backups/loki/
+```bash
+# 1. Verificar tamaño de datos
+du -sh /var/lib/loki/
+
+# 2. Crear backup (mientras Loki está corriendo)
+sudo tar czf /var/backups/loki-backup-$(date +%Y%m%d-%H%M%S).tar.gz \
+  -C /var/lib loki
+
+# 3. Ver backups
+ls -lh /var/backups/loki-backup-*.tar.gz
 
 # Ejemplo salida:
-# loki-backup-20241228-030000.tar.gz (234 MB)
+# loki-backup-20260109-030000.tar.gz (234 MB)
+```
+
+### Backup automático con cron (opcional)
+
+Si deseas backups automáticos, crear un cron job:
+
+```bash
+# Editar crontab
+sudo crontab -e
+
+# Añadir (diario a las 3 AM):
+0 3 * * * tar czf /var/backups/loki-backup-$(date +\%Y\%m\%d-\%H\%M\%S).tar.gz -C /var/lib loki && find /var/backups -name "loki-backup-*.tar.gz" -mtime +7 -delete
 ```
 
 ### Restaurar backup
