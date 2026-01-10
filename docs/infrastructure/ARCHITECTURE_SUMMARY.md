@@ -59,93 +59,122 @@
 
 ---
 
-## Diagrama de Arquitectura
+## Arquitectura Final (3 Diagramas)
+
+La arquitectura completa se divide en 3 vistas para facilitar la comprensión.
+
+### Vista 1: Edge Layer (Internet a Servidor)
 
 ```mermaid
 graph TB
-    subgraph internet["🌐 Internet"]
-        users["👥 Users"]
-        admin["👨‍💼 Admin"]
-    end
+    Users[Users]
+    Admin[Admin]
+    CF[Cloudflare]
+    FW[Firewall]
+    Server[Hetzner Server]
 
-    subgraph cloudflare["☁️ Cloudflare"]
-        dns["DNS + Proxy"]
-        waf["WAF + DDoS"]
-    end
+    Users -->|HTTPS| CF
+    Admin -->|SSH 2FA| FW
+    CF -->|Filtered| FW
+    FW --> Server
 
-    subgraph hetzner["🏢 Hetzner Cloud - NBG1"]
-        subgraph firewall["🛡️ Cloud Firewall"]
-            fw_rules["Rules:<br/>- SSH: Admin IP only<br/>- HTTPS: Cloudflare IPs<br/>- Monitoring: localhost"]
-        end
-
-        subgraph wordpress_server["🖥️ WordPress Server (CAX11)"]
-            nginx["Nginx :80,:443"]
-            php["PHP-FPM 8.3"]
-            mariadb["MariaDB 10.11"]
-            valkey["Valkey 8.0<br/>Unix Socket"]
-            wordpress["WordPress + Tutor LMS"]
-
-            subgraph exporters_app["📊 Exporters"]
-                node_exp["Node Exporter :9100"]
-                nginx_exp["Nginx Exporter :9113"]
-                php_exp["PHP-FPM Exporter :9253"]
-                mariadb_exp["MariaDB Exporter :9104"]
-                valkey_exp["Valkey Exporter :9121"]
-            end
-        end
-
-        subgraph monitoring_server["📈 Monitoring Server (same as WordPress)"]
-            prometheus["Prometheus :9090"]
-            loki["Loki :3100"]
-            promtail["Promtail"]
-            grafana["Grafana :3000"]
-        end
-
-        subgraph openbao_server["🔐 OpenBao Server (CAX11 - Optional)"]
-            openbao["OpenBao :8200"]
-            consul["Consul :8500<br/>(HA Backend)"]
-        end
-    end
-
-    subgraph terraform_cloud["☁️ Terraform Cloud"]
-        tf_state["State Backend"]
-        tf_secrets["Infrastructure Secrets"]
-    end
-
-    users -->|HTTPS| dns
-    admin -->|SSH + 2FA| fw_rules
-
-    dns -->|Proxy| waf
-    waf --> fw_rules
-    fw_rules --> nginx
-
-    nginx --> php
-    php --> mariadb
-    php -.->|Unix Socket| valkey
-    php --> wordpress
-
-    node_exp --> prometheus
-    nginx_exp --> prometheus
-    php_exp --> prometheus
-    mariadb_exp --> prometheus
-    valkey_exp --> prometheus
-
-    promtail -->|Logs| loki
-    prometheus -->|Metrics| grafana
-    loki -->|Logs| grafana
-
-    admin -.->|View Dashboards| grafana
-    admin -.->|Manage Secrets| openbao
-
-    terraform_cloud -.->|Deploy Infrastructure| hetzner
-    openbao -.->|Application Secrets| wordpress_server
-
-    style wordpress_server fill:#e3f2fd
-    style monitoring_server fill:#fff3e0
-    style openbao_server fill:#ffebee
-    style cloudflare fill:#f3e5f5
-    style terraform_cloud fill:#e8f5e9
+    style Users fill:#E8F4FD,stroke:#1565C0
+    style Admin fill:#FCE4EC,stroke:#C2185B
+    style CF fill:#FFF3E0,stroke:#E65100
+    style FW fill:#FCE4EC,stroke:#C2185B
+    style Server fill:#E8F5E9,stroke:#2E7D32
 ```
+
+#### Componentes Edge Layer
+
+| Componente | Función | Detalles |
+|------------|---------|----------|
+| **Users** | Visitantes y estudiantes | Acceso global HTTPS |
+| **Admin** | Administrador del sistema | SSH con 2FA (TOTP + Yubikey) |
+| **Cloudflare** | CDN + Protección | DNS, WAF, DDoS, SSL |
+| **Firewall** | Hetzner Cloud Firewall | Reglas por IP y puerto |
+| **Server** | CAX11 (2 vCPU, 4GB RAM) | Hetzner Nuremberg |
+
+### Vista 2: Server Stack (Aplicación)
+
+```mermaid
+graph TB
+    Nginx[Nginx]
+    PHP[PHP-FPM 8.3]
+    WP[WordPress]
+    DB[(MariaDB)]
+    Cache[(Valkey)]
+
+    Nginx --> PHP
+    PHP --> WP
+    WP --> DB
+    WP --> Cache
+
+    style Nginx fill:#E8F5E9,stroke:#2E7D32
+    style PHP fill:#E8F4FD,stroke:#1565C0
+    style WP fill:#E8F4FD,stroke:#1565C0
+    style DB fill:#F3E5F5,stroke:#6A1B9A
+    style Cache fill:#F3E5F5,stroke:#6A1B9A
+```
+
+#### Componentes Application Stack
+
+| Servicio | Puerto | Función |
+|----------|--------|---------|
+| **Nginx** | 80, 443 | Web server, reverse proxy |
+| **PHP-FPM** | 9000 | Application runtime |
+| **WordPress** | - | CMS + Tutor LMS |
+| **MariaDB** | 3306 | Database (localhost only) |
+| **Valkey** | 6379 | Object cache (Unix socket) |
+
+#### Monitoring Exporters
+
+| Exporter | Puerto | Métricas |
+|----------|--------|----------|
+| Node Exporter | 9100 | CPU, RAM, Disk, Network |
+| Nginx Exporter | 9113 | Requests, connections |
+| PHP-FPM Exporter | 9253 | Processes, pool status |
+| MariaDB Exporter | 9104 | Queries, connections |
+| Valkey Exporter | 9121 | Cache hits, memory |
+
+### Vista 3: Monitoring y External Services
+
+```mermaid
+graph TB
+    Prom[Prometheus]
+    Loki[Loki]
+    Graf[Grafana]
+    TF[Terraform Cloud]
+    OB[OpenBao]
+
+    Prom --> Graf
+    Loki --> Graf
+    TF -.->|State| Prom
+    OB -.->|Secrets| Graf
+
+    style Prom fill:#FFF3E0,stroke:#E65100
+    style Loki fill:#FFF3E0,stroke:#E65100
+    style Graf fill:#E8F5E9,stroke:#2E7D32
+    style TF fill:#E8F4FD,stroke:#1565C0
+    style OB fill:#FCE4EC,stroke:#C2185B
+```
+
+#### Servicios de Monitoring
+
+| Servicio | Puerto | Función | Retención |
+|----------|--------|---------|-----------|
+| **Prometheus** | 9090 | Metrics collector | 30 días |
+| **Loki** | 3100 | Log aggregation | 30 días |
+| **Promtail** | - | Log shipper | - |
+| **Grafana** | 3000 | Visualization | - |
+
+#### Servicios Externos
+
+| Servicio | Función | Plan |
+|----------|---------|------|
+| **Terraform Cloud** | State backend + secrets | Free |
+| **OpenBao** | Secrets management | Opcional (CAX11 +€4.05/mes) |
+| **Cloudflare** | DNS + CDN + DDoS | Free |
 
 ---
 

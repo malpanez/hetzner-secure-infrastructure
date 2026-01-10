@@ -256,35 +256,18 @@ flowchart TD
 
 #### ¿Ofuscar el puerto SSH a 2222?
 
-```mermaid
-flowchart TD
-    A[Puerto SSH] --> B{¿Cambiar de 22?}
-    B -->|Sí → 2222| C[Pros y Contras]
-    B -->|No → 22| D[Pros y Contras]
+**Comparativa: Puerto 22 vs Puerto 2222**
 
-    C --> C1[✓ Reduce scans automáticos 95%]
-    C --> C2[✓ Menos ruido en logs]
-    C --> C3[✗ Debes recordar: ssh -p 2222]
-    C --> C4[✗ Security by obscurity]
-    C --> C5[⚠️ Puede complicar scripts]
-
-    D --> D1[✓ Puerto estándar, fácil]
-    D --> D2[✓ Scripts funcionan sin modificar]
-    D --> D3[✗ Más scans en logs]
-    D --> D4[✓ Con IP filtering + 2FA es seguro]
-
-    style C fill:#fff4e1
-    style D fill:#e1ffe1
-```
-
-**Análisis de seguridad:**
-
-| Configuración | Scans/día | Impacto Real | Complejidad |
-|--------------|-----------|--------------|-------------|
-| **Puerto 22 + IP filtering** | ~50-100 | ❌ Ninguno (bloqueados) | ✅ Simple |
-| **Puerto 2222 + IP filtering** | ~5-10 | ❌ Ninguno (bloqueados) | ⚠️ Media |
-| **Puerto 22 SIN filtering** | ~1000+ | ⚠️ PELIGROSO | ✅ Simple |
-| **Puerto 2222 SIN filtering** | ~100+ | ⚠️ Menos pero inseguro | ⚠️ Media |
+| Aspecto | Puerto 22 (Estándar) | Puerto 2222 (Custom) |
+|---------|----------------------|----------------------|
+| **Scans automáticos** | 50-100/día | 5-10/día |
+| **Facilidad de uso** | Simple, no requiere -p | Debes recordar -p 2222 |
+| **Scripts y tools** | Funcionan sin modificar | Requieren modificación |
+| **Seguridad real** | Alta (con IP filter + 2FA) | Alta (con IP filter + 2FA) |
+| **Ruido en logs** | Más entradas de scans | Menos entradas |
+| **Tipo de seguridad** | Real (autenticación fuerte) | Obscurity (esconder puerto) |
+| **Complejidad setup** | Baja | Media |
+| **Recomendado** | Sí (con protecciones) | Solo si necesitas logs limpios |
 
 **Recomendación: Mantener puerto 22**
 
@@ -828,38 +811,118 @@ prevent_destroy = false  # Cambiar a true después del primer deploy
 
 ## Proceso de Deployment
 
-### Diagrama de Flujo Completo
+### Deployment Flow (3 Fases)
+
+El proceso de deployment se divide en 3 fases principales para facilitar el seguimiento.
+
+#### Fase 1: Validación (Pre-flight Checks)
 
 ```mermaid
-flowchart TD
-    Start([Inicio]) --> A[Validar Configuración]
-    A --> B{¿Validación OK?}
-    B -->|No| A
-    B -->|Sí| C[Terraform Init]
-    C --> D[Terraform Plan]
-    D --> E{¿Plan correcto?}
-    E -->|No| Fix[Corregir configuración]
-    Fix --> A
-    E -->|Sí| F[Terraform Apply]
-    F --> G[Servidor Creado]
-    G --> H[Esperar Cloud-Init]
-    H --> I[Ansible: Hardening]
-    I --> J[Ansible: Firewall]
-    J --> K[Ansible: SSH 2FA]
-    K --> L[Ansible: Monitoring]
-    L --> M[Ansible: WordPress]
-    M --> N{¿Todo OK?}
-    N -->|No| Debug[Revisar logs]
-    Debug --> I
-    N -->|Sí| O[Configuración Manual]
-    O --> P[Verificación Final]
-    P --> End([Deployment Completo])
+graph TB
+    Start[Inicio]
+    Valid[Validar Config]
+    Check{OK?}
+    Fix[Corregir]
 
-    style Start fill:#e1f5ff
-    style End fill:#e1ffe1
-    style G fill:#fff4e1
-    style N fill:#ffe1e1
+    Start --> Valid
+    Valid --> Check
+    Check -->|No| Fix
+    Fix --> Valid
+    Check -->|Sí| Next[Fase 2]
+
+    style Start fill:#E8F4FD,stroke:#1565C0
+    style Valid fill:#E8F5E9,stroke:#2E7D32
+    style Check fill:#FFF3E0,stroke:#E65100
+    style Next fill:#E8F5E9,stroke:#2E7D32
 ```
+
+| Paso | Acción | Comando |
+|------|--------|---------|
+| 1 | Cargar variables | `source .env` |
+| 2 | Validar Terraform | `terraform validate` |
+| 3 | Validar Ansible | `make validate` |
+| 4 | Revisar outputs | Verificar errores en pantalla |
+
+#### Fase 2: Deploy (Terraform + Ansible)
+
+```mermaid
+graph TB
+    TFInit[Terraform Init]
+    TFPlan[Terraform Plan]
+    TFApply[Terraform Apply]
+    Server[Servidor Creado]
+    Ansible[Ansible Deploy]
+
+    TFInit --> TFPlan
+    TFPlan --> TFApply
+    TFApply --> Server
+    Server --> Ansible
+
+    style TFInit fill:#E8F4FD,stroke:#1565C0
+    style TFPlan fill:#E8F4FD,stroke:#1565C0
+    style TFApply fill:#E8F5E9,stroke:#2E7D32
+    style Server fill:#FFF3E0,stroke:#E65100
+    style Ansible fill:#E8F5E9,stroke:#2E7D32
+```
+
+| Fase | Herramienta | Tiempo estimado |
+|------|-------------|-----------------|
+| **Infraestructura** | Terraform | 2-3 minutos |
+| **Configuración** | Ansible | 15-20 minutos |
+
+**Roles Ansible ejecutados:**
+
+| Orden | Role | Función |
+|-------|------|---------|
+| 1 | common | Timezone, packages básicos |
+| 2 | security_hardening | Sysctl, AIDE, Auditd |
+| 3 | ufw | Firewall UFW |
+| 4 | fail2ban | IDS |
+| 5 | ssh_2fa | SSH con 2FA |
+| 6 | mariadb | Base de datos |
+| 7 | valkey | Cache |
+| 8 | nginx_wordpress | Web + WordPress |
+| 9 | monitoring | Prometheus + Grafana |
+
+#### Fase 3: Post-Deploy (DNS + SSL + Verificación)
+
+```mermaid
+graph TB
+    DNS[Configurar DNS]
+    SSL[Obtener SSL]
+    WP[Instalar WordPress]
+    Verify[Verificar]
+    Done[Completo]
+
+    DNS --> SSL
+    SSL --> WP
+    WP --> Verify
+    Verify --> Done
+
+    style DNS fill:#E8F4FD,stroke:#1565C0
+    style SSL fill:#E8F5E9,stroke:#2E7D32
+    style WP fill:#FFF3E0,stroke:#E65100
+    style Verify fill:#F3E5F5,stroke:#6A1B9A
+    style Done fill:#E8F5E9,stroke:#2E7D32
+```
+
+| Paso | Acción | Manual/Auto |
+|------|--------|-------------|
+| 1 | Apuntar DNS a servidor IP | Manual (Cloudflare) |
+| 2 | Esperar propagación DNS | Automático (5-30 min) |
+| 3 | Ejecutar Certbot | Manual (`certbot --nginx`) |
+| 4 | Completar wizard WordPress | Manual (web browser) |
+| 5 | Verificar servicios | Manual (checklist) |
+
+**Checklist de verificación final:**
+
+- [ ] DNS resuelve correctamente (`dig domain.com`)
+- [ ] SSL válido (candado verde en navegador)
+- [ ] WordPress carga sin errores
+- [ ] Grafana accesible (`https://grafana.domain.com`)
+- [ ] Todos los servicios running (`systemctl status`)
+- [ ] Firewall activo (`sudo ufw status`)
+- [ ] Backups configurados
 
 ### Paso 1: Validación Pre-Deployment
 

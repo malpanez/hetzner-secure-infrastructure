@@ -4,81 +4,110 @@ Este archivo complementa [WORDPRESS-STACK.md](WORDPRESS-STACK.md) con diagramas 
 
 ---
 
-## 🏗️ Diagrama de Arquitectura Completa
+## Arquitectura WordPress Stack
+
+Esta sección muestra la arquitectura completa dividida en 3 diagramas simples para facilitar la comprensión.
+
+### Diagrama 1: Edge Layer (Cloudflare a Servidor)
 
 ```mermaid
 graph TB
-    subgraph Internet
-        Users[👥 Users/Students]
-    end
+    Users[Users]
+    CF[Cloudflare Edge]
+    Server[Hetzner Server]
 
-    subgraph Cloudflare["☁️ Cloudflare (Free Plan)"]
-        DNS[🌐 DNS Management]
-        CDN[📦 CDN & Cache]
-        WAF[🛡️ WAF Rules]
-        SSL[🔒 SSL/TLS]
-        RateLimit[⏱️ Rate Limiting]
-    end
+    Users -->|HTTPS| CF
+    CF -->|Filtered| Server
 
-    subgraph Hetzner["🖥️ Hetzner Cloud Server"]
-        subgraph WebLayer["Web Layer"]
-            Nginx[⚡ Nginx<br/>• FastCGI Cache<br/>• Gzip/Brotli<br/>• Security Headers]
-        end
+    style Users fill:#E8F4FD,stroke:#1565C0
+    style CF fill:#FFF3E0,stroke:#E65100
+    style Server fill:#E8F5E9,stroke:#2E7D32
+```
 
-        subgraph AppLayer["Application Layer"]
-            PHP[🐘 PHP 8.4-FPM<br/>• OPcache<br/>• APCu]
-            WP[📝 WordPress 6.x]
-            LD[🎓 LearnDash Pro]
-            Plugins[🔌 Essential Plugins<br/>• redis-cache<br/>• nginx-helper<br/>• wordfence-login-security<br/>• limit-login-attempts-reloaded]
-        end
+#### Detalles Edge Layer
 
-        subgraph DataLayer["Data Layer"]
-            MariaDB[(💾 MariaDB 10.11<br/>• InnoDB<br/>• UTF8MB4)]
-            Valkey[(⚡ Valkey 8.0<br/>Redis-compatible<br/>Object Cache)]
-        end
+| Componente | Función | Características |
+|------------|---------|-----------------|
+| **Users** | Estudiantes y visitantes | Acceso global via HTTPS |
+| **Cloudflare Edge** | CDN + Protección | DNS, WAF, Rate Limiting, SSL/TLS |
+| **Hetzner Server** | Infraestructura | CAX11, Firewall UFW, 2 vCPU |
 
-        subgraph SecurityLayer["🔒 Security Layer"]
-            UFW[🧱 UFW Firewall<br/>Ports: 22,80,443]
-            Fail2ban[🚫 Fail2ban IDS<br/>• SSH<br/>• Nginx<br/>• WordPress]
-            AppArmor[🛡️ AppArmor<br/>• PHP-FPM<br/>• Nginx<br/>• SSH]
-            SSH[🔑 SSH 2FA<br/>• Yubikey/FIDO2<br/>• TOTP]
-        end
-    end
+### Diagrama 2: Application Stack (Nginx a Base de Datos)
 
-    subgraph Backups["💾 Backup Storage"]
-        S3[☁️ Amazon S3<br/>or Google Drive]
-        Hetzner Backup[📸 Hetzner Backups<br/>Daily Snapshots]
-    end
+```mermaid
+graph TB
+    Nginx[Nginx]
+    PHP[PHP-FPM 8.4]
+    WP[WordPress 6.x]
+    DB[(MariaDB)]
+    Cache[(Valkey Cache)]
 
-    Users -->|HTTPS Request| Cloudflare
-    Cloudflare -->|Filtered Request| UFW
-    UFW --> Nginx
     Nginx -->|FastCGI| PHP
     PHP --> WP
-    WP --> LD
-    WP --> Plugins
-    WP -->|SQL Queries| MariaDB
-    WP -->|Get/Set Cache| Valkey
-    PHP -->|Read Cache| Valkey
+    WP -->|Query| DB
+    WP -->|Cache| Cache
 
-    WP -.->|Daily DB Backup| S3
-    WP -.->|Weekly Files Backup| S3
-    Hetzner -.->|Full Snapshots| HetznerBackup
-
-    Fail2ban -.->|Monitor Logs| Nginx
-    Fail2ban -.->|Ban IPs| UFW
-    AppArmor -.->|Restrict Processes| PHP
-    SSH -.->|2FA Auth| Hetzner
-
-    style Users fill:#e1f5ff,stroke:#01579b
-    style Cloudflare fill:#f9a825,stroke:#f57f17
-    style Hetzner fill:#d84315,stroke:#bf360c
-    style WebLayer fill:#4caf50,stroke:#2e7d32
-    style AppLayer fill:#2196f3,stroke:#1565c0
-    style DataLayer fill:#9c27b0,stroke:#6a1b9a
-    style SecurityLayer fill:#f44336,stroke:#c62828
-    style Backups fill:#607d8b,stroke:#37474f
+    style Nginx fill:#E8F5E9,stroke:#2E7D32
+    style PHP fill:#E8F4FD,stroke:#1565C0
+    style WP fill:#E8F4FD,stroke:#1565C0
+    style DB fill:#F3E5F5,stroke:#6A1B9A
+    style Cache fill:#F3E5F5,stroke:#6A1B9A
 ```
+
+#### Detalles Application Stack
+
+| Componente | Versión | Función |
+|------------|---------|---------|
+| **Nginx** | Latest | Web server, FastCGI Cache |
+| **PHP-FPM** | 8.4 | Application runtime, OPcache |
+| **WordPress** | 6.x | CMS + LearnDash LMS |
+| **MariaDB** | 10.11 | Base de datos, InnoDB |
+| **Valkey** | 8.0 | Object cache, Redis-compatible |
+
+#### Plugins Esenciales
+
+| Plugin | Función |
+|--------|---------|
+| redis-cache | Integración con Valkey |
+| nginx-helper | Purge FastCGI cache |
+| wordfence-login-security | 2FA para admin |
+| limit-login-attempts-reloaded | Rate limiting login |
+
+### Diagrama 3: Security y Backups
+
+```mermaid
+graph TB
+    UFW[UFW Firewall]
+    Fail2ban[Fail2ban]
+    SSH[SSH 2FA]
+    Backup[Backup System]
+
+    UFW -->|Protect| Fail2ban
+    Fail2ban -->|Monitor| SSH
+    SSH -->|Secure| Backup
+
+    style UFW fill:#FCE4EC,stroke:#C2185B
+    style Fail2ban fill:#FCE4EC,stroke:#C2185B
+    style SSH fill:#FCE4EC,stroke:#C2185B
+    style Backup fill:#FFF3E0,stroke:#E65100
+```
+
+#### Detalles Security Layer
+
+| Componente | Protección | Configuración |
+|------------|------------|---------------|
+| **UFW Firewall** | Puertos | Solo 22, 80, 443 permitidos |
+| **Fail2ban** | IDS | SSH, Nginx, WordPress protegidos |
+| **AppArmor** | Process restriction | PHP-FPM, Nginx, SSH |
+| **SSH 2FA** | Autenticación | TOTP + opcional Yubikey/FIDO2 |
+
+#### Sistema de Backups
+
+| Tipo | Frecuencia | Destino | Retención |
+|------|-----------|---------|-----------|
+| **Database** | Diaria | S3/Google Drive | 14 días |
+| **Files** | Semanal | S3/Google Drive | 4 semanas |
+| **Full Snapshot** | Diaria | Hetzner Backups | 7 días |
 
 ---
 
