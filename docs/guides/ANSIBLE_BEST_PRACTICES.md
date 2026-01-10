@@ -6,6 +6,8 @@
 
 ---
 
+**Nota**: El stack de monitorización usa colecciones externas (`prometheus.prometheus`, `grafana.grafana`). Los ejemplos con `prometheus` son ilustrativos.
+
 ## Tabla de Contenidos
 
 - [Naming Conventions](#naming-conventions)

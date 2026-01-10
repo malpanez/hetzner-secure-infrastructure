@@ -51,7 +51,7 @@ ssh user@server
 #### For Ansible Automation (Break-Glass)
 
 ```
-ansible-playbook -i inventory site.yml
+ansible-playbook playbooks/site.yml
 1. SSH Key authentication (publickey) ✓
 2. User in 'ansible-automation' group → Skip TOTP ✓
 3. Access granted (Ansible runs without interaction)
@@ -257,7 +257,7 @@ id malpanez
 ```bash
 # Run Ansible playbook
 cd ansible
-ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml
+ansible-playbook playbooks/site.yml
 
 # Should complete without asking for TOTP
 # Playbook runs fully automated
@@ -404,5 +404,5 @@ google-authenticator
 ---
 
 **Author**: Infrastructure Team
-**Last Updated**: 2026-01-01
+**Last Updated**: 2026-01-09
 **Version**: 1.0

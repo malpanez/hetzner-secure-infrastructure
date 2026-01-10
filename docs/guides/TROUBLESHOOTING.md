@@ -244,7 +244,7 @@ miguel@X.X.X.X: Permission denied (publickey).
 
 ```bash
 cd ansible
-ansible-playbook -i inventory/hetzner.yml playbooks/site.yml --tags ssh
+ansible-playbook playbooks/site.yml --tags ssh
 ```
 
 **Solution 2: Fix permissions**
@@ -591,7 +591,7 @@ fatal: [X.X.X.X]: UNREACHABLE! => {"changed": false, "msg": "Failed to connect t
 2. **Check inventory:**
 
    ```bash
-   ansible-inventory -i inventory/hetzner.yml --list
+   ansible-inventory --list
    ```
 
 **Solutions:**
@@ -603,20 +603,20 @@ cd terraform/environments/production
 tofu output -json > ../../../ansible/inventory/terraform-output.json
 
 cd ../../../ansible
-ansible-inventory -i inventory/hetzner.yml --list
+ansible-inventory --list
 ```
 
 **Solution 2: Specify SSH key**
 
 ```bash
-ansible-playbook -i inventory/hetzner.yml playbooks/site.yml \
+ansible-playbook playbooks/site.yml \
   --private-key ~/.ssh/id_ed25519_sk
 ```
 
 **Solution 3: Test connectivity**
 
 ```bash
-ansible all -i inventory/hetzner.yml -m ping
+ansible all -m ping
 ```
 
 ### Issue: "Authentication or permission failure"
@@ -656,7 +656,7 @@ fatal: [X.X.X.X]: FAILED! => {"msg": "Missing sudo password"}
 **Solution 1: Provide sudo password**
 
 ```bash
-ansible-playbook -i inventory/hetzner.yml playbooks/site.yml --ask-become-pass
+ansible-playbook playbooks/site.yml --ask-become-pass
 ```
 
 **Solution 2: Configure passwordless sudo**
@@ -729,7 +729,7 @@ sudo dmesg | grep -i apparmor
 apparmor_enforce: false  # Use complain mode
 
 # Re-run playbook
-ansible-playbook -i inventory/hetzner.yml playbooks/site.yml --tags apparmor
+ansible-playbook playbooks/site.yml --tags apparmor
 
 # Monitor for violations
 sudo aa-notify -s 1 -v
@@ -1223,7 +1223,7 @@ tofu apply
 
 # 4. Re-run Ansible
 cd ../../../ansible
-ansible-playbook -i inventory/hetzner.yml playbooks/site.yml
+ansible-playbook playbooks/site.yml
 
 # 5. Restore data
 scp backup.tar.gz miguel@X.X.X.X:/tmp/

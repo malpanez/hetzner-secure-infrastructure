@@ -43,14 +43,14 @@
 ```mermaid
 graph TB
     subgraph option1["🏆 Option 1: Separate Server (Production)"]
-        openbao1["OpenBao Server<br/>cx11 (€3.79/mo)<br/>Dedicated, Highly Available"]
+        openbao1["OpenBao Server<br/>CAX11 (€4.05/mo)<br/>Dedicated, Highly Available"]
         app1["Application Servers<br/>Access OpenBao via API"]
 
         openbao1 -.->|Secrets API| app1
     end
 
     subgraph option2["💻 Option 2: Same Server (Dev/Small)"]
-        combined["Single Server<br/>cx21 (€5.83/mo)<br/>OpenBao + WordPress"]
+        combined["Single Server<br/>CAX11 (€4.05/mo)<br/>OpenBao + WordPress"]
     end
 
     subgraph option3["☁️ Option 3: HCP Vault (Managed)"]
@@ -70,7 +70,7 @@ graph TB
 
 | Factor | Separate Server | Same Server | HCP Vault |
 |--------|----------------|-------------|-----------|
-| **Cost** | €3.79/mo | €0 extra | ~€22/mo |
+| **Cost** | €4.05/mo | €0 extra | ~€22/mo |
 | **Security** | ⭐⭐⭐⭐⭐ Excellent | ⭐⭐⭐ Good | ⭐⭐⭐⭐⭐ Excellent |
 | **Availability** | ⭐⭐⭐⭐ High | ⭐⭐⭐ Medium | ⭐⭐⭐⭐⭐ Very High |
 | **Management** | ⭐⭐⭐ Manual | ⭐⭐⭐ Manual | ⭐⭐⭐⭐⭐ Fully Managed |
@@ -83,7 +83,7 @@ graph TB
 
 - 🏆 **Option 1: Separate Server** (RECOMMENDED)
 - Why: Better security isolation, can manage multiple servers
-- Cost: Only €3.79/mo extra (worth it for security)
+- Cost: Only €4.05/mo extra (worth it for security)
 
 **Development/Testing:**
 
@@ -111,9 +111,9 @@ graph TB
     end
 
     subgraph hetzner["☁️ Hetzner Cloud"]
-        subgraph openbao_server["🔐 OpenBao Server (cx11)"]
+        subgraph openbao_server["🔐 OpenBao Server (CAX11)"]
             openbao["OpenBao<br/>:8200"]
-            consul["Consul<br/>:8500<br/>(HA Backend)"]
+            storage["Storage Backend<br/>(file/raft)"]
         end
 
         subgraph app_servers["🖥️ Application Servers"]
@@ -122,14 +122,14 @@ graph TB
         end
 
         subgraph firewall["🛡️ Cloud Firewall"]
-            fw_rules["OpenBao: 8200 (from admin IP only)<br/>Consul: 8500 (internal only)"]
+            fw_rules["OpenBao: 8200 (from admin IP only)"]
         end
     end
 
     admin -->|SSH + 2FA| fw_rules
     terraform -->|State API :8200| fw_rules
     fw_rules --> openbao
-    openbao --> consul
+    openbao --> storage
 
     wordpress1 -.->|Get Secrets :8200| openbao
     wordpress2 -.->|Get Secrets :8200| openbao
@@ -150,13 +150,13 @@ module "openbao_server" {
 
   # Server configuration
   server_name = "openbao-prod"
-  server_type = "cx11"  # 1 vCPU, 2 GB RAM - Sufficient for OpenBao
+  server_type = "cax11"  # 2 vCPU, 4 GB RAM (ARM64)
   location    = "nbg1"
   image       = "debian-13"
 
   # SSH access (VERY RESTRICTIVE!)
   ssh_public_key  = var.ssh_public_key
-  ssh_user        = "admin"
+  ssh_user        = "malpanez"
   ssh_allowed_ips = var.admin_ips  # Only your IP!
 
   # Firewall rules
@@ -410,8 +410,7 @@ Once OpenBao is installed and reachable, you can run the dedicated bootstrap pla
 Run:
 
 ```bash
-ansible-playbook -i inventory/production/hosts.yml \
-  playbooks/openbao-bootstrap.yml \
+ansible-playbook playbooks/openbao-bootstrap.yml \
   -e openbao_bootstrap_ack=true \
   --ask-vault-pass
 ```
@@ -431,10 +430,10 @@ After bootstrap:
 
 ### Cost
 
-- **Server**: cx11 = €3.79/month
+- **Server**: CAX11 = €4.05/month
 - **Volume**: 10 GB = €1.20/month
 - **Backups**: €0.76/month
-- **Total**: €5.75/month
+- **Total**: €6.01/month
 
 ---
 
@@ -444,7 +443,7 @@ After bootstrap:
 
 ```mermaid
 graph TB
-    subgraph server["🖥️ Single Server (cx21)"]
+    subgraph server["🖥️ Single Server (CAX11)"]
         wordpress["WordPress<br/>:80, :443"]
         openbao["OpenBao<br/>:8200"]
         mysql["MySQL<br/>:3306"]
@@ -685,7 +684,7 @@ OPENBAO_IP=$(tofu output -raw openbao_server_ip)
 
 ```bash
 cd ../../ansible
-ansible-playbook -i inventory/hetzner.yml playbooks/openbao.yml
+ansible-playbook playbooks/openbao.yml
 ```
 
 #### 3. Initialize OpenBao
@@ -904,13 +903,13 @@ For your production trading course infrastructure, I recommend:
 ### Architecture
 
 ```
-Hetzner Cloud (Total: €15.15/month)
+Hetzner Cloud (Total: ~€13.63/month)
 
-├── OpenBao Server (cx11): €5.75/month
+├── OpenBao Server (CAX11): ~€6.01/month
 │   ├── OpenBao :8200
 │   └── 10 GB encrypted volume
 │
-└── WordPress Server (cx21): €9.40/month
+└── WordPress Server (CAX11): ~€7.62/month
     ├── WordPress + Tutor LMS
     ├── Nginx + PHP-FPM
     ├── 20 GB volume
@@ -921,7 +920,7 @@ Hetzner Cloud (Total: €15.15/month)
 
 1. **Security Isolation**: Secrets separate from application
 2. **Scalability**: Add more WordPress servers easily
-3. **Cost-effective**: Only €5.75/month extra
+3. **Cost-effective**: Only ~€6.01/month extra
 4. **Professional**: Industry best practice
 5. **Future-proof**: Ready for growth
 
@@ -934,10 +933,10 @@ tofu apply -target=module.openbao_server
 
 # 2. Configure OpenBao
 cd ../../ansible
-ansible-playbook -i inventory/hetzner.yml playbooks/openbao.yml
+ansible-playbook playbooks/openbao.yml
 
 # 3. Initialize and unseal
-ssh admin@$(tofu output -raw openbao_server_ip)
+ssh malpanez@$(tofu output -raw openbao_server_ip)
 bao operator init
 bao operator unseal <key1>
 bao operator unseal <key2>
@@ -978,4 +977,6 @@ bao token create -policy=admin -period=768h
 
 ---
 
-This deployment guide provides everything you need to set up OpenBao for production-grade secrets management! The separate server option gives you the best security for only €5.75/month extra.
+This deployment guide provides everything you need to set up OpenBao for production-grade secrets management! The separate server option gives you the best security for only ~€6.01/month extra.
+
+**Last Updated:** 2026-01-09

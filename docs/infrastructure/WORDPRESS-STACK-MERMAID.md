@@ -29,7 +29,7 @@ graph TB
             PHP[🐘 PHP 8.4-FPM<br/>• OPcache<br/>• APCu]
             WP[📝 WordPress 6.x]
             LD[🎓 LearnDash Pro]
-            Plugins[🔌 Security Plugins<br/>• Wordfence<br/>• Sucuri<br/>• WP 2FA]
+            Plugins[🔌 Essential Plugins<br/>• redis-cache<br/>• nginx-helper<br/>• wordfence-login-security<br/>• limit-login-attempts-reloaded]
         end
 
         subgraph DataLayer["Data Layer"]
@@ -41,7 +41,7 @@ graph TB
             UFW[🧱 UFW Firewall<br/>Ports: 22,80,443]
             Fail2ban[🚫 Fail2ban IDS<br/>• SSH<br/>• Nginx<br/>• WordPress]
             AppArmor[🛡️ AppArmor<br/>• PHP-FPM<br/>• Nginx<br/>• SSH]
-            SSH[🔑 SSH 2FA<br/>• Yubikey<br/>• Google Auth]
+            SSH[🔑 SSH 2FA<br/>• Yubikey/FIDO2<br/>• TOTP]
         end
     end
 
@@ -97,7 +97,7 @@ sequenceDiagram
 
     Note over Dev,CF: Phase 1: Infrastructure Provisioning
     Dev->>TF: terraform apply -var-file=staging.tfvars
-    TF->>Hetzner: Create server (CPX31)
+    TF->>Hetzner: Create server (CAX11 ARM64)
     TF->>Hetzner: Configure firewall rules
     Hetzner->>Server: Provision server
     Server->>Server: Cloud-init<br/>(create user, SSH keys)
@@ -184,7 +184,7 @@ flowchart LR
     Cache{FastCGI<br/>Cache Hit?}
     PHP[PHP-FPM]
     WP[WordPress]
-    Redis{Redis<br/>Cache Hit?}
+    Redis{Valkey<br/>Cache Hit?}
     DB[(MariaDB)]
 
     User -->|1. DNS Query| CF_DNS
@@ -448,10 +448,10 @@ erDiagram
 
 ```mermaid
 pie title Monthly Costs (Production)
-    "Hetzner Server (CPX31)" : 13.90
-    "Hetzner Backups (20%)" : 2.78
+    "Hetzner Server (CAX11)" : 4.05
+    "Hetzner Backups (20%)" : 0.81
     "Cloudflare" : 0
-    "Total: €16.68/month" : 0
+    "Total: €4.86/month" : 0
 ```
 
 ```mermaid
@@ -509,6 +509,8 @@ gitGraph
 4. **Exportar**: Mermaid Live Editor permite exportar a SVG/PNG para usar en presentaciones.
 
 ---
+
+**Última actualización:** 2026-01-09
 
 ## 🔗 Referencias
 

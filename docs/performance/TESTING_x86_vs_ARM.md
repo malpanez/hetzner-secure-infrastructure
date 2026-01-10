@@ -82,7 +82,7 @@ cd ../ansible
 # Edit ansible/inventory/staging.yml if needed
 
 # Deploy full WordPress stack
-ansible-playbook -i inventory/staging.yml playbooks/wordpress.yml
+ansible-playbook playbooks/wordpress.yml
 ```
 
 ### Step 4: Validate WordPress
@@ -354,7 +354,7 @@ cd terraform && terraform apply -var-file=terraform.staging.tfvars
 SERVER_IP=$(terraform output -raw server_ipv4)
 
 # Run Ansible
-cd ../ansible && ansible-playbook -i inventory/staging.yml playbooks/wordpress.yml
+cd ../ansible && ansible-playbook playbooks/wordpress.yml
 
 # Benchmark
 ab -n 1000 -c 10 http://$SERVER_IP/

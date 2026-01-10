@@ -7,7 +7,7 @@
 ### OBLIGATORIO (para empezar)
 
 1. **LearnDash:** $199 USD → Comprar en <https://learndash.com/pricing/>
-2. **Hetzner Cloud:** €5.39/mes → Se cobra automáticamente cuando creas el servidor
+2. **Hetzner Cloud:** €4.05/mes → Se cobra automáticamente cuando creas el servidor
 
 **TOTAL MÍNIMO: ~$210 USD para empezar**
 
@@ -160,7 +160,7 @@ terraform init
 # Ver qué se va a crear
 terraform plan
 
-# Crear servidor (SE COBRARÁ €5.39)
+# Crear servidor (SE COBRARÁ €4.05)
 terraform apply
 # Escribir: yes
 
@@ -375,19 +375,21 @@ wordpress_title: "Mi Plataforma LMS"
 wordpress_admin_email: "admin@tudominio.com"
 wordpress_db_name: "wordpress_prod"
 wordpress_db_user: "wordpress"
-grafana_domain: "monitoring.tudominio.com"
+grafana_domain: "grafana.tudominio.com"
 ansible_user: malpanez
 ansible_ssh_private_key_file: ~/.ssh/id_ed25519
 ```
 
-**Ejecutar:**
+**Ejecutar (inventario dinámico ya configurado en `ansible.cfg`):**
 
 ```bash
-ansible-playbook -i inventory/hetzner.yml playbooks/site.yml --ask-vault-pass
+ansible-playbook playbooks/site.yml --ask-vault-pass
 # Introducir la contraseña del vault
 ```
 
 ### Opción B: Inventario Estático (manual)
+
+**Nota**: Para usar inventario estático, cambia `inventory` en `ansible.cfg` a `inventory/production/hosts.yml`.
 
 ```bash
 cd ansible
@@ -412,13 +414,13 @@ all:
         wordpress_admin_email: "admin@tudominio.com"
         wordpress_db_name: "wordpress_prod"
         wordpress_db_user: "wordpress"
-        grafana_domain: "monitoring.tudominio.com"
+        grafana_domain: "grafana.tudominio.com"
 ```
 
 **Ejecutar:**
 
 ```bash
-ansible-playbook -i inventory/production/hosts.yml playbooks/site.yml --ask-vault-pass
+ansible-playbook playbooks/site.yml --ask-vault-pass
 ```
 
 **⏱️ Tiempo: 15-25 minutos**
@@ -455,7 +457,7 @@ https://tudominio.com
 
 ```bash
 # Abrir en navegador
-https://monitoring.tudominio.com
+https://grafana.tudominio.com
 ```
 
 **Debe mostrar:** Página de login Grafana
@@ -505,9 +507,6 @@ ssh malpanez@tudominio.com
 ### ❌ DEBES INSTALAR MANUAL
 
 - LearnDash Plugin ($199 - OBLIGATORIO)
-- Wordfence Security (gratis - recomendado)
-- UpdraftPlus Backups (gratis - recomendado)
-- Otros plugins según necesidad
 
 ---
 
@@ -518,14 +517,14 @@ ssh malpanez@tudominio.com
 | Concepto | Costo | Obligatorio |
 |----------|-------|-------------|
 | LearnDash | $199 USD | ✅ SÍ |
-| Hetzner mes 1 | €5.39 | ✅ SÍ |
+| Hetzner mes 1 | €4.05 | ✅ SÍ |
 | Transferir dominio a Cloudflare | €9-10 | ⚠️ RECOMENDADO |
-| **TOTAL MÍNIMO** | **~$210 USD** | Si NO transfieres |
-| **TOTAL RECOMENDADO** | **~$220 USD** | Si transfieres dominio |
+| **TOTAL MÍNIMO** | **~$205 USD** | Si NO transfieres |
+| **TOTAL RECOMENDADO** | **~$215 USD** | Si transfieres dominio |
 
 ### Cada mes
 
-- Hetzner CX22: €5.39/mes
+- Hetzner CAX11: €4.05/mes
 
 ### Cada año (renovaciones)
 
@@ -570,7 +569,7 @@ Después de completar todos los pasos, tu sitio estará en:
 
 - **WordPress:** <https://tudominio.com>
 - **Admin:** <https://tudominio.com/wp-admin>
-- **Monitoring:** <https://monitoring.tudominio.com>
+- **Monitoring:** <https://grafana.tudominio.com>
 
 **¡Listo para crear cursos con LearnDash! 🎓**
 

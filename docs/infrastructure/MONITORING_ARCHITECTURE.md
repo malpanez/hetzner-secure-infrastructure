@@ -1,6 +1,6 @@
 # Monitoring Architecture
 
-> **Arquitectura completa de monitorización con Prometheus y Grafana**
+> **Arquitectura completa de monitorización con Prometheus, Grafana y Loki (opcional)**
 
 ## Table of Contents
 
@@ -23,10 +23,11 @@
 
 ```mermaid
 graph TB
-    subgraph monitoring["🖥️ Monitoring Server (cx11)"]
+    subgraph monitoring["🖥️ Monitoring Server (CAX11 ARM64)"]
         prom["📊 Prometheus<br/>:9090"]
         graf["📈 Grafana<br/>:3000"]
-        alert["🔔 Alertmanager<br/>:9093"]
+        alert["🔔 Alertmanager<br/>:9093 (opcional)"]
+        loki["📝 Loki<br/>:3100 (opcional)"]
     end
 
     subgraph app1["🖥️ App Server 1"]
@@ -43,6 +44,7 @@ graph TB
     node2 -->|metrics| prom
     prom --> graf
     prom --> alert
+    prom -.-> loki
 
     style monitoring fill:#e1f5e1
     style app1 fill:#e3f2fd
@@ -115,7 +117,7 @@ graph LR
 
 | Aspecto | Opción 1: Dedicado | Opción 2: Mismo Server | Opción 3: Cloud |
 |---------|-------------------|----------------------|----------------|
-| **Costo** | ~€5/mes extra | €0 | €0 (free tier) |
+| **Costo** | ~€4.05/mes extra | €0 | €0 (free tier) |
 | **Complejidad** | Media | Baja | Baja |
 | **Escalabilidad** | Excelente | Limitada | Excelente |
 | **Rendimiento** | Excelente | Puede afectar app | Excelente |
@@ -136,7 +138,7 @@ graph LR
 
 ### Desventajas
 
-- ❌ Costo adicional (~€4.51/mes para cx11)
+- ❌ Costo adicional (~€4.05/mes para CAX11)
 - ❌ Más infraestructura que gestionar
 
 ### Cuándo usar
@@ -149,11 +151,11 @@ graph LR
 
 ```mermaid
 graph TB
-    subgraph monitoring["🖥️ Monitoring Server (cx11 - €4.51/mes)"]
+    subgraph monitoring["🖥️ Monitoring Server (CAX11 - €4.05/mes)"]
         direction TB
         prom["📊 Prometheus :9090<br/>━━━━━━━━━━━━━━━<br/>• Scrape: 15s<br/>• Retention: 15d<br/>• Storage: ~5GB"]
         graf["📈 Grafana :3000<br/>━━━━━━━━━━━━━━━<br/>• Dashboard 1860<br/>• Dashboard 11074<br/>• Custom alerts"]
-        alert["🔔 Alertmanager :9093<br/>━━━━━━━━━━━━━━━<br/>• Email<br/>• Slack/Discord<br/>• PagerDuty"]
+        alert["🔔 Alertmanager :9093<br/>━━━━━━━━━━━━━━━<br/>• Email<br/>• Slack/Discord<br/>• PagerDuty<br/>• Optional"]
         loki["📝 Loki :3100<br/>━━━━━━━━━━━━━━━<br/>• Log aggregation<br/>• Optional"]
 
         prom --> graf
@@ -186,7 +188,7 @@ graph TB
 |------------|--------|-------------|---------------|
 | **Prometheus** | 9090 | Time-series database | Scrape: 15s, Retention: 15d |
 | **Grafana** | 3000 | Visualization & dashboards | Dashboards: 1860, 11074 |
-| **Alertmanager** | 9093 | Alert routing & notification | Email, Slack, PagerDuty |
+| **Alertmanager** | 9093 | Alert routing & notification (opcional) | Email, Slack, PagerDuty |
 | **Loki** | 3100 | Log aggregation (opcional) | Centralized logging |
 | **Node Exporter** | 9100 | Self-monitoring | Monitors the monitoring server |
 
@@ -216,16 +218,18 @@ graph TB
 ### Configuración
 
 ```yaml
-# ansible/playbooks/monitoring-standalone.yml
+# ansible/playbooks/site.yml (extracto)
 ---
-- name: Setup monitoring on same server
-  hosts: all
-  become: yes
+- name: Deploy monitoring stack
+  hosts: monitoring_servers
+  become: true
 
   roles:
-    - monitoring      # Instala Node Exporter
-    - prometheus      # Instala Prometheus
-    - grafana         # Instala Grafana
+    - prometheus.prometheus.prometheus
+    - grafana.grafana.grafana
+    - grafana.grafana.loki        # opcional (deploy_loki=true)
+    - grafana.grafana.promtail    # opcional (deploy_promtail=true)
+    - prometheus.prometheus.node_exporter
 ```
 
 ---
@@ -233,6 +237,8 @@ graph TB
 ## Opción 3: Servicios Externos (Cloud)
 
 ### Grafana Cloud (Recomendado para cloud)
+
+**Nota**: Esta opción no está automatizada por Ansible en este repositorio.
 
 **Free Tier incluye:**
 
@@ -280,11 +286,11 @@ module "monitoring_server" {
   source = "../../modules/hetzner-server"
 
   server_name    = "monitoring-01"
-  server_type    = "cx11"  # Suficiente para ~10 servidores
-  image          = "debian-12"
+  server_type    = "cax11"  # Suficiente para ~10 servidores
+  image          = "debian-13"
   location       = "nbg1"
   environment    = "production"
-  admin_username = "admin"
+  admin_username = "malpanez"
 
   ssh_public_key = var.ssh_public_key
 
@@ -326,131 +332,11 @@ cd terraform/environments/production
 tofu apply
 ```
 
-#### Paso 3: Crear rol de Ansible para Prometheus/Grafana
+#### Paso 3: Desplegar con Ansible (colecciones oficiales)
 
 ```bash
-# Crear estructura de roles
-cd ansible/roles
-mkdir -p prometheus/{tasks,templates,defaults}
-mkdir -p grafana/{tasks,templates,defaults}
-```
-
-**ansible/roles/prometheus/tasks/main.yml:**
-
-```yaml
----
-- name: Install Prometheus
-  ansible.builtin.apt:
-    name: prometheus
-    state: present
-    update_cache: yes
-
-- name: Configure Prometheus
-  ansible.builtin.template:
-    src: prometheus.yml.j2
-    dest: /etc/prometheus/prometheus.yml
-    owner: prometheus
-    group: prometheus
-    mode: '0644'
-  notify: restart prometheus
-
-- name: Ensure Prometheus is running
-  ansible.builtin.systemd:
-    name: prometheus
-    state: started
-    enabled: yes
-
-- name: Allow Prometheus port
-  community.general.ufw:
-    rule: allow
-    port: 9090
-    proto: tcp
-    from_ip: "{{ item }}"
-  loop: "{{ prometheus_allowed_ips }}"
-```
-
-**ansible/roles/prometheus/templates/prometheus.yml.j2:**
-
-```yaml
-# Prometheus Configuration
-global:
-  scrape_interval: 15s
-  evaluation_interval: 15s
-  external_labels:
-    monitor: 'hetzner-monitoring'
-
-# Alertmanager configuration
-alerting:
-  alertmanagers:
-    - static_configs:
-        - targets: ['localhost:9093']
-
-# Scrape configurations
-scrape_configs:
-  # Prometheus itself
-  - job_name: 'prometheus'
-    static_configs:
-      - targets: ['localhost:9090']
-
-  # Monitoring server
-  - job_name: 'monitoring-server'
-    static_configs:
-      - targets: ['localhost:9100']
-        labels:
-          instance: 'monitoring-01'
-
-  # Application servers
-  - job_name: 'app-servers'
-    static_configs:
-{% for host in groups['hetzner'] %}
-      - targets: ['{{ hostvars[host]['ansible_default_ipv4']['address'] }}:9100']
-        labels:
-          instance: '{{ host }}'
-          environment: '{{ hostvars[host]['environment'] | default('production') }}'
-{% endfor %}
-```
-
-**ansible/roles/grafana/tasks/main.yml:**
-
-```yaml
----
-- name: Add Grafana GPG key
-  ansible.builtin.apt_key:
-    url: https://apt.grafana.com/gpg.key
-    state: present
-
-- name: Add Grafana repository
-  ansible.builtin.apt_repository:
-    repo: deb https://apt.grafana.com stable main
-    state: present
-    filename: grafana
-
-- name: Install Grafana
-  ansible.builtin.apt:
-    name: grafana
-    state: present
-    update_cache: yes
-
-- name: Configure Grafana
-  ansible.builtin.template:
-    src: grafana.ini.j2
-    dest: /etc/grafana/grafana.ini
-    owner: root
-    group: grafana
-    mode: '0640'
-  notify: restart grafana
-
-- name: Ensure Grafana is running
-  ansible.builtin.systemd:
-    name: grafana-server
-    state: started
-    enabled: yes
-
-- name: Allow Grafana port
-  community.general.ufw:
-    rule: allow
-    port: 3000
-    proto: tcp
+cd ansible
+ansible-playbook playbooks/site.yml --tags monitoring
 ```
 
 #### Paso 4: Playbook de monitoring
@@ -504,11 +390,11 @@ monitored_servers:
 ```bash
 cd ansible
 
-# Configurar servidor de monitoreo
-ansible-playbook -i inventory/hetzner.yml playbooks/setup-monitoring-server.yml
+# Configurar servidor de monitoreo (inventario en ansible.cfg)
+ansible-playbook playbooks/setup-monitoring-server.yml
 
 # Configurar Node Exporter en servidores de aplicación
-ansible-playbook -i inventory/hetzner.yml playbooks/site.yml --tags monitoring
+ansible-playbook playbooks/site.yml --tags monitoring
 ```
 
 #### Paso 7: Acceder a Grafana
@@ -518,13 +404,22 @@ ansible-playbook -i inventory/hetzner.yml playbooks/site.yml --tags monitoring
 cd terraform/environments/production
 tofu output monitoring_server_ip
 
-# Acceder a Grafana
-open http://MONITORING_IP:3000
+# Acceder a Grafana (opción 1: subdominio)
+open https://grafana.tudominio.com
+
+# Acceder a Grafana (opción 2: IP directa)
+# open http://MONITORING_IP:3000
 
 # Login inicial:
 # User: admin
 # Password: admin (cambiar en primer login)
 ```
+
+**Subdominios opcionales (recomendado con auth):**
+
+- Grafana: `https://grafana.tudominio.com`
+- Prometheus: `https://prometheus.tudominio.com` (solo si lo expones vía Nginx + auth)
+- Loki: `https://loki.tudominio.com` (solo si lo expones vía Nginx + auth)
 
 #### Paso 8: Configurar Grafana
 
@@ -557,7 +452,7 @@ open http://MONITORING_IP:3000
 cd ansible
 
 # Instalar todo en el mismo servidor
-ansible-playbook -i inventory/hetzner.yml playbooks/site.yml --tags monitoring,prometheus,grafana
+ansible-playbook playbooks/site.yml --tags monitoring,prometheus,grafana
 
 # Acceder
 open http://YOUR_SERVER_IP:3000
@@ -646,28 +541,28 @@ integrations:
 ### Opción 1: Servidor Dedicado
 
 ```
-Servidor monitoring (cx11):    €4.51/mes
-Servidores aplicación (cx11):  €4.51/mes × N servers
+Servidor monitoring (CAX11):    €4.05/mes
+Servidores aplicación (CAX11):  €4.05/mes × N servers
 ─────────────────────────────────────────
-Total (1 app + 1 monitoring):  €9.02/mes
-Total (3 app + 1 monitoring):  €18.04/mes
+Total (1 app + 1 monitoring):  €8.10/mes
+Total (3 app + 1 monitoring):  €16.20/mes
 ```
 
 ### Opción 2: Mismo Servidor
 
 ```
-Servidor único (cx11):         €4.51/mes
+Servidor único (CAX11):        €4.05/mes
 ─────────────────────────────────────────
-Total:                         €4.51/mes
+Total:                         €4.05/mes
 ```
 
 ### Opción 3: Grafana Cloud
 
 ```
 Free tier:                     €0/mes (hasta 10k series)
-Servidores aplicación (cx11):  €4.51/mes × N servers
+Servidores aplicación (CAX11): €4.05/mes × N servers
 ─────────────────────────────────────────
-Total (3 app servers):         €13.53/mes
+Total (3 app servers):         €12.15/mes
 ```
 
 ---
@@ -680,7 +575,7 @@ Total (3 app servers):         €13.53/mes
 
 - Separa monitoreo de aplicaciones
 - Escalable y confiable
-- ~€5/mes extra bien invertidos
+- ~€4/mes extra bien invertidos
 
 ### Para Desarrollo/Testing
 
@@ -711,3 +606,5 @@ Total (3 app servers):         €13.53/mes
 ---
 
 **Recomendación Personal:** Empieza con **Opción 2** para desarrollo, y cuando tengas múltiples servidores en producción, migra a **Opción 1** (servidor dedicado).
+
+**Última actualización:** 2026-01-09

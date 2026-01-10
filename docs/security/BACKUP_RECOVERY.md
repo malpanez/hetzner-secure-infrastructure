@@ -407,7 +407,7 @@ sudo restic -r $RESTIC_REPOSITORY restore latest --target / --include /usr/local
 
 ```bash
 cd ansible
-ansible-playbook -i inventory/hetzner.yml playbooks/site.yml
+ansible-playbook playbooks/site.yml
 ```
 
 **Step 4: Reconfigure 2FA**
@@ -433,7 +433,7 @@ tofu apply
 
 # 3. Run Ansible hardening
 cd ../../../ansible
-ansible-playbook -i inventory/hetzner.yml playbooks/site.yml
+ansible-playbook playbooks/site.yml
 
 # 4. Restore application data
 ssh user@server-ip

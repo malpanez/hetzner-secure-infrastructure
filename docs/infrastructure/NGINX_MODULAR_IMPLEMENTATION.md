@@ -1,7 +1,7 @@
 # Nginx Modular Configuration - Implementation Complete
 
-**Date**: 2024-12-31
-**Status**: ✅ READY FOR TESTING
+**Date**: 2026-01-09
+**Status**: ✅ READY FOR PRODUCTION
 
 ---
 
@@ -425,7 +425,7 @@ Created comprehensive guides:
 
    ```bash
    cd terraform
-   ansible-playbook -i inventory/staging ../ansible/playbook.yml --tags nginx-wordpress
+   ansible-playbook ../ansible/playbook.yml --tags nginx-wordpress
    ```
 
 2. **Verify deployment**

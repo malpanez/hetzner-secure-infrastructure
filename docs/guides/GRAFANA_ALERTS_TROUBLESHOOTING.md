@@ -196,7 +196,7 @@ sudo systemctl restart nginx
    watch -n 5 'free -h; echo "---"; ps aux | head -5'
    ```
 
-**Expected Memory Usage (4GB CX23 x86)**:
+**Expected Memory Usage (4GB CAX11 ARM64)**:
 
 | Component | Normal Usage | Alert If > |
 |-----------|--------------|-----------|
@@ -296,7 +296,7 @@ df -h
 
 **Understanding Load Average**:
 
-- **CX23 x86**: 2 vCPUs → Normal load: 0.0 - 2.0
+- **CAX11 ARM64**: 2 vCPUs → Normal load: 0.0 - 2.0
 - **Load > 2.0**: System is overloaded
 - **Load > 4.0**: Critical, investigate immediately
 
@@ -550,7 +550,7 @@ Grafana uses 4 alert states:
 
 ## Performance Metrics Reference
 
-### Staging x86 (CX23) Baseline Metrics
+### Staging ARM (CAX11) Baseline Metrics
 
 These are **normal/expected** values for our staging environment:
 
@@ -558,10 +558,9 @@ These are **normal/expected** values for our staging environment:
 
 | Metric | Value | Status |
 |--------|-------|--------|
-| CPU Usage | 2-5% | 🟢 Normal |
-| Memory Used | ~800 MB / 3.7 GB (21%) | 🟢 Normal |
-| Load Average | 0.05 - 0.15 | 🟢 Normal |
-| Disk Usage | ~2.5 GB / 40 GB (6%) | 🟢 Normal |
+| Memory Used | ~736 MB / 3.7 GB (19%) | 🟢 Normal |
+| Load Average | ~0.19 | 🟢 Normal |
+| Disk Usage | ~4.5 GB / 38 GB (12%) | 🟢 Normal |
 | Network TX | < 1 Kbps | 🟢 Normal |
 | Network RX | < 1 Kbps | 🟢 Normal |
 
@@ -569,11 +568,10 @@ These are **normal/expected** values for our staging environment:
 
 | Metric | Value | Status |
 |--------|-------|--------|
-| CPU Usage | 40-60% | 🟢 Normal |
-| Memory Used | ~850 MB / 3.7 GB (23%) | 🟢 Normal |
-| Load Average | 0.4 - 0.7 | 🟢 Normal |
-| Requests/sec | 5,200+ | 🟢 Excellent |
-| Mean Response Time | 95ms | 🟢 Excellent |
+| Memory Used | ~736 MB / 3.7 GB (19%) | 🟢 Normal |
+| Load Average | 0.19 | 🟢 Normal |
+| Requests/sec | 8,339 | 🟢 Excellent |
+| Mean Response Time | 12ms | 🟢 Excellent |
 | Failed Requests | 0% | 🟢 Perfect |
 
 #### Alert Thresholds

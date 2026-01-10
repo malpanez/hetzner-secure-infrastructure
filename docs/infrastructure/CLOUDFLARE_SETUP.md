@@ -104,7 +104,7 @@ graph TB
     subgraph server_protection["🖥️ Server Protection"]
         layer_cf_tunnel["🔒 Layer 6: Cloudflare IPs Only<br/>• UFW whitelist<br/>• Fail2ban"]
         layer_nginx["⚡ Layer 7: Nginx<br/>• Rate limiting<br/>• Security headers"]
-        layer_wp["📝 Layer 8: WordPress<br/>• Wordfence<br/>• 2FA Admin"]
+        layer_wp["📝 Layer 8: WordPress<br/>• 2FA Admin (plugin)<br/>• Login rate limiting"]
     end
 
     internet --> layer_ddos
@@ -525,7 +525,7 @@ module "hetzner_server" {
   source = "../../modules/hetzner-server"
 
   server_name    = "trading-academy-prod"
-  server_type    = "cpx31"  # 4 vCPU, 8GB RAM para WordPress + MySQL
+  server_type    = "cax11"  # 2 vCPU, 4GB RAM (ARM64 baseline)
   # ... resto de configuración
 }
 
@@ -543,8 +543,9 @@ module "cloudflare" {
 resource "null_resource" "configure_cloudflare_ips" {
   provisioner "local-exec" {
     command = <<-EOT
-      ansible-playbook -i ${module.hetzner_server.ipv4_address}, \
+      ANSIBLE_CONFIG=ansible/ansible.cfg ansible-playbook \
         ansible/playbooks/cloudflare-firewall.yml \
+        --limit wordpress_servers \
         -e "cloudflare_ips='${jsonencode(module.cloudflare.cloudflare_ipv4_cidrs)}'"
     EOT
   }
@@ -677,24 +678,15 @@ tofu apply
 ### Plugins WordPress Recomendados
 
 ```yaml
-# ansible/roles/wordpress/vars/main.yml
+# ansible/roles/nginx_wordpress/defaults/main.yml (extracto)
 wordpress_plugins:
-  security:
-    - wordfence  # WAF + Firewall + 2FA
-    - wp-fail2ban  # Integración con Fail2ban
-    - limit-login-attempts-reloaded
-    - wp-2fa  # Two-factor authentication
-
-  performance:
-    - w3-total-cache  # Caching (compatiblecon Cloudflare)
-    - autoptimize  # Minify CSS/JS
-    - wp-smushit  # Image optimization
-
-  tutor_lms:
-    - tutor  # LMS principal
-    - tutor-pro  # Features premium
-    - elementor  # Page builder
+  - redis-cache                      # Valkey object cache
+  - nginx-helper                     # FastCGI cache purging
+  - wordfence-login-security         # Admin 2FA/MFA
+  - limit-login-attempts-reloaded    # Login rate limiting
 ```
+
+**Nota:** No usamos el plugin de Cloudflare; la integración es DNS/API y reglas en el edge.
 
 ---
 
@@ -738,6 +730,8 @@ curl -I https://tu-dominio.com
 
 - DDoS attacks detected
 - High error rate (5xx)
+
+**Última actualización:** 2026-01-09
 - SSL certificate expiring
 
 ---
@@ -748,8 +742,8 @@ curl -I https://tu-dominio.com
 |------------|---------------|
 | **Cloudflare Free** | €0 |
 | **Dominio (Cloudflare)** | ~€10/año |
-| **Hetzner CPX31** | ~€13/mes |
-| **Total** | **~€13/mes** |
+| **Hetzner CAX11** | ~€4.05/mes |
+| **Total** | **~€4.05/mes** |
 
 **vs. Sin Cloudflare + GoDaddy:**
 

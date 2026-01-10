@@ -2,7 +2,7 @@
 
 > **Complete performance analysis of Hetzner CX23 x86 with monitoring stack deployed**
 
-**Date**: 2025-12-30
+**Date**: 2026-01-09
 **Server**: stag-de-wp-01 (Hetzner CX23 x86)
 **Location**: Nuremberg, Germany (nbg1)
 
@@ -18,7 +18,7 @@
 | **RAM** | 4 GB |
 | **Disk** | 40 GB NVMe |
 | **Network** | 20 TB traffic |
-| **Price** | €5.04/month |
+| **Price** | €3.68/month |
 
 ---
 
@@ -27,15 +27,15 @@
 ### Application Stack
 
 - **OS**: Debian 13 (Trixie)
-- **Web Server**: Nginx 1.27.3
+- **Web Server**: Nginx 1.28.1
 - **PHP**: PHP 8.4-FPM
-- **Database**: MariaDB 11.4
+- **Database**: MariaDB 11.8
 - **Cache**: Valkey 8.0.1 (Redis fork)
 - **WordPress**: Latest (redirect to setup)
 
 ### Monitoring Stack (All-in-One Deployment)
 
-- **Prometheus**: 3.8.1 (metrics collection)
+- **Prometheus**: 2.48 (metrics collection)
 - **Grafana**: Latest (visualization)
 - **Loki**: Latest (log aggregation)
 - **Promtail**: Latest (log shipping)
@@ -373,7 +373,7 @@ Current capacity estimates:
 
 1. ✅ Complete x86 benchmark with monitoring - **DONE**
 2. ⏳ Document findings - **IN PROGRESS**
-3. ⏳ Deploy ARM (CAX11) for comparison testing
+3. ✅ Deploy ARM (CAX11) for comparison testing
 
 ### ARM Comparison Testing
 
@@ -411,9 +411,9 @@ The Hetzner CX23 x86 server demonstrates **excellent performance** for a WordPre
 
 The monitoring stack (Prometheus + Grafana + Loki) adds tremendous value with minimal cost, providing real-time observability and historical analytics essential for production operations.
 
-**Next**: Test ARM architecture (CAX11) to compare price/performance ratio before final production deployment.
+**Next**: Review ARM comparison results in `docs/performance/ARM64_vs_X86_COMPARISON.md`.
 
 ---
 
 **Author**: Infrastructure Automation Team
-**Last Updated**: 2025-12-30
+**Last Updated**: 2026-01-09

@@ -36,8 +36,8 @@ This infrastructure implements a **5-layer caching stack** designed for maximum 
 └─────────────────────────────────────────────────────────┘
                            ↓ (Cache MISS)
 ┌─────────────────────────────────────────────────────────┐
-│ LAYER 4: MySQL Query Cache + OpCache                    │
-│ - MySQL query results caching                           │
+│ LAYER 4: MariaDB Query Cache + OpCache                  │
+│ - MariaDB query results caching                         │
 │ - PHP OpCache for compiled bytecode                     │
 └─────────────────────────────────────────────────────────┘
                            ↓ (Cache MISS)
@@ -358,7 +358,7 @@ query_cache_limit = 2M
 **InnoDB Buffer Pool**:
 
 ```sql
-innodb_buffer_pool_size = 1G  # For cx21 with 4GB RAM
+innodb_buffer_pool_size = 1G  # For 4GB RAM servers (CAX11/CX23)
 innodb_buffer_pool_instances = 4
 ```
 
@@ -717,6 +717,6 @@ Valkey: Enabled with monitoring
 
 ---
 
-**Last Updated**: 2025-12-26
+**Last Updated**: 2026-01-09
 **Infrastructure Version**: v2.0
 **Maintained By**: Infrastructure Team
