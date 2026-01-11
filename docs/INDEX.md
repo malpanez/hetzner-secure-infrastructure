@@ -11,13 +11,8 @@ Quick access to all project documentation.
 ### New Users
 
 1. [README](../README.md) - Project overview
-2. [Quick Start (Spanish)](guides/QUICK_START_ES.md) - Guía rápida en español
-3. [Go Live Today Checklist](../GO_LIVE_TODAY_CHECKLIST.md) - Production deployment
-
-### Existing Users
-
-- [Deployment Guide](guides/DEPLOYMENT.md) - Standard deployment process
-- [Troubleshooting](guides/TROUBLESHOOTING.md) - Common issues and solutions
+2. [Deployment Guide](guides/DEPLOYMENT_GUIDE.md) - **Complete step-by-step deployment**
+3. [Troubleshooting](guides/TROUBLESHOOTING.md) - Common issues and solutions
 
 ---
 
@@ -39,9 +34,8 @@ Quick access to all project documentation.
 
 ### Deployment & Operations
 
-- [Deployment Automation Setup](guides/DEPLOYMENT_AUTOMATION_SETUP.md) - **Complete production guide**
-- [Deployment Guide](guides/DEPLOYMENT_GUIDE.md) - Standard deployment
-- [Production Readiness Plan](guides/PRODUCTION_READINESS_PLAN.md) - Pre-launch checklist
+- [Deployment Guide](guides/DEPLOYMENT_GUIDE.md) - **Complete production deployment (ARM64 ready)**
+- [Deployment Automation Setup](guides/DEPLOYMENT_AUTOMATION_SETUP.md) - Automated deployments
 - [Testing & DR Strategy](guides/TESTING_AND_DR_STRATEGY.md) - Disaster recovery
 - [Complete Testing Guide](guides/COMPLETE_TESTING_GUIDE.md) - QA procedures
 - [Logging](guides/LOGGING.md) - Centralized logging with Loki
@@ -59,10 +53,9 @@ Quick access to all project documentation.
 
 ### Performance
 
-- [ARM64 vs x86 Comparison](performance/ARM64_vs_X86_COMPARISON.md) - **Performance benchmarks**
-- [ARM64 Staging Benchmark](performance/ARM64_STAGING_BENCHMARK.md) - Legacy CAX21 test results
+- [ARM64 vs x86 Comparison](performance/ARM64_vs_X86_COMPARISON.md) - **Performance benchmarks (ARM64 wins)**
+- [ARM64 Staging Benchmark](performance/ARM64_STAGING_BENCHMARK.md) - CAX21 test results
 - [x86 Staging Benchmark](performance/X86_STAGING_BENCHMARK_WITH_MONITORING.md) - CX23 test results
-- [Testing x86 vs ARM](performance/TESTING_x86_vs_ARM.md) - Methodology
 
 ### Configuration
 
@@ -84,9 +77,9 @@ Quick access to all project documentation.
 ### I want to
 
 **Deploy to production today**
-→ [Go Live Today Checklist](../GO_LIVE_TODAY_CHECKLIST.md)
+→ [Deployment Guide](guides/DEPLOYMENT_GUIDE.md)
 
-**Setup automated deployments (no 2FA prompt)**
+**Setup automated deployments**
 → [Deployment Automation Setup](guides/DEPLOYMENT_AUTOMATION_SETUP.md)
 
 **Capture 2FA QR code for my phone**
