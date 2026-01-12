@@ -1,0 +1,47 @@
+# ========================================
+# Page Rules - Caching Strategy
+# ========================================
+#
+# IMPORTANT: Cloudflare Free plan only allows 3 Page Rules
+# Priority: Admin bypass > Login security > Static cache
+#
+# NOTE: CSS/JS caching removed to stay within Free plan limits
+# These are cached automatically by Cloudflare's default settings
+# ========================================
+
+# Don't cache WordPress admin (PRIORITY 1)
+resource "cloudflare_page_rule" "bypass_admin" {
+  zone_id  = data.cloudflare_zone.main.id
+  target   = "${var.domain_name}/wp-admin/*"
+  priority = 1
+
+  actions {
+    cache_level      = "bypass"
+    disable_security = false
+  }
+}
+
+# Don't cache login page + higher security (PRIORITY 2)
+resource "cloudflare_page_rule" "bypass_login" {
+  zone_id  = data.cloudflare_zone.main.id
+  target   = "${var.domain_name}/wp-login.php"
+  priority = 2
+
+  actions {
+    cache_level    = "bypass"
+    security_level = "high" # Higher security for login page
+  }
+}
+
+# Cache static assets aggressively (PRIORITY 3)
+resource "cloudflare_page_rule" "cache_static" {
+  zone_id  = data.cloudflare_zone.main.id
+  target   = "${var.domain_name}/wp-content/*"
+  priority = 3
+
+  actions {
+    cache_level       = "cache_everything"
+    edge_cache_ttl    = 2592000 # 30 days
+    browser_cache_ttl = 604800  # 7 days
+  }
+}

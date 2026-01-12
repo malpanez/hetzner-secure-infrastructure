@@ -6,7 +6,7 @@
 resource "cloudflare_record" "root" {
   zone_id = data.cloudflare_zone.main.id
   name    = "@"
-  value   = var.server_ipv4
+  content = var.server_ipv4
   type    = "A"
   proxied = true # Enable Cloudflare CDN + DDoS protection
   ttl     = 1    # Auto (when proxied)
@@ -42,7 +42,7 @@ resource "cloudflare_record" "www" {
 resource "cloudflare_record" "grafana" {
   zone_id = data.cloudflare_zone.main.id
   name    = "grafana"
-  value   = var.server_ipv4
+  content = var.server_ipv4
   type    = "A"
   proxied = true
   ttl     = 1
@@ -53,7 +53,7 @@ resource "cloudflare_record" "grafana" {
 resource "cloudflare_record" "prometheus" {
   zone_id = data.cloudflare_zone.main.id
   name    = "prometheus"
-  value   = var.server_ipv4
+  content = var.server_ipv4
   type    = "A"
   proxied = true
   ttl     = 1
