@@ -1,0 +1,30 @@
+# Gitleaks Configuration
+# https://github.com/gitleaks/gitleaks
+
+title = "Hetzner Secure Infrastructure - GitLeaks Config"
+
+# Ignore archived documentation with example secrets
+[allowlist]
+  description = "Allowlist for archived docs with example/dummy secrets"
+
+  # Ignore all files in .archive/ directory (historical docs with examples)
+  paths = [
+    '''.archive/.*''',
+    '''\.archive/.*'''
+  ]
+
+  # Ignore specific patterns that are known examples
+  regexes = [
+    '''example\.com''',
+    '''tu_token.*''',
+    '''your.*token''',
+    '''dummy.*password''',
+    '''REDACTED''',
+  ]
+
+  # Ignore commits that add .gitleaks.toml itself
+  commits = []
+
+[extend]
+  # Use default gitleaks rules
+  useDefault = true
