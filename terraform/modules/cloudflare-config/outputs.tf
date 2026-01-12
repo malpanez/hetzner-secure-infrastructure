@@ -114,17 +114,15 @@ output "browser_cache_ttl" {
 }
 
 # ========================================
-# Page Rules
+# Rulesets (Replaces Page Rules)
 # ========================================
 
-output "page_rules_count" {
-  description = "Number of page rules configured"
+output "rulesets_count" {
+  description = "Number of rulesets configured"
   value = length([
-    cloudflare_page_rule.cache_static.id,
-    cloudflare_page_rule.bypass_admin.id,
-    cloudflare_page_rule.bypass_login.id,
-    cloudflare_page_rule.cache_assets.id,
-    cloudflare_page_rule.cache_js.id,
+    cloudflare_ruleset.security_headers.id,
+    cloudflare_ruleset.cache_rules.id,
+    cloudflare_ruleset.redirect_www_to_apex.id,
   ])
 }
 

@@ -10,39 +10,6 @@
 # --------------------------------------------------------
 # Security Headers (HTTP Response Headers Transform)
 # --------------------------------------------------------
-locals {
-  security_headers = {
-    "X-Frame-Options" = {
-      operation = "set"
-      value     = "DENY"
-    }
-    "X-Content-Type-Options" = {
-      operation = "set"
-      value     = "nosniff"
-    }
-    "X-XSS-Protection" = {
-      operation = "set"
-      value     = "1; mode=block"
-    }
-    "Referrer-Policy" = {
-      operation = "set"
-      value     = "strict-origin-when-cross-origin"
-    }
-    "Permissions-Policy" = {
-      operation = "set"
-      value     = "geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=()"
-    }
-    "Content-Security-Policy" = {
-      operation = "set"
-      value     = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"
-    }
-    "Strict-Transport-Security" = {
-      operation = "set"
-      value     = "max-age=31536000; includeSubDomains; preload"
-    }
-  }
-}
-
 resource "cloudflare_ruleset" "security_headers" {
   zone_id     = data.cloudflare_zone.main.id
   name        = "security-headers"
@@ -55,8 +22,43 @@ resource "cloudflare_ruleset" "security_headers" {
     expression  = "true"
     action      = "rewrite"
     enabled     = true
+
     action_parameters {
-      headers = local.security_headers
+      headers {
+        name      = "X-Frame-Options"
+        operation = "set"
+        value     = "DENY"
+      }
+      headers {
+        name      = "X-Content-Type-Options"
+        operation = "set"
+        value     = "nosniff"
+      }
+      headers {
+        name      = "X-XSS-Protection"
+        operation = "set"
+        value     = "1; mode=block"
+      }
+      headers {
+        name      = "Referrer-Policy"
+        operation = "set"
+        value     = "strict-origin-when-cross-origin"
+      }
+      headers {
+        name      = "Permissions-Policy"
+        operation = "set"
+        value     = "geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=()"
+      }
+      headers {
+        name      = "Content-Security-Policy"
+        operation = "set"
+        value     = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"
+      }
+      headers {
+        name      = "Strict-Transport-Security"
+        operation = "set"
+        value     = "max-age=31536000; includeSubDomains; preload"
+      }
     }
   }
 }
