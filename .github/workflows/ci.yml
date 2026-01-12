@@ -207,7 +207,7 @@ jobs:
           required_docs=(
             "README.md"
             "docs/INDEX.md"
-            "docs/guides/DEPLOYMENT.md"
+            "docs/guides/DEPLOYMENT_GUIDE.md"
           )
 
           missing=0

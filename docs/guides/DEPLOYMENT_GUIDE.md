@@ -49,10 +49,10 @@ git --version      # >= 2.30
 
 | Componente | Costo Mensual | Obligatorio |
 |------------|---------------|-------------|
-| CAX11 (2 vCPU ARM64, 4GB RAM) | €4.05 | ✅ Sí |
+| CAX11 (2 vCPU ARM64, 4GB RAM, IPv4 incluida) | €4.66 | ✅ Sí |
 | Dominio (.com) | ~€1.00 | ✅ Sí |
 | Cloudflare | €0.00 (Free) | ⚠️ Recomendado |
-| **TOTAL MÍNIMO** | **€5.05/mes** | |
+| **TOTAL MÍNIMO** | **€5.66/mes** | |
 
 ---
 

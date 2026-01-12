@@ -1,22 +1,20 @@
-# Hetzner Secure Infrastructure - WordPress + LearnDash
+# Hetzner Secure Infrastructure - Production WordPress (ARM64)
 
 <div align="center">
 
 [![Build Status](https://github.com/malpanez/hetzner-secure-infrastructure/actions/workflows/ci.yml/badge.svg)](https://github.com/malpanez/hetzner-secure-infrastructure/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Terraform](https://img.shields.io/badge/Terraform-1.9-7B42BC?logo=terraform&logoColor=white)](https://terraform.io)
-[![Ansible](https://img.shields.io/badge/Ansible-2.15-EE0000?logo=ansible&logoColor=white)](https://ansible.com)
-[![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://python.org)
-[![Go](https://img.shields.io/badge/Go-1.22-00ADD8?logo=go&logoColor=white)](https://golang.org)
+[![Terraform](https://img.shields.io/badge/Terraform-1.10-7B42BC?logo=terraform&logoColor=white)](https://terraform.io)
+[![Ansible](https://img.shields.io/badge/Ansible-2.16-EE0000?logo=ansible&logoColor=white)](https://ansible.com)
+[![ARM64](https://img.shields.io/badge/ARM64-Optimized-success)](docs/performance/ARM64_vs_X86_COMPARISON.md)
 
 [![Security Scan](https://img.shields.io/badge/security-scanned-brightgreen.svg)](SECURITY.md)
 [![Pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://pre-commit.com/)
-[![Code Quality](https://img.shields.io/badge/code%20quality-A-brightgreen.svg)](https://github.com/ansible/ansible-lint)
-[![Infrastructure Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](TESTING.md)
+[![Infrastructure Tests](https://img.shields.io/badge/tests-10%2F10%20passing-brightgreen.svg)](docs/guides/COMPLETE_TESTING_GUIDE.md)
 
-**Professional, battle-tested infrastructure for WordPress + LearnDash premium course platform**
+**Production-ready WordPress infrastructure optimized for ARM64 (2.68x faster than x86)**
 
-Automated deployment of secure, high-performance WordPress infrastructure on Hetzner Cloud with comprehensive testing and monitoring.
+Fully automated deployment of secure, high-performance WordPress on Hetzner Cloud ARM64 servers with enterprise-grade monitoring and security.
 
 [Quick Start](#-quick-start) • [Features](#-features) • [Documentation](#-documentation) • [Contributing](CONTRIBUTING.md)
 
@@ -24,16 +22,16 @@ Automated deployment of secure, high-performance WordPress infrastructure on Het
 
 ---
 
-## 🌟 Why Choose This Infrastructure?
+## 🌟 Why This Infrastructure?
 
-- ✅ **Production-Ready**: Battle-tested with real workloads
-- ✅ **Cost-Effective**: Starting at €9.40/month for 100-200 students
-- ✅ **Fully Automated**: From bare metal to production in minutes
-- ✅ **Comprehensive Testing**: 100% test coverage with Terratest + Molecule
-- ✅ **Enterprise Security**: Multi-layer security with WAF, Fail2ban, AppArmor
-- ✅ **High Performance**: 5-layer caching stack (85% faster TTFB)
-- ✅ **Well Documented**: Extensive documentation and examples
-- ✅ **Active Maintenance**: Regular updates and security patches
+- ✅ **ARM64 Optimized**: 2.68x faster than x86 (benchmarked)
+- ✅ **Cost-Effective**: €4.66/month (CAX11 ARM64 with IPv4)
+- ✅ **Fully Automated**: Terraform + Ansible with dynamic inventory
+- ✅ **100% Test Coverage**: 10 Molecule tests + Terratest + CI/CD
+- ✅ **Enterprise Security**: WAF, Fail2ban, AppArmor, SSH 2FA
+- ✅ **High Performance**: Nginx 1.28.1 + PHP 8.4 + Valkey cache
+- ✅ **Complete Monitoring**: Prometheus + Grafana + Loki (logs)
+- ✅ **Production-Ready**: Clean code, comprehensive docs
 
 ---
 
@@ -41,19 +39,24 @@ Automated deployment of secure, high-performance WordPress infrastructure on Het
 
 ```bash
 # 1. Clone repository
-git clone https://codeberg.org/malpanez/twomindstrading_hetzner.git
-cd twomindstrading_hetzner
+git clone https://github.com/malpanez/hetzner-secure-infrastructure.git
+cd hetzner-secure-infrastructure
 
-# 2. Install dependencies
-make install-deps
+# 2. Deploy with Terraform (ARM64)
+cd terraform
+export HCLOUD_TOKEN="your_token"
+terraform apply -var-file=terraform.prod.tfvars
 
-# 3. Run tests
-make test
+# 3. Configure with Ansible
+cd ../ansible
+export HCLOUD_TOKEN="your_token"
+ansible-playbook playbooks/site.yml --ask-vault-pass
 
-# 4. Deploy infrastructure
-export HCLOUD_TOKEN="your-token"
-make deploy
+# 4. Complete WordPress setup
+# https://YOUR_IP/wp-admin/install.php
 ```
+
+**Full guide**: [docs/guides/DEPLOYMENT_GUIDE.md](docs/guides/DEPLOYMENT_GUIDE.md)
 
 ---
 
@@ -61,19 +64,18 @@ make deploy
 
 ### Infrastructure
 
-- ✅ **Terraform** - Infrastructure as Code (Hetzner Cloud)
-- ✅ **Ansible** - Configuration Management (12 roles)
-- ✅ **Debian 13** - Latest stable OS
-- ✅ **Red Hat CoP** - Best practices compliant
+- ✅ **Hetzner Cloud ARM64** - CAX11 (2 vCPU, 4GB RAM)
+- ✅ **Terraform** - Infrastructure as Code
+- ✅ **Ansible** - 10 production roles + dynamic inventory
+- ✅ **Debian 12** - Stable with ARM64 support
 
 ### WordPress Stack
 
 - ✅ **WordPress** - Latest version
-- ✅ **LearnDash Pro** - Premium LMS
-- ✅ **Nginx** - High-performance web server
-- ✅ **PHP 8.3** - Latest PHP with OpCache
-- ✅ **MariaDB 10.11** - Fast MySQL fork
-- ✅ **Valkey 8.0** - Redis-compatible object cache
+- ✅ **Nginx 1.28.1** - Official repo + FastCGI cache
+- ✅ **PHP 8.4** - Latest with OpCache
+- ✅ **MariaDB 10.11** - Production database
+- ✅ **Valkey 8.0** - Redis-compatible cache
 
 ### Performance (5-Layer Caching)
 
@@ -91,12 +93,12 @@ make deploy
 
 ### Security
 
-- ✅ **Cloudflare WAF** - Web Application Firewall
-- ✅ **UFW Firewall** - Host-level firewall
-- ✅ **Fail2ban** - Intrusion prevention
-- ✅ **AppArmor** - Mandatory access control
-- ✅ **SSH 2FA** - Two-factor authentication
-- ✅ **OpenBao** - Secrets management
+- ✅ **Cloudflare WAF** - Edge protection + DDoS
+- ✅ **UFW Firewall** - Host-level rules
+- ✅ **Fail2ban** - Auto-ban malicious IPs
+- ✅ **AppArmor** - Application sandboxing
+- ✅ **SSH Hardening** - Key-only + optional 2FA
+- ✅ **Kernel Hardening** - sysctl security settings
 
 ---
 
@@ -104,28 +106,29 @@ make deploy
 
 ### Complete Test Coverage
 
-- ✅ **Terratest** - Infrastructure tests (Go)
-- ✅ **Molecule** - Ansible role tests (12/12 roles)
+- ✅ **Molecule** - 10/10 Ansible roles tested with Docker
+- ✅ **Testinfra** - 912 lines of infrastructure tests
+- ✅ **GitHub Actions CI** - Automated validation on every push
 - ✅ **Ansible Lint** - Best practices validation
-- ✅ **YAML Lint** - Syntax validation
+- ✅ **Security Scans** - Trivy, Checkov, GitLeaks, ShellCheck
 
-### Run Tests
+### Run Tests Locally
 
 ```bash
-# All tests
-make test
+# Test specific role with Molecule
+cd ansible/roles/nginx_wordpress
+molecule test
 
-# Only Terraform
-make test-terraform
+# Validate Ansible syntax
+cd ansible
+ansible-playbook playbooks/site.yml --syntax-check
 
-# Only Ansible
-make test-ansible
-
-# Only Molecule
-make test-molecule
+# Run all CI checks
+cd ..
+.github/workflows/ci.yml  # See workflow for commands
 ```
 
-**See**: [TESTING.md](TESTING.md) for complete testing guide
+**See**: [docs/guides/COMPLETE_TESTING_GUIDE.md](docs/guides/COMPLETE_TESTING_GUIDE.md)
 
 ---
 
@@ -137,7 +140,7 @@ make test-molecule
 
 | Option | Type | Cost (with IPv4) | Performance | Availability |
 |--------|------|------------------|-------------|--------------|
-| **CAX11** (ARM) | cax11 | €4.05/mo | **8,339 req/s, 12ms latency** | ✅ Always available |
+| **CAX11** (ARM) | cax11 | €4.66/mo | **8,339 req/s, 12ms latency** | ✅ Always available |
 | **CX23** (x86) | cx23 | €3.68/mo | 3,114 req/s, 32ms latency | ⚠️ Limited stock |
 
 **Winner**: ARM64 (CAX11)
@@ -151,7 +154,7 @@ make test-molecule
 
 ### Production Architecture (Minimal - 1 Server)
 
-**Cost**: €4.05/month (ARM64) | **Capacity**: 8,000+ req/s
+**Cost**: €4.66/month (ARM64) | **Capacity**: 8,000+ req/s
 
 ```
 ┌─────────────────────────────────────┐
@@ -176,14 +179,14 @@ make test-molecule
 
 ### Future: Multi-Server (When Revenue Grows)
 
-**Cost**: €8.10/month | **Capacity**: 16,000+ req/s | **When**: After first €6,000 revenue
+**Cost**: €9.32/month | **Capacity**: 16,000+ req/s | **When**: After first €6,000 revenue
 
 ```
 ┌──────────────┐  ┌──────────────────────┐
 │  WordPress   │  │  Monitoring+Secrets  │
 │  + Database  │  │  Prometheus+Grafana  │
-│  CAX11 €4.05 │  │  Vault OSS           │
-│  (ARM64)     │  │  CAX11 €4.05         │
+│  CAX11 €4.66 │  │  Vault OSS           │
+│  (ARM64)     │  │  CAX11 €4.66         │
 └──────────────┘  │  (ARM64)             │
                   └──────────────────────┘
 ```
@@ -423,9 +426,9 @@ Every push runs:
 
 | Component | Type | Monthly | **Annual** |
 |-----------|------|---------|------------|
-| All-in-One Server | CAX11 (ARM64) | €4.05 | **€48.60** |
+| All-in-One Server | CAX11 (ARM64) | €4.66 | **€55.92** |
 | Cloudflare (Free) | - | €0 | **€0** |
-| **Total** | | **€4.05/month** | **€48.60/year** |
+| **Total** | | **€4.66/month** | **€55.92/year** |
 
 **Includes**: WordPress, MariaDB, Valkey, Nginx, Monitoring (Prometheus+Grafana+Loki), optional Vault OSS
 
@@ -437,9 +440,9 @@ Every push runs:
 
 | Component | Type | Monthly | **Annual** | When to Deploy |
 |-----------|------|---------|------------|----------------|
-| WordPress Server | CAX11 (ARM64) | €4.05 | €48.60 | Always |
-| Monitoring+Secrets Server | CAX11 (ARM64) | €4.05 | €48.60 | After first €6k revenue |
-| **Total** | | **€8.10/month** | **€97.20/year** | |
+| WordPress Server | CAX11 (ARM64) | €4.66 | €55.92 | Always |
+| Monitoring+Secrets Server | CAX11 (ARM64) | €4.66 | €55.92 | After first €6k revenue |
+| **Total** | | **€9.32/month** | **€111.84/year** | |
 
 **Capacity**: 16,000+ req/s sustained
 **Good for**: 1,000-2,000 students
