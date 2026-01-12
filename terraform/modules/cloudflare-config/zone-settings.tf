@@ -1,6 +1,10 @@
 # ========================================
 # Zone Settings - SSL/TLS, Security, Performance
 # ========================================
+#
+# NOTE: Some settings are read-only and will cause errors if set explicitly.
+# Only include settings that can be modified via API.
+# ========================================
 
 resource "cloudflare_zone_settings_override" "security" {
   zone_id = data.cloudflare_zone.main.id
@@ -46,11 +50,6 @@ resource "cloudflare_zone_settings_override" "security" {
     browser_cache_ttl = 14400        # 4 hours
     cache_level       = "aggressive" # Aggressive caching
 
-    # Bot Management - Requires Business plan or higher
-    # bot_management {
-    #   enable_js = true
-    # }
-
     # Security Headers
     security_header {
       enabled            = true
@@ -59,5 +58,12 @@ resource "cloudflare_zone_settings_override" "security" {
       preload            = true
       nosniff            = true
     }
+  }
+
+  # Ignore changes to read-only fields
+  lifecycle {
+    ignore_changes = [
+      settings[0].true_client_ip_header,
+    ]
   }
 }
