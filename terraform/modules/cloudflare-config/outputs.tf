@@ -108,12 +108,12 @@ output "always_use_https" {
 output "configuration_summary" {
   description = "Summary of Cloudflare configuration"
   value = {
-    zone_name            = data.cloudflare_zone.main.name
-    zone_status          = data.cloudflare_zone.main.status
-    ssl_mode             = cloudflare_zone_settings_override.security.settings[0].ssl
-    security_level       = cloudflare_zone_settings_override.security.settings[0].security_level
-    dns_records_count    = 4
-    rulesets_count       = 4
-    ipv6_enabled         = var.server_ipv6 != null
+    zone_name         = data.cloudflare_zone.main.name
+    zone_status       = data.cloudflare_zone.main.status
+    ssl_mode          = cloudflare_zone_settings_override.security.settings[0].ssl
+    security_level    = cloudflare_zone_settings_override.security.settings[0].security_level
+    dns_records_count = 4
+    rulesets_count    = 4
+    ipv6_enabled      = var.server_ipv6 != null
   }
 }

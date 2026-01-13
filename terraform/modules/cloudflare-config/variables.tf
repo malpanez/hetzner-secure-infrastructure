@@ -5,7 +5,7 @@
 # ========================================
 
 variable "domain_name" {
-  description = "Domain name to configure (e.g., example.com)"
+  description = "Domain name to configure (e.g., example.com) - Zone will be looked up automatically"
   type        = string
 
   validation {
@@ -14,10 +14,7 @@ variable "domain_name" {
   }
 }
 
-variable "zone_id" {
-  description = "Cloudflare Zone ID"
-  type        = string
-}
+# Note: zone_id is no longer needed - we look up the zone by domain_name
 
 variable "server_ipv4" {
   description = "IPv4 address of the origin server (Hetzner)"
