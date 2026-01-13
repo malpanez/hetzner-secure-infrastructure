@@ -24,32 +24,13 @@ output "server_size" {
 }
 
 output "server_specs" {
-  description = "Server specifications"
+  description = "Server specifications (prices include IPv4)"
   value = {
     cpu   = "${local.selected_specs.cpu} vCPUs"
     ram   = "${local.selected_specs.ram} GB"
-    disk  = "${local.selected_specs.disk} GB NVMe"
+    disk  = "${local.selected_specs.disk} GB"
     price = "€${local.selected_specs.price}/month"
   }
-}
-
-output "cost_comparison" {
-  description = "ARM vs x86 cost comparison (only shown when ARM architecture selected)"
-  value = var.architecture == "arm" ? {
-    arm_selected = "€${local.selected_specs.price}/month"
-    vs_cx_cheaper = {
-      x86_cost    = "€${local.cost_comparison.cx_equivalent}/month"
-      difference  = "ARM pays +€${local.cost_comparison.cx_monthly_diff}/month (${local.cost_comparison.cx_percent_diff}% more)"
-      annual_diff = "+€${local.cost_comparison.cx_yearly_diff}/year"
-      note        = "CX series: Cheapest x86 (Intel/AMD, limited availability)"
-    }
-    vs_cpx_performance = {
-      x86_cost    = "€${local.cost_comparison.cpx_equivalent}/month"
-      difference  = "ARM saves €${local.cost_comparison.cpx_monthly_diff}/month (${local.cost_comparison.cpx_percent_diff}% cheaper)"
-      annual_diff = "Saves €${local.cost_comparison.cpx_yearly_diff}/year"
-      note        = "CPX series: Performance x86 (AMD EPYC dedicated)"
-    }
-  } : null
 }
 
 output "server_ipv4" {
