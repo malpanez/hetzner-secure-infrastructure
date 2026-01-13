@@ -1,0 +1,8 @@
+# Monitor faillock tally directory for failed authentication tracking
+-w /var/run/faillock/ -p wa -k faillock_tally
+
+# Monitor faillock configuration changes
+-w /etc/security/faillock.conf -p wa -k faillock_config
+
+# Monitor PAM configuration changes that affect faillock
+-w /usr/share/pam-configs/faillock -p wa -k pam_faillock_profile

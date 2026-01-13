@@ -1,0 +1,13 @@
+# PAM Faillock Configuration
+# Managed by Ansible - ssh_2fa role
+Name: Faillock (account lockout after failed attempts)
+Default: yes
+Priority: 900
+Auth-Type: Primary
+Auth:
+        requisite pam_faillock.so preauth
+        [default=die] pam_faillock.so authfail
+        sufficient pam_faillock.so authsucc
+Account-Type: Primary
+Account:
+        required pam_faillock.so

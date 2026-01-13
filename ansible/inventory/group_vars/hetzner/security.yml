@@ -136,3 +136,6 @@ unattended_upgrades_remove_unused_dependencies: true
 security_auto_updates_enabled: true
 security_aide_enabled: true
 security_kernel_hardening_enabled: true
+
+# Keep root unlocked for Hetzner console access
+common_disable_root_password: false

@@ -6,7 +6,7 @@
 # ========================================
 
 # Enable 2FA for SSH
-ssh_2fa_enable_ssh: true
+ssh_2fa_enable_ssh: false
 
 # Enable 2FA for sudo
 ssh_2fa_enable_sudo: true
