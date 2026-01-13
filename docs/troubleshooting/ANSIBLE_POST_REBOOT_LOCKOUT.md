@@ -1,8 +1,9 @@
 # Ansible Post-Reboot Lockout Troubleshooting
 
 **Created**: 2026-01-13
-**Status**: 🔴 ACTIVE ISSUE - Under Investigation
-**Severity**: HIGH - Blocks WordPress deployment
+**Updated**: 2026-01-13
+**Status**: ✅ WORKAROUND APPLIED - Auditd disabled
+**Severity**: MEDIUM - Workaround deployed, can re-enable later
 
 ---
 
@@ -317,17 +318,50 @@ journalctl -b | grep -i "root\|lock"
 
 ---
 
+## Solution / Workaround
+
+### ✅ Temporary Solution (Applied 2026-01-13)
+
+**Root Cause Identified**: `security_hardening` role's auditd configuration modifies GRUB with `audit=1` kernel parameter, which causes boot hang after reboot.
+
+**Workaround Applied**:
+```yaml
+# File: ansible/roles/security_hardening/defaults/main.yml
+security_hardening_auditd_enabled: false
+security_hardening_manage_grub: false
+```
+
+**Impact**:
+- ✅ System boots normally after Ansible + reboot
+- ✅ Console access preserved
+- ✅ All other security hardening (sysctl, unattended-upgrades, etc.) still active
+- ⚠️ Audit logging disabled (can re-enable later)
+
+**To Re-enable Auditd Later** (after fixing boot sequence):
+```bash
+# Edit inventory/group_vars/all/main.yml or host_vars
+security_hardening_auditd_enabled: true
+security_hardening_manage_grub: true
+
+# Run only security_hardening role
+ansible-playbook playbooks/site.yml --tags security,auditd
+```
+
+---
+
 ## Status Updates
 
-### 2026-01-13 - Initial Investigation
-- ✅ Identified issue occurs post-Ansible, not cloud-init
-- ✅ Narrowed down to 3 suspect roles
-- ✅ Created rescue mode investigation procedure
-- 🔄 Awaiting test deployment to gather logs
+### 2026-01-13 - Root Cause Found and Workaround Applied
+- ✅ Identified culprit: `security_hardening/tasks/auditd.yml`
+- ✅ GRUB modification with `audit=1 audit_backlog_limit=8192` causes boot hang
+- ✅ Disabled auditd temporarily in role defaults
+- ✅ Documentation updated with workaround
+- 🔄 Can re-enable later with proper boot sequence fix
 
-### Next Steps
-1. Deploy test server with verbose logging
-2. Capture all PAM/audit/systemd logs during Ansible run
-3. Monitor console access after each role
+### Next Steps (Optional - For Full Audit Support)
+1. Investigate why `audit=1` causes boot hang on Debian 13 + Hetzner
+2. Test alternative auditd configurations
+3. Consider delaying auditd enablement until second Ansible run
+4. Add pre-reboot validation checks
 4. Identify exact task that locks root account
 5. Implement targeted fix

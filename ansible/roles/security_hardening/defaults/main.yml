@@ -16,8 +16,11 @@ security_hardening_aide_enabled: false
 security_hardening_aide_async: true
 
 # Auditd Configuration
-security_hardening_auditd_enabled: true
-security_hardening_manage_grub: true
+# DISABLED: Causes boot hang after reboot due to audit=1 kernel parameter
+# TODO: Re-enable after fixing boot sequence issue
+# See: docs/troubleshooting/ANSIBLE_POST_REBOOT_LOCKOUT.md
+security_hardening_auditd_enabled: false
+security_hardening_manage_grub: false
 
 # Kernel audit parameters (added to GRUB_CMDLINE_LINUX_DEFAULT)
 # audit=1: Enable auditing from boot
