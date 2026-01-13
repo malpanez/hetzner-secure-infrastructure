@@ -1,50 +1,306 @@
 #cloud-config
-# Cloud-init configuration for initial server setup
-# This runs BEFORE Ansible hardening
+# Cloud-init configuration for Hetzner Cloud - Debian 13
+# Security-hardened initial setup following cloud-init best practices
+# References:
+# - https://cloudinit.readthedocs.io/en/latest/explanation/hardening.html
+# - https://community.hetzner.com/tutorials/basic-cloud-config/
+
+# ========================================
+# Core Configuration
+# ========================================
+
+# CRITICAL: Debian 13 locks root by default - explicitly enable it for Hetzner console
+disable_root: false
 
 hostname: ${hostname}
-fqdn: ${hostname}
+fqdn: ${hostname}.${domain}
+prefer_fqdn_over_hostname: true
 
-# Packages to install on first boot
+# ========================================
+# System Configuration
+# ========================================
+
+timezone: Europe/Dublin
+locale: en_IE.UTF-8
+
+# ========================================
+# Package Management
+# ========================================
+
+# Apply security updates on first boot (cloud-init best practice)
+package_update: true
+package_upgrade: true
+package_reboot_if_required: false
+
+# Essential packages for server management and Ansible
 packages:
+  # System utilities
   - curl
   - wget
   - vim
   - git
   - htop
   - net-tools
+  - ncdu
+  - tree
+  # Security
+  - ufw
+  - fail2ban
+  - unattended-upgrades
+  - apt-listchanges
+  # Python for Ansible
   - python3
   - python3-pip
+  - python3-apt
+  # Admin tools
   - sudo
-  - ufw
+  - lsof
+  - strace
+  - tcpdump
 
-# Create admin user with passwordless sudo
+# ========================================
+# User Configuration
+# ========================================
+
+# Create admin user with SSH key authentication (best practice)
 users:
   - name: ${username}
-    groups: sudo
+    groups:
+      - sudo
+      - adm
     shell: /bin/bash
+    # Passwordless sudo for initial setup - Ansible will configure 2FA later
     sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    # SSH key authentication only (no password)
     ssh_authorized_keys:
       - ${ssh_pub_key}
+    lock_passwd: true  # Disable password login for this user
 
-# Disable root SSH login immediately
+# ========================================
+# SSH Hardening (Basic)
+# ========================================
+# NOTE: Full SSH hardening (ciphers, MACs, etc.) is done by Ansible
+# This provides minimal secure defaults without breaking Hetzner's setup
+
+ssh_pwauth: false  # Disable password authentication globally
+ssh_deletekeys: false  # Keep Hetzner's generated host keys
+
+# Publish SSH host keys to console for verification (security best practice)
+ssh:
+  emit_keys_to_console: true
+
+# ========================================
+# Firewall Configuration (UFW)
+# ========================================
+
+# Configure basic firewall rules before Ansible runs
+# This provides immediate protection while maintaining access
 runcmd:
-  - sed -i 's/^PermitRootLogin.*/PermitRootLogin prohibit-password/' /etc/ssh/sshd_config
-  - systemctl restart sshd
-  - apt-get update
-  - apt-get upgrade -y
-  - echo "Cloud-init completed" > /var/log/cloud-init-status.log
+  # ========================================
+  # Unlock Root Account (Debian 13 Fix)
+  # ========================================
+  # Debian 13 locks root by default. Hetzner sets password but account is locked.
+  # This unlocks it so the password (sent via email) works on console.
+  - passwd -u root
 
-# Timezone
-timezone: Europe/Dublin
+  # ========================================
+  # Firewall Setup
+  # ========================================
+  - |
+    # Enable UFW with safe defaults
+    ufw --force reset
+    ufw default deny incoming
+    ufw default allow outgoing
+    # Allow SSH from management IP only (security hardening)
+    ufw allow from ${management_ip} to any port 22 proto tcp comment 'SSH from management'
+    # Allow HTTP/HTTPS from anywhere (for web services)
+    ufw allow 80/tcp comment 'HTTP'
+    ufw allow 443/tcp comment 'HTTPS'
+    # Enable UFW without prompt
+    echo "y" | ufw enable
+    ufw status verbose
 
-# Enable automatic security updates
-package_update: true
-package_upgrade: true
-package_reboot_if_required: false
+  # ========================================
+  # Kernel Hardening (sysctl)
+  # ========================================
+  - |
+    # Apply kernel security settings
+    cat > /etc/sysctl.d/99-security-hardening.conf << 'SYSCTL_EOF'
+    # IP forwarding (disable unless needed for Docker/routing)
+    net.ipv4.ip_forward = 0
+    net.ipv6.conf.all.forwarding = 0
 
-# Set locale
-locale: en_IE.UTF-8
+    # SYN flood protection
+    net.ipv4.tcp_syncookies = 1
+    net.ipv4.tcp_syn_retries = 2
+    net.ipv4.tcp_synack_retries = 2
+    net.ipv4.tcp_max_syn_backlog = 4096
 
-# Final message
-final_message: "Server ${hostname} is ready after $UPTIME seconds"
+    # IP spoofing protection
+    net.ipv4.conf.all.rp_filter = 1
+    net.ipv4.conf.default.rp_filter = 1
+
+    # Ignore ICMP redirects
+    net.ipv4.conf.all.accept_redirects = 0
+    net.ipv4.conf.default.accept_redirects = 0
+    net.ipv4.conf.all.secure_redirects = 0
+    net.ipv4.conf.default.secure_redirects = 0
+    net.ipv6.conf.all.accept_redirects = 0
+    net.ipv6.conf.default.accept_redirects = 0
+
+    # Don't send ICMP redirects
+    net.ipv4.conf.all.send_redirects = 0
+    net.ipv4.conf.default.send_redirects = 0
+
+    # Ignore ICMP pings (disabled to allow monitoring)
+    net.ipv4.icmp_echo_ignore_all = 0
+    net.ipv4.icmp_echo_ignore_broadcasts = 1
+
+    # Disable source routing
+    net.ipv4.conf.all.accept_source_route = 0
+    net.ipv6.conf.all.accept_source_route = 0
+
+    # Log suspicious packets (Martians)
+    net.ipv4.conf.all.log_martians = 1
+
+    # Kernel hardening
+    kernel.dmesg_restrict = 1
+    kernel.kptr_restrict = 2
+    kernel.yama.ptrace_scope = 1
+
+    # Filesystem hardening
+    fs.suid_dumpable = 0
+    fs.protected_hardlinks = 1
+    fs.protected_symlinks = 1
+    SYSCTL_EOF
+    # Apply settings immediately
+    sysctl -p /etc/sysctl.d/99-security-hardening.conf
+
+  # ========================================
+  # Automatic Security Updates
+  # ========================================
+  - |
+    # Configure unattended-upgrades for automatic security patches
+    cat > /etc/apt/apt.conf.d/50unattended-upgrades << 'UNATTENDED_EOF'
+    Unattended-Upgrade::Allowed-Origins {
+        "$${distro_id}:$${distro_codename}";
+        "$${distro_id}:$${distro_codename}-security";
+        "$${distro_id}ESMApps:$${distro_codename}-apps-security";
+        "$${distro_id}ESM:$${distro_codename}-infra-security";
+    };
+    Unattended-Upgrade::AutoFixInterruptedDpkg "true";
+    Unattended-Upgrade::MinimalSteps "true";
+    Unattended-Upgrade::Remove-Unused-Kernel-Packages "true";
+    Unattended-Upgrade::Remove-Unused-Dependencies "true";
+    Unattended-Upgrade::Automatic-Reboot "false";
+    Unattended-Upgrade::Automatic-Reboot-Time "03:00";
+    UNATTENDED_EOF
+
+    # Enable automatic updates
+    cat > /etc/apt/apt.conf.d/20auto-upgrades << 'AUTO_EOF'
+    APT::Periodic::Update-Package-Lists "1";
+    APT::Periodic::Unattended-Upgrade "1";
+    APT::Periodic::AutocleanInterval "7";
+    AUTO_EOF
+
+  # ========================================
+  # Fail2ban Configuration
+  # ========================================
+  - |
+    # Configure fail2ban for SSH protection
+    cat > /etc/fail2ban/jail.local << 'FAIL2BAN_EOF'
+    [DEFAULT]
+    bantime = 3600
+    findtime = 600
+    maxretry = 3
+    destemail = root@localhost
+    sendername = Fail2Ban
+    action = %(action_mwl)s
+
+    [sshd]
+    enabled = true
+    port = 22
+    filter = sshd
+    logpath = /var/log/auth.log
+    maxretry = 3
+    FAIL2BAN_EOF
+    # Start fail2ban
+    systemctl enable fail2ban
+    systemctl restart fail2ban
+
+  # ========================================
+  # SSH Minimal Hardening
+  # ========================================
+  - |
+    # Basic SSH hardening without breaking Hetzner's setup
+    # Full hardening (ciphers, MACs) will be done by Ansible
+    cat > /etc/ssh/sshd_config.d/00-cloud-init-hardening.conf << 'SSH_EOF'
+    # Disable password authentication (key-only)
+    PasswordAuthentication no
+    PermitEmptyPasswords no
+
+    # Keep root SSH with key for initial Ansible run
+    # Ansible will change this to 'prohibit-password' or 'no' later
+    PermitRootLogin yes
+
+    # Enable public key authentication
+    PubkeyAuthentication yes
+
+    # Disable challenge-response (will be enabled by Ansible for 2FA)
+    ChallengeResponseAuthentication no
+
+    # Basic security settings
+    X11Forwarding no
+    PrintMotd no
+    AcceptEnv LANG LC_*
+    SSH_EOF
+    # Restart SSH to apply changes
+    systemctl restart ssh || systemctl restart sshd
+
+  # ========================================
+  # Logging and Audit
+  # ========================================
+  - |
+    # Create status log
+    mkdir -p /var/log/cloud-init
+    {
+      echo "Cloud-init completed: $(date)"
+      echo "Hostname: ${hostname}"
+      echo "Admin user: ${username}"
+      echo "UFW status:"
+      ufw status verbose
+      echo ""
+      echo "Fail2ban status:"
+      systemctl status fail2ban --no-pager
+      echo ""
+      echo "System info:"
+      hostnamectl
+    } > /var/log/cloud-init/setup-complete.log
+    chmod 600 /var/log/cloud-init/setup-complete.log
+
+# ========================================
+# Final Message
+# ========================================
+
+final_message: |
+  ╔════════════════════════════════════════════════════════════════════╗
+  ║            Cloud-Init Setup Complete - ${hostname}                 ║
+  ╚════════════════════════════════════════════════════════════════════╝
+
+  System is ready for Ansible configuration.
+
+  Security baseline applied:
+  - Firewall (UFW) enabled with SSH restricted to management IP
+  - Kernel hardening (sysctl) configured
+  - Automatic security updates enabled
+  - Fail2ban active for SSH protection
+  - SSH password authentication disabled
+  - Admin user ${username} created with SSH key access
+
+  Next steps:
+  1. Verify SSH access: ssh ${username}@${hostname}
+  2. Run Ansible playbook for full hardening and application setup
+  3. Configure 2FA via Ansible (ssh_2fa role)
+
+  Setup completed in $UPTIME seconds
+  Boot finished at $TIMESTAMP

@@ -116,7 +116,7 @@
 
 - name: SSH 2FA | Faillock | Display break-glass unlock instructions
   ansible.builtin.debug:
-    msg: |
+    msg: |-
       ╔════════════════════════════════════════════════════════════════════╗
       ║                    FAILLOCK BREAK-GLASS PROCEDURES                 ║
       ╚════════════════════════════════════════════════════════════════════╝
@@ -141,6 +141,5 @@
 
       Configuration: /etc/security/faillock.conf
       Tally directory: /var/run/faillock/ (tmpfs - cleared on reboot)
-
   run_once: true
   tags: [faillock, documentation]

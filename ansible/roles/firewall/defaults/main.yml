@@ -29,11 +29,16 @@ firewall_default_outgoing_policy: allow
 # UFW Allowed Ports
 # ========================================
 
+# Management IP for SSH access restriction
+# This should match the IP used in cloud-init and Terraform
+firewall_management_ips: "{{ ssh_allowed_ips | default(['0.0.0.0/0']) }}"
+
 firewall_allowed_ports:
   - rule: allow
     port: "22"
     proto: tcp
-    comment: "SSH"
+    from_ip: "{{ firewall_management_ips | first }}"  # SSH restricted to management IP
+    comment: "SSH from management IP"
   - rule: allow
     port: "80"
     proto: tcp

@@ -43,9 +43,11 @@ resource "hcloud_server" "server" {
   labels = local.common_labels
 
   user_data = templatefile("${path.module}/templates/cloud-init.yml", {
-    hostname    = var.server_name
-    username    = var.admin_username
-    ssh_pub_key = var.ssh_public_key
+    hostname      = var.server_name
+    domain        = var.domain
+    username      = var.admin_username
+    ssh_pub_key   = var.ssh_public_key
+    management_ip = var.ssh_allowed_ips[0] # First IP in the list is management IP
   })
 
   firewall_ids = var.firewall_ids

@@ -1,8 +1,9 @@
 # Guía de Deployment - WordPress en Hetzner Cloud ARM64
 
-**Última actualización:** 2026-01-11
+**Última actualización:** 2026-01-13
 **Arquitectura:** ARM64 (CAX11) - 2.68x mejor rendimiento que x86
 **Tiempo estimado:** 45-60 minutos
+**Cambios recientes:** Workspaces, pricing 2026, cloud-init hardening
 
 ---
 
@@ -53,6 +54,8 @@ git --version      # >= 2.30
 | Dominio (.com) | ~€1.00 | ✅ Sí |
 | Cloudflare | €0.00 (Free) | ⚠️ Recomendado |
 | **TOTAL MÍNIMO** | **€5.66/mes** | |
+
+> **Nota:** Precios actualizados enero 2026 (Germany/NBG1 location). Incluyen Primary IPv4. Ver [Hetzner Pricing](https://www.hetzner.com/cloud/pricing/) para más opciones.
 
 ---
 
@@ -105,35 +108,48 @@ ansible-vault view group_vars/all/secrets.yml
 
 ### 1. Revisar Configuración
 
-El archivo `terraform/terraform.prod.tfvars` ya está configurado para ARM64:
+El archivo `terraform/production.tfvars` ya está configurado para ARM64:
 
 ```bash
 cd terraform
-cat terraform.prod.tfvars
+cat production.tfvars
 ```
 
-**Personalizar (opcional):**
+**Personalizar (obligatorio):**
 ```hcl
-# Cambiar solo si necesitas:
-ssh_allowed_ips = ["TU_IP_PUBLICA/32"]  # Tu IP pública
+# DEBES cambiar tu IP pública (por seguridad SSH está restringido):
+ssh_allowed_ips = ["TU_IP_PUBLICA/32"]  # Obtén con: curl ifconfig.me
+
+# Opcional:
 domain = "tudominio.com"                 # Tu dominio
 ```
 
-### 2. Ejecutar Terraform
+> **⚠️ IMPORTANTE:** Si tu IP cambia y pierdes acceso SSH, usa la [Consola Hetzner](https://console.hetzner.cloud/) (VNC) para acceso de emergencia.
+
+### 2. Ejecutar Terraform con Workspaces
 
 ```bash
 # Desde terraform/
 terraform init
 
+# Seleccionar workspace de producción
+terraform workspace select production
+# Si es la primera vez, crear: terraform workspace new production
+
 # Revisar plan
-terraform plan -var-file=terraform.prod.tfvars
+terraform plan -var-file=production.tfvars
 
 # Aplicar (crear infraestructura)
-terraform apply -var-file=terraform.prod.tfvars
+terraform apply -var-file=production.tfvars
 
 # Guardar IP del servidor
 terraform output -raw server_ipv4 > ../server_ip.txt
 ```
+
+**¿Qué son los workspaces?**
+- Permiten gestionar múltiples entornos (production, staging) con el mismo código
+- Estados de Terraform aislados por workspace
+- Uso: `terraform workspace select <nombre>`
 
 **Recursos creados:**
 - ✅ Servidor ARM64 CAX11

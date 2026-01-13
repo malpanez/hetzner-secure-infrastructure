@@ -25,8 +25,8 @@ Fully automated deployment of secure, high-performance WordPress on Hetzner Clou
 ## 🌟 Why This Infrastructure?
 
 - ✅ **ARM64 Optimized**: 2.68x faster than x86 (benchmarked)
-- ✅ **Cost-Effective**: €4.66/month (CAX11 ARM64 with IPv4)
-- ✅ **Fully Automated**: Terraform + Ansible with dynamic inventory
+- ✅ **Cost-Effective**: €4.66/month (CAX11 ARM64 with IPv4) - Updated Jan 2026
+- ✅ **Fully Automated**: Terraform + Ansible with workspaces + dynamic inventory
 - ✅ **100% Test Coverage**: 10 Molecule tests + Terratest + CI/CD
 - ✅ **Enterprise Security**: WAF, Fail2ban, AppArmor, SSH 2FA
 - ✅ **High Performance**: Nginx 1.28.1 + PHP 8.4 + Valkey cache
@@ -66,9 +66,9 @@ ansible-playbook playbooks/site.yml --ask-vault-pass
 ### Infrastructure
 
 - ✅ **Hetzner Cloud ARM64** - CAX11 (2 vCPU, 4GB RAM)
-- ✅ **Terraform** - Infrastructure as Code
+- ✅ **Terraform** - Infrastructure as Code with workspaces
 - ✅ **Ansible** - 10 production roles + dynamic inventory
-- ✅ **Debian 12** - Stable with ARM64 support
+- ✅ **Debian 13 (Trixie)** - Latest stable with ARM64 support
 
 ### WordPress Stack
 

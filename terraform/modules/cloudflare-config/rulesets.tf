@@ -24,25 +24,11 @@ resource "cloudflare_ruleset" "security_headers" {
     enabled     = true
 
     action_parameters {
+      # NOTE: Headers MUST be in alphabetical order by name (Cloudflare sorts them)
       headers {
-        name      = "X-Frame-Options"
+        name      = "Content-Security-Policy"
         operation = "set"
-        value     = "DENY"
-      }
-      headers {
-        name      = "X-Content-Type-Options"
-        operation = "set"
-        value     = "nosniff"
-      }
-      headers {
-        name      = "X-XSS-Protection"
-        operation = "set"
-        value     = "1; mode=block"
-      }
-      headers {
-        name      = "Referrer-Policy"
-        operation = "set"
-        value     = "strict-origin-when-cross-origin"
+        value     = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"
       }
       headers {
         name      = "Permissions-Policy"
@@ -50,14 +36,29 @@ resource "cloudflare_ruleset" "security_headers" {
         value     = "geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=()"
       }
       headers {
-        name      = "Content-Security-Policy"
+        name      = "Referrer-Policy"
         operation = "set"
-        value     = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"
+        value     = "strict-origin-when-cross-origin"
       }
       headers {
         name      = "Strict-Transport-Security"
         operation = "set"
         value     = "max-age=31536000; includeSubDomains; preload"
+      }
+      headers {
+        name      = "X-Content-Type-Options"
+        operation = "set"
+        value     = "nosniff"
+      }
+      headers {
+        name      = "X-Frame-Options"
+        operation = "set"
+        value     = "DENY"
+      }
+      headers {
+        name      = "X-XSS-Protection"
+        operation = "set"
+        value     = "1; mode=block"
       }
     }
   }

@@ -39,28 +39,28 @@ locals {
   # - CAX: ARM (Ampere Altra, best price/performance)
   #
   # Prices updated 2026-01-13 from Hetzner Cloud Console (includes IPv4)
-  # Source: https://www.hetzner.com/cloud/pricing/
+  # Source: https://www.hetzner.com/cloud/pricing/ (Germany/NBG1 location)
   server_type_map = {
     x86 = {
       # CX series - Cost-Optimized (Intel/AMD mix, limited availability)
-      small  = "cx23" # 2 vCPU, 4GB RAM, 40GB SSD, €3.49/mo (CHEAPEST x86!)
-      medium = "cx33" # 4 vCPU, 8GB RAM, 80GB SSD, €5.49/mo
-      large  = "cx43" # 8 vCPU, 16GB RAM, 160GB SSD, €9.49/mo
-      xlarge = "cx53" # 16 vCPU, 32GB RAM, 320GB SSD, €17.49/mo
+      small  = "cx23" # 2 vCPU, 4GB RAM, 40GB SSD, €4.29/mo
+      medium = "cx33" # 4 vCPU, 8GB RAM, 80GB SSD, €6.75/mo
+      large  = "cx43" # 8 vCPU, 16GB RAM, 160GB SSD, €11.67/mo
+      xlarge = "cx53" # 16 vCPU, 32GB RAM, 320GB SSD, €21.51/mo
     }
     x86_perf = {
       # CPX series - Dedicated General Purpose (AMD EPYC)
-      small  = "cpx11" # 2 vCPU, 2GB RAM, 40GB SSD, €4.99/mo
-      medium = "cpx21" # 3 vCPU, 4GB RAM, 80GB SSD, €9.49/mo
-      large  = "cpx31" # 4 vCPU, 8GB RAM, 160GB SSD, €16.49/mo
-      xlarge = "cpx41" # 8 vCPU, 16GB RAM, 240GB SSD, €30.49/mo
+      small  = "cpx22" # 2 vCPU, 4GB RAM, 80GB SSD, €7.98/mo
+      medium = "cpx32" # 4 vCPU, 8GB RAM, 160GB SSD, €13.52/mo
+      large  = "cpx42" # 8 vCPU, 16GB RAM, 320GB SSD, €24.59/mo
+      xlarge = "cpx52" # 12 vCPU, 24GB RAM, 480GB SSD, €35.04/mo
     }
     arm = {
-      # CAX series - ARM (Ampere Altra)
-      small  = "cax11" # 2 vCPU, 4GB RAM, 40GB SSD, €3.79/mo
-      medium = "cax21" # 4 vCPU, 8GB RAM, 80GB SSD, €6.49/mo
-      large  = "cax31" # 8 vCPU, 16GB RAM, 160GB SSD, €12.49/mo
-      xlarge = "cax41" # 16 vCPU, 32GB RAM, 320GB SSD, €24.49/mo
+      # CAX series - ARM (Ampere Altra) - BEST PRICE/PERFORMANCE
+      small  = "cax11" # 2 vCPU, 4GB RAM, 40GB SSD, €4.66/mo
+      medium = "cax21" # 4 vCPU, 8GB RAM, 80GB SSD, €7.98/mo
+      large  = "cax31" # 8 vCPU, 16GB RAM, 160GB SSD, €15.36/mo
+      xlarge = "cax41" # 16 vCPU, 32GB RAM, 320GB SSD, €30.12/mo
     }
   }
 
@@ -82,34 +82,34 @@ locals {
 
   # Server specs lookup (for documentation/outputs)
   # Prices updated 2026-01-13 from Hetzner Cloud Console (includes IPv4)
-  # Source: https://www.hetzner.com/cloud/pricing/
+  # Source: https://www.hetzner.com/cloud/pricing/ (Germany/NBG1 location)
   server_specs = {
     # x86 Cost-Optimized - CX series (Intel/AMD mix, Gen3, limited availability)
-    cx23 = { cpu = 2, ram = 4, disk = 40, price = 3.49 }
-    cx33 = { cpu = 4, ram = 8, disk = 80, price = 5.49 }
-    cx43 = { cpu = 8, ram = 16, disk = 160, price = 9.49 }
-    cx53 = { cpu = 16, ram = 32, disk = 320, price = 17.49 }
+    cx23 = { cpu = 2, ram = 4, disk = 40, price = 4.29 }
+    cx33 = { cpu = 4, ram = 8, disk = 80, price = 6.75 }
+    cx43 = { cpu = 8, ram = 16, disk = 160, price = 11.67 }
+    cx53 = { cpu = 16, ram = 32, disk = 320, price = 21.51 }
 
     # ARM Cost-Optimized - CAX series (Ampere Altra)
-    cax11 = { cpu = 2, ram = 4, disk = 40, price = 3.79 }
-    cax21 = { cpu = 4, ram = 8, disk = 80, price = 6.49 }
-    cax31 = { cpu = 8, ram = 16, disk = 160, price = 12.49 }
-    cax41 = { cpu = 16, ram = 32, disk = 320, price = 24.49 }
+    cax11 = { cpu = 2, ram = 4, disk = 40, price = 4.66 }
+    cax21 = { cpu = 4, ram = 8, disk = 80, price = 7.98 }
+    cax31 = { cpu = 8, ram = 16, disk = 160, price = 15.36 }
+    cax41 = { cpu = 16, ram = 32, disk = 320, price = 30.12 }
 
     # x86 Dedicated General Purpose - CPX series (AMD EPYC)
-    cpx11 = { cpu = 2, ram = 2, disk = 40, price = 4.99 }
-    cpx21 = { cpu = 3, ram = 4, disk = 80, price = 9.49 }
-    cpx31 = { cpu = 4, ram = 8, disk = 160, price = 16.49 }
-    cpx41 = { cpu = 8, ram = 16, disk = 240, price = 30.49 }
-    cpx51 = { cpu = 16, ram = 32, disk = 360, price = 60.49 }
+    cpx22 = { cpu = 2, ram = 4, disk = 80, price = 7.98 }
+    cpx32 = { cpu = 4, ram = 8, disk = 160, price = 13.52 }
+    cpx42 = { cpu = 8, ram = 16, disk = 320, price = 24.59 }
+    cpx52 = { cpu = 12, ram = 24, disk = 480, price = 35.04 }
+    cpx62 = { cpu = 16, ram = 32, disk = 640, price = 47.96 }
 
     # x86 Premium Dedicated - CCX Series (AMD EPYC Dedicated vCPU)
-    ccx13 = { cpu = 2, ram = 8, disk = 80, price = 12.49 }
-    ccx23 = { cpu = 4, ram = 16, disk = 160, price = 24.49 }
-    ccx33 = { cpu = 8, ram = 32, disk = 240, price = 48.49 }
-    ccx43 = { cpu = 16, ram = 64, disk = 360, price = 96.49 }
-    ccx53 = { cpu = 32, ram = 128, disk = 600, price = 192.49 }
-    ccx63 = { cpu = 48, ram = 192, disk = 960, price = 288.49 }
+    ccx13 = { cpu = 2, ram = 8, disk = 80, price = 15.36 }
+    ccx23 = { cpu = 4, ram = 16, disk = 160, price = 30.12 }
+    ccx33 = { cpu = 8, ram = 32, disk = 240, price = 59.64 }
+    ccx43 = { cpu = 16, ram = 64, disk = 360, price = 118.68 }
+    ccx53 = { cpu = 32, ram = 128, disk = 600, price = 236.76 }
+    ccx63 = { cpu = 48, ram = 192, disk = 960, price = 354.84 }
   }
 
   selected_specs = local.server_specs[local.final_server_type]

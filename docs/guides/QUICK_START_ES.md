@@ -7,7 +7,7 @@
 ### OBLIGATORIO (para empezar)
 
 1. **LearnDash:** $199 USD → Comprar en <https://learndash.com/pricing/>
-2. **Hetzner Cloud:** €4.05/mes → Se cobra automáticamente cuando creas el servidor
+2. **Hetzner Cloud:** €4.66/mes → Se cobra automáticamente cuando creas el servidor (precio enero 2026 con IPv4)
 
 **TOTAL MÍNIMO: ~$210 USD para empezar**
 
@@ -129,7 +129,7 @@ ansible-vault encrypt ansible/inventory/group_vars/all/secrets.yml
 ### Paso 5: Configurar Terraform
 
 ```bash
-nano terraform/environments/production/terraform.tfvars
+nano terraform/production.tfvars
 ```
 
 **Cambiar estos valores:**
@@ -152,20 +152,24 @@ volume_size     = 0  # 0 = sin disco extra (ahorra €2.40/mes)
 source .env
 
 # Ir a carpeta terraform
-cd terraform/environments/production
+cd terraform
 
 # Inicializar
 terraform init
 
-# Ver qué se va a crear
-terraform plan
+# Seleccionar workspace de producción
+terraform workspace select production
+# Si es la primera vez: terraform workspace new production
 
-# Crear servidor (SE COBRARÁ €4.05)
-terraform apply
+# Ver qué se va a crear
+terraform plan -var-file=production.tfvars
+
+# Crear servidor (SE COBRARÁ €4.66)
+terraform apply -var-file=production.tfvars
 # Escribir: yes
 
 # GUARDAR la IP del servidor
-terraform output server_ip
+terraform output server_ipv4
 # Ejemplo: 203.0.113.42
 ```
 
@@ -285,7 +289,7 @@ enable_cloudflare   = true
 **Paso 6: Terraform crea DNS automáticamente**
 
 ```bash
-terraform apply
+terraform apply -var-file=production.tfvars
 # Terraform creará:
 # - Registro A: @ (root)
 # - Registro A: www
@@ -517,14 +521,14 @@ ssh malpanez@tudominio.com
 | Concepto | Costo | Obligatorio |
 |----------|-------|-------------|
 | LearnDash | $199 USD | ✅ SÍ |
-| Hetzner mes 1 | €4.05 | ✅ SÍ |
+| Hetzner mes 1 | €4.66 | ✅ SÍ |
 | Transferir dominio a Cloudflare | €9-10 | ⚠️ RECOMENDADO |
 | **TOTAL MÍNIMO** | **~$205 USD** | Si NO transfieres |
 | **TOTAL RECOMENDADO** | **~$215 USD** | Si transfieres dominio |
 
 ### Cada mes
 
-- Hetzner CAX11: €4.05/mes
+- Hetzner CAX11: €4.66/mes (precio enero 2026 con IPv4)
 
 ### Cada año (renovaciones)
 

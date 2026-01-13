@@ -225,17 +225,17 @@ graph LR
     end
 
     subgraph "Collection"
-        NE[Node Exporter<br/>:9100]
+        NE["Node Exporter :9100"]
         PT[Promtail]
     end
 
     subgraph "Storage"
-        PROM[Prometheus<br/>15-day retention]
-        LOKI[Loki<br/>7-day retention]
+        PROM["Prometheus 15-day retention"]
+        LOKI["Loki 7-day retention"]
     end
 
     subgraph "Visualization"
-        GRAF[Grafana<br/>:3000]
+        GRAF["Grafana :3000"]
     end
 
     NGINX_SVC -->|/metrics| NE
@@ -300,12 +300,12 @@ sequenceDiagram
 ```mermaid
 graph TB
     subgraph "Cloudflare DNS"
-        ROOT[@<br/>example.com]
+        ROOT["@ example.com"]
         WWW[www.example.com]
     end
 
     subgraph "Hetzner Server"
-        IP[Server IP<br/>46.224.156.140]
+        IP["Server IP 46.224.156.140"]
     end
 
     ROOT -->|Proxied ☁️| IP

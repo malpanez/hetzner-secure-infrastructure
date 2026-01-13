@@ -28,23 +28,13 @@ resource "cloudflare_zone_settings_override" "security" {
     privacy_pass        = "on"     # Privacy Pass support
 
     # Performance Settings
-    brotli = "on" # Brotli compression
-    minify {
-      css  = "on"
-      js   = "on"
-      html = "on"
-    }
+    brotli        = "on"  # Brotli compression
     rocket_loader = "off" # Off for WordPress compatibility
-    mirage        = "off" # Off (requires paid plan)
-    polish        = "off" # Off (requires paid plan)
+    # NOTE: minify, mirage, and polish are read-only or cause issues, don't set them explicitly
 
     # Network Settings
-    http2       = "on"  # Enable HTTP/2
-    http3       = "on"  # Enable HTTP/3 (QUIC)
-    zero_rtt    = "on"  # 0-RTT Connection Resumption
-    ipv6        = "on"  # Enable IPv6
-    websockets  = "on"  # Enable WebSockets
-    pseudo_ipv4 = "off" # No pseudo IPv4
+    # NOTE: http2, http3, zero_rtt, websockets, pseudo_ipv4, ipv6 are read-only, don't set them explicitly
+    # These are managed by Cloudflare and cannot be changed via API
 
     # Caching Settings
     browser_cache_ttl = 14400        # 4 hours
@@ -67,6 +57,12 @@ resource "cloudflare_zone_settings_override" "security" {
       settings[0].sort_query_string_for_cache,
       settings[0].polish,
       settings[0].mirage,
+      settings[0].minify,
+      settings[0].http2,
+      settings[0].http3,
+      settings[0].zero_rtt,
+      settings[0].websockets,
+      settings[0].pseudo_ipv4,
     ]
   }
 }
