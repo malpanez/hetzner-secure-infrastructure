@@ -8,7 +8,7 @@ terraform {
     }
     cloudflare = {
       source  = "cloudflare/cloudflare"
-      version = "~> 4.0"
+      version = "~> 5.0"
     }
     local = {
       source  = "hashicorp/local"
@@ -97,6 +97,7 @@ module "cloudflare" {
   source = "./modules/cloudflare-config"
 
   domain_name = var.domain
+  zone_id     = var.cloudflare_zone_id
   server_ipv4 = module.production_server.server_ipv4
   server_ipv6 = module.production_server.server_ipv6
 

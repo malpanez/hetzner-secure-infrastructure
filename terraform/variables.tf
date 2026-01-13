@@ -223,6 +223,12 @@ variable "cloudflare_api_token" {
   default     = ""
 }
 
+variable "cloudflare_zone_id" {
+  description = "Cloudflare Zone ID"
+  type        = string
+  default     = ""
+}
+
 variable "enable_cloudflare" {
   description = "Enable Cloudflare DNS and security configuration"
   type        = bool

@@ -13,7 +13,7 @@ terraform {
 
 # Get zone information
 data "cloudflare_zone" "main" {
-  name = var.domain_name
+  zone_id = var.zone_id
 }
 
 # Module structure:

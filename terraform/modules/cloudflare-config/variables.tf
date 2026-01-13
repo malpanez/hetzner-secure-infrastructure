@@ -14,6 +14,11 @@ variable "domain_name" {
   }
 }
 
+variable "zone_id" {
+  description = "Cloudflare Zone ID"
+  type        = string
+}
+
 variable "server_ipv4" {
   description = "IPv4 address of the origin server (Hetzner)"
   type        = string

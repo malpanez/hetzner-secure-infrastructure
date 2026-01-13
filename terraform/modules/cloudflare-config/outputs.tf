@@ -37,22 +37,22 @@ output "zone_status" {
 
 output "root_record_id" {
   description = "Root domain DNS record ID"
-  value       = cloudflare_record.root.id
+  value       = cloudflare_dns_record.root.id
 }
 
 output "root_record_hostname" {
   description = "Root domain hostname"
-  value       = cloudflare_record.root.hostname
+  value       = var.domain_name
 }
 
 output "www_record_id" {
   description = "WWW subdomain DNS record ID"
-  value       = cloudflare_record.www.id
+  value       = cloudflare_dns_record.www.id
 }
 
 output "www_record_hostname" {
   description = "WWW subdomain hostname"
-  value       = cloudflare_record.www.hostname
+  value       = "www.${var.domain_name}"
 }
 
 output "ipv6_enabled" {
@@ -66,17 +66,17 @@ output "ipv6_enabled" {
 
 output "ssl_mode" {
   description = "SSL/TLS encryption mode"
-  value       = cloudflare_zone_settings_override.security.settings[0].ssl
+  value       = cloudflare_zone_setting.ssl.value
 }
 
 output "min_tls_version" {
   description = "Minimum TLS version"
-  value       = cloudflare_zone_settings_override.security.settings[0].min_tls_version
+  value       = cloudflare_zone_setting.min_tls_version.value
 }
 
 output "security_level" {
   description = "Security level"
-  value       = cloudflare_zone_settings_override.security.settings[0].security_level
+  value       = cloudflare_zone_setting.security_level.value
 }
 
 output "firewall_rules_count" {
@@ -95,22 +95,22 @@ output "wordpress_security_ruleset_id" {
 
 output "http2_enabled" {
   description = "Whether HTTP/2 is enabled"
-  value       = cloudflare_zone_settings_override.security.settings[0].http2
+  value       = null
 }
 
 output "http3_enabled" {
   description = "Whether HTTP/3 (QUIC) is enabled"
-  value       = cloudflare_zone_settings_override.security.settings[0].http3
+  value       = null
 }
 
 output "brotli_enabled" {
   description = "Whether Brotli compression is enabled"
-  value       = cloudflare_zone_settings_override.security.settings[0].brotli
+  value       = cloudflare_zone_setting.brotli.value
 }
 
 output "browser_cache_ttl" {
   description = "Browser cache TTL (seconds)"
-  value       = cloudflare_zone_settings_override.security.settings[0].browser_cache_ttl
+  value       = cloudflare_zone_setting.browser_cache_ttl.value
 }
 
 # ========================================
@@ -157,14 +157,14 @@ output "configuration_summary" {
   value = {
     zone_name            = data.cloudflare_zone.main.name
     zone_status          = data.cloudflare_zone.main.status
-    ssl_mode             = cloudflare_zone_settings_override.security.settings[0].ssl
-    security_level       = cloudflare_zone_settings_override.security.settings[0].security_level
+    ssl_mode             = cloudflare_zone_setting.ssl.value
+    security_level       = cloudflare_zone_setting.security_level.value
     firewall_rulesets    = 1 + (var.enable_course_protection ? 1 : 0)
     page_rules           = 5
     waf_login_protection = true # Handled by WAF ruleset
     ipv6_enabled         = var.server_ipv6 != null
-    http2_enabled        = true
-    http3_enabled        = true
+    http2_enabled        = null
+    http3_enabled        = null
   }
 }
 
