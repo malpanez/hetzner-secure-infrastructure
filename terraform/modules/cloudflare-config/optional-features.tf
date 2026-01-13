@@ -14,7 +14,7 @@
 resource "cloudflare_custom_pages" "error_1020" {
   count   = var.enable_custom_error_pages ? 1 : 0
   zone_id = data.cloudflare_zone.main.id
-  identifier = "ip_block"
+  type    = "ip_block"
   url     = var.custom_error_page_url
   state   = "customized"
 }

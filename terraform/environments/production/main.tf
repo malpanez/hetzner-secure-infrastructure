@@ -92,20 +92,19 @@ resource "local_file" "ssh_config" {
 }
 
 # Cloudflare DNS and Security Configuration
-# TEMPORARILY DISABLED - Will be re-enabled after fixing provider version conflicts
-# module "cloudflare" {
-#   count  = var.enable_cloudflare ? 1 : 0
-#   source = "../../modules/cloudflare-config"
-#
-#   domain_name = var.domain
-#   zone_id     = var.cloudflare_zone_id
-#   server_ipv4 = module.production_server.server_ipv4
-#   server_ipv6 = module.production_server.server_ipv6
-#
-#   # Security features (all available on Free plan)
-#   # NOTE: Login rate limiting is handled by WAF ruleset (always enabled)
-#   enable_course_protection  = false # Set true to require login for /courses/*
-#   enable_custom_error_pages = false # Optional
-#   enable_cloudflare_access  = false # Requires paid plan
-#   custom_error_page_url     = ""
-# }
+module "cloudflare" {
+  count  = var.enable_cloudflare ? 1 : 0
+  source = "../../modules/cloudflare-config"
+
+  domain_name = var.domain
+  zone_id     = var.cloudflare_zone_id
+  server_ipv4 = module.production_server.server_ipv4
+  server_ipv6 = module.production_server.server_ipv6
+
+  # Security features (all available on Free plan)
+  # NOTE: Login rate limiting is handled by WAF ruleset (always enabled)
+  enable_course_protection  = false # Set true to require login for /courses/*
+  enable_custom_error_pages = false # Optional
+  enable_cloudflare_access  = false # Requires paid plan
+  custom_error_page_url     = ""
+}

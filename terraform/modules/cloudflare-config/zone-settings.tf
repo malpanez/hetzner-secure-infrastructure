@@ -64,6 +64,7 @@ resource "cloudflare_zone_settings_override" "security" {
   lifecycle {
     ignore_changes = [
       settings[0].true_client_ip_header,
+      settings[0].sort_query_string_for_cache,
     ]
   }
 }
