@@ -45,7 +45,8 @@ cd hetzner-secure-infrastructure
 # 2. Deploy with Terraform (ARM64)
 cd terraform
 export HCLOUD_TOKEN="your_token"
-terraform apply -var-file=terraform.prod.tfvars
+terraform workspace select production  # or: staging, default
+terraform apply -var-file=production.tfvars
 
 # 3. Configure with Ansible
 cd ../ansible
