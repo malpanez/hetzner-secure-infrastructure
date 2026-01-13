@@ -12,17 +12,25 @@ Haz clic en **"Create Token"** → **"Create Custom Token"**
 
 ### 3. Configurar Permisos (CRÍTICO)
 
-El token necesita estos permisos **EXACTOS**:
+El token necesita estos permisos **EXACTOS** (basados en homelabforge.dev working config):
 
 | Resource | Permission | Scope |
 |----------|------------|-------|
+| **Account** | Account Rulesets:Edit | All accounts |
 | **Zone** | DNS:Edit | Specific zone: `twomindstrading.com` |
+| **Zone** | Zone:Edit | Specific zone: `twomindstrading.com` |
 | **Zone** | Zone Settings:Edit | Specific zone: `twomindstrading.com` |
-| **Zone** | Zone:Read | Specific zone: `twomindstrading.com` |
-| **Account** | Account Rulesets:Edit | Specific account |
-| **Account** | Account Rulesets:Read | Specific account |
+| **Zone** | Cache Rules:Edit | Specific zone: `twomindstrading.com` |
+| **Zone** | Transform Rules:Edit | Specific zone: `twomindstrading.com` |
+| **Zone** | Single Redirect:Edit | Specific zone: `twomindstrading.com` |
 
 **NOTA**: ~~Page Rules~~ ya NO se usan (deprecated). Ahora usamos **Rulesets v5** (mejor y sin límites en Free plan).
+
+**Permisos Específicos Necesarios**:
+- **Account Rulesets:Edit**: Para crear/modificar rulesets a nivel de cuenta
+- **Cache Rules:Edit**: Para configurar reglas de caché (wp-content, static assets)
+- **Transform Rules:Edit**: Para security headers (CSP, HSTS, X-Frame-Options)
+- **Single Redirect:Edit**: Para redirects www → apex
 
 ### 4. Template de Configuración
 
@@ -30,14 +38,16 @@ El token necesita estos permisos **EXACTOS**:
 Token Name: Terraform - twomindstrading.com
 
 Permissions:
-  Zone:
-    - DNS:Edit (twomindstrading.com)
-    - Zone Settings:Edit (twomindstrading.com)
-    - Zone:Read (twomindstrading.com)
-
   Account:
-    - Account Rulesets:Edit (Your Account)
-    - Account Rulesets:Read (Your Account)
+    - Account Rulesets:Edit (All accounts)
+
+  Zone (twomindstrading.com):
+    - DNS:Edit
+    - Zone:Edit
+    - Zone Settings:Edit
+    - Cache Rules:Edit
+    - Transform Rules:Edit
+    - Single Redirect:Edit
 
 IP Filtering: Optional (restrict to your IP for security)
 
