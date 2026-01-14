@@ -64,21 +64,15 @@
     - kernel_audit_check.rc != 0
   tags: [security, auditd]
 
-- name: Security Hardening | Auditd | Update GRUB configuration
-  ansible.builtin.command: update-grub
+- name: Security Hardening | Auditd | Trigger GRUB update and reboot
+  ansible.builtin.debug:
+    msg: "GRUB configuration changed, triggering initramfs and GRUB update"
   changed_when: true
   when:
     - grub_audit_enabled is defined
     - grub_audit_enabled.changed
-  tags: [security, auditd, molecule-notest]
-
-- name: Security Hardening | Auditd | Set reboot required fact
-  ansible.builtin.set_fact:
-    ansible_reboot_required: true
-    cacheable: true
-  when:
-    - grub_audit_enabled is defined
-    - grub_audit_enabled.changed
+  notify:
+    - update grub
   tags: [security, auditd, molecule-notest]
 
 - name: Security Hardening | Auditd | Enable and start service

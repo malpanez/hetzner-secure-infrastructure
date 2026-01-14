@@ -9,6 +9,7 @@
 apparmor_enabled: true
 
 # Manage GRUB kernel cmdline to enable AppArmor
+# Requires initramfs update before reboot to embed AppArmor profiles
 apparmor_manage_grub: true
 
 # Enable enforce mode (true) or complain mode (false)

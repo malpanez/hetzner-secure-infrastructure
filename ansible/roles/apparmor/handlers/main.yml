@@ -4,9 +4,15 @@
   changed_when: true
   failed_when: false
 
+- name: update initramfs
+  ansible.builtin.command: update-initramfs -u -k all
+  changed_when: true
+  listen: update grub
+
 - name: update grub
   ansible.builtin.command: update-grub
   changed_when: true
+  notify: reboot required
 
 - name: reboot required
   ansible.builtin.set_fact:

@@ -58,9 +58,9 @@
   when: common_admin_user_create
   tags: [common, sudo]
 
-- name: Common | Users | Disable root account password
-  ansible.builtin.user:
-    name: root
-    password: "!"
-  when: common_disable_root_password | default(false)
-  tags: [common, security]
+# - name: Common | Users | Disable root account password
+#   ansible.builtin.user:
+#     name: root
+#     password: "!"
+#   when: common_disable_root_password | default(false)
+#   tags: [common, security]
