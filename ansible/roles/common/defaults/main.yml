@@ -58,7 +58,10 @@ common_admin_user_ssh_keys: []
 common_admin_user_passwordless_sudo: false
 
 # Disable root password (locks root account for console access)
-common_disable_root_password: true
+# DISABLED: Need root console access for Hetzner Cloud Console (VNC/recovery)
+# Root SSH is already blocked via sshd_config PermitRootLogin=no
+# See: docs/troubleshooting/ANSIBLE_POST_REBOOT_LOCKOUT.md
+common_disable_root_password: false
 
 # ========================================
 # Cleanup

@@ -1,15 +1,9 @@
 ---
-- name: Security Hardening | Session | Configure stronger timeouts
-  ansible.builtin.lineinfile:
-    path: /etc/profile.d/timeout.sh
-    line: "{{ item }}"
-    create: true
+- name: Security Hardening | Session | Deploy session timeout configuration
+  ansible.builtin.template:
+    src: timeout.sh.j2
+    dest: /etc/profile.d/timeout.sh
     owner: root
     group: root
-    mode: "0644"
-  loop:
-    - "# Managed by Ansible - security_hardening role"
-    - "TMOUT=900"
-    - "readonly TMOUT"
-    - "export TMOUT"
+    mode: '0644'
   tags: [security, session]

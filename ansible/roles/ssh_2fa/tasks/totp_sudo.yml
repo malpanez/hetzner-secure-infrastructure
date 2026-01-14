@@ -82,18 +82,24 @@
     backup: yes
   tags: [totp, sudo, mfa, pam]
 
-- name: SSH 2FA | TOTP Sudo | Add substack to /etc/pam.d/sudo
-  ansible.builtin.blockinfile:
-    path: /etc/pam.d/sudo
-    marker: "# {mark} ANSIBLE MANAGED - Root-Owned TOTP MFA for sudo"
-    insertafter: '^@include common-auth'
-    block: |
-      # Substack for MFA TOTP (root-owned secrets)
-      # Executed AFTER common-auth for users in {{ ssh_2fa_mfa_required_group }} group
-      auth [success=ok ignore=ignore default=die] pam_succeed_if.so quiet user ingroup {{ ssh_2fa_mfa_required_group }}
-      auth [success=1 default=ignore] pam_succeed_if.so quiet user notingroup {{ ssh_2fa_mfa_required_group }}
-      auth substack mfa-totp
+- name: SSH 2FA | TOTP Sudo | Deploy sudo MFA TOTP configuration file
+  ansible.builtin.template:
+    src: pam-sudo-mfa-totp.j2
+    dest: /etc/pam.d/sudo-mfa-totp
+    owner: root
+    group: root
+    mode: '0644'
     backup: yes
+  tags: [totp, sudo, mfa, pam]
+
+- name: SSH 2FA | TOTP Sudo | Add MFA TOTP substack to /etc/pam.d/sudo
+  community.general.pamd:
+    name: sudo
+    type: auth
+    control: substack
+    module_path: sudo-mfa-totp
+    state: after
+    module_arguments: ''
   tags: [totp, sudo, mfa, pam]
 
 # ========================================

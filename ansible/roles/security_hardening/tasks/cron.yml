@@ -1,28 +1,16 @@
 ---
-- name: Security Hardening | Cron | Restrict to authorized users
-  block:
-    - name: Security Hardening | Cron | Create cron.allow
-      ansible.builtin.file:
-        path: /etc/cron.allow
-        state: touch
-        owner: root
-        group: root
-        mode: "0640"
-        modification_time: preserve
-        access_time: preserve
+- name: Security Hardening | Cron | Deploy cron.allow whitelist
+  ansible.builtin.template:
+    src: cron.allow.j2
+    dest: /etc/cron.allow
+    owner: root
+    group: root
+    mode: '0640'
+    backup: yes
+  tags: [security, cron]
 
-    - name: Security Hardening | Cron | Add admin user to cron.allow
-      ansible.builtin.lineinfile:
-        path: /etc/cron.allow
-        line: "{{ security_hardening_admin_username }}"
-        state: present
-        create: true
-        owner: root
-        group: root
-        mode: "0640"
-
-    - name: Security Hardening | Cron | Remove cron.deny if exists
-      ansible.builtin.file:
-        path: /etc/cron.deny
-        state: absent
+- name: Security Hardening | Cron | Remove cron.deny if exists
+  ansible.builtin.file:
+    path: /etc/cron.deny
+    state: absent
   tags: [security, cron]

@@ -1,0 +1,18 @@
+# PAM configuration for sudo MFA TOTP
+# Managed by Ansible - ssh_2fa role
+# Location: /etc/pam.d/sudo-mfa-totp
+#
+# Purpose: Enforce TOTP multi-factor authentication for sudo users in mfa-required group
+#
+# This file is included from /etc/pam.d/sudo via substack directive
+# Execution flow:
+#   1. Check if user is in {{ ssh_2fa_mfa_required_group }} group
+#   2. If yes, call mfa-totp substack (requires TOTP)
+#   3. If no, skip MFA check
+
+# Check if user is in MFA required group
+auth [success=ok ignore=ignore default=die] pam_succeed_if.so quiet user ingroup {{ ssh_2fa_mfa_required_group }}
+auth [success=1 default=ignore] pam_succeed_if.so quiet user notingroup {{ ssh_2fa_mfa_required_group }}
+
+# Load MFA TOTP substack
+auth substack mfa-totp

@@ -1,0 +1,13 @@
+# GRUB Drop-in Configuration - Audit Kernel Parameters
+# Managed by Ansible - security_hardening role
+#
+# This file is sourced by update-grub when generating /boot/grub/grub.cfg
+# Location: /etc/default/grub.d/99-audit.cfg
+#
+# Purpose: Enable kernel audit subsystem with sufficient buffer size
+# - audit=1: Enable auditing from boot
+# - audit_backlog_limit: Buffer size for audit messages before auditd starts
+#   Default is 64 (too small, causes boot hangs on some systems)
+#   Recommended: 8192 or higher to prevent buffer overflow during boot
+
+GRUB_CMDLINE_LINUX_DEFAULT="${GRUB_CMDLINE_LINUX_DEFAULT} {{ security_hardening_audit_kernel_params }}"

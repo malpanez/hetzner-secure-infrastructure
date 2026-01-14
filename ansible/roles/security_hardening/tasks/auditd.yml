@@ -28,29 +28,28 @@
   changed_when: false
   tags: [security, auditd]
 
-- name: Security Hardening | Auditd | Check GRUB cmdline for audit flag
-  ansible.builtin.command: >-
-    grep -Eq 'GRUB_CMDLINE_LINUX_DEFAULT="[^"]*audit=1' /etc/default/grub
-  register: grub_audit_flag
-  changed_when: false
-  failed_when: false
+- name: Security Hardening | Auditd | Ensure GRUB drop-in directory exists
+  ansible.builtin.file:
+    path: /etc/default/grub.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
   when:
     - security_hardening_auditd_enabled | default(true)
     - security_hardening_manage_grub | default(true)
   tags: [security, auditd, molecule-notest]
 
-- name: Security Hardening | Auditd | Append audit parameters to GRUB cmdline
-  ansible.builtin.lineinfile:
-    path: /etc/default/grub
-    regexp: '^GRUB_CMDLINE_LINUX_DEFAULT="(.*)"'
-    line: 'GRUB_CMDLINE_LINUX_DEFAULT="\1 {{ security_hardening_audit_kernel_params }}"'
-    backrefs: true
-    backup: true
+- name: Security Hardening | Auditd | Deploy GRUB drop-in for audit parameters
+  ansible.builtin.template:
+    src: grub-audit.cfg.j2
+    dest: /etc/default/grub.d/99-audit.cfg
+    owner: root
+    group: root
+    mode: '0644'
   when:
     - security_hardening_auditd_enabled | default(true)
     - security_hardening_manage_grub | default(true)
-    - kernel_audit_check.rc != 0
-    - grub_audit_flag.rc != 0
   register: grub_audit_enabled
   tags: [security, auditd, molecule-notest]
 

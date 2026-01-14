@@ -1,13 +1,10 @@
 ---
-- name: Security Hardening | Login | Configure login.defs
-  ansible.builtin.lineinfile:
-    path: /etc/login.defs
-    regexp: "{{ item.regexp }}"
-    line: "{{ item.line }}"
-    state: present
-  loop:
-    - { regexp: ^PASS_MAX_DAYS, line: PASS_MAX_DAYS   90 }
-    - { regexp: ^PASS_MIN_DAYS, line: PASS_MIN_DAYS   1 }
-    - { regexp: ^PASS_WARN_AGE, line: PASS_WARN_AGE   7 }
-    - { regexp: ^UMASK, line: UMASK           027 }
-  tags: [security, password]
+- name: Security Hardening | Login | Deploy login.defs configuration
+  ansible.builtin.template:
+    src: login.defs.j2
+    dest: /etc/login.defs
+    owner: root
+    group: root
+    mode: '0644'
+    backup: yes
+  tags: [security, password, login]

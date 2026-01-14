@@ -49,15 +49,41 @@ Cannot open access to console, the root account is locked.
    6. apparmor            # ← SUSPECT: AppArmor profiles
    ```
 
-### Prime Suspects
+### Prime Suspects (Post-Mortem Analysis)
 
-#### 1. **PAM Configuration** (`ssh_2fa` role)
+#### ✅ 1. **Root Password Locking** (`common` role) - **CONFIRMED CULPRIT**
+
+**File**: `ansible/roles/common/tasks/users.yml`
+
+**What it did**:
+```yaml
+- name: Common | Users | Disable root account password
+  ansible.builtin.user:
+    name: root
+    password: "!"  # ← This LOCKS the account
+  when: common_disable_root_password | default(true)
+```
+
+**Timeline**:
+1. Cloud-init unlocks root: `passwd -u root`
+2. Ansible runs and **locks root again**: `password: "!"`
+3. Console login blocked: "Cannot open access to console, the root account is locked"
+
+**Fix**: Set `common_disable_root_password: false` in defaults
+
+**Security Note**: Root SSH is still blocked via `sshd_config` PermitRootLogin=no, so this only affects console/VNC access (which is needed for recovery).
+
+---
+
+#### 3. **PAM Configuration** (`ssh_2fa` role) - **NOT THE ISSUE**
 
 **Files**:
 - `ansible/roles/ssh_2fa/templates/pam-ssh-2fa.j2`
 - `/etc/pam.d/sshd-2fa` (deployed by Ansible)
 
 **Theory**: PAM misconfiguration could lock root on reboot.
+
+**Result**: This was not the cause. PAM configuration was correct.
 
 **Check**:
 ```bash
@@ -73,7 +99,7 @@ cat /etc/security/faillock.conf
 ssh_2fa_faillock_even_deny_root: false  # Default in defaults/main.yml:186
 ```
 
-#### 2. **Auditd + GRUB** (`security_hardening` role)
+#### ✅ 2. **Auditd + GRUB** (`security_hardening` role) - **CONFIRMED CULPRIT**
 
 **Files**:
 - `ansible/roles/security_hardening/tasks/auditd.yml`
@@ -84,7 +110,7 @@ ssh_2fa_faillock_even_deny_root: false  # Default in defaults/main.yml:186
 GRUB_CMDLINE_LINUX_DEFAULT="... audit=1 audit_backlog_limit=8192"
 ```
 
-**Theory**: First boot with `audit=1` might trigger strict audit mode that blocks console.
+**What happened**: First boot with `audit=1` causes boot hang/freeze on Debian 13 + Hetzner Cloud.
 
 **Check**:
 ```bash
@@ -93,9 +119,11 @@ cat /proc/cmdline | grep audit
 systemctl status auditd
 ```
 
-#### 3. **AppArmor Profiles** (`apparmor` role)
+#### 4. **AppArmor Profiles** (`apparmor` role) - **NOT THE ISSUE**
 
 **Theory**: AppArmor profile might restrict console login.
+
+**Result**: This was not the cause. AppArmor profiles were fine.
 
 **Check**:
 ```bash
@@ -320,20 +348,31 @@ journalctl -b | grep -i "root\|lock"
 
 ## Solution / Workaround
 
-### ✅ Temporary Solution (Applied 2026-01-13)
+### ✅ Solution (Applied 2026-01-13)
 
-**Root Cause Identified**: `security_hardening` role's auditd configuration modifies GRUB with `audit=1` kernel parameter, which causes boot hang after reboot.
+**Root Causes Identified**:
 
-**Workaround Applied**:
+1. **Primary Issue**: `security_hardening` role's auditd configuration modifies GRUB with `audit=1` kernel parameter, which causes boot hang after reboot.
+
+2. **Secondary Issue**: `common` role disables root password after cloud-init unlocks it, blocking console access.
+
+**Fixes Applied**:
+
 ```yaml
 # File: ansible/roles/security_hardening/defaults/main.yml
 security_hardening_auditd_enabled: false
 security_hardening_manage_grub: false
 ```
 
+```yaml
+# File: ansible/roles/common/defaults/main.yml
+common_disable_root_password: false
+```
+
 **Impact**:
-- ✅ System boots normally after Ansible + reboot
-- ✅ Console access preserved
+- ✅ System boots normally after Ansible + reboot (no GRUB modification)
+- ✅ Console access preserved (root password not locked)
+- ✅ Root SSH still blocked via `sshd_config` (PermitRootLogin=no)
 - ✅ All other security hardening (sysctl, unattended-upgrades, etc.) still active
 - ⚠️ Audit logging disabled (can re-enable later)
 
@@ -351,12 +390,14 @@ ansible-playbook playbooks/site.yml --tags security,auditd
 
 ## Status Updates
 
-### 2026-01-13 - Root Cause Found and Workaround Applied
-- ✅ Identified culprit: `security_hardening/tasks/auditd.yml`
-- ✅ GRUB modification with `audit=1 audit_backlog_limit=8192` causes boot hang
-- ✅ Disabled auditd temporarily in role defaults
-- ✅ Documentation updated with workaround
-- 🔄 Can re-enable later with proper boot sequence fix
+### 2026-01-13 - Root Causes Found and Fixes Applied
+- ✅ **Primary Issue**: `security_hardening/tasks/auditd.yml` modifies GRUB with `audit=1 audit_backlog_limit=8192` causing boot hang
+- ✅ **Secondary Issue**: `common/tasks/users.yml` disables root password (sets `password: "!"`) blocking console
+- ✅ Disabled auditd temporarily in `security_hardening/defaults/main.yml`
+- ✅ Disabled root password locking in `common/defaults/main.yml` (set `common_disable_root_password: false`)
+- ✅ Root SSH still blocked via `sshd_config` PermitRootLogin=no (defense in depth maintained)
+- ✅ Documentation updated with both fixes
+- 🔄 Can re-enable auditd later with proper boot sequence fix
 
 ### Next Steps (Optional - For Full Audit Support)
 1. Investigate why `audit=1` causes boot hang on Debian 13 + Hetzner

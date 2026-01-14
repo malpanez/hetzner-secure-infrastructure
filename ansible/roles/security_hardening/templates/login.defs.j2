@@ -1,0 +1,340 @@
+# /etc/login.defs - Configuration control definitions for the shadow package.
+# Managed by Ansible - security_hardening role
+#
+# This file is sourced by various shadow utilities including:
+# - login(1), passwd(1), su(1), useradd(8), usermod(8), etc.
+#
+# Note: Many settings have been moved to PAM configuration files.
+# Refer to /etc/pam.d/ for modern authentication and session configuration.
+
+#
+# Delay in seconds before being allowed another attempt after a login failure
+#
+FAIL_DELAY		3
+
+#
+# Enable logging of successful logins
+#
+LOG_OK_LOGINS		no
+
+#
+# Enable "syslog" logging of su activity - in addition to sulog file logging.
+#
+SYSLOG_SU_ENAB		yes
+
+#
+# Enable "syslog" logging of newgrp activity
+#
+SYSLOG_SG_ENAB		yes
+
+#
+# If defined, all su activity is logged to this file.
+#
+#SULOG_FILE	/var/log/sulog
+
+#
+# If defined, file which maps tty line to TERM environment parameter.
+# Each line of the file is in a format something like "vt100  tty::/dev/tty1".
+#
+#TTYTYPE_FILE	/etc/ttytype
+
+#
+# If defined, login(1) failures will be logged here in a utmp format
+# last(1), when invoked as lastb(1), will read /var/log/btmp, so...
+#
+#FTMP_FILE	/var/log/btmp
+
+#
+# If defined, the command name to display when running "su -".  For
+# example, if this is defined as "su" then a "ps" will display the
+# command is "-su".  If not defined, then "ps" would display the
+# name of the shell actually being run, e.g. something like "-sh".
+#
+SU_NAME		su
+
+#
+# If defined, file which inhibits all the usual chatter during the login
+# sequence.  If a full pathname, then hushed mode will be enabled if the
+# user's name or shell are found in the file.  If not a full pathname, then
+# hushed mode will be enabled if the file exists in the user's home directory.
+#
+HUSHLOGIN_FILE	.hushlogin
+#HUSHLOGIN_FILE	/etc/hushlogins
+
+#
+# If defined, either full pathname of a file containing device names or
+# a ":" delimited list of device names.  Root logins will be allowed only
+# upon these devices.
+#
+# This variable is used by login and su.
+#
+#CONSOLE	/etc/consoles
+#CONSOLE	console:tty01:tty02:tty03:tty04
+
+#
+# List of groups to add to the user's supplementary group set
+# when logging in on the console (as determined by the CONSOLE
+# setting).  Default is none.
+#
+# Use with caution - it is possible for users to gain permanent
+# access to these groups, even when not logged in on the console.
+#
+#CONSOLE_GROUPS		floppy:audio:cdrom
+
+#
+# If set to MD5 , MD5-based algorithm will be used for encrypting password
+# If set to SHA256, SHA256-based algorithm will be used for encrypting password
+# If set to SHA512, SHA512-based algorithm will be used for encrypting password
+# If set to DES, DES-based algorithm will be used for encrypting password (default)
+# MD5 and DES should not be used for new installations.
+# Overrides the MD5_CRYPT_ENAB option
+#
+# Note: It is recommended to use a value consistent with
+# the PAM modules configuration.
+#
+ENCRYPT_METHOD SHA512
+
+#
+# Only used if ENCRYPT_METHOD is set to SHA256 or SHA512.
+#
+# Define the number of SHA rounds.
+# With a lot of rounds, it is more difficult to brute force the password.
+# However, more CPU resources will be needed to authenticate users.
+#
+# If not specified, the libc will choose the default number of rounds (5000).
+# The values must be within the 1000-999999999 range.
+# If only one of the MIN or MAX values is set, then this value will be used.
+# If MIN > MAX, the highest value will be used.
+#
+# SHA_CRYPT_MIN_ROUNDS 5000
+# SHA_CRYPT_MAX_ROUNDS 5000
+
+#
+# Password aging controls:
+#
+# PASS_MAX_DAYS	Maximum number of days a password may be used.
+# PASS_MIN_DAYS	Minimum number of days allowed between password changes.
+# PASS_WARN_AGE	Number of days warning given before a password expires.
+#
+PASS_MAX_DAYS	{{ security_hardening_pass_max_days | default(90) }}
+PASS_MIN_DAYS	{{ security_hardening_pass_min_days | default(1) }}
+PASS_WARN_AGE	{{ security_hardening_pass_warn_age | default(7) }}
+
+#
+# Min/max values for automatic uid selection in useradd
+#
+UID_MIN			 1000
+UID_MAX			60000
+# System accounts
+SYS_UID_MIN		  100
+SYS_UID_MAX		  999
+
+#
+# Min/max values for automatic gid selection in groupadd
+#
+GID_MIN			 1000
+GID_MAX			60000
+# System accounts
+SYS_GID_MIN		  100
+SYS_GID_MAX		  999
+
+#
+# Max number of login retries if password is bad. This will most likely be
+# overridden by PAM, since the default pam_unix module has its own built
+# in of 3 retries. However, this is a safe fallback in case you are using
+# an authentication module that does not enforce PAM_MAXTRIES.
+#
+LOGIN_RETRIES		5
+
+#
+# Max time in seconds for login
+#
+LOGIN_TIMEOUT		60
+
+#
+# Maximum number of attempts to change password if rejected (too easy)
+#
+PASS_CHANGE_TRIES	5
+
+#
+# Warn about weak passwords (but still allow them) if you are root.
+#
+PASS_ALWAYS_WARN	yes
+
+#
+# Number of significant characters in the password for crypt().
+# Default is 8, don't change unless your crypt() is better.
+# Ignored if MD5_CRYPT_ENAB set to "yes".
+#
+#PASS_MAX_LEN		8
+
+#
+# Require password before chfn/chsh can make any changes.
+#
+CHFN_RESTRICT		rwh
+
+#
+# Which fields may be changed by regular users using chfn - use
+# any combination of letters "frwh" (full name, room number, work
+# phone, home phone).  If not defined, no changes are allowed.
+# For backward compatibility, "yes" = "rwh" and "no" = "frwh".
+#
+#CHFN_AUTH		yes
+
+#
+# Should login be allowed if we can't cd to the home directory?
+# Default is no.
+#
+DEFAULT_HOME	yes
+
+#
+# If this variable is set to "yes", userdel will remove the user's group
+# if it contains no more members, and useradd will create by default a group
+# with the name of the user.
+#
+USERGROUPS_ENAB yes
+
+#
+# If set to a non-zero number, the shadow utilities will make sure that
+# groups never have more than this number of users on one line.
+# This permits to support split groups (groups split into multiple lines,
+# with the same group ID, to avoid limitation of the line length in the
+# group file).
+#
+# 0 is the default value and disables this feature.
+#
+#MAX_MEMBERS_PER_GROUP	0
+
+#
+# If useradd should create home directories for users by default (non-system
+# users only).
+# This option is overridden with the -M or -m flags on the useradd command line.
+#
+CREATE_HOME	yes
+
+#
+# Force use shadow, even if shadow passwd & shadow group files are not present.
+#
+FORCE_SHADOW	yes
+
+#
+# The default permission mask for home directories (in octal).
+#
+# Security: More restrictive than default 022, prevents group/world read
+# of user home directories
+UMASK		{{ security_hardening_umask | default('027') }}
+
+#
+# The permission mask (in octal) for group directories created by useradd.
+# Default is 0755. Uncomment to use more restrictive permission.
+#
+#HOME_MODE	0700
+
+#
+# Password hashing rounds for ext4 and xfs filesystems (used by useradd -m)
+#
+# The default value is not used. It will use the default for the underlying
+# libc function crypt(). The defaults are in order (if the library doesn't
+# set a specific default):
+# - bcrypt uses rounds
+# - SHA crypt uses 5000 rounds
+# - MD5 uses 1000 rounds
+# - DES uses no rounds
+#
+# Increase the default rounds for better security, at the cost of computational
+# time when users change passwords.
+# Valid bcrypt rounds: 4-31
+# Valid SHA crypt rounds: 1000-999999999
+#
+# These are used for passwords set from within useradd/passwd
+# They override the settings from the libpam-runtime package (pam.d)
+#
+# SHA_CRYPT_MIN_ROUNDS 5000
+# SHA_CRYPT_MAX_ROUNDS 5000
+
+#
+# Should BSD-style "talking" and password changing be allowed?
+#
+PREVENT_NO_AUTH	yes
+
+#
+# Configuration for console access
+#
+LOGIN_STRING		"%%s login: "
+
+#
+# Options which are passed to the MOTD_FILE pam module on login
+#
+MOTD_FILE	/etc/motd
+#MOTD_FILE	/run/motd.dynamic
+#MOTD_FILE	/run/motd.dynamic:/etc/motd
+
+#
+# Directory where mailboxes reside, _or_ name of file, relative to the
+# home directory.  If you _do_ define both, MAIL_DIR takes precedence.
+# QMAIL_DIR is for Qmail
+#
+#QMAIL_DIR	Maildir
+MAIL_DIR	/var/mail
+#MAIL_FILE	.mail
+
+#
+# If you have disabled CREATE_HOME (for non-system accounts), uncomment
+# this to make login chdir to /tmp when a user does not have a home directory.
+# to be created).
+#
+#FAKE_SHELL	/bin/bash
+
+#
+# The default PATH for non-root users.
+# Defaults to /usr/local/bin:/usr/bin:/bin:/usr/games
+#
+ENV_PATH	PATH=/usr/local/bin:/usr/bin:/bin
+
+#
+# The default PATH for root users.
+# Defaults to /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+#
+ENV_SUPATH	PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+#
+# Terminal permissions
+#
+#	TTYGROUP	Login tty will be assigned this group ownership.
+#	TTYPERM		Login tty will be set to this permission.
+#
+# If you have a write(1) program which is "setgid" to a special group
+# which owns the terminals, define TTYGROUP as the number of such group
+# and TTYPERM as 0620.  Otherwise leave TTYGROUP commented out and
+# set TTYPERM to either 622 or 600.
+#
+TTYGROUP	tty
+TTYPERM		0600
+
+#
+# Login configuration initializations:
+#
+#	ERASECHAR	Terminal ERASE character ('\010' = backspace).
+#	KILLCHAR	Terminal KILL character ('\025' = CTRL/U).
+#	ULIMIT		Default "ulimit" value.
+#
+# The ERASECHAR and KILLCHAR are used only on System V machines.
+#
+# ULIMIT is used on both System V and BSD systems. ULIMIT default value
+# is set to 0, which means unlimited.
+#
+#ERASECHAR	0177
+#KILLCHAR	025
+#ULIMIT		2097152
+
+# Use a stronger hashing algorithm for group passwords
+# (backwarrds compatible DES is used by default)
+# GROUP_CRYPT_ALG SHA512
+
+#
+# Use SHA512 to encrypt password.
+#
+# Note: SHA512 must also be supported by the system C library (glibc)
+# and by PAM modules (pam_unix).
+SHA_CRYPT_MIN_ROUNDS 5000
+SHA_CRYPT_MAX_ROUNDS 5000
