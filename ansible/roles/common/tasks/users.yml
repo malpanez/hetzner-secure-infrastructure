@@ -62,5 +62,5 @@
   ansible.builtin.user:
     name: root
     password: "!"
-  when: common_disable_root_password | default(true)
+  when: common_disable_root_password | default(false)
   tags: [common, security]
