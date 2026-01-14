@@ -98,8 +98,7 @@
     type: auth
     control: substack
     module_path: sudo-mfa-totp
-    state: after
-    module_arguments: ''
+    state: updated
   tags: [totp, sudo, mfa, pam]
 
 # ========================================

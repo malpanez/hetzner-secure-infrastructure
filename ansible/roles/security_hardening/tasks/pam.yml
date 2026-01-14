@@ -14,6 +14,5 @@
     type: auth
     control: substack
     module_path: su-wheel
-    state: before
-    module_arguments: ''
+    state: updated
   tags: [security, pam]
