@@ -1,24 +1,24 @@
 ---
 # AppArmor Role - Configuration Tasks
 
-- name: AppArmor | Configure | Check GRUB cmdline for AppArmor flags
-  ansible.builtin.command: >-
-    grep -Eq 'GRUB_CMDLINE_LINUX_DEFAULT="[^"]*(apparmor=1|security=apparmor)' {{ apparmor_grub_config_file }}
-  register: apparmor_grub_flags
-  changed_when: false
-  failed_when: false
+- name: AppArmor | Configure | Ensure GRUB drop-in directory exists
+  ansible.builtin.file:
+    path: /etc/default/grub.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
   when: apparmor_manage_grub | default(true)
   tags: [apparmor, grub, config, molecule-notest]
 
-- name: AppArmor | Configure | Append AppArmor flags to GRUB cmdline
-  ansible.builtin.lineinfile:
-    path: "{{ apparmor_grub_config_file }}"
-    regexp: ^GRUB_CMDLINE_LINUX_DEFAULT="(.*)"
-    line: 'GRUB_CMDLINE_LINUX_DEFAULT="\1 {{ apparmor_grub_cmdline }}"'
-    backrefs: true
-  when:
-    - apparmor_manage_grub | default(true)
-    - apparmor_grub_flags.rc != 0
+- name: AppArmor | Configure | Deploy GRUB drop-in for AppArmor parameters
+  ansible.builtin.template:
+    src: grub-apparmor.cfg.j2
+    dest: /etc/default/grub.d/99-apparmor.cfg
+    owner: root
+    group: root
+    mode: '0644'
+  when: apparmor_manage_grub | default(true)
   notify:
     - update grub
     - reboot required

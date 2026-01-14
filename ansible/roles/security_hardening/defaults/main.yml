@@ -120,6 +120,9 @@ security_hardening_restrict_compilers: true
 # Harden /tmp with separate mount options
 security_hardening_harden_tmp: true
 
+# /tmp tmpfs size limit (prevents DoS)
+security_hardening_tmp_size: '2G'
+
 # ========================================
 # Sysctl Hardening Configuration
 # ========================================

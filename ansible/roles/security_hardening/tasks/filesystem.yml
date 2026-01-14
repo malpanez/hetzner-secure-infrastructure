@@ -1,10 +1,21 @@
 ---
-- name: Security Hardening | Filesystem | Secure shared memory
-  ansible.builtin.lineinfile:
-    path: /etc/fstab
-    line: tmpfs /run/shm tmpfs defaults,noexec,nosuid 0 0
-    state: present
-  tags: filesystem
+- name: Security Hardening | Filesystem | Deploy /run/shm systemd mount unit
+  ansible.builtin.template:
+    src: run-shm.mount.j2
+    dest: /etc/systemd/system/run-shm.mount
+    owner: root
+    group: root
+    mode: '0644'
+  tags: [security, filesystem]
+
+- name: Security Hardening | Filesystem | Enable and start run-shm.mount
+  ansible.builtin.systemd:
+    name: run-shm.mount
+    enabled: true
+    state: started
+    daemon_reload: true
+  failed_when: false
+  tags: [security, filesystem, molecule-notest]
 
 - name: Security Hardening | Filesystem | Harden /tmp directory
   block:
@@ -14,29 +25,13 @@
       failed_when: false
       changed_when: false
 
-    - name: Security Hardening | Filesystem | Create /tmp systemd mount unit
-      ansible.builtin.copy:
-        content: |
-          [Unit]
-          Description=Temporary Directory /tmp
-          ConditionPathIsSymbolicLink=!/tmp
-          DefaultDependencies=no
-          Conflicts=umount.target
-          Before=local-fs.target umount.target
-          After=swap.target
-
-          [Mount]
-          What=tmpfs
-          Where=/tmp
-          Type=tmpfs
-          Options=mode=1777,strictatime,noexec,nodev,nosuid,size=2G
-
-          [Install]
-          WantedBy=local-fs.target
+    - name: Security Hardening | Filesystem | Deploy /tmp systemd mount unit
+      ansible.builtin.template:
+        src: tmp.mount.j2
         dest: /etc/systemd/system/tmp.mount
         owner: root
         group: root
-        mode: "0644"
+        mode: '0644'
       when: tmp_mountpoint.rc != 0
 
     - name: Security Hardening | Filesystem | Enable tmp.mount
