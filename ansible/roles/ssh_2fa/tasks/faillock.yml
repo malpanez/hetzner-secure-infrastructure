@@ -86,7 +86,7 @@
     mode: '0640'
   when: ssh_2fa_faillock_audit_enabled | default(true)
   notify: restart auditd
-  tags: [faillock, audit]
+  tags: [faillock, audit, molecule-notest]
 
 # ========================================
 # Break-glass Information

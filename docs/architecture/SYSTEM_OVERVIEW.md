@@ -216,41 +216,38 @@ sequenceDiagram
 
 ```mermaid
 graph LR
-    subgraph "Data Sources"
-        NGINX_SVC[Nginx]
-        PHP_SVC[PHP-FPM]
-        MARIA_SVC[MariaDB]
-        VALKEY_SVC[Valkey]
-        LOGS[/var/log/*]
-    end
+    NGINX_SVC[Nginx]
+    PHP_SVC[PHP-FPM]
+    MARIA_SVC[MariaDB]
+    VALKEY_SVC[Valkey]
+    LOGS[System Logs]
 
-    subgraph "Collection"
-        NE["Node Exporter :9100"]
-        PT[Promtail]
-    end
+    NE[Node Exporter :9100]
+    PT[Promtail]
 
-    subgraph "Storage"
-        PROM["Prometheus 15-day retention"]
-        LOKI["Loki 7-day retention"]
-    end
+    PROM[Prometheus<br/>15-day retention]
+    LOKI[Loki<br/>7-day retention]
 
-    subgraph "Visualization"
-        GRAF["Grafana :3000"]
-    end
+    GRAF[Grafana :3000]
+    USER[Admin Browser]
 
-    NGINX_SVC -->|/metrics| NE
-    PHP_SVC -->|/metrics| NE
-    MARIA_SVC -->|/metrics| NE
-    VALKEY_SVC -->|/metrics| NE
+    NGINX_SVC -->|metrics| NE
+    PHP_SVC -->|metrics| NE
+    MARIA_SVC -->|metrics| NE
+    VALKEY_SVC -->|metrics| NE
 
-    NE -->|Scrape 15s| PROM
-    LOGS -->|Tail| PT
-    PT -->|Ship| LOKI
+    NE -->|scrape 15s| PROM
+    LOGS -->|tail| PT
+    PT -->|ship| LOKI
 
     PROM -->|PromQL| GRAF
     LOKI -->|LogQL| GRAF
 
-    GRAF -->|Dashboard| USER[Admin Browser]
+    GRAF -->|dashboard| USER
+
+    style NGINX_SVC fill:#E8F5E9,stroke:#2E7D32,stroke-width:2px,color:#000
+    style PROM fill:#F3E5F5,stroke:#6A1B9A,stroke-width:2px,color:#000
+    style GRAF fill:#E8F4FD,stroke:#0D47A1,stroke-width:2px,color:#000
 ```
 
 ### 3. Secret Rotation Flow

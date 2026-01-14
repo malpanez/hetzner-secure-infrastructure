@@ -9,6 +9,7 @@ exclude_paths:
   - .terraform/
   - venv/
   - '**/*.md'
+  - ansible/roles/geerlingguy.*  # Third-party roles from Ansible Galaxy
 
 # Enable specific rules
 enable_list:
