@@ -17,6 +17,7 @@
   ansible.builtin.command: update-grub
   changed_when: true
   notify: reboot required
+  when: ansible_virtualization_type not in ['docker', 'container', 'lxc', 'podman']
 
 - name: reboot required
   ansible.builtin.file:
