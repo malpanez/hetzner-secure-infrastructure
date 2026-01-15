@@ -13,3 +13,5 @@
     - role: firewall
       vars:
         firewall_relax_idempotence: true
+        ssh_allowed_ips:
+          - "192.168.1.0/24"

@@ -9,5 +9,11 @@
         update_cache: true
         cache_valid_time: 3600
 
+    - name: Create GRUB configuration directory (for containers)
+      ansible.builtin.file:
+        path: /etc/default/grub.d
+        state: directory
+        mode: "0755"
+
   roles:
     - role: common
