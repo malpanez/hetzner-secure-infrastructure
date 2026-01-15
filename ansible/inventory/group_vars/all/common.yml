@@ -10,10 +10,26 @@ ansible_user: malpanez
 ansible_ssh_private_key_file: ~/.ssh/github_ed25519
 
 # ========================================
-# System Configuration
+# System Configuration - Global Deployment
 # ========================================
-system_timezone: "Europe/Dublin"
-system_locale: "en_IE.UTF-8"
+# Two Minds Trading is a GLOBAL trading education platform
+# Audiences: USA, Spain, Mexico, Argentina, Brazil, and worldwide
+# Server timezone: UTC (mandatory for global operations)
+# User display: Local timezone via JavaScript/WordPress
+
+system_timezone: "UTC"
+system_locale: "en_US.UTF-8"
+
+# Multi-language support for global audience
+additional_locales:
+  - en_US.UTF-8     # US English (primary)
+  - en_GB.UTF-8     # British English
+  - es_ES.UTF-8     # Spanish (Spain)
+  - es_MX.UTF-8     # Spanish (Mexico)
+  - es_AR.UTF-8     # Spanish (Argentina)
+  - pt_BR.UTF-8     # Portuguese (Brazil)
+  - de_DE.UTF-8     # German (future expansion)
+  - fr_FR.UTF-8     # French (future expansion)
 
 # ========================================
 # Admin User
@@ -41,14 +57,23 @@ required_packages:
   - tree
 
 # ========================================
-# NTP Configuration
+# NTP Configuration - Global Anycast
 # ========================================
+# Using global anycast NTP servers for worldwide reliability
+# Primary: Cloudflare/Google (global anycast, ultra-reliable)
+# Backup: Regional pool (Germany - low latency from Hetzner Nuremberg)
+
 ntp_enabled: true
 ntp_servers:
-  - 0.debian.pool.ntp.org
-  - 1.debian.pool.ntp.org
-  - 2.debian.pool.ntp.org
-  - 3.debian.pool.ntp.org
+  - time.cloudflare.com    # Global anycast (ultra-reliable)
+  - time.google.com        # Global anycast
+  - 0.de.pool.ntp.org      # Regional backup (low latency)
+  - 1.de.pool.ntp.org
+
+ntp_fallback_servers:
+  - 0.europe.pool.ntp.org
+  - 1.europe.pool.ntp.org
+  - time.windows.com
 
 # ========================================
 # Logging
@@ -80,6 +105,40 @@ ssh_allowed_ips:
 #   wordpress_server_ip: "65.108.1.100"
 #   openbao_server_ip: "65.108.1.101"
 #   monitoring_server_ip: "65.108.1.102"
+
+# ========================================
+# Security Deployment Strategy
+# ========================================
+# For initial deployment and testing, use safer defaults
+# After verification, enable stricter security in production
+
+# AppArmor: Start in complain mode (logs but doesn't block)
+apparmor_enforce_mode: false  # Set to true after testing
+
+# Auditd: Use mutable mode for testing (allows changes without reboot)
+audit_immutable_mode: "1"  # Use "2" for production (requires reboot to modify)
+
+# Root account: Unlocked for console access (Hetzner VNC recovery)
+# Root SSH login is blocked via sshd_config
+disable_root_password: false
+
+# Unattended Upgrades
+unattended_upgrades_automatic_reboot: false  # Manual reboot for WordPress
+unattended_upgrades_automatic_reboot_time: "03:00"
+unattended_upgrades_automatic_reboot_with_users: false
+unattended_upgrades_mail: ""  # Set to your email for notifications
+unattended_upgrades_mail_report: "only-on-error"
+unattended_upgrades_blacklist: []  # Add packages to prevent auto-update
+unattended_upgrades_remove_new_unused_dependencies: true
+unattended_upgrades_keep_debs: false
+
+# SSH 2FA with nullok fallback (allows initial login before 2FA setup)
+ssh_2fa_pam_google_authenticator_ssh_options: "nullok forward_pass"
+
+# ========================================
+# WordPress Configuration
+# ========================================
+wordpress_root: "/var/www/wordpress"
 
 # ========================================
 # OpenBao Bootstrap (opt-in)

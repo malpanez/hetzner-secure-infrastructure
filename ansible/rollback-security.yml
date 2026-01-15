@@ -1,0 +1,262 @@
+---
+# Emergency Security Rollback Playbook
+# =====================================
+# Use this playbook if the server becomes locked after deployment
+#
+# WHEN TO USE:
+# - Cannot SSH to server after security hardening
+# - Cannot access server console (Hetzner VNC)
+# - Auditd immutable mode preventing changes
+# - AppArmor profiles blocking services
+#
+# HOW TO USE:
+# 1. Boot server into rescue mode (if completely locked)
+# 2. Run: ansible-playbook -i inventory/production rollback-security.yml
+# 3. Test access
+# 4. Re-apply security incrementally
+#
+# CAUTION: This temporarily WEAKENS security for recovery purposes
+
+- name: Emergency Security Rollback
+  hosts: hetzner
+  become: true
+  gather_facts: false
+
+  vars:
+    # Set to true to skip potentially dangerous operations
+    safe_mode: false
+
+  tasks:
+    - name: Rollback | Test connection
+      ansible.builtin.ping:
+      ignore_errors: true
+      register: ping_result
+
+    - name: Rollback | Display connection status
+      ansible.builtin.debug:
+        msg: "{{ 'Connection OK' if ping_result is success else 'Connection FAILED - may need rescue mode' }}"
+
+    # =================================================================
+    # AppArmor Rollback
+    # =================================================================
+
+    - name: Rollback | Put all AppArmor profiles in complain mode
+      ansible.builtin.shell: |
+        aa-complain /etc/apparmor.d/* 2>/dev/null || true
+      register: apparmor_complain
+      changed_when: false
+      ignore_errors: true
+      tags: [apparmor]
+
+    - name: Rollback | Disable AppArmor service (temporary)
+      ansible.builtin.systemd:
+        name: apparmor
+        state: stopped
+        enabled: false
+      when: not safe_mode
+      ignore_errors: true
+      tags: [apparmor]
+
+    # =================================================================
+    # Root Account Recovery
+    # =================================================================
+
+    - name: Rollback | Ensure root account is unlocked for console
+      ansible.builtin.command: passwd -u root
+      register: root_unlock
+      changed_when: "'password expiry information changed' in root_unlock.stdout"
+      ignore_errors: true
+      tags: [root]
+
+    - name: Rollback | Temporarily allow root SSH login (emergency only)
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PermitRootLogin'
+        line: 'PermitRootLogin yes'
+        state: present
+        backup: true
+      notify: restart sshd
+      when: not safe_mode
+      ignore_errors: true
+      tags: [ssh, root]
+
+    - name: Rollback | Temporarily allow password authentication
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PasswordAuthentication'
+        line: 'PasswordAuthentication yes'
+        state: present
+        backup: true
+      notify: restart sshd
+      when: not safe_mode
+      ignore_errors: true
+      tags: [ssh]
+
+    # =================================================================
+    # Auditd Rollback
+    # =================================================================
+
+    - name: Rollback | Check if audit rules are immutable
+      ansible.builtin.shell: auditctl -s | grep enabled
+      register: audit_status
+      changed_when: false
+      failed_when: false
+      ignore_errors: true
+      tags: [audit]
+
+    - name: Rollback | Display audit status
+      ansible.builtin.debug:
+        msg: "{{ audit_status.stdout_lines | default(['Auditd not running']) }}"
+      tags: [audit]
+
+    - name: Rollback | Set audit rules to mutable (if possible)
+      ansible.builtin.lineinfile:
+        path: /etc/audit/rules.d/audit.rules
+        regexp: '^-e 2'
+        line: '-e 1'
+        state: present
+        backup: true
+      register: audit_rules_changed
+      ignore_errors: true
+      tags: [audit]
+
+    - name: Rollback | Reload audit rules (if not immutable)
+      ansible.builtin.command: augenrules --load
+      when: audit_rules_changed is changed
+      ignore_errors: true
+      tags: [audit]
+
+    - name: Rollback | Stop auditd service (if immutable, requires reboot)
+      ansible.builtin.systemd:
+        name: auditd
+        state: stopped
+        enabled: false
+      when: not safe_mode
+      ignore_errors: true
+      tags: [audit]
+
+    - name: Rollback | Note about audit immutability
+      ansible.builtin.debug:
+        msg: |
+          WARNING: If audit was set to immutable mode (-e 2), you must REBOOT
+          the server to make changes. Run: systemctl reboot
+      when: "'enabled 2' in audit_status.stdout | default('')"
+      tags: [audit]
+
+    # =================================================================
+    # Fail2ban Rollback
+    # =================================================================
+
+    - name: Rollback | Disable fail2ban temporarily
+      ansible.builtin.systemd:
+        name: fail2ban
+        state: stopped
+        enabled: false
+      when: not safe_mode
+      ignore_errors: true
+      tags: [fail2ban]
+
+    - name: Rollback | Unban all IPs from fail2ban
+      ansible.builtin.shell: |
+        fail2ban-client unban --all 2>/dev/null || true
+      when: not safe_mode
+      ignore_errors: true
+      tags: [fail2ban]
+
+    # =================================================================
+    # Firewall Rollback (UFW)
+    # =================================================================
+
+    - name: Rollback | Allow SSH from anywhere (emergency)
+      community.general.ufw:
+        rule: allow
+        port: '22'
+        proto: tcp
+        comment: 'Emergency SSH access - remove after recovery'
+      when: not safe_mode
+      ignore_errors: true
+      tags: [firewall]
+
+    - name: Rollback | Disable UFW firewall (emergency only)
+      community.general.ufw:
+        state: disabled
+      when: not safe_mode
+      ignore_errors: true
+      tags: [firewall]
+
+    # =================================================================
+    # PAM / 2FA Rollback
+    # =================================================================
+
+    - name: Rollback | Disable SSH 2FA temporarily
+      ansible.builtin.lineinfile:
+        path: /etc/pam.d/sshd
+        regexp: '^@include sshd-2fa'
+        line: '#@include sshd-2fa  # Disabled for recovery'
+        state: present
+        backup: true
+      notify: restart sshd
+      when: not safe_mode
+      ignore_errors: true
+      tags: [pam, 2fa]
+
+    - name: Rollback | Comment out Google Authenticator requirement
+      ansible.builtin.replace:
+        path: /etc/pam.d/sshd-2fa
+        regexp: '^(auth required pam_google_authenticator.so.*)$'
+        replace: '#\1  # Disabled for recovery'
+        backup: true
+      when: not safe_mode
+      ignore_errors: true
+      tags: [pam, 2fa]
+
+    # =================================================================
+    # Service Restarts
+    # =================================================================
+
+    - name: Rollback | Restart SSH service
+      ansible.builtin.systemd:
+        name: sshd
+        state: restarted
+      ignore_errors: true
+      tags: [ssh]
+
+    - name: Rollback | Display recovery instructions
+      ansible.builtin.debug:
+        msg: |
+          =================================================================
+          EMERGENCY ROLLBACK COMPLETE
+          =================================================================
+
+          Security measures have been TEMPORARILY DISABLED:
+
+          ✓ AppArmor:     Complain mode / Disabled
+          ✓ Root:         Unlocked + SSH enabled
+          ✓ SSH:          Password auth enabled
+          ✓ Auditd:       Mutable mode / Stopped
+          ✓ Fail2ban:     Disabled
+          ✓ UFW:          Disabled / SSH allowed from anywhere
+          ✓ 2FA:          Disabled
+
+          NEXT STEPS:
+          1. Test SSH access: ssh {{ ansible_user }}@{{ inventory_hostname }}
+          2. Test root console access via Hetzner VNC
+          3. Review logs: journalctl -xe, /var/log/auth.log
+          4. Re-apply security incrementally:
+             - Start with AppArmor in complain mode
+             - Enable auditd with -e 1 (mutable)
+             - Enable fail2ban
+             - Enable UFW with your management IP
+             - Enable 2FA with nullok option
+             - Test each step before proceeding
+          5. IMPORTANT: After recovery, re-harden the server!
+
+          WARNING: Server is now in INSECURE state - restore security ASAP!
+          =================================================================
+
+  handlers:
+    - name: restart sshd
+      ansible.builtin.systemd:
+        name: sshd
+        state: restarted
+      ignore_errors: true

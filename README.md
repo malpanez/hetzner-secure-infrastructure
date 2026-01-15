@@ -26,6 +26,7 @@ Fully automated deployment of secure, high-performance WordPress on Hetzner Clou
 
 - ✅ **ARM64 Optimized**: 2.68x faster than x86 (benchmarked)
 - ✅ **Cost-Effective**: €4.66/month (CAX11 ARM64 with IPv4) - Updated Jan 2026
+- ✅ **Global Deployment**: UTC timezone, multi-language support, global NTP
 - ✅ **Fully Automated**: Terraform + Ansible with workspaces + dynamic inventory
 - ✅ **100% Test Coverage**: 10 Molecule tests + Terratest + CI/CD
 - ✅ **Enterprise Security**: WAF, Fail2ban, AppArmor, SSH 2FA
@@ -348,6 +349,7 @@ make backup
 ### Getting Started
 
 - **[DEPLOYMENT.md](docs/guides/DEPLOYMENT.md)** - Complete deployment guide (development → production)
+- **[GLOBAL_DEPLOYMENT_STRATEGY.md](docs/deployment/GLOBAL_DEPLOYMENT_STRATEGY.md)** - 🌍 **NEW!** Global deployment for worldwide audiences
 - **[TERRAFORM_CLOUD_MIGRATION.md](docs/guides/TERRAFORM_CLOUD_MIGRATION.md)** - Set up Terraform Cloud
 - **[COMPLETE_TESTING_GUIDE.md](docs/guides/COMPLETE_TESTING_GUIDE.md)** - Testing procedures
 

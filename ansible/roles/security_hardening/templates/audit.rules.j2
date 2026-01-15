@@ -1,15 +1,19 @@
 ## Auditd Rules - Comprehensive Security Logging
 ## Managed by Ansible - DO NOT EDIT MANUALLY
+## Optimized for Debian 13 (Trixie) with WordPress
 ## Compliance: SOC-2, NIST 800-53, FedRAMP, HIPAA, PCI-DSS
 
 # Remove any existing rules
 -D
 
-# Buffer Size
--b 8192
+# Buffer Size (increase for WordPress high I/O)
+-b 16384
 
 # Failure Mode (0=silent 1=printk 2=panic)
 -f 1
+
+# Rate limit (prevent log flooding from WordPress)
+-r 500
 
 ## ===== AUDITD SELF-MONITORING =====
 -w /var/log/audit/ -p wa -k auditlog
@@ -39,8 +43,7 @@
 -w /etc/issue -p wa -k system-locale
 -w /etc/issue.net -p wa -k system-locale
 -w /etc/hosts -p wa -k system-locale
--w /etc/network -p wa -k system-locale
--w /etc/netplan/ -p wa -k system-locale
+-w /etc/network/ -p wa -k system-locale
 
 ## ===== MAC POLICY CHANGES (AppArmor) =====
 -w /etc/apparmor/ -p wa -k MAC-policy
@@ -136,21 +139,52 @@
 -a always,exit -F arch=b32 -S mount -S umount -S umount2 -F auid>=1000 -F auid!=4294967295 -k mounts
 
 ## ===== WORDPRESS/WEB APPLICATION SECURITY =====
-# Monitor WordPress installations
--w /var/www/ -p wa -k webfiles
+# Nginx configuration (Debian path)
+-w /etc/nginx/nginx.conf -p wa -k webconfig
+-w /etc/nginx/sites-enabled/ -p wa -k webconfig
+-w /etc/nginx/sites-available/ -p wa -k webconfig
+-w /etc/nginx/conf.d/ -p wa -k webconfig
 
-# Monitor web server configs
--w /etc/nginx/ -p wa -k webconfig
--w /etc/php/ -p wa -k webconfig
+# PHP configuration (all versions - use wildcard for flexibility)
+# This covers PHP 8.2, 8.3, 8.4, and future versions
+-w /etc/php/ -p wa -k phpconfig
 
-# Monitor database
+# WordPress core files (only critical ones to avoid log spam)
+{% set wp_root = nginx_wordpress_web_root | default('/var/www/wordpress') %}
+-w {{ wp_root }}/wp-config.php -p wa -k wordpress
+-w {{ wp_root }}/.htaccess -p wa -k wordpress
+-w {{ wp_root }}/wp-admin/includes/ -p wa -k wordpress
+-w {{ wp_root }}/wp-includes/capabilities.php -p wa -k wordpress
+-w {{ wp_root }}/wp-includes/user.php -p wa -k wordpress
+
+# WordPress uploads (file creation monitoring - be careful, can be noisy)
+# Uncomment only if you need forensics, can generate massive logs
+# -w {{ wp_root }}/wp-content/uploads/ -p wa -k wordpress-uploads
+
+# WordPress plugins and themes (security-critical)
+-w {{ wp_root }}/wp-content/plugins/ -p wa -k wordpress-plugins
+-w {{ wp_root }}/wp-content/themes/ -p wa -k wordpress-themes
+-w {{ wp_root }}/wp-content/mu-plugins/ -p wa -k wordpress-plugins
+
+# Database configuration
 -w /etc/mysql/ -p wa -k database
+-w /etc/mysql/mariadb.conf.d/ -p wa -k database
+
+# SSL/TLS certificates
+-w /etc/letsencrypt/ -p wa -k certificates
+-w /etc/ssl/private/ -p wa -k certificates
 
 ## ===== SECRETS AND CREDENTIALS =====
 -w /root/.ssh/ -p wa -k rootkey
+{% if security_hardening_admin_username is defined %}
 -w /home/{{ security_hardening_admin_username }}/.ssh/ -p wa -k adminkey
+{% endif %}
+
+# WordPress secrets
+-w /root/.my.cnf -p wa -k dbcredentials
 
 ## ===== MAKE CONFIGURATION IMMUTABLE =====
 # This must be the last rule
-# Requires reboot to modify audit rules
--e 2
+# Use -e 1 for first deployment/testing (mutable, allows changes)
+# Use -e 2 for stable production (immutable, requires reboot to modify)
+-e {{ audit_immutable_mode | default('1') }}
