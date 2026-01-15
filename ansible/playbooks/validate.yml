@@ -116,7 +116,8 @@
 
           CRITICAL - Test SSH Access:
           {% for host in groups.get('hetzner', []) %}
-          ssh {{ hostvars[host]['ansible_user'] | default('malpanez') }}@{{ hostvars[host]['ansible_host'] | default(host) }}
+          ssh {{ hostvars[host]['ansible_user'] | default('malpanez') }}@
+          {{ hostvars[host]['ansible_host'] | default(host) }}
           {% endfor %}
 
           Security Verification:
@@ -131,7 +132,8 @@
           OpenBao Setup (if deployed):
           {% if groups['secrets_servers'] is defined %}
           {% for host in groups['secrets_servers'] %}
-          ssh {{ hostvars[host]['ansible_user'] | default('malpanez') }}@{{ hostvars[host]['ansible_host'] | default(host) }}
+          ssh {{ hostvars[host]['ansible_user'] | default('malpanez') }}@
+          {{ hostvars[host]['ansible_host'] | default(host) }}
           export VAULT_ADDR='https://{{ hostvars[host]['ansible_host'] | default(host) }}:8200'
           bao operator init
           # SAVE UNSEAL KEYS!
@@ -149,8 +151,10 @@
           WordPress Setup (if deployed):
           {% if groups['wordpress_servers'] is defined %}
           {% for host in groups['wordpress_servers'] %}
-          1. Get SSL: sudo certbot --nginx -d {{ hostvars[host]['wordpress_domain'] | default('example.com') }}
-          2. Access WordPress admin: http://{{ hostvars[host]['ansible_host'] | default(host) }}/wp-admin
+          1. Get SSL: sudo certbot --nginx -d
+          {{ hostvars[host]['wordpress_domain'] | default('example.com') }}
+          2. Access WordPress admin:
+          http://{{ hostvars[host]['ansible_host'] | default(host) }}/wp-admin
           3. Install LearnDash Pro manually (requires license)
           4. Configure Cloudflare (if enabled)
           {% endfor %}

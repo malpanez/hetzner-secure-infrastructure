@@ -9,7 +9,10 @@
 
 - name: Nginx WordPress | Plugins | Install mandatory WordPress plugins
   ansible.builtin.command:
-    cmd: "{{ nginx_wordpress_wpcli_path }} plugin install {{ nginx_wordpress_plugins_mandatory | join(' ') }} --activate --path={{ nginx_wordpress_web_root }}"
+    cmd: >-
+      {{ nginx_wordpress_wpcli_path }} plugin install
+      {{ nginx_wordpress_plugins_mandatory | join(' ') }} --activate
+      --path={{ nginx_wordpress_web_root }}
   become_user: "{{ nginx_wordpress_nginx_user }}"
   register: plugin_install
   changed_when: "'Success: Plugin already installed' not in plugin_install.stdout"
@@ -19,7 +22,10 @@
 
 - name: Nginx WordPress | Plugins | Install LMS critical plugins
   ansible.builtin.command:
-    cmd: "{{ nginx_wordpress_wpcli_path }} plugin install {{ nginx_wordpress_plugins_lms_critical | join(' ') }} --activate --path={{ nginx_wordpress_web_root }}"
+    cmd: >-
+      {{ nginx_wordpress_wpcli_path }} plugin install
+      {{ nginx_wordpress_plugins_lms_critical | join(' ') }} --activate
+      --path={{ nginx_wordpress_web_root }}
   become_user: "{{ nginx_wordpress_nginx_user }}"
   register: lms_plugin_install
   changed_when: "'Success: Plugin already installed' not in lms_plugin_install.stdout"
@@ -29,7 +35,10 @@
 
 - name: Nginx WordPress | Plugins | Install recommended plugins
   ansible.builtin.command:
-    cmd: "{{ nginx_wordpress_wpcli_path }} plugin install {{ nginx_wordpress_plugins_recommended | join(' ') }} --activate --path={{ nginx_wordpress_web_root }}"
+    cmd: >-
+      {{ nginx_wordpress_wpcli_path }} plugin install
+      {{ nginx_wordpress_plugins_recommended | join(' ') }} --activate
+      --path={{ nginx_wordpress_web_root }}
   become_user: "{{ nginx_wordpress_nginx_user }}"
   register: recommended_plugin_install
   changed_when: "'Success: Plugin already installed' not in recommended_plugin_install.stdout"
@@ -39,7 +48,9 @@
 
 - name: Nginx WordPress | Plugins | Check plugin installation status
   ansible.builtin.command:
-    cmd: "{{ nginx_wordpress_wpcli_path }} plugin list --path={{ nginx_wordpress_web_root }} --format=json"
+    cmd: >-
+      {{ nginx_wordpress_wpcli_path }} plugin list
+      --path={{ nginx_wordpress_web_root }} --format=json
   become_user: "{{ nginx_wordpress_nginx_user }}"
   register: installed_plugins
   changed_when: false
@@ -97,7 +108,9 @@
 
     - name: Nginx WordPress | Plugins | Enable Redis Object Cache
       ansible.builtin.command:
-        cmd: "{{ nginx_wordpress_wpcli_path }} redis enable --path={{ nginx_wordpress_web_root }}"
+        cmd: >-
+          {{ nginx_wordpress_wpcli_path }} redis enable
+          --path={{ nginx_wordpress_web_root }}
       become_user: "{{ nginx_wordpress_nginx_user }}"
       when: valkey_status.status.ActiveState == 'active'
       register: redis_enable
@@ -106,7 +119,10 @@
 
     - name: Nginx WordPress | Plugins | Display Redis cache status
       ansible.builtin.debug:
-        msg: "Redis Object Cache: {{ 'ENABLED ✓' if valkey_status.status.ActiveState == 'active' else 'DISABLED (Valkey not running)' }}"
+        msg: >-
+          Redis Object Cache:
+          {{ 'ENABLED ✓' if valkey_status.status.ActiveState == 'active'
+             else 'DISABLED (Valkey not running)' }}
   when: wp_config_check.stat.exists
   tags: [nginx-wordpress, wordpress, plugins, redis]
 
@@ -114,7 +130,10 @@
   block:
     - name: Nginx WordPress | Plugins | Enable Nginx Helper purge on update
       ansible.builtin.command:
-        cmd: "{{ nginx_wordpress_wpcli_path }} option update rt_wp_nginx_helper_options '{{ nginx_helper_options | to_json }}' --format=json --path={{ nginx_wordpress_web_root }}"
+        cmd: >-
+          {{ nginx_wordpress_wpcli_path }} option update rt_wp_nginx_helper_options
+          '{{ nginx_helper_options | to_json }}' --format=json
+          --path={{ nginx_wordpress_web_root }}
       become_user: "{{ nginx_wordpress_nginx_user }}"
       vars:
         nginx_helper_options:
@@ -152,7 +171,8 @@
       - "2. WP Mail SMTP (Email Delivery):"
       - "   • WordPress Admin → WP Mail SMTP → Settings"
       - "   • Mailer: Brevo (recommended - 300 emails/day free)"
-      - "   • Get API key: https://app.brevo.com/settings/keys/api"
+      - "   • Get API key:"
+      - "     https://app.brevo.com/settings/keys/api"
       - "   • Send test email to verify"
       - ""
       - "3. Rank Math SEO:"
@@ -176,7 +196,10 @@
       - "ALREADY CONFIGURED:"
       - ""
       - "6. Redis Object Cache:"
-      - "   • {{ 'ENABLED ✓ - Monitor via WordPress admin' if valkey_status.status.ActiveState == 'active' else 'Install Valkey role first' }}"
+      - >-
+        {{ '   • ENABLED ✓ - Monitor via WordPress admin'
+           if valkey_status.status.ActiveState == 'active'
+           else '   • Install Valkey role first' }}
       - ""
       - "7. Nginx Helper:"
       - "   • CONFIGURED ✓ - Cache auto-purges on updates"

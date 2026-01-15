@@ -30,3 +30,4 @@ ignore: |
   .terraform/
   node_modules/
   *.egg-info/
+  ansible/roles/geerlingguy.mysql/

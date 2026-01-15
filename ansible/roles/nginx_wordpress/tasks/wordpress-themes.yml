@@ -9,7 +9,9 @@
 
 - name: Nginx WordPress | Themes | Install primary theme
   ansible.builtin.command:
-    cmd: "{{ nginx_wordpress_wpcli_path }} theme install {{ nginx_wordpress_theme }} --path={{ nginx_wordpress_web_root }}"
+    cmd: >-
+      {{ nginx_wordpress_wpcli_path }} theme install
+      {{ nginx_wordpress_theme }} --path={{ nginx_wordpress_web_root }}
   become_user: "{{ nginx_wordpress_nginx_user }}"
   register: theme_install
   changed_when: "'Success: Installed' in theme_install.stdout"
@@ -22,7 +24,9 @@
 
 - name: Nginx WordPress | Themes | Activate primary theme
   ansible.builtin.command:
-    cmd: "{{ nginx_wordpress_wpcli_path }} theme activate {{ nginx_wordpress_theme }} --path={{ nginx_wordpress_web_root }}"
+    cmd: >-
+      {{ nginx_wordpress_wpcli_path }} theme activate
+      {{ nginx_wordpress_theme }} --path={{ nginx_wordpress_web_root }}
   become_user: "{{ nginx_wordpress_nginx_user }}"
   register: theme_activate
   changed_when: "'Success: Switched' in theme_activate.stdout"
@@ -36,7 +40,9 @@
 
 - name: Nginx WordPress | Themes | Install additional themes
   ansible.builtin.command:
-    cmd: "{{ nginx_wordpress_wpcli_path }} theme install {{ item }} --path={{ nginx_wordpress_web_root }}"
+    cmd: >-
+      {{ nginx_wordpress_wpcli_path }} theme install {{ item }}
+      --path={{ nginx_wordpress_web_root }}
   become_user: "{{ nginx_wordpress_nginx_user }}"
   loop: "{{ nginx_wordpress_themes_additional }}"
   register: additional_themes_install
@@ -50,7 +56,9 @@
 
 - name: Nginx WordPress | Themes | Get list of installed themes
   ansible.builtin.command:
-    cmd: "{{ nginx_wordpress_wpcli_path }} theme list --path={{ nginx_wordpress_web_root }} --format=json"
+    cmd: >-
+      {{ nginx_wordpress_wpcli_path }} theme list
+      --path={{ nginx_wordpress_web_root }} --format=json
   become_user: "{{ nginx_wordpress_nginx_user }}"
   register: installed_themes
   changed_when: false
@@ -62,10 +70,10 @@
     msg: "{{ ['========================================',
              'Installed WordPress Themes',
              '========================================',
-             'Active Theme: ' + (installed_themes.stdout | from_json | selectattr('status', 'equalto', 'active') | map(attribute='name') | first | default('unknown')),
+             'Active Theme: ' + active_theme_name,
              '',
              'All Installed Themes:'] +
-            (installed_themes.stdout | from_json | map(attribute='name') | list) +
+            installed_theme_names +
             ['',
              'Theme Information:',
              '  • Kadence: Free, LearnDash-compatible, header/footer builder',
@@ -75,6 +83,16 @@
              '',
              'All themes are 100% FREE from WordPress.org',
              '========================================'] }}"
+  vars:
+    active_theme_name: >-
+      {{ installed_themes.stdout
+         | from_json
+         | selectattr('status', 'equalto', 'active')
+         | map(attribute='name')
+         | first
+         | default('unknown') }}
+    installed_theme_names: >-
+      {{ installed_themes.stdout | from_json | map(attribute='name') | list }}
   when:
     - wp_config_check.stat.exists
     - installed_themes.stdout is defined
@@ -98,15 +116,28 @@
       - "   • Configure header/footer"
       - ""
       - "2. {{ nginx_wordpress_theme | capitalize }} Specific:"
-      - "{{ '   • Appearance → Kadence → Starter Templates (FREE)' if nginx_wordpress_theme == 'kadence' else '   • Install Starter Templates plugin (free)' }}"
-      - "{{ '   • Choose LearnDash-compatible template' if nginx_wordpress_theme == 'kadence' else '   • Import LearnDash starter site' }}"
-      - "{{ '   • Import demo content (optional)' if nginx_wordpress_theme == 'kadence' else '' }}"
+      - "{{ theme_starter_templates_line }}"
+      - "{{ theme_learndash_line }}"
+      - "{{ theme_demo_content_line }}"
       - ""
       - "3. Install LearnDash Pro:"
       - "   • Upload from Plugins → Add New → Upload"
       - "   • Activate with license key"
       - ""
       - "========================================="
+  vars:
+    theme_starter_templates_line: >-
+      {{ '   • Appearance → Kadence → Starter Templates (FREE)'
+         if nginx_wordpress_theme == 'kadence'
+         else '   • Install Starter Templates plugin (free)' }}
+    theme_learndash_line: >-
+      {{ '   • Choose LearnDash-compatible template'
+         if nginx_wordpress_theme == 'kadence'
+         else '   • Import LearnDash starter site' }}
+    theme_demo_content_line: >-
+      {{ '   • Import demo content (optional)'
+         if nginx_wordpress_theme == 'kadence'
+         else '' }}
   when: wp_config_check.stat.exists
   run_once: true
   tags: [nginx-wordpress, wordpress, themes, info]

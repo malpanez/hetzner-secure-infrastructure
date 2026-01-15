@@ -84,8 +84,6 @@ wordpress_plugins:
     activate: true
     reason: "Auto-purge Cloudflare edge cache on updates"
 
-  # === OPTIONAL (Evaluate based on needs) ===
-
   # SEO Optimization (lighter than Yoast)
   # - slug: rank-math
   #   state: present

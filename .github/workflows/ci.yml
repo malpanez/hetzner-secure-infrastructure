@@ -101,7 +101,7 @@ jobs:
             --exclude roles/geerlingguy.mysql/ \
             --parseable | tee ../ansible-lint-report.txt || true
         continue-on-error: true
-        timeout-minutes: 8
+        timeout-minutes: 15
 
       - name: Upload lint report
         if: always()
