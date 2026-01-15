@@ -111,7 +111,7 @@ php_realpath_cache_ttl: 600
 # ========================================
 # PHP Date & Timezone
 # ========================================
-php_date_timezone: "Europe/Dublin"
+php_date_timezone: "UTC"
 
 # ========================================
 # PHP Extensions (Required for WordPress)

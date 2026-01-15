@@ -1,19 +1,9 @@
 ---
-- name: reload apparmor profiles
+- name: reload apparmor profiles  # noqa: command-instead-of-module
   ansible.builtin.command: systemctl reload-or-restart apparmor
   changed_when: true
   failed_when: false
 
-- name: update initramfs
-  ansible.builtin.command: update-initramfs -u -k all
-  changed_when: true
-  listen: update grub
-
-- name: update grub
-  ansible.builtin.command: update-grub
-  changed_when: true
-  notify: reboot required
-
-- name: reboot required
-  ansible.builtin.set_fact:
-    ansible_reboot_required: true
+# NOTE: GRUB/initramfs/reboot handlers are centralized in common/handlers/main.yml
+# This role notifies "update grub" which triggers the handler chain there
+# DO NOT duplicate the "update grub" handler here - it will shadow the common handler

@@ -1,0 +1,12 @@
+---
+# Common Role - GRUB Console Configuration Tasks
+
+- name: Common | GRUB | Deploy GRUB drop-in for console output
+  ansible.builtin.template:
+    src: grub-console.cfg.j2
+    dest: /etc/default/grub.d/00-console.cfg
+    owner: root
+    group: root
+    mode: '0644'
+  notify: update grub
+  tags: [common, grub, boot, console]

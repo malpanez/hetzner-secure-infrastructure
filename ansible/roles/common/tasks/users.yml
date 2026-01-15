@@ -58,9 +58,14 @@
   when: common_admin_user_create
   tags: [common, sudo]
 
-# - name: Common | Users | Disable root account password
-#   ansible.builtin.user:
-#     name: root
-#     password: "!"
-#   when: common_disable_root_password | default(false)
-#   tags: [common, security]
+- name: Common | Users | Ensure root account is unlocked for console access
+  ansible.builtin.command: passwd -u root
+  register: root_unlock_result
+  changed_when: "'password expiry information changed' in root_unlock_result.stdout"
+  failed_when: false
+  when: not common_disable_root_password | default(false)
+  tags: [common, security]
+
+# Root console access - Hetzner Cloud images already have root configured
+# Root SSH is blocked via sshd_config PermitRootLogin=no
+# See: docs/troubleshooting/ANSIBLE_POST_REBOOT_LOCKOUT.md

@@ -57,12 +57,12 @@
 
 ### Benefits
 
-✅ **Primary OpenBao auto-unseals after reboot** (no manual intervention)
-✅ **Transit instance rarely reboots** (minimal manual work)
-✅ **Production rotation never fails** (primary always unsealed)
-✅ **Industry standard pattern** (HashiCorp recommended)
-✅ **No cloud dependencies** (runs on same server)
-✅ **CI/CD tests pass** (tests deployment, not functionality)
+1. ✅ **Primary OpenBao auto-unseals after reboot** (no manual intervention)
+2. ✅ **Transit instance rarely reboots** (minimal manual work)
+3. ✅ **Production rotation never fails** (primary always unsealed)
+4. ✅ **Industry standard pattern** (HashiCorp recommended)
+5. ✅ **No cloud dependencies** (runs on same server)
+6. ✅ **CI/CD tests pass** (tests deployment, not functionality)
 
 ---
 

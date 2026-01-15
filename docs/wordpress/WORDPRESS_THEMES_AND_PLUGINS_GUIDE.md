@@ -213,7 +213,28 @@
 
 ### Phase 2: Theme Installation
 
-#### Option A: Kadence Theme (Recommended)
+#### ✅ AUTOMATED - Theme Auto-Installed by Ansible
+
+**Kadence Theme** (FREE) is automatically installed and activated by the Ansible playbook.
+
+**Configuration**: `ansible/roles/nginx_wordpress/defaults/main.yml:129`
+```yaml
+nginx_wordpress_theme: kadence  # Auto-installed and activated
+```
+
+**To change theme**, edit the variable before running Ansible:
+- `kadence` (Recommended - Best LearnDash integration)
+- `astra` (Popular, lightweight)
+- `neve` (Mobile-first)
+- `generatepress` (Performance-focused)
+
+**All themes are 100% FREE from WordPress.org**
+
+#### Manual Theme Installation (Alternative)
+
+If you prefer to install manually:
+
+**Option A: Kadence Theme**
 ```bash
 # From WordPress admin
 1. Go to: Appearance → Themes → Add New
@@ -225,7 +246,7 @@
 7. Customize: Appearance → Customizer
 ```
 
-#### Option B: Astra Theme
+**Option B: Astra Theme**
 ```bash
 1. Go to: Appearance → Themes → Add New
 2. Search: "Astra"
@@ -390,7 +411,8 @@
 ## Final Checklist
 
 ### Pre-Launch:
-- [ ] Theme installed and customized
+- [x] Theme installed automatically (Kadence FREE)
+- [ ] Theme customized via Appearance → Customize
 - [ ] Logo and branding complete
 - [ ] LearnDash Pro activated with license
 - [ ] Payment gateways configured and tested

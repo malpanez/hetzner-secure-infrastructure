@@ -1,28 +1,10 @@
 ---
 # AppArmor Role - Configuration Tasks
 
-- name: AppArmor | Configure | Ensure GRUB drop-in directory exists
-  ansible.builtin.file:
-    path: /etc/default/grub.d
-    state: directory
-    owner: root
-    group: root
-    mode: '0755'
-  when: apparmor_manage_grub | default(true)
-  tags: [apparmor, grub, config, molecule-notest]
-
-- name: AppArmor | Configure | Deploy GRUB drop-in for AppArmor parameters
-  ansible.builtin.template:
-    src: grub-apparmor.cfg.j2
-    dest: /etc/default/grub.d/99-apparmor.cfg
-    owner: root
-    group: root
-    mode: '0644'
-  when: apparmor_manage_grub | default(true)
-  notify:
-    - update grub
-    - reboot required
-  tags: [apparmor, grub, config, molecule-notest]
+# NOTE: AppArmor GRUB configuration removed - NOT needed on Debian 13
+# AppArmor is enabled by default since Debian 10
+# Source: https://wiki.debian.org/AppArmor/HowToUse
+# No kernel parameters required
 
 - name: AppArmor | Configure | Create custom profiles directory
   ansible.builtin.file:

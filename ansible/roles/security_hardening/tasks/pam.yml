@@ -1,4 +1,18 @@
 ---
+- name: Security Hardening | PAM | Ensure wheel group exists
+  ansible.builtin.group:
+    name: wheel
+    state: present
+    system: yes
+  tags: [security, pam]
+
+- name: Security Hardening | PAM | Add admin user to wheel group
+  ansible.builtin.user:
+    name: "{{ admin_username }}"
+    groups: wheel
+    append: yes
+  tags: [security, pam]
+
 - name: Security Hardening | PAM | Deploy su wheel restriction file
   ansible.builtin.template:
     src: pam-su-wheel.j2
@@ -8,11 +22,9 @@
     mode: '0644'
   tags: [security, pam]
 
-- name: Security Hardening | PAM | Add wheel restriction to su
-  community.general.pamd:
-    name: su
-    type: auth
-    control: substack
-    module_path: su-wheel
-    state: updated
+- name: Security Hardening | PAM | Include su-wheel in su PAM config
+  ansible.builtin.lineinfile:
+    path: /etc/pam.d/su
+    line: '@include su-wheel'
+    insertbefore: BOF
   tags: [security, pam]

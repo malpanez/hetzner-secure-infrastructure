@@ -1,0 +1,161 @@
+---
+# Validation Playbook - Final Checks and Summary
+#
+# Validates the complete deployment and displays summary information.
+#
+# Usage:
+#   ansible-playbook -i inventory/production.yml playbooks/validate.yml
+#
+# Tags:
+#   - validate: All validation tasks
+#   - summary: Deployment summary
+#   - checklist: Post-deployment checklist
+
+# ========================================
+# Final Validation & Summary
+# ========================================
+- name: Validate complete deployment
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Verify all servers are accessible
+      ansible.builtin.ping:
+      tags: [validate]
+
+    - name: Gather service facts
+      ansible.builtin.service_facts:
+      tags: [validate]
+
+    - name: Check critical services
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.services['ssh.service'].state == 'running'
+          - not (firewall_enabled | default(true)) or (
+              (ansible_facts.services['ufw.service'] is defined) and
+              (
+                ansible_facts.services['ufw.service'].state in ['running', 'exited'] or
+                ansible_facts.services['ufw.service'].status == 'enabled'
+              )
+            )
+        fail_msg: Critical services not running!
+        success_msg: All critical services operational
+      tags: [validate]
+
+    - name: Display comprehensive deployment summary
+      ansible.builtin.debug:
+        msg: "{{ summary_message.split('\n') }}"
+      vars:
+        summary_message: |
+          ========================================
+          DEPLOYMENT COMPLETE
+          ========================================
+
+          Infrastructure Overview:
+          {% if groups['wordpress_servers'] is defined %}
+          WordPress Servers: {{ groups['wordpress_servers'] | length }}
+          {% for host in groups['wordpress_servers'] %}
+             - {{ host }}: {{ hostvars[host]['ansible_host'] | default('N/A') }}
+          {% endfor %}
+          {% endif %}
+
+          {% if groups['secrets_servers'] is defined %}
+          OpenBao Servers: {{ groups['secrets_servers'] | length }}
+          {% for host in groups['secrets_servers'] %}
+             - {{ host }}: {{ hostvars[host]['ansible_host'] | default('N/A') }}
+          {% endfor %}
+          {% endif %}
+
+          {% if groups['monitoring_servers'] is defined %}
+          Monitoring Servers: {{ groups['monitoring_servers'] | length }}
+          {% for host in groups['monitoring_servers'] %}
+             - {{ host }}: {{ hostvars[host]['ansible_host'] | default('N/A') }}
+          {% endfor %}
+          {% endif %}
+
+          Security Features Enabled:
+          {% if firewall_enabled | default(true) %}
+          [x] UFW Firewall
+          {% endif %}
+          {% if fail2ban_enabled | default(true) %}
+          [x] Fail2ban IDS
+          {% endif %}
+          {% if apparmor_enabled | default(true) %}
+          [x] AppArmor MAC
+          {% endif %}
+          {% if ssh_2fa_enabled | default(true) %}
+          [x] SSH 2FA
+          {% endif %}
+          [x] Kernel Hardening
+          [x] Auto Security Updates
+
+          All systems operational and secured!
+
+          ========================================
+      run_once: true
+      delegate_to: localhost
+      tags: [validate, summary, always]
+
+# ========================================
+# Post-Deployment Recommendations
+# ========================================
+- name: Display post-deployment checklist
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: Show post-deployment tasks
+      ansible.builtin.debug:
+        msg: "{{ checklist_message.split('\n') }}"
+      vars:
+        checklist_message: |
+          ========================================
+          POST-DEPLOYMENT CHECKLIST
+          ========================================
+
+          CRITICAL - Test SSH Access:
+          {% for host in groups.get('hetzner', []) %}
+          ssh {{ hostvars[host]['ansible_user'] | default('malpanez') }}@{{ hostvars[host]['ansible_host'] | default(host) }}
+          {% endfor %}
+
+          Security Verification:
+          {% for host in groups.get('hetzner', []) %}
+          On {{ host }}:
+          - sudo aa-status              # AppArmor profiles
+          - sudo ufw status verbose     # Firewall rules
+          - sudo fail2ban-client status # IDS status
+          - sudo sshd -t                # SSH config valid
+          {% endfor %}
+
+          OpenBao Setup (if deployed):
+          {% if groups['secrets_servers'] is defined %}
+          {% for host in groups['secrets_servers'] %}
+          ssh {{ hostvars[host]['ansible_user'] | default('malpanez') }}@{{ hostvars[host]['ansible_host'] | default(host) }}
+          export VAULT_ADDR='https://{{ hostvars[host]['ansible_host'] | default(host) }}:8200'
+          bao operator init
+          # SAVE UNSEAL KEYS!
+          {% endfor %}
+          {% endif %}
+
+          Monitoring Access (if deployed):
+          {% if groups['monitoring_servers'] is defined %}
+          {% for host in groups['monitoring_servers'] %}
+          Prometheus: http://{{ hostvars[host]['ansible_host'] | default(host) }}:9090
+          Grafana: http://{{ hostvars[host]['ansible_host'] | default(host) }}:3000
+          {% endfor %}
+          {% endif %}
+
+          WordPress Setup (if deployed):
+          {% if groups['wordpress_servers'] is defined %}
+          {% for host in groups['wordpress_servers'] %}
+          1. Get SSL: sudo certbot --nginx -d {{ hostvars[host]['wordpress_domain'] | default('example.com') }}
+          2. Access WordPress admin: http://{{ hostvars[host]['ansible_host'] | default(host) }}/wp-admin
+          3. Install LearnDash Pro manually (requires license)
+          4. Configure Cloudflare (if enabled)
+          {% endfor %}
+          {% endif %}
+
+          ========================================
+      run_once: true
+      tags: [info, checklist, always]

@@ -1,0 +1,185 @@
+---
+# Common Configuration Playbook - Security Hardening for All Servers
+#
+# Applies base configuration and security hardening to all Hetzner servers.
+#
+# Usage:
+#   ansible-playbook -i inventory/production.yml playbooks/common.yml
+#
+# Tags:
+#   - common: Base system configuration
+#   - security: All security-related tasks
+#   - hardening: Kernel and system hardening
+#   - ssh, 2fa: SSH configuration and 2FA
+#   - firewall: UFW firewall
+#   - fail2ban: Intrusion detection
+#   - apparmor: Mandatory Access Control
+
+- name: Apply common security hardening to all servers
+  hosts: hetzner
+  become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Display deployment information
+      ansible.builtin.debug:
+        msg:
+          - "======================================================================"
+          - "              DEPLOYMENT - STARTING"
+          - "======================================================================"
+          - ""
+          - "Target Host"
+          - "  Hostname:     {{ inventory_hostname }}"
+          - "  IP Address:   {{ ansible_default_ipv4.address | default('N/A') }}"
+          - "  Groups:       {{ group_names | join(', ') }}"
+          - ""
+          - "System Information"
+          - "  OS:           {{ ansible_distribution }} {{ ansible_distribution_version }}"
+          - "  Kernel:       {{ ansible_kernel }}"
+          - "  Architecture: {{ ansible_architecture }}"
+          - "  CPUs:         {{ ansible_processor_vcpus }}"
+          - ""
+          - "Configuration"
+          - "  User:         {{ ansible_user }}"
+          - "  Python:       {{ ansible_python_version }}"
+          - "  SSH Port:     {{ ansible_port | default(22) }}"
+          - ""
+          - "======================================================================"
+      tags: [always]
+
+    - name: Update apt cache (Debian/Ubuntu)
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+      when: ansible_os_family == 'Debian'
+      tags: [always]
+
+    - name: Check OS compatibility
+      ansible.builtin.assert:
+        that:
+          - ansible_distribution in ['Debian', 'Ubuntu']
+          - ansible_distribution_major_version | int >= 12
+        fail_msg: This playbook requires Debian 12+ or Ubuntu 22.04+
+        success_msg: OS compatibility check passed
+      tags: [always]
+
+  roles:
+    - role: common
+      tags: [common, base]
+
+    - role: security_hardening
+      tags: [security, hardening]
+
+    # IMPORTANT: SSH 2FA must run BEFORE firewall to ensure SSH is configured
+    # before UFW locks down the system
+    - role: ssh_2fa
+      tags: [security, ssh, 2fa]
+      when: ssh_2fa_enabled | default(true) | bool
+
+    # Firewall runs AFTER SSH is configured to avoid lockout
+    - role: firewall
+      tags: [security, firewall]
+      when: firewall_enabled | default(true) | bool
+
+    - role: fail2ban
+      tags: [security, fail2ban]
+      when: fail2ban_enabled | default(true) | bool
+
+    - role: apparmor
+      tags: [security, apparmor]
+      when:
+        - apparmor_enabled | default(true) | bool
+        - ansible_distribution in ['Debian', 'Ubuntu']
+
+  post_tasks:
+    - name: Flush handlers
+      ansible.builtin.meta: flush_handlers
+      tags: [always]
+
+# ========================================
+# Reboot if Required (Kernel Parameters)
+# ========================================
+- name: Reboot servers if kernel parameters changed
+  hosts: hetzner
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Check if reboot is required
+      ansible.builtin.stat:
+        path: /var/run/reboot-required
+      register: reboot_required_file
+      tags: [reboot, always]
+
+    - name: Display reboot status
+      ansible.builtin.debug:
+        msg: "Reboot {{ 'IS' if reboot_required_file.stat.exists else 'is NOT' }} required for this server"
+      tags: [reboot, always]
+
+    - name: Reboot server if required
+      ansible.builtin.reboot:
+        msg: "Rebooting to apply kernel parameters (AppArmor, etc.)"
+        connect_timeout: 10
+        reboot_timeout: 600
+        pre_reboot_delay: 5
+        post_reboot_delay: 30
+        test_command: "systemctl is-system-running || true"
+      when: reboot_required_file.stat.exists
+      tags: [reboot]
+
+    - name: Wait for SSH to be fully available
+      ansible.builtin.wait_for_connection:
+        delay: 10
+        timeout: 300
+      when: reboot_required_file.stat.exists
+      tags: [reboot]
+
+    - name: Remove reboot required flag
+      ansible.builtin.file:
+        path: /var/run/reboot-required
+        state: absent
+      when: reboot_required_file.stat.exists
+      tags: [reboot]
+
+    - name: Verify UFW is running and SSH is allowed
+      ansible.builtin.shell: |
+        set -o pipefail
+        ufw status | grep -q "Status: active" && \
+        ufw status | grep -q "22/tcp" && \
+        echo "UFW OK"
+      args:
+        executable: /bin/bash
+      register: ufw_check
+      changed_when: false
+      failed_when: false
+      when: reboot_required_file.stat.exists
+      tags: [reboot, firewall]
+
+    - name: Display UFW status after reboot
+      ansible.builtin.debug:
+        msg: "UFW Status: {{ ufw_check.stdout | default('Not checked') }}"
+      when: reboot_required_file.stat.exists
+      tags: [reboot, firewall]
+
+    - name: Gather facts after reboot
+      ansible.builtin.setup:
+      when: reboot_required_file.stat.exists
+      tags: [reboot]
+
+# ========================================
+# Post-Reboot Security Services
+# ========================================
+- name: Start security services after reboot
+  hosts: hetzner
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Ensure auditd is running
+      ansible.builtin.systemd:
+        name: auditd
+        enabled: true
+        state: started
+      when: security_hardening_auditd_enabled | default(false)
+      failed_when: false
+      tags: [security, auditd]

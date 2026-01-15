@@ -116,9 +116,9 @@ ENCRYPT_METHOD SHA512
 # PASS_MIN_DAYS	Minimum number of days allowed between password changes.
 # PASS_WARN_AGE	Number of days warning given before a password expires.
 #
-PASS_MAX_DAYS	{{ security_hardening_pass_max_days | default(90) }}
+PASS_MAX_DAYS	{{ security_hardening_pass_max_days | default(99999) }}
 PASS_MIN_DAYS	{{ security_hardening_pass_min_days | default(1) }}
-PASS_WARN_AGE	{{ security_hardening_pass_warn_age | default(7) }}
+PASS_WARN_AGE	{{ security_hardening_pass_warn_age | default(14) }}
 
 #
 # Min/max values for automatic uid selection in useradd
@@ -222,7 +222,7 @@ FORCE_SHADOW	yes
 #
 # Security: More restrictive than default 022, prevents group/world read
 # of user home directories
-UMASK		{{ security_hardening_umask | default('027') }}
+UMASK		{{ security_hardening_umask | default('022') }}
 
 #
 # The permission mask (in octal) for group directories created by useradd.
@@ -253,9 +253,16 @@ UMASK		{{ security_hardening_umask | default('027') }}
 # SHA_CRYPT_MAX_ROUNDS 5000
 
 #
-# Should BSD-style "talking" and password changing be allowed?
+# ========================================
+# PREVENT_NO_AUTH (NO EFFECT IN DEBIAN 13)
+# ========================================
+# NOTE: This parameter is IGNORED when PAM is enabled (Debian default)
+# The code enforcing this is only in the #ifndef PAM case
+# See: Debian Bug #1041547
 #
-PREVENT_NO_AUTH	yes
+# Kept as 'no' for documentation, but has NO ACTUAL EFFECT
+# Root console access is controlled by PAM configuration, not this setting
+PREVENT_NO_AUTH	no
 
 #
 # Configuration for console access
@@ -336,5 +343,5 @@ TTYPERM		0600
 #
 # Note: SHA512 must also be supported by the system C library (glibc)
 # and by PAM modules (pam_unix).
-SHA_CRYPT_MIN_ROUNDS 5000
-SHA_CRYPT_MAX_ROUNDS 5000
+SHA_CRYPT_MIN_ROUNDS {{ security_hardening_sha_rounds | default(10000) }}
+SHA_CRYPT_MAX_ROUNDS {{ security_hardening_sha_rounds | default(10000) }}

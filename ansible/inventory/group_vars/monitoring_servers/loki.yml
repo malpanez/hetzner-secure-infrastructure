@@ -65,6 +65,8 @@ loki_limits_config:
 loki_compactor:
   working_directory: "/var/lib/loki/compactor"
   retention_enabled: true
+  delete_request_store: filesystem
+  delete_request_store_key_prefix: "delete-requests/"
   retention_delete_delay: 2h
   retention_delete_worker_count: 150
 

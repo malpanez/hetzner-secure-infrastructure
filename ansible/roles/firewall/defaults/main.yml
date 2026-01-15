@@ -31,7 +31,7 @@ firewall_default_outgoing_policy: allow
 
 # Management IP for SSH access restriction
 # This should match the IP used in cloud-init and Terraform
-firewall_management_ips: "{{ ssh_allowed_ips | default(['0.0.0.0/0']) }}"
+firewall_management_ips: "{{ ssh_allowed_ips }}"
 
 firewall_allowed_ports:
   - rule: allow

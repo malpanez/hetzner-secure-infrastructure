@@ -8,6 +8,20 @@
     mode: "0755"
   tags: [security, modules]
 
+- name: Security Hardening | Modules | Check if system is UEFI
+  ansible.builtin.stat:
+    path: /sys/firmware/efi
+  register: _efi_check
+  tags: [security, modules, filesystems]
+
+- name: Security Hardening | Modules | Prevent vfat blocking on UEFI
+  ansible.builtin.assert:
+    that:
+      - "'vfat' not in security_hardening_disabled_filesystems"
+    fail_msg: "UEFI detected: remove 'vfat' from security_hardening_disabled_filesystems to avoid /boot/efi breakage."
+  when: _efi_check.stat.exists
+  tags: [security, modules, filesystems]
+
 - name: Security Hardening | Modules | Disable insecure filesystems
   ansible.builtin.template:
     src: disable-filesystems.conf.j2

@@ -16,20 +16,18 @@ security_hardening_aide_enabled: false
 security_hardening_aide_async: true
 
 # Auditd Configuration
-# Requires initramfs update before reboot to embed audit rules
-# Handler chain: update grub -> update initramfs -> reboot required
-security_hardening_auditd_enabled: true
-security_hardening_manage_grub: true
+# NOTE: Auditd does NOT require kernel parameters on Debian 13
+# Source: https://www.server-world.info/en/note?os=Debian_13&p=audit&f=1
+# Just install auditd package, configure rules, and start service - NO GRUB changes needed
+# audit=1 kernel param is optional; on kernels >= 6.1.0-39 it is safe to enable
+# if you need early-boot auditing for compliance.
+security_hardening_auditd_enabled: false
 
-# Kernel audit parameters (added to GRUB_CMDLINE_LINUX_DEFAULT)
-# audit=1: Enable auditing from boot
-# audit_backlog_limit: Buffer size for audit messages before auditd starts
-#   Default is 64 - too small, causes boot hangs
-#   Recommended: 8192 or higher to prevent buffer overflow during boot
-security_hardening_audit_kernel_params: "audit=1 audit_backlog_limit=8192"
+# NOTE: GRUB management removed - audit=1 is optional and should be enabled only when required
+# Source: https://www.server-world.info/en/note?os=Debian_13&p=audit&f=1
 
 # USB storage disable
-security_hardening_disable_usb_storage: false
+security_hardening_disable_usb_storage: true
 
 # ========================================
 # Auditd Configuration
@@ -57,12 +55,25 @@ security_hardening_admin_username: malpanez
 # ========================================
 
 # Password aging controls
-security_hardening_pass_max_days: 90
+# NOTE: For single-admin systems, use 99999 to avoid lockout
+# For multi-admin environments, 90 days may be acceptable
+security_hardening_pass_max_days: 99999
 security_hardening_pass_min_days: 1
-security_hardening_pass_warn_age: 7
+security_hardening_pass_warn_age: 14
+
+# Password hashing rounds (SHA512)
+security_hardening_sha_rounds: 10000
 
 # User/group file permissions mask
-security_hardening_umask: '027'
+# CRITICAL FOR WORDPRESS: Use 022 (Debian default)
+# - 022: Web-compatible (rw-r--r-- for files)
+# - 027: More secure but BREAKS WordPress (www-data can't read files)
+# In Debian 13, pam_umask RESPECTS this value (unlike Debian 12)
+security_hardening_umask: '022'
+
+# Password quality defaults
+security_hardening_minclass: 3
+security_hardening_dictcheck: 1
 
 # ========================================
 # Session Timeout Configuration
@@ -120,7 +131,7 @@ security_hardening_restrict_compilers: true
 security_hardening_harden_tmp: true
 
 # /tmp tmpfs size limit (prevents DoS)
-security_hardening_tmp_size: '2G'
+security_hardening_tmp_size: '4G'
 
 # ========================================
 # Sysctl Hardening Configuration
@@ -150,8 +161,9 @@ security_hardening_sysctl_config:
   net.ipv6.conf.default.accept_redirects: 0
   net.ipv6.conf.all.accept_source_route: 0
   net.ipv6.conf.default.accept_source_route: 0
-  net.ipv6.conf.all.accept_ra: 0
-  net.ipv6.conf.default.accept_ra: 0
+  # Hetzner Cloud uses SLAAC with RA (fe80::1 gateway). Keep RA enabled unless IPv6 is static.
+  net.ipv6.conf.all.accept_ra: 1
+  net.ipv6.conf.default.accept_ra: 1
 
   # Kernel hardening
   kernel.dmesg_restrict: 1
@@ -181,7 +193,7 @@ security_hardening_disabled_filesystems:
   - hfsplus
   - squashfs
   - udf
-  - vfat
+  # vfat intentionally omitted: required for UEFI /boot/efi
 
 # ========================================
 # Network Protocol Blocking

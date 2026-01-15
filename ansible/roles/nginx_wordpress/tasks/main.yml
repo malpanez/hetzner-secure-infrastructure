@@ -27,6 +27,13 @@
   when: nginx_wordpress_enabled
   tags: [nginx-wordpress, service]
 
+- name: Nginx WordPress | Main | Include WordPress themes installation
+  ansible.builtin.include_tasks: wordpress-themes.yml
+  when:
+    - nginx_wordpress_enabled
+    - nginx_wordpress_install_wordpress
+  tags: [nginx-wordpress, wordpress, themes]
+
 - name: Nginx WordPress | Main | Include WordPress plugins installation
   ansible.builtin.include_tasks: wordpress-plugins.yml
   when:

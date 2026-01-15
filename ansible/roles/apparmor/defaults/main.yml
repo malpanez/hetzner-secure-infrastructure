@@ -8,10 +8,6 @@
 # Enable/disable AppArmor deployment
 apparmor_enabled: true
 
-# Manage GRUB kernel cmdline to enable AppArmor
-# Requires initramfs update before reboot to embed AppArmor profiles
-apparmor_manage_grub: true
-
 # Enable enforce mode (true) or complain mode (false)
 # IMPORTANT: Set to false (complain mode) to avoid blocking SSH
 # Complain mode logs violations but doesn't block them
@@ -32,8 +28,8 @@ apparmor_profiles:
   - usr.sbin.sshd
   - usr.bin.fail2ban-server
 
-# GRUB command line configuration
-apparmor_grub_cmdline: "quiet apparmor=1 security=apparmor"
+# NOTE: GRUB management removed - AppArmor enabled by default on Debian 10+
+# Source: https://wiki.debian.org/AppArmor/HowToUse
 
 # ========================================
 # Directories

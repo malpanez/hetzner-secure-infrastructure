@@ -3,3 +3,27 @@
   ansible.builtin.systemd:
     name: systemd-timesyncd
     state: restarted
+
+# ========================================
+# GRUB Handlers
+# ========================================
+# These handlers are shared across multiple roles (apparmor, security_hardening)
+# Centralized here to avoid duplication and handler shadowing
+#
+# NOTE: Debian 13 does NOT require update-initramfs for AppArmor/audit basic functionality
+# initramfs update is only needed for advanced early-boot confinement of systemd/init
+
+- name: update grub
+  ansible.builtin.command: update-grub
+  changed_when: true
+  notify: reboot required
+
+- name: reboot required
+  ansible.builtin.file:
+    path: /var/run/reboot-required
+    state: touch
+    mode: '0644'
+    owner: root
+    group: root
+    modification_time: preserve
+    access_time: preserve

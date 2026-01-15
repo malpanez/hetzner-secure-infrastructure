@@ -15,6 +15,18 @@
   ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
   tags: [openbao]
 
+- name: OpenBao | Main | Require transit token when auto-unseal is enabled
+  ansible.builtin.assert:
+    that:
+      - openbao_transit_token is defined
+      - openbao_transit_token | length > 0
+    fail_msg: >-
+      openbao_transit_enabled is true but openbao_transit_token is empty.
+      Run playbooks/openbao-transit-bootstrap.yml (-e openbao_transit_bootstrap_ack=true),
+      then store the token in Ansible Vault (vault_openbao_transit_token).
+  when: openbao_transit_enabled | default(false) | bool
+  tags: [openbao, transit]
+
 - name: OpenBao | Main | Include installation tasks
   ansible.builtin.include_tasks: install.yml
   tags: [openbao, install]

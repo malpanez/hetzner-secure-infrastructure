@@ -90,6 +90,18 @@ common_ntp_servers:
   - 3.debian.pool.ntp.org
 
 # ========================================
+# GRUB Console Configuration
+# ========================================
+
+# GRUB timeout in seconds (0 = no menu, -1 = wait forever)
+# Set to 5 for production, higher for debugging
+grub_console_timeout: 5
+
+# Enable verbose boot output for debugging
+# Set to true to see detailed boot messages (removes 'quiet', increases loglevel)
+grub_console_debug: true
+
+# ========================================
 # Logging Configuration
 # ========================================
 

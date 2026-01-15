@@ -1,0 +1,150 @@
+---
+# =============================================================================
+# Filesystem Hardening for Debian 13 (Trixie)
+# =============================================================================
+#
+# ESTRATEGIA DE SEGURIDAD:
+#
+# 1. Usamos ansible.posix.mount con state=mounted para /tmp y /dev/shm
+#    - Este módulo gestiona /etc/fstab de forma atómica (sin duplicados)
+#    - Monta inmediatamente sin necesidad de handlers
+#    - Es idempotente: no hace cambios si la entrada ya existe con los mismos opts
+#
+# 2. NO borramos /etc/systemd/system/tmp.mount porque:
+#    - En Debian 13 vanilla, tmp.mount viene de /usr/lib/systemd/system/
+#    - Borrar archivos en /etc/systemd/system/ no afecta al unit original
+#    - Si existía un override previo, el unit base sigue activo
+#    - fstab tiene PRIORIDAD sobre systemd mount units (systemd-fstab-generator)
+#
+# 3. POR QUÉ ESTO NO ROMPE EL BOOT:
+#    - /etc/fstab es leído por systemd-fstab-generator al inicio
+#    - El generator crea units dinámicos que tienen prioridad sobre tmp.mount
+#    - Si fstab tiene una entrada válida para /tmp, systemd la usa
+#    - mode=1777 asegura que el sticky bit esté correcto (crítico para /tmp)
+#
+# 4. VERIFICACIÓN PREVIA (Pre-flight):
+#    - Detectamos UEFI para advertir si vfat está bloqueado (rompe /boot/efi)
+#    - Verificamos que no haya conflictos con mounts existentes
+#
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Pre-flight: Detectar entorno UEFI y advertir sobre vfat
+# -----------------------------------------------------------------------------
+- name: Security Hardening | Filesystem | Pre-flight | Check if system is UEFI
+  ansible.builtin.stat:
+    path: /sys/firmware/efi
+  register: _efi_check
+  tags: [security, filesystem]
+
+- name: Security Hardening | Filesystem | Pre-flight | Check if vfat is blocked
+  ansible.builtin.shell: |
+    set -o pipefail
+    grep -r 'install vfat /bin/false\|blacklist vfat' /etc/modprobe.d/ 2>/dev/null || true
+  args:
+    executable: /bin/bash
+  register: _vfat_blocked
+  changed_when: false
+  tags: [security, filesystem]
+
+- name: Security Hardening | Filesystem | Pre-flight | Warn about UEFI + vfat conflict
+  ansible.builtin.debug:
+    msg: |
+      ⚠️  ADVERTENCIA: Sistema UEFI detectado y vfat está bloqueado.
+      Esto puede impedir el acceso a /boot/efi después de un reboot.
+      Revisa security_hardening_disabled_filesystems y elimina 'vfat' si es necesario.
+  when:
+    - _efi_check.stat.exists
+    - _vfat_blocked.stdout | length > 0
+  tags: [security, filesystem]
+
+# -----------------------------------------------------------------------------
+# Limpieza de entradas duplicadas/legacy en fstab
+# -----------------------------------------------------------------------------
+# ansible.posix.mount con state=mounted gestiona fstab automáticamente,
+# pero debemos limpiar entradas legacy que usen 'none' como device o
+# tengan formato diferente para evitar duplicados.
+
+- name: Security Hardening | Filesystem | Clean legacy /tmp entries from fstab
+  ansible.builtin.lineinfile:
+    path: /etc/fstab
+    regexp: '^none\s+/tmp\s+tmpfs'
+    state: absent
+    backup: true
+  when: security_hardening_harden_tmp | default(true)
+  tags: [security, filesystem]
+
+- name: Security Hardening | Filesystem | Clean legacy /dev/shm entries from fstab
+  ansible.builtin.lineinfile:
+    path: /etc/fstab
+    regexp: '^none\s+/dev/shm\s+tmpfs'
+    state: absent
+    backup: true
+  when: security_hardening_harden_tmp | default(true)
+  tags: [security, filesystem]
+
+# -----------------------------------------------------------------------------
+# Hardening de /tmp con ansible.posix.mount
+# -----------------------------------------------------------------------------
+# Opciones de seguridad:
+#   - noexec: Previene ejecución de binarios (mitigación de malware)
+#   - nodev: No permite device nodes (previene escalación de privilegios)
+#   - nosuid: Ignora SUID/SGID bits (previene escalación de privilegios)
+#   - mode=1777: Sticky bit obligatorio para /tmp (permite a usuarios crear
+#                archivos pero solo borrar los propios)
+
+- name: Security Hardening | Filesystem | Harden /tmp mount
+  ansible.posix.mount:
+    path: /tmp
+    src: tmpfs
+    fstype: tmpfs
+    opts: "defaults,noexec,nodev,nosuid,size={{ security_hardening_tmp_size | default('4G') }},mode=1777"
+    state: mounted
+    backup: true
+  when: security_hardening_harden_tmp | default(true)
+  tags: [security, filesystem]
+
+# -----------------------------------------------------------------------------
+# Hardening de /dev/shm con ansible.posix.mount
+# -----------------------------------------------------------------------------
+# /dev/shm es shared memory de POSIX, usado por aplicaciones para IPC.
+# Las mismas opciones de seguridad aplican.
+
+- name: Security Hardening | Filesystem | Harden /dev/shm mount
+  ansible.posix.mount:
+    path: /dev/shm
+    src: tmpfs
+    fstype: tmpfs
+    opts: "defaults,noexec,nodev,nosuid,mode=1777"
+    state: mounted
+    backup: true
+  when: security_hardening_harden_tmp | default(true)
+  tags: [security, filesystem]
+
+# -----------------------------------------------------------------------------
+# Verificación post-mount
+# -----------------------------------------------------------------------------
+- name: Security Hardening | Filesystem | Verify /tmp mount options
+  ansible.builtin.command: findmnt -n -o OPTIONS /tmp
+  register: _tmp_mount_verify
+  changed_when: false
+  failed_when: >
+    'noexec' not in _tmp_mount_verify.stdout or
+    'nodev' not in _tmp_mount_verify.stdout or
+    'nosuid' not in _tmp_mount_verify.stdout
+  when: security_hardening_harden_tmp | default(true)
+  tags: [security, filesystem]
+
+- name: Security Hardening | Filesystem | Verify /dev/shm mount options
+  ansible.builtin.command: findmnt -n -o OPTIONS /dev/shm
+  register: _shm_mount_verify
+  changed_when: false
+  failed_when: >
+    'noexec' not in _shm_mount_verify.stdout or
+    'nodev' not in _shm_mount_verify.stdout or
+    'nosuid' not in _shm_mount_verify.stdout
+  when: security_hardening_harden_tmp | default(true)
+  tags: [security, filesystem]
+
+# NOTE: /run/shm es un symlink obsoleto a /dev/shm en sistemas modernos.
+# NO crear un mount separado para él.

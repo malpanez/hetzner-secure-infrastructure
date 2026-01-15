@@ -1,0 +1,164 @@
+---
+# WordPress Playbook - Application Stack Deployment
+#
+# Deploys the WordPress application stack including:
+# - MariaDB database
+# - Valkey (Redis) object cache
+# - Nginx with PHP-FPM
+# - WordPress with plugins and themes
+#
+# Usage:
+#   ansible-playbook -i inventory/production.yml playbooks/wordpress.yml
+#
+# Tags:
+#   - wordpress: All WordPress tasks
+#   - database, mariadb: Database deployment
+#   - cache, redis: Object cache
+#   - nginx, webserver: Web server
+#   - rotation: OpenBao credential rotation
+
+- name: Deploy WordPress application stack
+  hosts: wordpress_servers
+  become: true
+  gather_facts: true
+
+  roles:
+    # Use Galaxy role for MariaDB
+    - role: geerlingguy.mysql
+      tags: [wordpress, database, mariadb]
+      vars:
+        mysql_databases:
+          - name: "{{ wordpress_db_name | default('wordpress') }}"
+            encoding: utf8mb4
+            collation: utf8mb4_unicode_ci
+        mysql_users:
+          - name: "{{ wordpress_db_user | default('wordpress') }}"
+            host: localhost
+            password: "{{ wordpress_db_password }}"
+            priv: "{{ wordpress_db_name | default('wordpress') }}.*:ALL"
+      when: deploy_mariadb | default(true) | bool
+
+    # Custom roles
+    - role: valkey
+      tags: [wordpress, redis, cache, performance]
+      when: deploy_valkey | default(true) | bool
+
+    - role: nginx_wordpress
+      tags: [wordpress, nginx, webserver]
+
+  tasks:
+    - name: Create OpenBao config directory
+      ansible.builtin.file:
+        path: /etc/openbao
+        state: directory
+        owner: root
+        group: root
+        mode: '0750'
+      when: openbao_rotation_enabled | default(false) | bool
+      tags: [wordpress, openbao, rotation]
+
+    - name: Install OpenBao environment file for rotation
+      ansible.builtin.copy:
+        dest: /etc/openbao/wordpress.env
+        owner: root
+        group: root
+        mode: '0640'
+        content: |
+          VAULT_ADDR={{ openbao_api_addr | default('https://' ~ ansible_host ~ ':8200') }}
+          {% if openbao_tls_self_signed | default(true) | bool %}
+          VAULT_SKIP_VERIFY=1
+          {% endif %}
+      when: openbao_rotation_enabled | default(false) | bool
+      tags: [wordpress, openbao, rotation]
+
+    - name: Install OpenBao token for WordPress rotation
+      ansible.builtin.copy:
+        dest: /etc/openbao/wordpress.token
+        owner: root
+        group: root
+        mode: '0400'
+        content: "{{ openbao_wordpress_rotation_token }}"
+      when:
+        - openbao_rotation_enabled | default(false) | bool
+        - openbao_wordpress_rotation_token is defined
+      tags: [wordpress, openbao, rotation]
+
+    - name: Install WordPress credential rotation script
+      ansible.builtin.template:
+        src: templates/openbao-rotate-wordpress.sh.j2
+        dest: /usr/local/bin/openbao-rotate-wordpress.sh
+        owner: root
+        group: root
+        mode: '0750'
+      when: openbao_rotation_enabled | default(false) | bool
+      tags: [wordpress, openbao, rotation]
+
+    - name: Install systemd service for WordPress rotation
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/openbao-rotate-wordpress.service
+        owner: root
+        group: root
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=Rotate WordPress DB credentials via OpenBao
+          After=network-online.target
+
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/local/bin/openbao-rotate-wordpress.sh
+      when: openbao_rotation_enabled | default(false) | bool
+      tags: [wordpress, openbao, rotation]
+
+    - name: Install systemd timer for WordPress rotation
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/openbao-rotate-wordpress.timer
+        owner: root
+        group: root
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=Rotate WordPress DB credentials every 90 days
+
+          [Timer]
+          OnCalendar=daily
+          Persistent=true
+
+          [Install]
+          WantedBy=timers.target
+      when: openbao_rotation_enabled | default(false) | bool
+      tags: [wordpress, openbao, rotation]
+
+    - name: Enable WordPress rotation timer
+      ansible.builtin.systemd:
+        name: openbao-rotate-wordpress.timer
+        enabled: true
+        state: started
+        daemon_reload: true
+      when: openbao_rotation_enabled | default(false) | bool
+      tags: [wordpress, openbao, rotation]
+
+  post_tasks:
+    - name: Display WordPress deployment information
+      ansible.builtin.debug:
+        msg: |-
+          ========================================
+          WordPress Stack Deployed
+          ========================================
+
+          Server: {{ inventory_hostname }}
+          IP: {{ ansible_host }}
+          URL: http://{{ ansible_host }}
+
+          WordPress already installed and configured!
+          Database: {{ wordpress_db_name | default('wordpress') }}
+          Admin User: {{ nginx_wordpress_admin_user | default('admin') }}
+
+          Next steps:
+          1. Access WordPress: http://{{ ansible_host }}/wp-admin
+          2. Configure CloudFlare + SSL later
+          3. Configure security plugins (Wordfence, WP 2FA)
+          4. Install LearnDash Pro manually (requires license)
+
+          ========================================
+      tags: [wordpress, info]

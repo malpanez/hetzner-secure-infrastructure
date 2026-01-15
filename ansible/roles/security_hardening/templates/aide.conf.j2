@@ -1,14 +1,22 @@
 # AIDE Configuration File
 # Managed by Ansible - security_hardening role
 # Advanced Intrusion Detection Environment
+# Optimized for Debian 13 with AppArmor and WordPress
 
 # Database locations (AIDE v0.19+)
 database_in=file:/var/lib/aide/aide.db
 database_out=file:/var/lib/aide/aide.db.new
 database_new=file:/var/lib/aide/aide.db.new
 
-# Report format
+# Report configuration
 report_url=stdout
+report_summarize_changes=yes
+report_grouped=yes
+report_quiet=no
+warn_dead_symlinks=yes
+
+# Gzip databases to save space
+gzip_dbout=yes
 
 # Rule definitions
 # p:  permissions
@@ -19,28 +27,36 @@ report_url=stdout
 # s:  size
 # b:  block count
 # m:  mtime (modification time)
-# a:  atime (access time)
+# a:  atime (access time - usually excluded)
 # c:  ctime (change time)
 # S:  check for growing size
-# acl: access control list
-# selinux: SELinux security context
-# xattrs: extended attributes
+# acl: access control list (if available)
+# xattrs: extended attributes (AppArmor uses this)
 # sha256/sha512: cryptographic checksums
 
-# Frequently Modified Files (only permissions and ownership)
-Norm = p+u+g+i+n+acl+selinux+xattrs
+# Basic rule (permissions and ownership only)
+Norm = p+u+g+i+n+xattrs
 
-# Logs and Databases (check for growing files)
-Log = p+u+g+i+n+acl+selinux+xattrs+growing
+# Logs and growing files (check for unauthorized modifications, allow growth)
+Log = p+u+g+i+n+xattrs+S
 
-# Config Files (full integrity check)
-ConfFiles = p+i+n+u+g+s+b+m+c+md5+sha256+acl+selinux+xattrs
+# Config Files (full integrity check, no atime to avoid noise)
+ConfFiles = p+i+n+u+g+s+b+m+c+sha256+xattrs
 
-# Binaries (full integrity check with checksums)
-Binaries = p+i+n+u+g+s+b+m+c+md5+sha256+sha512+acl+selinux+xattrs
+# Binaries (full integrity check with strong checksums)
+Binaries = p+i+n+u+g+s+b+m+c+sha256+sha512+xattrs
 
-# Critical system directories
+# Read-only data files
+DataFiles = p+i+n+u+g+s+b+m+c+sha256+xattrs
+
+# ==================================================================
+# SYSTEM DIRECTORIES
+# ==================================================================
+
+# Critical boot files
 /boot           Binaries
+
+# System libraries
 /lib            Binaries
 /lib64          Binaries
 /usr/lib        Binaries
@@ -54,32 +70,195 @@ Binaries = p+i+n+u+g+s+b+m+c+md5+sha256+sha512+acl+selinux+xattrs
 /usr/local/bin  Binaries
 /usr/local/sbin Binaries
 
-# Configuration files
+# ==================================================================
+# CONFIGURATION FILES
+# ==================================================================
+
+# System config
 /etc            ConfFiles
+
+# Exclude frequently changed files
 !/etc/mtab$
 !/etc/.*~
+!/etc/adjtime$
 !/etc/aide/aide.db
 !/etc/aide/aide.db.new
+!/etc/aide/aide.db.sig
+!/etc/.updated$
+!/etc/ca-certificates.conf.dpkg-old$
 
-# Variable data (monitor for changes but allow growth)
-/var/log        Log
-/var/spool      Norm
+# Exclude backup files
+!/etc/.*\.swp$
+!/etc/.*\.bak$
+!/etc/.*\.save$
+!/etc/.*\.old$
 
-# Exclude certain directories
+# Exclude package manager cache
+!/etc/apt/sources.list.d/.*\.save$
+
+# ==================================================================
+# SECURITY-CRITICAL CONFIGURATIONS
+# ==================================================================
+
+# SSH - critical security component
+/etc/ssh                    ConfFiles
+!/etc/ssh/ssh_host_.*_key$  # Exclude private keys from logs
+!/etc/ssh/moduli.old$
+
+# PAM and authentication
+/etc/pam.d                  ConfFiles
+/etc/security               ConfFiles
+
+# Sudoers
+/etc/sudoers                ConfFiles
+/etc/sudoers.d              ConfFiles
+
+# AppArmor profiles (Debian-specific)
+/etc/apparmor               ConfFiles
+/etc/apparmor.d             ConfFiles
+
+# Fail2ban
+/etc/fail2ban               ConfFiles
+
+# Firewall
+/etc/ufw                    ConfFiles
+/etc/iptables               ConfFiles
+
+# User management
+/etc/passwd                 ConfFiles
+/etc/group                  ConfFiles
+/etc/shadow                 ConfFiles
+/etc/gshadow                ConfFiles
+
+# ==================================================================
+# WEB SERVER & WORDPRESS
+# ==================================================================
+
+# Nginx configuration
+/etc/nginx                  ConfFiles
+!/etc/nginx/.*\.dpkg-.*$
+!/etc/nginx/.*~$
+
+# PHP configuration (all versions)
+/etc/php                    ConfFiles
+!/etc/php/.*\.dpkg-.*$
+
+# WordPress core files (read-only production files)
+{% set wp_root = nginx_wordpress_web_root | default('/var/www/wordpress') %}
+{{ wp_root }}/index.php              DataFiles
+{{ wp_root }}/wp-config.php          ConfFiles
+{{ wp_root }}/wp-settings.php        DataFiles
+{{ wp_root }}/.htaccess              ConfFiles
+{{ wp_root }}/wp-admin               DataFiles
+{{ wp_root }}/wp-includes            DataFiles
+
+# WordPress plugins and themes (monitor for changes)
+{{ wp_root }}/wp-content/plugins     DataFiles
+{{ wp_root }}/wp-content/themes      DataFiles
+{{ wp_root }}/wp-content/mu-plugins  DataFiles
+
+# Exclude WordPress cache and uploads (too dynamic)
+!{{ wp_root }}/wp-content/cache
+!{{ wp_root }}/wp-content/uploads
+!{{ wp_root }}/wp-content/upgrade
+!{{ wp_root }}/wp-content/backup.*
+!{{ wp_root }}/wp-content/.*\.log$
+
+# Database configuration
+/etc/mysql                  ConfFiles
+!/etc/mysql/.*\.dpkg-.*$
+
+# SSL/TLS certificates
+/etc/letsencrypt            ConfFiles
+/etc/ssl/certs              DataFiles
+/etc/ssl/private            ConfFiles
+
+# ==================================================================
+# LOGS AND VARIABLE DATA
+# ==================================================================
+
+# System logs (check for tampering, allow growth)
+/var/log                    Log
+!/var/log/aide
+!/var/log/journal
+!/var/log/.*\.[0-9]+(\.gz)?$
+!/var/log/.*\.old$
+
+# Audit logs (if auditd is enabled)
+/var/log/audit              Log
+
+# Mail spool
+/var/spool/mail             Norm
+
+# Cron jobs
+/var/spool/cron             ConfFiles
+
+# ==================================================================
+# USER DIRECTORIES
+# ==================================================================
+
+# Root SSH keys
+/root/.ssh                  ConfFiles
+
+# Admin user SSH keys
+{% if security_hardening_admin_username is defined %}
+/home/{{ security_hardening_admin_username }}/.ssh     ConfFiles
+{% endif %}
+
+# Exclude user caches
+!/root/.cache
+!/root/.local/share
+!/home/*/\.cache
+!/home/*/\.local/share
+!/home/*/\.ansible
+
+# ==================================================================
+# SYSTEM EXCLUSIONS
+# ==================================================================
+
+# Virtual filesystems
 !/proc
 !/sys
 !/dev
 !/run
+
+# Temporary directories
 !/tmp
 !/var/tmp
+
+# Package manager cache
 !/var/cache
+!/var/lib/apt/lists
+!/var/lib/dpkg/info
+
+# Backups
 !/var/backups
-!/root/.ansible
-!/root/.cache
-!/home/*/\.cache
+
+# AIDE own database
 !/var/lib/aide/aide.db
 !/var/lib/aide/aide.db.new
+!/var/lib/aide/aide.db.sig
 
-# WordPress specific exclusions (if applicable)
-!/var/www/html/wp-content/cache
-!/var/www/html/wp-content/uploads
+# Systemd
+!/var/lib/systemd/random-seed
+!/var/lib/systemd/catalog
+
+# ==================================================================
+# DEBIAN-SPECIFIC EXCLUSIONS
+# ==================================================================
+
+# Package manager temporary files
+!/var/lib/dpkg/lock
+!/var/lib/dpkg/lock-frontend
+!/var/cache/apt/archives/lock
+!/var/cache/debconf/.*\.dat-old$
+
+# Network manager
+!/var/lib/NetworkManager
+!/var/lib/dhcp
+
+# Docker (if installed)
+!/var/lib/docker
+
+# Snap (if installed)
+!/var/lib/snapd

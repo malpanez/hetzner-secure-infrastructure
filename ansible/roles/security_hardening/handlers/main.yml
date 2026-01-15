@@ -1,8 +1,11 @@
 ---
 - name: reload sysctl
   ansible.builtin.command: sysctl -p /etc/sysctl.d/99-hardening.conf
+  register: sysctl_result
   changed_when: true
-  failed_when: false  # Don't fail if some kernel parameters don't exist (Docker containers)
+  failed_when: >
+    sysctl_result.rc != 0 and
+    'No such file or directory' not in sysctl_result.stderr
 
 - name: restart auditd
   ansible.builtin.service:
@@ -10,17 +13,10 @@
     state: restarted
   failed_when: false  # Don't fail if auditd restart fails (may happen on some kernels)
 
-- name: update initramfs
-  ansible.builtin.command: update-initramfs -u -k all
-  changed_when: true
-  listen: update grub
+# NOTE: GRUB/initramfs/reboot handlers are centralized in common/handlers/main.yml
+# This role notifies "update grub" which triggers the handler chain there
 
-- name: update grub
-  ansible.builtin.command: update-grub
-  changed_when: true
-  notify: reboot required
-
-- name: reboot required
-  ansible.builtin.set_fact:
-    ansible_reboot_required: true
-    cacheable: true
+# NOTE: Los handlers "remount tmp" y "remount shm" han sido ELIMINADOS.
+# ansible.posix.mount con state=mounted realiza el mount inmediatamente,
+# haciendo innecesarios los handlers de remount.
+# Además, evitamos ignore_errors que ocultaba fallos silenciosamente.

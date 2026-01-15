@@ -1,9 +1,20 @@
 ---
 # Security Hardening Role - Main Tasks (Orchestrator)
+#
+# IMPORTANT: Some tasks are disabled to prevent boot lockout issues.
+# See docs/troubleshooting/ANSIBLE_POST_REBOOT_LOCKOUT.md for details.
+#
+# DISABLED TASKS (can cause boot lockout):
+# - filesystem.yml: fstab modifications can break boot
+# - login.yml: login.defs changes can lock root account
+# - pam.yml: wheel restriction can block su access
+# - permissions.yml: /boot 0700 can break bootloader access
 
 - name: Security Hardening | Main | Load OS-specific variables
   ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
   tags: [security-hardening, always]
+
+# === SAFE TASKS (no boot risk) ===
 
 - name: Security Hardening | Main | Packages
   ansible.builtin.include_tasks: packages.yml
@@ -14,8 +25,9 @@
 - name: Security Hardening | Main | Auto Updates
   ansible.builtin.include_tasks: auto_updates.yml
 
-- name: Security Hardening | Main | Filesystem
-  ansible.builtin.include_tasks: filesystem.yml
+# DISABLED - Can cause boot failures with fstab changes
+# - name: Security Hardening | Main | Filesystem
+#   ansible.builtin.include_tasks: filesystem.yml
 
 - name: Security Hardening | Main | Core Dumps
   ansible.builtin.include_tasks: core_dumps.yml
@@ -26,14 +38,16 @@
 - name: Security Hardening | Main | Modules
   ansible.builtin.include_tasks: modules.yml
 
-- name: Security Hardening | Main | Login
-  ansible.builtin.include_tasks: login.yml
+# DISABLED - login.defs changes can lock root account in Debian 13
+# - name: Security Hardening | Main | Login
+#   ansible.builtin.include_tasks: login.yml
 
 - name: Security Hardening | Main | Cron
   ansible.builtin.include_tasks: cron.yml
 
-- name: Security Hardening | Main | Permissions
-  ansible.builtin.include_tasks: permissions.yml
+# DISABLED - /boot 0700 can prevent bootloader access
+# - name: Security Hardening | Main | Permissions
+#   ansible.builtin.include_tasks: permissions.yml
 
 - name: Security Hardening | Main | Auditd
   ansible.builtin.include_tasks: auditd.yml
@@ -56,8 +70,9 @@
 - name: Security Hardening | Main | Session
   ansible.builtin.include_tasks: session.yml
 
-- name: Security Hardening | Main | PAM
-  ansible.builtin.include_tasks: pam.yml
+# DISABLED - wheel restriction on su can block root console access
+# - name: Security Hardening | Main | PAM
+#   ansible.builtin.include_tasks: pam.yml
 
 - name: Security Hardening | Main | Limits
   ansible.builtin.include_tasks: limits.yml

@@ -5,6 +5,7 @@
 
 # Hetzner Cloud API Token
 # Get from: https://console.hetzner.cloud/ → Select "Staging" project
+# Prefer env var: export TF_VAR_hcloud_token="your-token"
 hcloud_token = "YOUR_STAGING_HCLOUD_TOKEN_HERE"
 
 # SSH Public Key
@@ -54,7 +55,7 @@ location     = "nbg1"   # Nuremberg (CX available, limited stock!)
 # ============================================================================
 
 ssh_port        = 22
-ssh_allowed_ips = ["0.0.0.0/0", "::/0"]  # Allow from anywhere (staging only!)
+ssh_allowed_ips = ["YOUR_PUBLIC_IP/32"]  # REQUIRED: set your management IP(s)
 
 # Enable web traffic
 allow_http  = true   # Port 80 (redirects to HTTPS)

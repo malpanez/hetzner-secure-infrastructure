@@ -1,5 +1,6 @@
 # Hetzner Cloud API Token
 # Get from: https://console.hetzner.cloud/
+# Prefer env var: export TF_VAR_hcloud_token="your-token"
 hcloud_token = "YOUR_HCLOUD_TOKEN_HERE"
 
 # SSH Public Key (Yubikey FIDO2)
@@ -46,8 +47,7 @@ location     = "nbg1"    # nbg1 (x86 only), fsn1 (both), hel1 (both), ash (both)
 # SSH Access
 ssh_port = 22
 # Restrict to your IP for production:
-# ssh_allowed_ips = ["YOUR_IP/32"]
-ssh_allowed_ips = ["0.0.0.0/0", "::/0"]
+ssh_allowed_ips = ["YOUR_IP/32"]
 
 # Firewall
 allow_http  = false

@@ -50,6 +50,7 @@ Quick access to all project documentation.
 - [Backup & Recovery](security/BACKUP_RECOVERY.md) - Backup strategy
 - [YubiKey Setup](security/YUBIKEY_SETUP.md) - Hardware token authentication
 - [Security Policy](../SECURITY.md) - Vulnerability reporting
+- [GRUB Simplification](GRUB_SIMPLIFICATION.md) - **Boot configuration cleanup for Debian 13** (eliminates boot failures)
 
 ### Performance
 
@@ -63,6 +64,11 @@ Quick access to all project documentation.
 - [Ansible Best Practices](guides/ANSIBLE_BEST_PRACTICES.md) - Coding standards
 - [Terraform Cloud Migration](guides/TERRAFORM_CLOUD_MIGRATION.md) - Terraform setup
 - [Mermaid Diagrams Best Practices](guides/MERMAID_BEST_PRACTICES.md) - **Neurodivergent-friendly diagram standards**
+
+### WordPress & LMS
+
+- [WordPress Themes & Plugins Guide](wordpress/WORDPRESS_THEMES_AND_PLUGINS_GUIDE.md) - **Complete setup for LearnDash LMS**
+- [WordPress Plugins Rationale](wordpress/WORDPRESS_PLUGINS_RATIONALE.md) - **Why each plugin was selected (9 auto-installed)**
 
 ### Reference
 

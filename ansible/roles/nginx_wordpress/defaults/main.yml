@@ -101,15 +101,44 @@ nginx_wordpress_nonce_salt: ""
 # ❌ CDN: Cloudflare → NO Jetpack CDN
 # ❌ Rate Limiting: Nginx + Cloudflare → Built-in
 #
-# ONLY install these essential plugins (4 mandatory):
+# Auto-installed plugins organized by priority:
+
+# CRITICAL Infrastructure Integration (4 plugins)
 nginx_wordpress_plugins_mandatory:
-  # Infrastructure Integration (2 plugins)
+  # Infrastructure Integration
   - redis-cache                      # Valkey object cache - CRITICAL
   - nginx-helper                     # FastCGI cache purging - CRITICAL
 
-  # Application Security (2 plugins)
+  # Application Security
   - wordfence-login-security         # 2FA/MFA for admin - ESSENTIAL
   - limit-login-attempts-reloaded    # Login rate limiting - ESSENTIAL
+
+# CRITICAL LMS Operations (3 plugins)
+# These are essential for LearnDash LMS to function properly
+nginx_wordpress_plugins_lms_critical:
+  - updraftplus                      # Database & file backups - CRITICAL
+                                     # Why: No automated backups currently deployed
+                                     # Alternative: Manual Restic setup (not implemented yet)
+
+  - wp-mail-smtp                     # SMTP email delivery - CRITICAL
+                                     # Why: LearnDash sends many emails (registrations, certificates, notifications)
+                                     # Problem: PHP mail() goes to SPAM, emails don't reach students
+                                     # Solution: Use with Brevo Free (300 emails/day)
+
+  - seo-by-rank-math                 # SEO optimization - ESSENTIAL
+                                     # Why: Marketing courses = SEO = student acquisition
+                                     # Rank Math Free > Yoast Free (5 keywords vs 1, 20+ schemas vs 2)
+                                     # Includes: Redirects, 404 monitoring, social previews (all free)
+
+# IMPORTANT Content & Compliance (2 plugins)
+nginx_wordpress_plugins_recommended:
+  - kadence-blocks                   # Advanced Gutenberg blocks - IMPORTANT
+                                     # Why: Complements Kadence theme (already installed)
+                                     # Use case: Course landing pages, pricing tables, testimonials
+
+  - cookie-notice                    # GDPR cookie consent - IMPORTANT
+                                     # Why: Legal requirement for EU if selling courses
+                                     # Plugin: "Cookie Notice & Compliance for GDPR / CCPA" (free)
 
 # Optional (only if specifically needed)
 nginx_wordpress_plugins_optional:
@@ -118,6 +147,25 @@ nginx_wordpress_plugins_optional:
 # LMS Plugin (install manually - requires license)
 # LearnDash Pro - Commercial plugin, must be installed manually
 nginx_wordpress_lms_plugin_manual: learndash  # Reminder: Install manually with license
+
+# ========================================
+# WordPress Theme Configuration
+# ========================================
+# Theme is auto-installed and activated via WP-CLI
+
+# Theme selection (all FREE from WordPress.org)
+# Options: kadence, astra, neve, generatepress
+nginx_wordpress_theme: kadence  # Recommended: Best free LearnDash-compatible theme
+nginx_wordpress_theme_activate: true  # Auto-activate after install
+
+# Additional themes to install (not activated)
+nginx_wordpress_themes_additional: []
+  # - astra
+  # - generatepress
+
+# ========================================
+# WordPress Site Configuration
+# ========================================
 
 # WordPress site info
 nginx_wordpress_site_title: "My WordPress Site"

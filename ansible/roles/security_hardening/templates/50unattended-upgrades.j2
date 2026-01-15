@@ -1,24 +1,163 @@
-//Automatic security updates configuration
-// Managed by Ansible - DO NOT EDIT MANUALLY
+# Automatic Security Updates Configuration
+# Managed by Ansible - DO NOT EDIT MANUALLY
+# File: /etc/apt/apt.conf.d/50unattended-upgrades
 
-Unattended-Upgrade::Allowed-Origins {
+# ==================================================================
+# ORIGINS PATTERN (Preferred on Debian 10+)
+# ==================================================================
+Unattended-Upgrade::Origins-Pattern {
+{% if unattended_upgrades_origins_pattern is defined %}
+{% for origin in unattended_upgrades_origins_pattern %}
+    "{{ origin }}";
+{% endfor %}
+{% else %}
 {% for origin in unattended_upgrades_origins %}
     "{{ origin }}";
 {% endfor %}
+{% endif %}
 };
 
+# ==================================================================
+# PACKAGE BLACKLIST
+# ==================================================================
 Unattended-Upgrade::Package-Blacklist {
-    // Add packages to blacklist here
+{% if unattended_upgrades_blacklist is defined and unattended_upgrades_blacklist | length > 0 %}
+{% for package in unattended_upgrades_blacklist %}
+    "{{ package }}";
+{% endfor %}
+{% else %}
+    // Database servers (test manually before upgrading)
+    // "mysql-server.*";
+    // "mariadb-server.*";
+    // "postgresql.*";
+    
+    // Web servers (test WordPress compatibility)
+    // "nginx.*";
+    // "apache2.*";
+    
+    // PHP (test WordPress plugins compatibility)
+    // "php.*";
+    
+    // Kernel updates (test before applying)
+    // "linux-image.*";
+    // "linux-headers.*";
+{% endif %}
 };
 
-Unattended-Upgrade::AutoFixInterruptedDpkg "{{ unattended_upgrades_auto_fix_interrupted_dpkg | lower }}";
-Unattended-Upgrade::MinimalSteps "{{ unattended_upgrades_minimal_steps | lower }}";
-Unattended-Upgrade::InstallOnShutdown "{{ unattended_upgrades_install_on_shutdown | lower }}";
+# ==================================================================
+# DPKG AND PACKAGE MANAGEMENT
+# ==================================================================
 
-Unattended-Upgrade::Automatic-Reboot "{{ unattended_upgrades_automatic_reboot | lower }}";
-{% if unattended_upgrades_automatic_reboot %}
-Unattended-Upgrade::Automatic-Reboot-Time "{{ unattended_upgrades_automatic_reboot_time }}";
+# Automatically fix interrupted dpkg operations
+Unattended-Upgrade::AutoFixInterruptedDpkg "{{ unattended_upgrades_auto_fix_interrupted_dpkg | default('true') | lower }}";
+
+# Split upgrade into minimal steps to reduce errors
+Unattended-Upgrade::MinimalSteps "{{ unattended_upgrades_minimal_steps | default('true') | lower }}";
+
+# Install updates on shutdown instead of during normal operation
+Unattended-Upgrade::InstallOnShutdown "{{ unattended_upgrades_install_on_shutdown | default('false') | lower }}";
+
+# Configuration file handling
+Dpkg::Options {
+    "--force-confdef";
+    "--force-confold";
+};
+
+# ==================================================================
+# CLEANUP
+# ==================================================================
+
+# Remove unused kernel packages automatically
+Unattended-Upgrade::Remove-Unused-Kernel-Packages "{{ unattended_upgrades_remove_unused_kernel_packages | default('true') | lower }}";
+
+# Remove unused dependencies
+Unattended-Upgrade::Remove-Unused-Dependencies "{{ unattended_upgrades_remove_unused_dependencies | default('true') | lower }}";
+
+# Remove new unused dependencies after upgrade
+Unattended-Upgrade::Remove-New-Unused-Dependencies "{{ unattended_upgrades_remove_new_unused_dependencies | default('true') | lower }}";
+
+# ==================================================================
+# REBOOT CONFIGURATION
+# ==================================================================
+
+# Automatically reboot if required (CAUTION: WordPress downtime)
+Unattended-Upgrade::Automatic-Reboot "{{ unattended_upgrades_automatic_reboot | default('false') | lower }}";
+
+{% if unattended_upgrades_automatic_reboot | default(false) %}
+# Reboot time (24-hour format)
+Unattended-Upgrade::Automatic-Reboot-Time "{{ unattended_upgrades_automatic_reboot_time | default('03:00') }}";
+
+# Reboot even if users are logged in
+Unattended-Upgrade::Automatic-Reboot-WithUsers "{{ unattended_upgrades_automatic_reboot_with_users | default('false') | lower }}";
 {% endif %}
 
-Unattended-Upgrade::Remove-Unused-Kernel-Packages "{{ unattended_upgrades_remove_unused_kernel_packages | lower }}";
-Unattended-Upgrade::Remove-Unused-Dependencies "{{ unattended_upgrades_remove_unused_dependencies | lower }}";
+# ==================================================================
+# EMAIL NOTIFICATIONS
+# ==================================================================
+
+{% if unattended_upgrades_mail is defined and unattended_upgrades_mail != '' %}
+# Email address for notifications
+Unattended-Upgrade::Mail "{{ unattended_upgrades_mail }}";
+
+# Mail report options: "always", "only-on-error", "on-change"
+Unattended-Upgrade::MailReport "{{ unattended_upgrades_mail_report | default('only-on-error') }}";
+{% else %}
+# Email notifications disabled (no email configured)
+// Unattended-Upgrade::Mail "root";
+// Unattended-Upgrade::MailReport "only-on-error";
+{% endif %}
+
+# ==================================================================
+# LOGGING
+# ==================================================================
+
+# Enable syslog logging
+Unattended-Upgrade::SyslogEnable "{{ unattended_upgrades_syslog_enable | default('true') | lower }}";
+
+# Syslog facility
+Unattended-Upgrade::SyslogFacility "{{ unattended_upgrades_syslog_facility | default('daemon') }}";
+
+# Verbose logging (useful for debugging)
+{% if unattended_upgrades_verbose | default(false) %}
+Unattended-Upgrade::Verbose "true";
+{% else %}
+// Unattended-Upgrade::Verbose "false";
+{% endif %}
+
+# Debug mode (very verbose - only for troubleshooting)
+{% if unattended_upgrades_debug | default(false) %}
+Unattended-Upgrade::Debug "true";
+{% else %}
+// Unattended-Upgrade::Debug "false";
+{% endif %}
+
+# ==================================================================
+# ADDITIONAL SETTINGS
+# ==================================================================
+
+# Skip updates on metered connections (useful for cloud instances)
+Unattended-Upgrade::Skip-Updates-On-Metered-Connections "{{ unattended_upgrades_skip_metered | default('true') | lower }}";
+
+# Only upgrade on AC power (for laptops - usually false for servers)
+Unattended-Upgrade::OnlyOnACPower "{{ unattended_upgrades_only_on_ac | default('false') | lower }}";
+
+# Keep downloaded .deb files (useful for rollback)
+Unattended-Upgrade::Keep-Debs-After-Install "{{ unattended_upgrades_keep_debs | default('false') | lower }}";
+
+# Download limit in kb/sec (0 = unlimited)
+// Unattended-Upgrade::Download-Limit "{{ unattended_upgrades_download_limit | default('0') }}";
+
+# ==================================================================
+# WORDPRESS-SPECIFIC SETTINGS
+# ==================================================================
+
+{% if nginx_wordpress_install_wordpress | default(false) %}
+# For WordPress servers, be conservative with updates
+# Test updates in staging before applying to production
+
+# DevOps-Update-Script for WordPress compatibility testing
+{% if unattended_upgrades_devops_script is defined %}
+Unattended-Upgrade::DevOps-Update-Script "{{ unattended_upgrades_devops_script }}";
+{% endif %}
+
+{% endif %}

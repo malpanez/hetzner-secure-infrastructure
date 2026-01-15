@@ -1,4 +1,10 @@
 ---
+# Deploy login.defs with Debian 13 / WordPress compatible settings
+# Key fixes applied:
+# - UMASK 022 (not 027) for WordPress compatibility
+# - PASS_MAX_DAYS 99999 to avoid admin lockout
+# - PREVENT_NO_AUTH has no effect in Debian 13 (PAM ignores it)
+
 - name: Security Hardening | Login | Deploy login.defs configuration
   ansible.builtin.template:
     src: login.defs.j2

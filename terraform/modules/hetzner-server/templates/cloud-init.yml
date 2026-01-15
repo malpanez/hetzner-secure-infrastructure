@@ -20,8 +20,8 @@ prefer_fqdn_over_hostname: true
 # System Configuration
 # ========================================
 
-timezone: Europe/Dublin
-locale: en_IE.UTF-8
+timezone: UTC
+locale: en_US.UTF-8
 
 # ========================================
 # Package Management
@@ -44,18 +44,18 @@ packages:
   - ncdu
   - tree
   # Security
-  - ufw
-  - fail2ban
-  - unattended-upgrades
   - apt-listchanges
+  - fail2ban
+  - ufw
+  - unattended-upgrades
   # Python for Ansible
   - python3
-  - python3-pip
   - python3-apt
+  - python3-pip
   # Admin tools
-  - sudo
   - lsof
   - strace
+  - sudo
   - tcpdump
 
 # ========================================

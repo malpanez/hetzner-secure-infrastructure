@@ -106,7 +106,7 @@ fail2ban_services:
 # AppArmor
 # ========================================
 apparmor_enabled: true
-apparmor_enforce_mode: true  # false = complain mode
+apparmor_enforce_mode: false  # false = complain mode
 
 apparmor_profiles:
   - /usr/sbin/sshd

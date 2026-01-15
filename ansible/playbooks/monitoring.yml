@@ -1,0 +1,136 @@
+---
+# Monitoring Playbook - Observability Stack Deployment
+#
+# Deploys the monitoring stack including:
+# - Node Exporter on all monitored servers
+# - Prometheus metrics database
+# - Loki log aggregation
+# - Promtail log shipper
+# - Grafana visualization
+#
+# Usage:
+#   ansible-playbook -i inventory/production.yml playbooks/monitoring.yml
+#
+# Tags:
+#   - monitoring: All monitoring tasks
+#   - node_exporter, metrics: System metrics
+#   - prometheus: Metrics database
+#   - loki, logging: Log aggregation
+#   - promtail: Log shipper
+#   - grafana: Visualization
+
+# ========================================
+# Node Exporter (All Monitored Servers)
+# ========================================
+- name: Deploy Node Exporter metrics
+  hosts: monitored_servers
+  become: true
+  gather_facts: true
+
+  roles:
+    # Use official Prometheus Community collection
+    - role: prometheus.prometheus.node_exporter
+      tags: [monitoring, node_exporter, metrics]
+      when: node_exporter_enabled | default(true) | bool
+
+# ========================================
+# Monitoring Servers (Prometheus + Grafana)
+# ========================================
+- name: Deploy monitoring stack
+  hosts: monitoring_servers
+  become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Check monitoring deployment status
+      ansible.builtin.debug:
+        msg: >-
+          Monitoring will {{ 'be deployed' if (deploy_monitoring | default(true) | bool)
+          else 'NOT be deployed' }} on {{ inventory_hostname }}
+      tags: [monitoring]
+
+  roles:
+    # Use official Prometheus Community collection
+    - role: prometheus.prometheus.prometheus
+      tags: [monitoring, prometheus]
+      when: deploy_monitoring | default(true) | bool
+
+    # Use official Grafana Labs collection
+    - role: grafana.grafana.loki
+      tags: [monitoring, loki, logging]
+      when: deploy_loki | default(true) | bool
+
+    - role: grafana.grafana.promtail
+      tags: [monitoring, promtail, logging]
+      when: deploy_promtail | default(true) | bool
+
+    - role: grafana.grafana.grafana
+      tags: [monitoring, grafana]
+      when: deploy_monitoring | default(true) | bool
+
+  post_tasks:
+    # Ensure Prometheus file service discovery is properly configured
+    - name: Prometheus | Post-config | Ensure file_sd directory exists
+      ansible.builtin.file:
+        path: "{{ prometheus_config_dir | default('/etc/prometheus') }}/file_sd"
+        state: directory
+        owner: prometheus
+        group: prometheus
+        mode: '0755'
+      when: deploy_monitoring | default(true) | bool
+      tags: [monitoring, prometheus, post-config]
+
+    - name: Prometheus | Post-config | Create Node Exporter target file
+      ansible.builtin.copy:
+        dest: "{{ prometheus_config_dir | default('/etc/prometheus') }}/file_sd/node.yml"
+        owner: prometheus
+        group: prometheus
+        mode: '0644'
+        content: |
+          ---
+          - targets:
+            - localhost:9100
+            labels:
+              instance: "{{ inventory_hostname }}"
+              job: node_exporter
+      when: deploy_monitoring | default(true) | bool
+      notify: restart prometheus
+      tags: [monitoring, prometheus, post-config]
+
+    - name: Prometheus | Post-config | Restart Prometheus if config changed
+      ansible.builtin.systemd:
+        name: prometheus
+        state: restarted
+      when: deploy_monitoring | default(true) | bool
+      tags: [monitoring, prometheus, post-config]
+
+    - name: Display monitoring information
+      ansible.builtin.debug:
+        msg: |-
+          ========================================
+          Monitoring Stack Deployed
+          ========================================
+
+          Prometheus: http://{{ ansible_host }}:{{ prometheus_port | default(9090) }}
+          Loki: http://{{ ansible_host }}:{{ loki_http_listen_port | default(3100) }}
+          Grafana: http://{{ ansible_host }}:{{ grafana_ini.server.http_port | default(3000) }}
+
+          Default credentials:
+          - Username: {{ grafana_ini.security.admin_user | default('admin') }}
+          - Password: (check vault_grafana_admin_password)
+
+          Grafana Data Sources:
+          - Prometheus (metrics)
+          - Loki (logs)
+
+          Dashboards:
+          - Node Exporter Full (#1860)
+          - Prometheus Stats (#3662)
+
+          Access via Nginx reverse proxy:
+          - prometheus.{{ ansible_host }} -> http://localhost:9090
+          - grafana.{{ ansible_host }} -> http://localhost:3000
+
+          ========================================
+      when: deploy_monitoring | default(true) | bool
+      tags: [monitoring, info]

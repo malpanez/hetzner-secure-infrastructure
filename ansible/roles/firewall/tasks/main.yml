@@ -15,6 +15,16 @@
   when: not firewall_enabled
   tags: [firewall]
 
+- name: Firewall | Main | Require explicit SSH management IPs
+  ansible.builtin.assert:
+    that:
+      - ssh_allowed_ips is defined
+      - ssh_allowed_ips | length > 0
+      - "'0.0.0.0/0' not in ssh_allowed_ips"
+      - "'::/0' not in ssh_allowed_ips"
+    fail_msg: "ssh_allowed_ips must be explicitly defined and must not include 0.0.0.0/0 or ::/0."
+  tags: [firewall]
+
 - name: Firewall | Main | Include installation tasks
   ansible.builtin.include_tasks: install.yml
   tags: [firewall, install]

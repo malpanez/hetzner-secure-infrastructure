@@ -17,6 +17,10 @@
   ansible.builtin.include_tasks: users.yml
   tags: [common, users]
 
+- name: Common | Main | Include GRUB console configuration tasks
+  ansible.builtin.include_tasks: grub.yml
+  tags: [common, grub, boot]
+
 - name: Common | Main | Include cleanup tasks
   ansible.builtin.include_tasks: cleanup.yml
   tags: [common, cleanup]

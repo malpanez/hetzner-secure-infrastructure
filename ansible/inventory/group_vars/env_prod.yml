@@ -14,8 +14,8 @@ ssh_2fa_require_break_glass_ready: true
 # FIXED: Now includes audit_backlog_limit to prevent buffer overflow during boot
 # Previous issue: audit=1 alone caused boot hangs (buffer overflow before auditd starts)
 # Solution: audit_backlog_limit=8192 provides sufficient buffer for boot-time audit messages
-security_hardening_auditd_enabled: true
-security_hardening_manage_grub: true
+security_hardening_auditd_enabled: false
+security_hardening_manage_grub: false
 
 # AppArmor GRUB management (safe to enable)
 apparmor_manage_grub: true

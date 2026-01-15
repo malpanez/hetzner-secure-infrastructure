@@ -1,0 +1,16 @@
+# Ansible Automation Sudo Configuration
+# Managed by Ansible - ssh_2fa role
+# Purpose: Allow ansible-automation group members passwordless sudo
+#          for automated patching, deployments, and emergency break-glass access
+
+# NOPASSWD sudo for ansible-automation group
+# This group includes: ansible service user, malpanez (during deployment)
+%ansible-automation ALL=(ALL) NOPASSWD: ALL
+
+# Security Notes:
+# - SSH access still requires key authentication (no password login possible)
+# - Break-glass group: SSH key only, no 2FA required for SSH
+# - Members should be limited to: service accounts + emergency admin access
+# - malpanez: Has both 'sudo' group (standard) AND 'ansible-automation' (break-glass)
+# - ansible user: Only 'ansible-automation' group (service account)
+# - Regular admin users with 2FA should use 'sudo' group (password required)
