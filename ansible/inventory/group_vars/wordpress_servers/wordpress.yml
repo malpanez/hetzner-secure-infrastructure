@@ -41,8 +41,16 @@ wordpress_disable_file_edit: true
 wordpress_force_ssl_admin: true
 wordpress_auto_update_core: true
 
-# WordPress salts (auto-generated from WordPress API)
-wordpress_generate_salts: true
+# WordPress Security Keys and Salts (from vault)
+# Generate at: https://api.wordpress.org/secret-key/1.1/salt/
+nginx_wordpress_auth_key: "{{ vault_nginx_wordpress_auth_key }}"
+nginx_wordpress_secure_auth_key: "{{ vault_nginx_wordpress_secure_auth_key }}"
+nginx_wordpress_logged_in_key: "{{ vault_nginx_wordpress_logged_in_key }}"
+nginx_wordpress_nonce_key: "{{ vault_nginx_wordpress_nonce_key }}"
+nginx_wordpress_auth_salt: "{{ vault_nginx_wordpress_auth_salt }}"
+nginx_wordpress_secure_auth_salt: "{{ vault_nginx_wordpress_secure_auth_salt }}"
+nginx_wordpress_logged_in_salt: "{{ vault_nginx_wordpress_logged_in_salt }}"
+nginx_wordpress_nonce_salt: "{{ vault_nginx_wordpress_nonce_salt }}"
 
 # ========================================
 # LearnDash LMS Configuration
