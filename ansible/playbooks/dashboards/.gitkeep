@@ -1,0 +1,10 @@
+# This directory holds custom Grafana dashboard JSON files
+# Dashboards placed here will be imported via provisioning
+#
+# To add a custom dashboard:
+# 1. Export from Grafana UI (Share → Export → Save to file)
+# 2. Place the .json file in this directory
+# 3. Run the monitoring playbook
+#
+# Note: Dashboards from grafana.net are configured in:
+# ansible/inventory/group_vars/monitoring_servers/grafana.yml

@@ -21,18 +21,18 @@ grafana_ini:
 
   # Server settings
   server:
-    http_addr: "0.0.0.0"  # Override in staging/production as needed
+    http_addr: "127.0.0.1"  # Behind Nginx reverse proxy
     http_port: 3000
     protocol: http
-    domain: "{{ ansible_host }}"
-    root_url: "http://{{ ansible_host }}:3000"
+    domain: "grafana.{{ domain_name }}"
+    root_url: "https://grafana.{{ domain_name }}"
 
   # Security
   security:
     admin_user: admin
     admin_password: "{{ vault_grafana_admin_password }}"
     disable_gravatar: true
-    cookie_secure: false  # Set to true if using HTTPS
+    cookie_secure: true
     cookie_samesite: lax
     allow_embedding: false
 
@@ -62,6 +62,12 @@ grafana_ini:
 # ========================================
 grafana_use_provisioning: true
 grafana_provisioning_synced: false
+
+# Custom dashboards directory (for local JSON files, optional)
+# Default "dashboards" is relative to playbook directory
+# Created at: ansible/playbooks/dashboards/
+# Leave commented to use default path
+# grafana_dashboards_dir: "dashboards"
 
 grafana_datasources:
   - name: Prometheus
@@ -116,6 +122,30 @@ grafana_dashboards:
   - dashboard_id: "14055"
     revision_id: "5"
     datasource: "Loki"
+
+  # ==================
+  # Application Dashboards (WordPress Stack)
+  # ==================
+
+  # Nginx - Request metrics, connections, error rates
+  - dashboard_id: "12708"
+    revision_id: "1"
+    datasource: "Prometheus"
+
+  # MySQL/MariaDB Overview - Queries, connections, InnoDB
+  - dashboard_id: "7362"
+    revision_id: "5"
+    datasource: "Prometheus"
+
+  # PHP-FPM - Pool status, processes, slow requests
+  - dashboard_id: "4912"
+    revision_id: "1"
+    datasource: "Prometheus"
+
+  # Redis/Valkey - Cache hits, memory, keys, commands
+  - dashboard_id: "11835"
+    revision_id: "1"
+    datasource: "Prometheus"
 
 # ========================================
 # Grafana Plugins

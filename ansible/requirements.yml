@@ -13,6 +13,12 @@ collections:
   - name: grafana.grafana
     source: https://galaxy.ansible.com
 
+  # Community Grafana Collection
+  # Required for grafana_dashboard module (used by grafana.grafana role)
+  # Docs: https://docs.ansible.com/ansible/latest/collections/community/grafana/
+  - name: community.grafana
+    source: https://galaxy.ansible.com
+
   # Prometheus Community Collection
   # Includes: prometheus, node_exporter, alertmanager, exporters
   # Docs: https://prometheus-community.github.io/ansible/
