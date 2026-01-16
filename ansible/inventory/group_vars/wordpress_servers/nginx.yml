@@ -5,6 +5,26 @@
 # ========================================
 # Nginx Basic Configuration
 # ========================================
+nginx_wordpress_server_name: "{{ domain_name }}"
+nginx_wordpress_server_aliases:
+  - "www.{{ domain_name }}"
+
+# SSL/TLS (Let's Encrypt via Cloudflare DNS)
+nginx_wordpress_ssl_enabled: true
+nginx_wordpress_ssl_cert_path: "/etc/letsencrypt/live/{{ nginx_wordpress_server_name }}/fullchain.pem"
+nginx_wordpress_ssl_key_path: "/etc/letsencrypt/live/{{ nginx_wordpress_server_name }}/privkey.pem"
+nginx_wordpress_letsencrypt_enabled: true
+nginx_wordpress_letsencrypt_email: "{{ vault_nginx_wordpress_admin_email | default('admin@example.com') }}"
+nginx_wordpress_letsencrypt_domains:
+  - "{{ nginx_wordpress_server_name }}"
+  - "www.{{ nginx_wordpress_server_name }}"
+  - "grafana.{{ nginx_wordpress_server_name }}"
+  - "prometheus.{{ nginx_wordpress_server_name }}"
+
+# Monitoring reverse proxies (Grafana/Prometheus on same host as WordPress)
+# Set to true to deploy Nginx reverse proxies for grafana.domain and prometheus.domain
+deploy_monitoring: true
+
 nginx_user: www-data
 nginx_worker_processes: auto
 nginx_worker_connections: 2048
