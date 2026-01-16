@@ -33,6 +33,7 @@ nginx_wordpress_db_host: "{{ wordpress_db_host }}"
 nginx_wordpress_admin_user: "{{ vault_nginx_wordpress_admin_user | default('admin') }}"
 nginx_wordpress_admin_password: "{{ vault_nginx_wordpress_admin_password }}"
 nginx_wordpress_admin_email: "{{ vault_nginx_wordpress_admin_email | default('admin@example.com') }}"
+nginx_wordpress_site_url: "https://{{ domain_name }}"
 
 # ========================================
 # WordPress Security
@@ -96,6 +97,16 @@ wordpress_plugins:
     state: present
     activate: true
     reason: "Auto-purge Cloudflare edge cache on updates"
+
+  # === SECURITY (2FA for wp-admin) ===
+
+  # WP 2FA - Two-Factor Authentication (by Melapress)
+  # Most maintained, supports TOTP, Passkeys, YubiKey
+  # 400,000+ active installs, regularly updated
+  - slug: wp-2fa
+    state: present
+    activate: true
+    reason: "2FA for wp-admin login (TOTP, Passkeys, backup codes)"
 
   # SEO Optimization (lighter than Yoast)
   # - slug: rank-math
