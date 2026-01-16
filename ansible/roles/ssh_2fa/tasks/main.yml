@@ -6,22 +6,28 @@
 
 # SSH 2FA Role - Main Tasks (Orchestrator)
 
-# Detect OpenSSH version for logging and future compatibility checks
-- name: SSH 2FA | Preflight | Detect OpenSSH version
-  ansible.builtin.command: /usr/sbin/sshd -V
-  register: sshd_version_output
-  changed_when: false
-  failed_when: false
+# Detect OpenSSH version from installed package (Debian/Ubuntu)
+- name: SSH 2FA | Preflight | Get OpenSSH package version
+  ansible.builtin.package_facts:
+    manager: auto
   tags: [ssh-2fa, preflight]
 
-- name: SSH 2FA | Preflight | Extract and normalize SSH version
+- name: SSH 2FA | Preflight | Extract OpenSSH version from package facts
   ansible.builtin.set_fact:
     openssh_version: >-
-      {{ (sshd_version_output.stderr + sshd_version_output.stdout)
-         | regex_search('OpenSSH_([0-9]+\.[0-9]+)')
-         | default('OpenSSH_9.0')
-         | regex_replace('OpenSSH_', '') }}
+      {{ ansible_facts.packages['openssh-server'][0].version
+         | default('1:9.0')
+         | regex_search('[0-9]+\.[0-9]+')
+         | default('9.0') }}
     cacheable: true
+  when: "'openssh-server' in ansible_facts.packages"
+  tags: [ssh-2fa, preflight]
+
+- name: SSH 2FA | Preflight | Set default OpenSSH version if not detected
+  ansible.builtin.set_fact:
+    openssh_version: "9.0"
+    cacheable: true
+  when: openssh_version is not defined
   tags: [ssh-2fa, preflight]
 
 - name: SSH 2FA | Preflight | Display detected OpenSSH version
