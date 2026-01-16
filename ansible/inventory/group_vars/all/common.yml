@@ -139,6 +139,7 @@ ssh_2fa_pam_google_authenticator_ssh_options: "nullok forward_pass"
 # ========================================
 # WordPress Configuration
 # ========================================
+domain_name: "twomindstrading.com"
 wordpress_root: "/var/www/wordpress"
 
 # ========================================

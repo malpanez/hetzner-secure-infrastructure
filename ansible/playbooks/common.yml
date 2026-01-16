@@ -21,6 +21,13 @@
   gather_facts: true
 
   pre_tasks:
+    - name: Ensure facts are available
+      ansible.builtin.setup:
+        gather_subset:
+          - min
+      when: ansible_facts is not defined or ansible_facts | length == 0
+      tags: [always]
+
     - name: Display deployment information
       ansible.builtin.debug:
         msg:
@@ -30,18 +37,18 @@
           - ""
           - "Target Host"
           - "  Hostname:     {{ inventory_hostname }}"
-          - "  IP Address:   {{ ansible_default_ipv4.address | default('N/A') }}"
+          - "  IP Address:   {{ (ansible_facts.get('default_ipv4', {}).get('address', 'N/A')) }}"
           - "  Groups:       {{ group_names | join(', ') }}"
           - ""
           - "System Information"
-          - "  OS:           {{ ansible_distribution }} {{ ansible_distribution_version }}"
-          - "  Kernel:       {{ ansible_kernel }}"
-          - "  Architecture: {{ ansible_architecture }}"
-          - "  CPUs:         {{ ansible_processor_vcpus }}"
+          - "  OS:           {{ ansible_facts.get('distribution', 'unknown') }} {{ ansible_facts.get('distribution_version', '') }}"
+          - "  Kernel:       {{ ansible_facts.get('kernel', 'unknown') }}"
+          - "  Architecture: {{ ansible_facts.get('architecture', 'unknown') }}"
+          - "  CPUs:         {{ ansible_facts.get('processor_vcpus', 'unknown') }}"
           - ""
           - "Configuration"
           - "  User:         {{ ansible_user }}"
-          - "  Python:       {{ ansible_python_version }}"
+          - "  Python:       {{ ansible_python_version | default('unknown') }}"
           - "  SSH Port:     {{ ansible_port | default(22) }}"
           - ""
           - "======================================================================"
@@ -51,14 +58,14 @@
       ansible.builtin.apt:
         update_cache: true
         cache_valid_time: 3600
-      when: ansible_os_family == 'Debian'
+      when: ansible_facts.get('os_family', '') == 'Debian'
       tags: [always]
 
     - name: Check OS compatibility
       ansible.builtin.assert:
         that:
-          - ansible_distribution in ['Debian', 'Ubuntu']
-          - ansible_distribution_major_version | int >= 12
+          - ansible_facts.get('distribution', '') in ['Debian', 'Ubuntu']
+          - (ansible_facts.get('distribution_major_version', '0') | int) >= 12
         fail_msg: This playbook requires Debian 12+ or Ubuntu 22.04+
         success_msg: OS compatibility check passed
       tags: [always]

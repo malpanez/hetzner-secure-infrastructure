@@ -32,22 +32,22 @@
   post_tasks:
     - name: Display OpenBao information
       ansible.builtin.debug:
-        msg: |-
-          ========================================
-          OpenBao Deployed Successfully
-          ========================================
-
-          Server: {{ inventory_hostname }}
-          Address: {{ openbao_api_addr }}
-
-          Manual initialization required:
-          1. SSH: ssh {{ ansible_user }}@{{ ansible_host }}
-          2. Export: export VAULT_ADDR='{{ openbao_api_addr }}'
-          3. Initialize: bao operator init
-          4. Save unseal keys and root token!
-          5. Unseal: bao operator unseal (3 times with different keys)
-
-          ========================================
+        msg:
+          - "========================================"
+          - "OpenBao Deployed Successfully"
+          - "========================================"
+          - ""
+          - "Server: {{ inventory_hostname }}"
+          - "Address: {{ openbao_api_addr }}"
+          - ""
+          - "Manual initialization required:"
+          - "1. SSH: ssh {{ ansible_user }}@{{ ansible_host }}"
+          - "2. Export: export VAULT_ADDR='{{ openbao_api_addr }}'"
+          - "3. Initialize: bao operator init"
+          - "4. Save unseal keys and root token!"
+          - "5. Unseal: bao operator unseal (3 times with different keys)"
+          - ""
+          - "========================================"
       when: deploy_openbao | default(true) | bool
       tags: [openbao, info]
 
