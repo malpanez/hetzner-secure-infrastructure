@@ -17,10 +17,10 @@
 - name: SSH 2FA | Preflight | Extract and normalize SSH version
   ansible.builtin.set_fact:
     openssh_version: >-
-      {{ sshd_version_output.stderr
-         | regex_search('OpenSSH_([0-9]+\\.[0-9]+)', '\\1')
-         | default(['unknown'], true)
-         | first }}
+      {{ (sshd_version_output.stderr + sshd_version_output.stdout)
+         | regex_search('OpenSSH_([0-9]+\.[0-9]+)')
+         | default('OpenSSH_9.0')
+         | regex_replace('OpenSSH_', '') }}
     cacheable: true
   tags: [ssh-2fa, preflight]
 
