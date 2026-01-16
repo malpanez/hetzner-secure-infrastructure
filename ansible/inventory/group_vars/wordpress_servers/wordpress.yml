@@ -29,6 +29,11 @@ nginx_wordpress_db_user: "{{ wordpress_db_user }}"
 nginx_wordpress_db_password: "{{ wordpress_db_password }}"
 nginx_wordpress_db_host: "{{ wordpress_db_host }}"
 
+# WordPress Admin Credentials (from vault)
+nginx_wordpress_admin_user: "{{ vault_nginx_wordpress_admin_user | default('admin') }}"
+nginx_wordpress_admin_password: "{{ vault_nginx_wordpress_admin_password }}"
+nginx_wordpress_admin_email: "{{ vault_nginx_wordpress_admin_email | default('admin@example.com') }}"
+
 # ========================================
 # WordPress Security
 # ========================================
