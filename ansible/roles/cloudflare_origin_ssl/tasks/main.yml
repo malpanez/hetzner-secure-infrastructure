@@ -1,0 +1,89 @@
+---
+# Cloudflare Origin SSL Role - Main Tasks
+#
+# This role deploys Cloudflare Origin Certificates for secure origin-to-Cloudflare communication.
+# The certificate and key must be generated in Cloudflare Dashboard and stored in Ansible Vault.
+#
+# Prerequisites:
+# 1. Generate certificate at: Cloudflare Dashboard → SSL/TLS → Origin Server → Create Certificate
+# 2. Store in secrets.yml:
+#    vault_cloudflare_origin_cert: |
+#      -----BEGIN CERTIFICATE-----
+#      ...
+#      -----END CERTIFICATE-----
+#    vault_cloudflare_origin_key: |
+#      -----BEGIN PRIVATE KEY-----
+#      ...
+#      -----END PRIVATE KEY-----
+
+- name: Cloudflare Origin SSL | Validate required variables
+  ansible.builtin.assert:
+    that:
+      - vault_cloudflare_origin_cert is defined
+      - vault_cloudflare_origin_cert | length > 0
+      - vault_cloudflare_origin_key is defined
+      - vault_cloudflare_origin_key | length > 0
+    fail_msg: >
+      Cloudflare Origin Certificate not configured.
+      Please generate at Cloudflare Dashboard → SSL/TLS → Origin Server → Create Certificate
+      and add vault_cloudflare_origin_cert and vault_cloudflare_origin_key to your secrets.yml
+    quiet: true
+  tags: [cloudflare-ssl, validate]
+
+- name: Cloudflare Origin SSL | Create certificate directory
+  ansible.builtin.file:
+    path: "{{ cloudflare_origin_ssl_cert_dir }}"
+    state: directory
+    owner: "{{ cloudflare_origin_ssl_owner }}"
+    group: "{{ cloudflare_origin_ssl_group }}"
+    mode: "{{ cloudflare_origin_ssl_dir_mode }}"
+  tags: [cloudflare-ssl, install]
+
+- name: Cloudflare Origin SSL | Deploy origin certificate
+  ansible.builtin.copy:
+    content: "{{ vault_cloudflare_origin_cert }}"
+    dest: "{{ cloudflare_origin_ssl_cert_path }}"
+    owner: "{{ cloudflare_origin_ssl_owner }}"
+    group: "{{ cloudflare_origin_ssl_group }}"
+    mode: "{{ cloudflare_origin_ssl_cert_mode }}"
+  notify: reload nginx
+  tags: [cloudflare-ssl, install]
+
+- name: Cloudflare Origin SSL | Deploy origin private key
+  ansible.builtin.copy:
+    content: "{{ vault_cloudflare_origin_key }}"
+    dest: "{{ cloudflare_origin_ssl_key_path }}"
+    owner: "{{ cloudflare_origin_ssl_owner }}"
+    group: "{{ cloudflare_origin_ssl_group }}"
+    mode: "{{ cloudflare_origin_ssl_key_mode }}"
+  no_log: true
+  notify: reload nginx
+  tags: [cloudflare-ssl, install]
+
+- name: Cloudflare Origin SSL | Deploy Cloudflare CA certificate for client verification
+  ansible.builtin.copy:
+    src: cloudflare-origin-ca.pem
+    dest: "{{ cloudflare_origin_ssl_cert_dir }}/cloudflare-origin-ca.pem"
+    owner: "{{ cloudflare_origin_ssl_owner }}"
+    group: "{{ cloudflare_origin_ssl_group }}"
+    mode: "{{ cloudflare_origin_ssl_cert_mode }}"
+  tags: [cloudflare-ssl, install]
+
+- name: Cloudflare Origin SSL | Verify certificate is valid
+  ansible.builtin.command:
+    cmd: openssl x509 -in {{ cloudflare_origin_ssl_cert_path }} -noout -dates
+  register: cert_dates
+  changed_when: false
+  tags: [cloudflare-ssl, validate]
+
+- name: Cloudflare Origin SSL | Display certificate validity
+  ansible.builtin.debug:
+    msg: "{{ cert_dates.stdout_lines }}"
+  tags: [cloudflare-ssl, validate]
+
+- name: Cloudflare Origin SSL | Set fact for nginx_wordpress role
+  ansible.builtin.set_fact:
+    nginx_wordpress_ssl_enabled: true
+    nginx_wordpress_ssl_cert_path: "{{ cloudflare_origin_ssl_cert_path }}"
+    nginx_wordpress_ssl_key_path: "{{ cloudflare_origin_ssl_key_path }}"
+  tags: [cloudflare-ssl, config]

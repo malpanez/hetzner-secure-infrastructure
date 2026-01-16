@@ -1,0 +1,26 @@
+---
+galaxy_info:
+  author: Infrastructure Team
+  description: Deploy Cloudflare Origin Certificates for secure origin-to-edge communication
+  license: MIT
+  min_ansible_version: "2.14"
+
+  platforms:
+    - name: Debian
+      versions:
+        - bookworm
+        - trixie
+    - name: Ubuntu
+      versions:
+        - jammy
+        - noble
+
+  galaxy_tags:
+    - ssl
+    - tls
+    - cloudflare
+    - security
+    - nginx
+    - certificates
+
+dependencies: []
