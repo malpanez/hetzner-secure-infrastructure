@@ -82,6 +82,12 @@ variable "enable_cloudflare_access" {
 # Security Settings
 # ========================================
 
+variable "wp_admin_skip_challenge" {
+  description = "Skip Cloudflare managed challenge for wp-admin/wp-login (recommended: true if using Pi-hole or ad blockers)"
+  type        = bool
+  default     = true
+}
+
 variable "security_level" {
   description = "Cloudflare security level (off, essentially_off, low, medium, high, under_attack)"
   type        = string

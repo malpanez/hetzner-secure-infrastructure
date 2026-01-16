@@ -170,6 +170,34 @@ resource "cloudflare_ruleset" "cache_rules" {
 }
 
 # --------------------------------------------------------
+# WordPress Admin Security Exception
+# --------------------------------------------------------
+# Disable Managed Challenge for wp-admin/wp-login to allow access
+# without requiring challenges.cloudflare.com (blocked by some ad blockers/Pi-hole)
+# Security is still maintained via:
+# - Rate limiting (Nginx + Cloudflare)
+# - WordPress 2FA (WP 2FA plugin)
+# - WAF rules still apply
+# --------------------------------------------------------
+resource "cloudflare_ruleset" "wp_admin_security_exception" {
+  zone_id     = data.cloudflare_zone.main.id
+  name        = "wp-admin-security-exception"
+  description = "Skip managed challenge for WordPress admin (2FA handles auth security)"
+  kind        = "zone"
+  phase       = "http_request_firewall_custom"
+
+  rules {
+    description = "Skip challenge for wp-admin and wp-login"
+    expression  = "(starts_with(http.request.uri.path, \"/wp-admin\") or http.request.uri.path eq \"/wp-login.php\")"
+    action      = "skip"
+    enabled     = var.wp_admin_skip_challenge
+    action_parameters {
+      products = ["securityLevel"]
+    }
+  }
+}
+
+# --------------------------------------------------------
 # Redirect Rules - www to apex (301)
 # --------------------------------------------------------
 resource "cloudflare_ruleset" "redirect_www_to_apex" {
