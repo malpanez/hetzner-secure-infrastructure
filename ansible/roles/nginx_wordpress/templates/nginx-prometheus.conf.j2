@@ -1,9 +1,29 @@
 # Nginx Reverse Proxy for Prometheus
 # Managed by Ansible - nginx_wordpress role
 
+{% if nginx_wordpress_ssl_enabled %}
 server {
     listen 80;
+    listen [::]:80;
     server_name prometheus.{{ nginx_wordpress_server_name | default('_') }};
+
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name prometheus.{{ nginx_wordpress_server_name | default('_') }};
+
+    ssl_certificate {{ nginx_wordpress_ssl_cert_path }};
+    ssl_certificate_key {{ nginx_wordpress_ssl_key_path }};
+    include snippets/ssl-params.conf;
+{% else %}
+server {
+    listen 80;
+    listen [::]:80;
+    server_name prometheus.{{ nginx_wordpress_server_name | default('_') }};
+{% endif %}
 
     # Security headers
     add_header X-Frame-Options "SAMEORIGIN" always;

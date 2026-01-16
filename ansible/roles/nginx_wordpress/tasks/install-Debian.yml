@@ -29,6 +29,15 @@
     cache_valid_time: 3600
   tags: [nginx-wordpress, packages]
 
+- name: Nginx WordPress | Install | Install Certbot packages
+  ansible.builtin.apt:
+    name: "{{ nginx_wordpress_certbot_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  when: nginx_wordpress_letsencrypt_enabled | default(false) | bool
+  tags: [nginx-wordpress, packages, ssl, letsencrypt]
+
 - name: Nginx WordPress | Install | Download WP-CLI
   ansible.builtin.get_url:
     url: "{{ nginx_wordpress_wpcli_url }}"

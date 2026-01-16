@@ -45,6 +45,20 @@ nginx_wordpress_ssl_enabled: false  # Set to true when certs are configured
 nginx_wordpress_ssl_cert_path: /etc/ssl/certs/nginx-wordpress.crt
 nginx_wordpress_ssl_key_path: /etc/ssl/private/nginx-wordpress.key
 
+# Let's Encrypt (DNS-01 via Cloudflare)
+nginx_wordpress_letsencrypt_enabled: false
+nginx_wordpress_letsencrypt_email: ""
+nginx_wordpress_letsencrypt_primary_domain: "{{ nginx_wordpress_server_name }}"
+nginx_wordpress_letsencrypt_domains:
+  - "{{ nginx_wordpress_server_name }}"
+  - "www.{{ nginx_wordpress_server_name }}"
+  - "grafana.{{ nginx_wordpress_server_name }}"
+  - "prometheus.{{ nginx_wordpress_server_name }}"
+nginx_wordpress_letsencrypt_dns_provider: cloudflare
+nginx_wordpress_letsencrypt_cloudflare_credentials_path: /etc/letsencrypt/cloudflare.ini
+nginx_wordpress_letsencrypt_cloudflare_api_token: "{{ vault_cloudflare_api_token | default('') }}"
+nginx_wordpress_letsencrypt_propagation_seconds: 60
+
 # ========================================
 # PHP Configuration
 # ========================================
@@ -172,3 +186,7 @@ nginx_wordpress_site_title: "My WordPress Site"
 nginx_wordpress_admin_user: admin
 nginx_wordpress_admin_password: ""  # MUST be set
 nginx_wordpress_admin_email: admin@example.com
+
+# WordPress URL management
+nginx_wordpress_site_url: ""
+nginx_wordpress_force_url_replace: true

@@ -17,6 +17,13 @@
   when: nginx_wordpress_enabled
   tags: [nginx-wordpress, install]
 
+- name: Nginx WordPress | Main | Include Let's Encrypt tasks
+  ansible.builtin.include_tasks: letsencrypt.yml
+  when:
+    - nginx_wordpress_enabled
+    - nginx_wordpress_letsencrypt_enabled | default(false) | bool
+  tags: [nginx-wordpress, ssl, letsencrypt]
+
 - name: Nginx WordPress | Main | Include configuration tasks
   ansible.builtin.include_tasks: configure.yml
   when: nginx_wordpress_enabled

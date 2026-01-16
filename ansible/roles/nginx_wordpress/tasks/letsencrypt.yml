@@ -1,0 +1,65 @@
+---
+# Nginx WordPress Role - Let's Encrypt (DNS-01) Tasks
+
+- name: Nginx WordPress | Let's Encrypt | Validate required settings
+  ansible.builtin.assert:
+    that:
+      - nginx_wordpress_letsencrypt_email is defined
+      - nginx_wordpress_letsencrypt_email | length > 0
+      - nginx_wordpress_letsencrypt_domains is defined
+      - nginx_wordpress_letsencrypt_domains | length > 0
+      - nginx_wordpress_letsencrypt_dns_provider == 'cloudflare'
+      - nginx_wordpress_letsencrypt_cloudflare_api_token is defined
+      - nginx_wordpress_letsencrypt_cloudflare_api_token | length > 0
+    fail_msg: >-
+      Let's Encrypt (Cloudflare DNS) requires nginx_wordpress_letsencrypt_email,
+      nginx_wordpress_letsencrypt_domains, and vault_cloudflare_api_token.
+  tags: [nginx-wordpress, ssl, letsencrypt]
+
+- name: Nginx WordPress | Let's Encrypt | Ensure certbot is installed
+  ansible.builtin.package:
+    name: "{{ nginx_wordpress_certbot_packages | default(['certbot']) }}"
+    state: present
+  tags: [nginx-wordpress, ssl, letsencrypt]
+
+- name: Nginx WordPress | Let's Encrypt | Ensure credentials directory exists
+  ansible.builtin.file:
+    path: "{{ nginx_wordpress_letsencrypt_cloudflare_credentials_path | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+  tags: [nginx-wordpress, ssl, letsencrypt]
+
+- name: Nginx WordPress | Let's Encrypt | Write Cloudflare DNS credentials
+  ansible.builtin.copy:
+    dest: "{{ nginx_wordpress_letsencrypt_cloudflare_credentials_path }}"
+    owner: root
+    group: root
+    mode: '0600'
+    content: |
+      dns_cloudflare_api_token = {{ nginx_wordpress_letsencrypt_cloudflare_api_token }}
+  no_log: true
+  tags: [nginx-wordpress, ssl, letsencrypt]
+
+- name: Nginx WordPress | Let's Encrypt | Request certificate via DNS-01
+  ansible.builtin.command:
+    cmd: >
+      certbot certonly
+      --non-interactive
+      --agree-tos
+      --email {{ nginx_wordpress_letsencrypt_email }}
+      --dns-cloudflare
+      --dns-cloudflare-credentials {{ nginx_wordpress_letsencrypt_cloudflare_credentials_path }}
+      --dns-cloudflare-propagation-seconds {{ nginx_wordpress_letsencrypt_propagation_seconds }}
+      {% for domain in nginx_wordpress_letsencrypt_domains %}-d {{ domain }} {% endfor %}
+  args:
+    creates: "/etc/letsencrypt/live/{{ nginx_wordpress_letsencrypt_primary_domain }}/fullchain.pem"
+  tags: [nginx-wordpress, ssl, letsencrypt]
+
+- name: Nginx WordPress | Let's Encrypt | Enable certbot timer
+  ansible.builtin.systemd:
+    name: certbot.timer
+    enabled: true
+    state: started
+  tags: [nginx-wordpress, ssl, letsencrypt]

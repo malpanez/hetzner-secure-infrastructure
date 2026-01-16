@@ -31,8 +31,9 @@ server {
 # HTTPS Server (Main Configuration)
 # ============================================================================
 server {
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
     server_name {{ nginx_wordpress_server_name }} {{ nginx_wordpress_server_aliases | join(' ') }};
 
     # Document root

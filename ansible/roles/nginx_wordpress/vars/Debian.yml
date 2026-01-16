@@ -24,6 +24,11 @@ nginx_wordpress_tools_packages:
   - unzip
   - wget
 
+# Certbot (DNS-01 via Cloudflare)
+nginx_wordpress_certbot_packages:
+  - certbot
+  - python3-certbot-dns-cloudflare
+
 # Service names
 nginx_wordpress_nginx_service: nginx
 nginx_wordpress_php_fpm_service: "php{{ nginx_wordpress_php_version }}-fpm"
