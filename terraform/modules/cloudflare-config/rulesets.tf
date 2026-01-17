@@ -1,10 +1,10 @@
 # ========================================
 # Cloudflare v5 Rulesets (Modern API)
-# FREE PLAN COMPATIBLE - Unlimited rulesets
+# FREE PLAN: 1 ruleset per phase allowed
 # ========================================
 #
 # NOTE: This replaces deprecated Page Rules (limited to 3 on Free plan)
-# Rulesets are more powerful and have no limits on Free plan
+# Free plan allows 1 ruleset per phase, but multiple rules within each
 # ========================================
 
 # --------------------------------------------------------
@@ -25,10 +25,12 @@ resource "cloudflare_ruleset" "security_headers" {
 
     action_parameters {
       # NOTE: Headers MUST be in alphabetical order by name (Cloudflare sorts them)
+      # CSP: frame-ancestors 'self' allows WordPress Customizer (iframe from same origin)
+      # worker-src 'self' blob: allows Web Workers used by modern WP plugins
       headers {
         name      = "Content-Security-Policy"
         operation = "set"
-        value     = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"
+        value     = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' wss:; frame-src 'self' blob:; frame-ancestors 'self'; worker-src 'self' blob:; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"
       }
       headers {
         name      = "Permissions-Policy"
@@ -50,10 +52,12 @@ resource "cloudflare_ruleset" "security_headers" {
         operation = "set"
         value     = "nosniff"
       }
+      # X-Frame-Options: SAMEORIGIN allows same-origin iframes (Customizer)
+      # Note: frame-ancestors in CSP supersedes this, but browsers use both
       headers {
         name      = "X-Frame-Options"
         operation = "set"
-        value     = "DENY"
+        value     = "SAMEORIGIN"
       }
       headers {
         name      = "X-XSS-Protection"
@@ -165,34 +169,6 @@ resource "cloudflare_ruleset" "cache_rules" {
       cache_key {
         ignore_query_strings_order = false
       }
-    }
-  }
-}
-
-# --------------------------------------------------------
-# WordPress Admin Security Exception
-# --------------------------------------------------------
-# Disable Managed Challenge for wp-admin/wp-login to allow access
-# without requiring challenges.cloudflare.com (blocked by some ad blockers/Pi-hole)
-# Security is still maintained via:
-# - Rate limiting (Nginx + Cloudflare)
-# - WordPress 2FA (WP 2FA plugin)
-# - WAF rules still apply
-# --------------------------------------------------------
-resource "cloudflare_ruleset" "wp_admin_security_exception" {
-  zone_id     = data.cloudflare_zone.main.id
-  name        = "wp-admin-security-exception"
-  description = "Skip managed challenge for WordPress admin (2FA handles auth security)"
-  kind        = "zone"
-  phase       = "http_request_firewall_custom"
-
-  rules {
-    description = "Skip challenge for wp-admin and wp-login"
-    expression  = "(starts_with(http.request.uri.path, \"/wp-admin\") or http.request.uri.path eq \"/wp-login.php\")"
-    action      = "skip"
-    enabled     = var.wp_admin_skip_challenge
-    action_parameters {
-      products = ["securityLevel"]
     }
   }
 }

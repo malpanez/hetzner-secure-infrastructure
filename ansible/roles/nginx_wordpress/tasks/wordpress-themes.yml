@@ -76,11 +76,11 @@
             installed_theme_names +
             ['',
              'Theme Information:',
-             '  • Kadence: Free, LearnDash-compatible, header/footer builder',
-             '  • Astra: Free, ultra-lightweight, 1.7M+ installs',
-             '  • Neve: Free, mobile-first, AMP-ready',
+             '  • Astra: Free, ultra-lightweight, 1.7M+ installs, LearnDash official partner',
              '  • GeneratePress: Free, performance-focused',
+             '  • Neve: Free, mobile-first, AMP-ready',
              '',
+             'Astra + LearnDash: Official integration with dedicated starter sites',
              'All themes are 100% FREE from WordPress.org',
              '========================================'] }}"
   vars:
@@ -105,39 +105,29 @@
       - "WordPress Theme Installation Complete"
       - "========================================="
       - ""
-      - "✓ Primary theme installed: {{ nginx_wordpress_theme }}"
-      - "✓ Theme activated: {{ 'Yes' if nginx_wordpress_theme_activate else 'No' }}"
+      - "Primary theme installed: {{ nginx_wordpress_theme }}"
+      - "Theme activated: {{ 'Yes' if nginx_wordpress_theme_activate else 'No' }}"
       - ""
-      - "NEXT STEPS:"
+      - "NEXT STEPS (Astra + LearnDash Academy):"
       - ""
-      - "1. Customize Theme:"
-      - "   • Go to: Appearance → Customize"
-      - "   • Set logo, colors, typography"
-      - "   • Configure header/footer"
+      - "1. Install LearnDash Pro:"
+      - "   - Upload from Plugins -> Add New -> Upload"
+      - "   - Activate with license key"
+      - "   - Install LearnDash Course Grid plugin"
       - ""
-      - "2. {{ nginx_wordpress_theme | capitalize }} Specific:"
-      - "{{ theme_starter_templates_line }}"
-      - "{{ theme_learndash_line }}"
-      - "{{ theme_demo_content_line }}"
+      - "2. Import LearnDash Academy Starter Template:"
+      - "   - Install 'Starter Templates' plugin (free)"
+      - "   - Go to: Appearance -> Starter Templates"
+      - "   - Select page builder (Gutenberg or Elementor)"
+      - "   - Search: 'LearnDash Academy'"
+      - "   - Click 'Import Complete Site'"
       - ""
-      - "3. Install LearnDash Pro:"
-      - "   • Upload from Plugins → Add New → Upload"
-      - "   • Activate with license key"
+      - "3. Customize:"
+      - "   - Appearance -> Customize (logo, colors)"
+      - "   - Create courses in LearnDash -> Courses"
       - ""
+      - "Reference: https://wpastra.com/templates/learndash-academy-02/"
       - "========================================="
-  vars:
-    theme_starter_templates_line: >-
-      {{ '   • Appearance → Kadence → Starter Templates (FREE)'
-         if nginx_wordpress_theme == 'kadence'
-         else '   • Install Starter Templates plugin (free)' }}
-    theme_learndash_line: >-
-      {{ '   • Choose LearnDash-compatible template'
-         if nginx_wordpress_theme == 'kadence'
-         else '   • Import LearnDash starter site' }}
-    theme_demo_content_line: >-
-      {{ '   • Import demo content (optional)'
-         if nginx_wordpress_theme == 'kadence'
-         else '' }}
   when: wp_config_check.stat.exists
   run_once: true
   tags: [nginx-wordpress, wordpress, themes, info]
