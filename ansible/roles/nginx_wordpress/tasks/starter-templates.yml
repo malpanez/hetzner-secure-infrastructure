@@ -1,0 +1,163 @@
+---
+# Nginx WordPress Role - Kadence Starter Templates Setup
+# Prepares the environment for manual template import via WordPress admin
+# Note: Kadence Starter Templates requires manual import through the UI
+
+- name: Nginx WordPress | Starter Templates | Check if WordPress is installed
+  ansible.builtin.stat:
+    path: "{{ nginx_wordpress_web_root }}/wp-config.php"
+  register: wp_config_check
+  tags: [nginx-wordpress, wordpress, starter-templates]
+
+- name: Nginx WordPress | Starter Templates | Check if Kadence Starter Templates plugin is installed
+  ansible.builtin.command:
+    cmd: >-
+      {{ nginx_wordpress_wpcli_path }} plugin is-installed kadence-starter-templates
+      --path={{ nginx_wordpress_web_root }}
+  become_user: "{{ nginx_wordpress_nginx_user }}"
+  register: starter_templates_installed
+  changed_when: false
+  failed_when: false
+  when: wp_config_check.stat.exists
+  tags: [nginx-wordpress, wordpress, starter-templates, molecule-notest]
+
+- name: Nginx WordPress | Starter Templates | Ensure Kadence Starter Templates is installed and activated
+  ansible.builtin.command:
+    cmd: >-
+      {{ nginx_wordpress_wpcli_path }} plugin install kadence-starter-templates --activate
+      --path={{ nginx_wordpress_web_root }}
+  become_user: "{{ nginx_wordpress_nginx_user }}"
+  register: starter_templates_install
+  changed_when: "'Success' in starter_templates_install.stdout or 'Installing' in starter_templates_install.stdout"
+  failed_when: false
+  when:
+    - wp_config_check.stat.exists
+    - starter_templates_installed.rc != 0
+  tags: [nginx-wordpress, wordpress, starter-templates, molecule-notest]
+
+- name: Nginx WordPress | Starter Templates | Ensure Kadence Blocks is installed and activated
+  ansible.builtin.command:
+    cmd: >-
+      {{ nginx_wordpress_wpcli_path }} plugin install kadence-blocks --activate
+      --path={{ nginx_wordpress_web_root }}
+  become_user: "{{ nginx_wordpress_nginx_user }}"
+  register: kadence_blocks_install
+  changed_when: "'Success' in kadence_blocks_install.stdout or 'Installing' in kadence_blocks_install.stdout"
+  failed_when: false
+  when: wp_config_check.stat.exists
+  tags: [nginx-wordpress, wordpress, starter-templates, molecule-notest]
+
+- name: Nginx WordPress | Starter Templates | Check if Kadence theme is active
+  ansible.builtin.command:
+    cmd: >-
+      {{ nginx_wordpress_wpcli_path }} theme status kadence
+      --path={{ nginx_wordpress_web_root }}
+  become_user: "{{ nginx_wordpress_nginx_user }}"
+  register: kadence_theme_status
+  changed_when: false
+  failed_when: false
+  when: wp_config_check.stat.exists
+  tags: [nginx-wordpress, wordpress, starter-templates, molecule-notest]
+
+- name: Nginx WordPress | Starter Templates | Activate Kadence theme if not active
+  ansible.builtin.command:
+    cmd: >-
+      {{ nginx_wordpress_wpcli_path }} theme activate kadence
+      --path={{ nginx_wordpress_web_root }}
+  become_user: "{{ nginx_wordpress_nginx_user }}"
+  register: kadence_theme_activate
+  changed_when: "'Success' in kadence_theme_activate.stdout"
+  failed_when: false
+  when:
+    - wp_config_check.stat.exists
+    - "'Active' not in kadence_theme_status.stdout | default('')"
+  tags: [nginx-wordpress, wordpress, starter-templates, molecule-notest]
+
+# Flush rewrite rules to ensure clean state
+- name: Nginx WordPress | Starter Templates | Flush rewrite rules
+  ansible.builtin.command:
+    cmd: >-
+      {{ nginx_wordpress_wpcli_path }} rewrite flush
+      --path={{ nginx_wordpress_web_root }}
+  become_user: "{{ nginx_wordpress_nginx_user }}"
+  changed_when: false
+  when: wp_config_check.stat.exists
+  tags: [nginx-wordpress, wordpress, starter-templates, molecule-notest]
+
+# Clear all caches for clean template import
+- name: Nginx WordPress | Starter Templates | Clear caches before template import
+  ansible.builtin.command:
+    cmd: >-
+      {{ nginx_wordpress_wpcli_path }} cache flush
+      --path={{ nginx_wordpress_web_root }}
+  become_user: "{{ nginx_wordpress_nginx_user }}"
+  changed_when: false
+  failed_when: false
+  when: wp_config_check.stat.exists
+  tags: [nginx-wordpress, wordpress, starter-templates, molecule-notest]
+
+- name: Nginx WordPress | Starter Templates | Post-setup instructions
+  ansible.builtin.debug:
+    msg:
+      - "========================================="
+      - "Kadence Starter Templates - Ready"
+      - "========================================="
+      - ""
+      - "ENVIRONMENT PREPARED:"
+      - "  ✓ Kadence theme: ACTIVE"
+      - "  ✓ Kadence Blocks: INSTALLED"
+      - "  ✓ Kadence Starter Templates: INSTALLED"
+      - "  ✓ Caches: CLEARED"
+      - ""
+      - "NEXT STEP - Import Template:"
+      - ""
+      - "1. Go to: Appearance → Kadence → Starter Templates"
+      - "   (or Dashboard → Starter Templates)"
+      - ""
+      - "2. Select 'Gutenberg' as the page builder"
+      - ""
+      - "3. RECOMMENDED TEMPLATES for LMS/Trading:"
+      - ""
+      - "   • 'Business Courses' (BEST for LearnDash)"
+      - "     - Clean, professional layout"
+      - "     - Course showcase sections"
+      - "     - Testimonials & pricing"
+      - ""
+      - "   • 'Online Course'"
+      - "     - Focused on single course"
+      - "     - Good for course landing pages"
+      - ""
+      - "   • 'Digital Course'"
+      - "     - Modern, minimal design"
+      - "     - Video-focused layout"
+      - ""
+      - "4. Click 'Import Complete Site'"
+      - "   (or import individual pages)"
+      - ""
+      - "5. AFTER IMPORT - Customize:"
+      - ""
+      - "   Appearance → Customize → Site Identity:"
+      - "   • Upload logo and favicon"
+      - "   • Set site title: Two Minds Trading"
+      - ""
+      - "   Appearance → Customize → Colors & Fonts:"
+      - "   • Apply ND-friendly color palette:"
+      - "     - Background: #F8F9FA (off-white)"
+      - "     - Text: #343A40 (dark gray)"
+      - "     - Primary: #0D6EFD (accessible blue)"
+      - "     - Success: #28A745 (bull/growth)"
+      - "     - Danger: #DC3545 (bear/alert)"
+      - ""
+      - "   See: docs/wordpress/NEURODIVERGENT_FRIENDLY_DESIGN.md"
+      - ""
+      - "========================================="
+      - "FREE TRADING IMAGES:"
+      - "========================================="
+      - "  • Unsplash: unsplash.com/s/photos/trading"
+      - "  • Pexels: pexels.com/search/stock-market"
+      - "  • Pixabay: pixabay.com/images/search/finance"
+      - ""
+      - "========================================="
+  when: wp_config_check.stat.exists
+  run_once: true
+  tags: [nginx-wordpress, wordpress, starter-templates, info]

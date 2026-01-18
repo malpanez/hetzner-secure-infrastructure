@@ -106,7 +106,7 @@ nginx_wordpress_logged_in_salt: ""
 nginx_wordpress_nonce_salt: ""
 
 # ========================================
-# WordPress Plugins - OPTIMIZED
+# WordPress Plugins - OPTIMIZED for LearnDash LMS
 # ========================================
 #
 # Infrastructure already provides (NO PLUGINS NEEDED):
@@ -119,63 +119,68 @@ nginx_wordpress_nonce_salt: ""
 
 # CRITICAL Infrastructure Integration (4 plugins)
 nginx_wordpress_plugins_mandatory:
-  # Infrastructure Integration
   - redis-cache                      # Valkey object cache - CRITICAL
   - nginx-helper                     # FastCGI cache purging - CRITICAL
-
-  # Application Security
   - wordfence-login-security         # 2FA/MFA for admin - ESSENTIAL
   - limit-login-attempts-reloaded    # Login rate limiting - ESSENTIAL
 
 # CRITICAL LMS Operations (3 plugins)
-# These are essential for LearnDash LMS to function properly
 nginx_wordpress_plugins_lms_critical:
-  - updraftplus                      # Database & file backups - CRITICAL
-  # Why: No automated backups currently deployed
-  # Alternative: Manual Restic setup (not implemented yet)
+  - updraftplus                      # Backups - CRITICAL (configure with Google Drive/Dropbox)
+  - wp-mail-smtp                     # SMTP email - CRITICAL (configure with Brevo Free)
+  - seo-by-rank-math                 # SEO - ESSENTIAL (5 keywords free, 20+ schemas)
 
-  - wp-mail-smtp                     # SMTP email delivery - CRITICAL
-  # Why: LearnDash sends many emails (registrations, certificates, notifications)
-  # Problem: PHP mail() goes to SPAM, emails don't reach students
-  # Solution: Use with Brevo Free (300 emails/day)
+# Page Builder & Design (Kadence - Gutenberg native, no Elementor needed)
+nginx_wordpress_plugins_page_builder:
+  - kadence-blocks                   # Advanced Gutenberg blocks - ESSENTIAL
+  - kadence-starter-templates        # Kadence template importer
 
-  - seo-by-rank-math                 # SEO optimization - ESSENTIAL
-  # Why: Marketing courses = SEO = student acquisition
-  # Rank Math Free > Yoast Free (5 keywords vs 1, 20+ schemas vs 2)
-  # Includes: Redirects, 404 monitoring, social previews (all free)
+# Accessibility & UX (Neurodivergent-friendly design)
+nginx_wordpress_plugins_accessibility:
+  - accessibility-assistant          # Reading mask, dyslexia fonts, ADHD mode (free)
+  # Alternative premium: readabler (~$29 lifetime) - more features
 
-# IMPORTANT Content & Compliance (2 plugins)
+# IMPORTANT Content & Compliance
 nginx_wordpress_plugins_recommended:
-  - kadence-blocks                   # Advanced Gutenberg blocks - IMPORTANT
-  # Why: Complements Kadence theme (already installed)
-  # Use case: Course landing pages, pricing tables, testimonials
+  - cookie-notice                    # GDPR cookie consent - IMPORTANT for EU
 
-  - cookie-notice                    # GDPR cookie consent - IMPORTANT
-  # Why: Legal requirement for EU if selling courses
-  # Plugin: "Cookie Notice & Compliance for GDPR / CCPA" (free)
-
-# Optional (only if specifically needed)
-nginx_wordpress_plugins_optional:
-  - contact-form-7                   # Contact forms (if needed beyond LearnDash)
+# Bloat plugins to REMOVE (installed by default in WP)
+nginx_wordpress_plugins_remove:
+  - hello                            # Hello Dolly - useless
+  - akismet                          # Spam protection - not needed without comments
 
 # LMS Plugin (install manually - requires license)
 # LearnDash Pro - Commercial plugin, must be installed manually
-nginx_wordpress_lms_plugin_manual: learndash  # Reminder: Install manually with license
+nginx_wordpress_lms_plugin_manual: learndash
 
 # ========================================
 # WordPress Theme Configuration
 # ========================================
 # Theme is auto-installed and activated via WP-CLI
 
-# Theme selection (all FREE from WordPress.org)
-# Options: kadence, astra, neve, generatepress
-nginx_wordpress_theme: kadence  # Recommended: Best free LearnDash-compatible theme
+# Theme selection - Kadence recommended for easy self-design + LearnDash
+# Kadence advantages: Gutenberg-native, intuitive customizer, less plugins needed
+nginx_wordpress_theme: kadence  # Best for DIY design, LearnDash compatible
 nginx_wordpress_theme_activate: true  # Auto-activate after install
 
 # Additional themes to install (not activated)
 nginx_wordpress_themes_additional: []
-  # - astra
-  # - generatepress
+
+# ========================================
+# Starter Templates Configuration (Kadence)
+# ========================================
+# Import a complete site design via Kadence Starter Templates
+# Available FREE templates for LMS:
+#   - "Business Courses" (recommended - LearnDash optimized)
+#   - "Online Course"
+#   - "Digital Course"
+
+nginx_wordpress_starter_template_import: true  # Enable template import
+nginx_wordpress_starter_template_name: "Business Courses"  # LearnDash-optimized template
+nginx_wordpress_starter_template_id: ""  # Leave empty to auto-discover by name
+nginx_wordpress_starter_template_builder: "gutenberg"  # Kadence uses Gutenberg natively
+nginx_wordpress_starter_template_reset: false  # Reset existing content before import
+nginx_wordpress_starter_template_force: false  # Force re-import even if already imported
 
 # ========================================
 # WordPress Site Configuration
@@ -190,3 +195,27 @@ nginx_wordpress_admin_email: admin@example.com
 # WordPress URL management
 nginx_wordpress_site_url: ""
 nginx_wordpress_force_url_replace: true
+
+# ========================================
+# WordPress Optimization Settings
+# ========================================
+# Applied via WP-CLI after installation
+
+# Disable comments site-wide (not needed for LMS)
+nginx_wordpress_disable_comments: true
+
+# Set timezone (for course schedules, drip content)
+nginx_wordpress_timezone: "Europe/Madrid"
+
+# Set date/time format
+nginx_wordpress_date_format: "j F Y"  # 18 January 2025
+nginx_wordpress_time_format: "H:i"    # 24-hour format
+
+# Permalink structure (SEO-friendly)
+nginx_wordpress_permalink_structure: "/%postname%/"
+
+# Disable pingbacks/trackbacks (security + performance)
+nginx_wordpress_disable_pingbacks: true
+
+# Limit post revisions (database optimization)
+nginx_wordpress_revision_limit: 5
