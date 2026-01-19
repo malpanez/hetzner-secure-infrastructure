@@ -47,7 +47,16 @@
 # ========================================
 # Phase 2: Secrets Management
 # ========================================
-# OpenBao must be deployed before WordPress if using credential rotation
+# OpenBao deployment (requires transit token in vault for auto-unseal)
+#
+# FIRST TIME SETUP (run these manually BEFORE site.yml):
+#   1. ansible-playbook playbooks/openbao.yml
+#   2. ansible-playbook playbooks/openbao-transit-bootstrap.yml -e openbao_transit_bootstrap_ack=true
+#   3. Save transit unseal keys to password manager
+#   4. ansible-vault edit inventory/group_vars/all/secrets.yml
+#      Add: vault_openbao_transit_token: "s.xxxxx"
+#   5. Now run: ansible-playbook playbooks/site.yml
+#
 - name: Import OpenBao playbook
   ansible.builtin.import_playbook: openbao.yml
   tags: [openbao, secrets]

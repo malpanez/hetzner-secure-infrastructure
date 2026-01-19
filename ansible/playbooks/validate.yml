@@ -105,61 +105,51 @@
   gather_facts: false
 
   tasks:
+    - name: Build post-deployment checklist
+      ansible.builtin.set_fact:
+        # yamllint disable rule:line-length
+        ssh_commands: >-
+          {% for host in groups.get('hetzner', []) %}
+          ssh {{ hostvars[host]['ansible_user'] | default('malpanez') }}@{{ hostvars[host]['ansible_host'] | default(host) }}
+          {% endfor %}
+        openbao_host: "{{ hostvars[groups['secrets_servers'][0]]['ansible_host'] | default('N/A') if groups['secrets_servers'] is defined and groups['secrets_servers'] | length > 0 else 'N/A' }}"
+        monitoring_host: "{{ hostvars[groups['monitoring_servers'][0]]['ansible_host'] | default('N/A') if groups['monitoring_servers'] is defined and groups['monitoring_servers'] | length > 0 else 'N/A' }}"
+        wordpress_host: "{{ hostvars[groups['wordpress_servers'][0]]['ansible_host'] | default('N/A') if groups['wordpress_servers'] is defined and groups['wordpress_servers'] | length > 0 else 'N/A' }}"
+        wordpress_domain: "{{ hostvars[groups['wordpress_servers'][0]]['wordpress_domain'] | default(domain_name) | default('example.com') if groups['wordpress_servers'] is defined and groups['wordpress_servers'] | length > 0 else 'example.com' }}"
+        # yamllint enable rule:line-length
+      run_once: true
+      tags: [info, checklist, always]
+
     - name: Show post-deployment tasks
       ansible.builtin.debug:
-        msg: "{{ checklist_message.split('\n') }}"
-      vars:
-        checklist_message: |
-          ========================================
-          POST-DEPLOYMENT CHECKLIST
-          ========================================
-
-          CRITICAL - Test SSH Access:
-          {% for host in groups.get('hetzner', []) %}
-          # yamllint disable-line rule:line-length
-          ssh {{ hostvars[host]['ansible_user'] | default('malpanez') }}@{{ hostvars[host]['ansible_host'] | default(host) }}
-          {% endfor %}
-
-          Security Verification:
-          {% for host in groups.get('hetzner', []) %}
-          On {{ host }}:
-          - sudo aa-status              # AppArmor profiles
-          - sudo ufw status verbose     # Firewall rules
-          - sudo fail2ban-client status # IDS status
-          - sudo sshd -t                # SSH config valid
-          {% endfor %}
-
-          OpenBao Setup (if deployed):
-          {% if groups['secrets_servers'] is defined %}
-          {% for host in groups['secrets_servers'] %}
-          # yamllint disable-line rule:line-length
-          ssh {{ hostvars[host]['ansible_user'] | default('malpanez') }}@{{ hostvars[host]['ansible_host'] | default(host) }}
-          export VAULT_ADDR='https://{{ hostvars[host]['ansible_host'] | default(host) }}:8200'
-          bao operator init
-          # SAVE UNSEAL KEYS!
-          {% endfor %}
-          {% endif %}
-
-          Monitoring Access (if deployed):
-          {% if groups['monitoring_servers'] is defined %}
-          {% for host in groups['monitoring_servers'] %}
-          Prometheus: http://{{ hostvars[host]['ansible_host'] | default(host) }}:9090
-          Grafana: http://{{ hostvars[host]['ansible_host'] | default(host) }}:3000
-          {% endfor %}
-          {% endif %}
-
-          WordPress Setup (if deployed):
-          {% if groups['wordpress_servers'] is defined %}
-          {% for host in groups['wordpress_servers'] %}
-          # yamllint disable-line rule:line-length
-          1. Get SSL: sudo certbot --nginx -d {{ hostvars[host]['wordpress_domain'] | default('example.com') }}
-          # yamllint disable-line rule:line-length
-          2. Access WordPress admin: http://{{ hostvars[host]['ansible_host'] | default(host) }}/wp-admin
-          3. Install LearnDash Pro manually (requires license)
-          4. Configure Cloudflare (if enabled)
-          {% endfor %}
-          {% endif %}
-
-          ========================================
+        msg:
+          - "=========================================="
+          - "      POST-DEPLOYMENT CHECKLIST           "
+          - "=========================================="
+          - ""
+          - "1. Test SSH Access:"
+          - "   {{ ssh_commands | trim }}"
+          - ""
+          - "2. Security Verification:"
+          - "   sudo aa-status              # AppArmor"
+          - "   sudo ufw status verbose     # Firewall"
+          - "   sudo fail2ban-client status # IDS"
+          - "   sudo sshd -t                # SSH config"
+          - ""
+          - "3. OpenBao Setup:"
+          - "   export VAULT_ADDR='https://{{ openbao_host }}:8200'"
+          - "   bao operator init"
+          - "   # SAVE UNSEAL KEYS!"
+          - ""
+          - "4. Monitoring Access:"
+          - "   Prometheus: http://{{ monitoring_host }}:9090"
+          - "   Grafana:    http://{{ monitoring_host }}:3000"
+          - ""
+          - "5. WordPress Setup:"
+          - "   SSL:   sudo certbot --nginx -d {{ wordpress_domain }}"
+          - "   Admin: https://{{ wordpress_domain }}/wp-admin"
+          - "   Install LearnDash Pro (requires license)"
+          - ""
+          - "=========================================="
       run_once: true
       tags: [info, checklist, always]

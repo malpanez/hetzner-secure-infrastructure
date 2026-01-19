@@ -106,31 +106,30 @@
 
     - name: Display monitoring information
       ansible.builtin.debug:
-        msg: |-
-          ========================================
-          Monitoring Stack Deployed
-          ========================================
-
-          Prometheus: http://{{ ansible_host }}:{{ prometheus_port | default(9090) }}
-          Loki: http://{{ ansible_host }}:{{ loki_http_listen_port | default(3100) }}
-          Grafana: http://{{ ansible_host }}:{{ grafana_ini.server.http_port | default(3000) }}
-
-          Default credentials:
-          - Username: {{ grafana_ini.security.admin_user | default('admin') }}
-          - Password: (check vault_grafana_admin_password)
-
-          Grafana Data Sources:
-          - Prometheus (metrics)
-          - Loki (logs)
-
-          Dashboards:
-          - Node Exporter Full (#1860)
-          - Prometheus Stats (#3662)
-
-          Access via Nginx reverse proxy:
-          - prometheus.{{ ansible_host }} -> http://localhost:9090
-          - grafana.{{ ansible_host }} -> http://localhost:3000
-
-          ========================================
+        msg:
+          - "=========================================="
+          - "       Monitoring Stack Deployed          "
+          - "=========================================="
+          - ""
+          - "Prometheus:  http://{{ ansible_host }}:{{ prometheus_port | default(9090) }}"
+          - "Loki:        http://{{ ansible_host }}:{{ loki_http_listen_port | default(3100) }}"
+          - "Grafana:     http://{{ ansible_host }}:{{ grafana_ini.server.http_port | default(3000) }}"
+          - ""
+          - "Grafana Credentials:"
+          - "  Username:  {{ grafana_ini.security.admin_user | default('admin') }}"
+          - "  Password:  (check vault_grafana_admin_password)"
+          - ""
+          - "Data Sources:"
+          - "  • Prometheus (metrics)"
+          - "  • Loki (logs)"
+          - ""
+          - "Dashboards:"
+          - "  • Node Exporter Full (#1860)"
+          - "  • Prometheus Stats (#3662)"
+          - ""
+          - "Nginx Reverse Proxy:"
+          - "  • prometheus.{{ domain_name | default(ansible_host) }}"
+          - "  • grafana.{{ domain_name | default(ansible_host) }}"
+          - "=========================================="
       when: deploy_monitoring | default(true) | bool
       tags: [monitoring, info]
