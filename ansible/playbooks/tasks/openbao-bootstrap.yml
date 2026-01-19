@@ -10,23 +10,59 @@
 - name: Parse OpenBao status
   ansible.builtin.set_fact:
     openbao_status: "{{ (openbao_status_cmd.stdout | default('{}')) | from_json }}"
-  when: openbao_status_cmd.rc == 0
+  # bao status returns rc=0 (unsealed), rc=1 (error), rc=2 (sealed but valid JSON)
+  when: openbao_status_cmd.rc in [0, 2]
   tags: [openbao, bootstrap]
 
-- name: Initialize OpenBao (first run only)
+- name: Debug OpenBao status
+  ansible.builtin.debug:
+    msg:
+      - "OpenBao status check: rc={{ openbao_status_cmd.rc }}"
+      - "Initialized: {{ (openbao_status | default({})).initialized | default('unknown') }}"
+      - "Sealed: {{ (openbao_status | default({})).sealed | default('unknown') }}"
+      - "Recovery Seal Type: {{ (openbao_status | default({})).recovery_seal_type | default('none') }}"
+  tags: [openbao, bootstrap]
+
+# For Transit auto-unseal, use recovery shares instead of unseal keys
+- name: Initialize OpenBao with Transit auto-unseal (first run only)
+  ansible.builtin.command: >-
+    {{ openbao_cli }} operator init
+    -format=json
+    -recovery-shares={{ openbao_key_shares }}
+    -recovery-threshold={{ openbao_key_threshold }}
+  environment: "{{ openbao_env }}"
+  register: openbao_init_cmd
+  changed_when: true
+  when:
+    - not ((openbao_status | default({})).initialized | default(false) | bool)
+    - openbao_transit_enabled | default(false) | bool
+  no_log: true
+  tags: [openbao, bootstrap]
+
+# For standard OpenBao (no Transit), use regular unseal keys
+- name: Initialize OpenBao standard (first run only)
   ansible.builtin.command: >-
     {{ openbao_cli }} operator init
     -format=json
     -key-shares={{ openbao_key_shares }}
     -key-threshold={{ openbao_key_threshold }}
   environment: "{{ openbao_env }}"
-  register: openbao_init_cmd
+  register: openbao_init_cmd_standard
   changed_when: true
-  when: not ((openbao_status | default({})).initialized | default(false) | bool)
+  when:
+    - not ((openbao_status | default({})).initialized | default(false) | bool)
+    - not (openbao_transit_enabled | default(false) | bool)
   no_log: true
   tags: [openbao, bootstrap]
 
-- name: Capture OpenBao init output
+# Merge init results from either method
+- name: Set init result from Transit or standard init
+  ansible.builtin.set_fact:
+    openbao_init_result: "{{ openbao_init_cmd if (openbao_init_cmd is defined and openbao_init_cmd is not skipped) else openbao_init_cmd_standard }}"
+  when: (openbao_init_cmd is defined and openbao_init_cmd is not skipped) or (openbao_init_cmd_standard is defined and openbao_init_cmd_standard is not skipped)
+  tags: [openbao, bootstrap]
+
+- name: Capture OpenBao init output (Transit auto-unseal)
   ansible.builtin.set_fact:
     openbao_init: "{{ (openbao_init_cmd.stdout | default('{}')) | from_json }}"
     openbao_bootstrap_token: "{{ (openbao_init_cmd.stdout | from_json).root_token }}"
@@ -34,14 +70,44 @@
     - openbao_init_cmd is defined
     - openbao_init_cmd is not skipped
     - openbao_init_cmd.stdout is defined
+    - openbao_transit_enabled | default(false) | bool
   no_log: true
   tags: [openbao, bootstrap]
 
-- name: Unseal OpenBao (using first threshold keys)
+- name: Capture OpenBao init output (standard)
+  ansible.builtin.set_fact:
+    openbao_init: "{{ (openbao_init_cmd_standard.stdout | default('{}')) | from_json }}"
+    openbao_bootstrap_token: "{{ (openbao_init_cmd_standard.stdout | from_json).root_token }}"
+  when:
+    - openbao_init_cmd_standard is defined
+    - openbao_init_cmd_standard is not skipped
+    - openbao_init_cmd_standard.stdout is defined
+    - not (openbao_transit_enabled | default(false) | bool)
+  no_log: true
+  tags: [openbao, bootstrap]
+
+# Transit auto-unseal: wait for OpenBao to auto-unseal itself
+- name: Wait for OpenBao to auto-unseal (Transit mode)
+  ansible.builtin.command: "{{ openbao_cli }} status -format=json"
+  environment: "{{ openbao_env }}"
+  register: openbao_unseal_wait
+  until: (openbao_unseal_wait.stdout | from_json).sealed == false
+  retries: 12
+  delay: 5
+  changed_when: false
+  when:
+    - openbao_init is defined
+    - openbao_transit_enabled | default(false) | bool
+  tags: [openbao, bootstrap]
+
+# Standard mode: manual unseal with keys
+- name: Unseal OpenBao (using first threshold keys - standard mode only)
   ansible.builtin.command: "{{ openbao_cli }} operator unseal {{ item }}"
   environment: "{{ openbao_env }}"
   loop: "{{ openbao_init.unseal_keys_b64[0:openbao_key_threshold] }}"
-  when: openbao_init is defined
+  when:
+    - openbao_init is defined
+    - not (openbao_transit_enabled | default(false) | bool)
   no_log: true
   tags: [openbao, bootstrap]
 
@@ -156,30 +222,64 @@
   no_log: true
   tags: [openbao, bootstrap]
 
-- name: Display OpenBao init keys and root token (copy once)
+- name: Display OpenBao init keys and root token (Transit mode)
   ansible.builtin.debug:
-    msg: "{{ openbao_init_message.split('\n') }}"
-  vars:
-    openbao_init_message: |
-      ========================================
-      🔐 OPENBAO INITIALIZED - COPY THESE NOW
-      ========================================
-      Unseal Keys:
-      {% for key in openbao_init.unseal_keys_b64 %}
-      - {{ key }}
-      {% endfor %}
+    msg:
+      - "=========================================="
+      - "  OPENBAO INITIALIZED (Transit Auto-Unseal)"
+      - "=========================================="
+      - ""
+      - "Recovery Keys (save securely):"
+      - "  1. {{ openbao_init.recovery_keys_b64[0] }}"
+      - "  2. {{ openbao_init.recovery_keys_b64[1] }}"
+      - "  3. {{ openbao_init.recovery_keys_b64[2] }}"
+      - "  4. {{ openbao_init.recovery_keys_b64[3] }}"
+      - "  5. {{ openbao_init.recovery_keys_b64[4] }}"
+      - ""
+      - "Root Token:"
+      - "  {{ openbao_init.root_token }}"
+      - ""
+      - "NOTE: Recovery keys are for emergency access only."
+      - "OpenBao will auto-unseal via Transit instance."
+      - "=========================================="
+  when:
+    - openbao_init is defined
+    - openbao_transit_enabled | default(false) | bool
+  tags: [openbao, bootstrap]
 
-      Root Token:
-      - {{ openbao_init.root_token }}
-      ========================================
-  when: openbao_init is defined
+- name: Display OpenBao init keys and root token (standard mode)
+  ansible.builtin.debug:
+    msg:
+      - "=========================================="
+      - "  OPENBAO INITIALIZED - COPY THESE NOW   "
+      - "=========================================="
+      - ""
+      - "Unseal Keys (need {{ openbao_key_threshold }} to unseal):"
+      - "  1. {{ openbao_init.unseal_keys_b64[0] }}"
+      - "  2. {{ openbao_init.unseal_keys_b64[1] }}"
+      - "  3. {{ openbao_init.unseal_keys_b64[2] }}"
+      - "  4. {{ openbao_init.unseal_keys_b64[3] }}"
+      - "  5. {{ openbao_init.unseal_keys_b64[4] }}"
+      - ""
+      - "Root Token:"
+      - "  {{ openbao_init.root_token }}"
+      - "=========================================="
+  when:
+    - openbao_init is defined
+    - not (openbao_transit_enabled | default(false) | bool)
   tags: [openbao, bootstrap]
 
 - name: Remind to store rotation token in vault
   ansible.builtin.debug:
-    msg: |
-      Store the WordPress rotation token in your Ansible Vault:
-        openbao_wordpress_rotation_token: <token>
-      Then re-run playbooks that deploy WordPress rotation timers.
+    msg:
+      - "=========================================="
+      - "  SAVE THIS TOKEN IN ANSIBLE VAULT       "
+      - "=========================================="
+      - ""
+      - "Add to inventory/group_vars/all/secrets.yml:"
+      - "  openbao_wordpress_rotation_token: {{ openbao_wordpress_token }}"
+      - ""
+      - "Then re-run site.yml to deploy rotation timers."
+      - "=========================================="
   when: openbao_wordpress_token is defined
   tags: [openbao, bootstrap]

@@ -65,6 +65,15 @@
     enabled: true
     state: started
     daemon_reload: true
+  register: openbao_transit_service_started
+  tags: [openbao, transit, service]
+
+- name: OpenBao | Transit | Assert transit service started
+  ansible.builtin.assert:
+    that:
+      - openbao_transit_service_started is succeeded
+    success_msg: "OpenBao Transit service started and enabled"
+    fail_msg: "Failed to start OpenBao Transit service"
   tags: [openbao, transit, service]
 
 - name: OpenBao | Transit | Wait for transit instance to start
@@ -73,6 +82,15 @@
     host: 127.0.0.1
     delay: 5
     timeout: 60
+  register: openbao_transit_port_check
+  tags: [openbao, transit, validate]
+
+- name: OpenBao | Transit | Assert transit port is listening
+  ansible.builtin.assert:
+    that:
+      - openbao_transit_port_check is succeeded
+    success_msg: "OpenBao Transit is listening on port {{ openbao_transit_instance_port }}"
+    fail_msg: "OpenBao Transit failed to start within 60 seconds"
   tags: [openbao, transit, validate]
 
 - name: OpenBao | Transit | Display transit initialization instructions

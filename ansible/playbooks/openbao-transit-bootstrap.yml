@@ -12,18 +12,24 @@
   gather_facts: false
 
   vars:
-    openbao_cli: "{{ openbao_binary_path | default('bao') }}"
+    openbao_cli: "{{ openbao_binary_path | default(openbao_install_dir | default('/usr/bin') ~ '/bao') }}"
     openbao_transit_api_addr: "https://127.0.0.1:{{ openbao_transit_instance_port | default(8201) }}"
     openbao_env_base:
       VAULT_ADDR: "{{ openbao_transit_api_addr }}"
     openbao_env: "{{ openbao_env_base | combine({'VAULT_SKIP_VERIFY': '1'}) }}"
 
   pre_tasks:
+    - name: Skip transit bootstrap unless acknowledged
+      ansible.builtin.meta: end_play
+      when: not openbao_transit_bootstrap_ack | default(false) | bool
+      tags: [openbao, transit, bootstrap]
+
     - name: Confirm transit bootstrap
       ansible.builtin.assert:
         that:
           - openbao_transit_bootstrap_ack | default(false) | bool
         fail_msg: "Set -e openbao_transit_bootstrap_ack=true to acknowledge transit init/unseal."
+      tags: [openbao, transit, bootstrap]
 
   tasks:
     - name: Check transit instance status
@@ -155,17 +161,16 @@
              (Needed to unseal Transit after reboot)
 
           2. Add auto-unseal token to Ansible Vault:
-             ansible-vault edit inventory/group_vars/secrets_servers/openbao.yml
+             ansible-vault edit inventory/group_vars/all/secrets.yml
 
              Add:
-             openbao_transit_enabled: true
-             openbao_transit_token: "{{ transit_autounseal_token }}"
+             vault_openbao_transit_token: "{{ transit_autounseal_token }}"
 
           3. Re-run site.yml to deploy primary with auto-unseal:
-             ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/site.yml --tags openbao
+             ansible-playbook -i inventory/production.yml playbooks/site.yml --tags openbao
 
           4. Bootstrap primary OpenBao (will auto-unseal):
-             ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/openbao-bootstrap.yml \
+             ansible-playbook -i inventory/production.yml playbooks/openbao-bootstrap.yml \
                -e openbao_bootstrap_ack=true
 
           ========================================

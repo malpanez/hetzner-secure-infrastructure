@@ -1,11 +1,73 @@
 ---
 # OpenBao Role - Validation Tasks
 
-- name: OpenBao | Validate | Wait for OpenBao to start
+- name: OpenBao | Validate | Wait for OpenBao API to be available
   ansible.builtin.wait_for:
     port: 8200
+    host: "{{ openbao_bind_address | default('127.0.0.1') }}"
     delay: 5
     timeout: 60
+  register: openbao_port_check
+  tags: [openbao, validate]
+
+- name: OpenBao | Validate | Assert OpenBao port is listening
+  ansible.builtin.assert:
+    that:
+      - openbao_port_check is succeeded
+    success_msg: "OpenBao API is listening on port 8200"
+    fail_msg: "OpenBao API failed to start within 60 seconds"
+  tags: [openbao, validate]
+
+- name: OpenBao | Validate | Check OpenBao status
+  ansible.builtin.command: bao status -format=json
+  environment:
+    BAO_ADDR: "{{ openbao_api_addr }}"
+    BAO_SKIP_VERIFY: "{{ 'true' if openbao_tls_self_signed else 'false' }}"
+  register: openbao_status_result
+  failed_when: false
+  changed_when: false
+  tags: [openbao, validate]
+
+- name: OpenBao | Validate | Parse OpenBao status
+  ansible.builtin.set_fact:
+    openbao_status: "{{ openbao_status_result.stdout | from_json }}"
+  when: openbao_status_result.rc in [0, 1, 2]
+  tags: [openbao, validate]
+
+- name: OpenBao | Validate | Determine seal status
+  ansible.builtin.set_fact:
+    openbao_sealed: "{{ openbao_status.sealed | default(true) }}"
+    openbao_initialized: "{{ openbao_status.initialized | default(false) }}"
+    openbao_version: "{{ openbao_status.version | default('unknown') }}"
+  when: openbao_status is defined
+  tags: [openbao, validate]
+
+- name: OpenBao | Validate | Assert OpenBao is initialized and unsealed
+  ansible.builtin.assert:
+    that:
+      - openbao_initialized | bool
+      - not (openbao_sealed | bool)
+    success_msg: "OpenBao is initialized and unsealed"
+    fail_msg: "OpenBao validation failed - initialized: {{ openbao_initialized }}, sealed: {{ openbao_sealed }}"
+  when:
+    - openbao_status is defined
+    - openbao_transit_enabled | default(false)
+  tags: [openbao, validate]
+
+- name: OpenBao | Validate | Display validation summary
+  ansible.builtin.debug:
+    msg:
+      - "=========================================="
+      - "      OpenBao Validation Summary          "
+      - "=========================================="
+      - "API Address:   {{ openbao_api_addr }}"
+      - "Version:       {{ openbao_version | default('unknown') }}"
+      - "Initialized:   {{ openbao_initialized | default('unknown') }}"
+      - "Sealed:        {{ openbao_sealed | default('unknown') }}"
+      - "TLS Enabled:   {{ openbao_tls_enabled }}"
+      - "Transit Mode:  {{ openbao_transit_enabled | default(false) }}"
+      - "=========================================="
+  when: openbao_status is defined
   tags: [openbao, validate]
 
 - name: OpenBao | Validate | Display post-installation instructions
@@ -47,4 +109,5 @@
       - "8. Create policies and tokens for applications"
       - ""
       - "========================================"
+  when: not (openbao_initialized | default(false))
   tags: [openbao, info]
