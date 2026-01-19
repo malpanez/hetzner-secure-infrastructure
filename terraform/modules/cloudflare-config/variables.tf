@@ -114,7 +114,7 @@ variable "csp_frame_src_public_extra" {
 variable "wp_admin_challenge_enabled" {
   description = "Enable Cloudflare challenge for wp-admin/wp-login (set false if using Pi-hole or ad blockers that block challenges.cloudflare.com)"
   type        = bool
-  default     = false  # Disabled by default - security via Nginx rate limiting + WP 2FA
+  default     = false # Disabled by default - security via Nginx rate limiting + WP 2FA
 }
 
 variable "security_level" {

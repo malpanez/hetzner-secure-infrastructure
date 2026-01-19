@@ -39,10 +39,10 @@ locals {
     "https://www.youtube.com",
   ]
 
-  csp_connect_src_admin = concat(local.csp_connect_src_admin_base, var.csp_connect_src_admin_extra)
+  csp_connect_src_admin  = concat(local.csp_connect_src_admin_base, var.csp_connect_src_admin_extra)
   csp_connect_src_public = concat(local.csp_connect_src_public_base, var.csp_connect_src_public_extra)
-  csp_frame_src_admin = concat(local.csp_frame_src_admin_base, var.csp_frame_src_admin_extra)
-  csp_frame_src_public = concat(local.csp_frame_src_public_base, var.csp_frame_src_public_extra)
+  csp_frame_src_admin    = concat(local.csp_frame_src_admin_base, var.csp_frame_src_admin_extra)
+  csp_frame_src_public   = concat(local.csp_frame_src_public_base, var.csp_frame_src_public_extra)
 }
 
 resource "cloudflare_ruleset" "security_headers" {

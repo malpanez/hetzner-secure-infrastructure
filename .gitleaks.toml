@@ -14,6 +14,7 @@ title = "Hetzner Secure Infrastructure - GitLeaks Config"
     '''\.archive/.*''',
     '''DEPLOYMENT_GUIDE\.md''',
     '''docs/DEPLOYMENT\.md''',
+    '''ansible/roles/.*/README\.md''',
   ]
 
   # Ignore specific patterns that are known examples
