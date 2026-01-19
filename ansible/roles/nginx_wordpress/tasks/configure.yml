@@ -277,8 +277,9 @@
     - home
   when:
     - nginx_wordpress_install_wordpress
-    - wp_is_installed.rc == 0 or (wp_core_install is changed)
-  tags: [nginx-wordpress, wordpress, config]
+    - wp_is_installed is defined
+    - wp_is_installed.rc == 0 or (wp_core_install is defined and wp_core_install is changed)
+  tags: [nginx-wordpress, wordpress, molecule-notest]
 
 - name: Nginx WordPress | Configure | Replace IP URLs with domain
   ansible.builtin.command:
