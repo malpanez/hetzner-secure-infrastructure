@@ -106,35 +106,31 @@
 ### Complete Deployment Steps
 
 ```bash
-# 1. Deploy Infrastructure (includes both OpenBao instances)
-ansible-playbook playbooks/site.yml
-
-# Output: Both Transit (8201) and Primary (8200) OpenBao deployed
-#         Both are SEALED and need initialization
-
-# 2. Bootstrap Transit Instance
+# 1. Bootstrap Transit Instance
 ansible-playbook \
   playbooks/openbao-transit-bootstrap.yml \
   -e openbao_transit_bootstrap_ack=true
+
+# (Optional) Run bootstrap via site.yml:
+# ansible-playbook playbooks/site.yml -e openbao_transit_bootstrap_ack=true --tags openbao,transit,bootstrap
 
 # Output: Transit initialized, unsealed, encryption key created
 #         SAVE: 5 transit unseal keys + auto-unseal token
 #         Auto-unseal token goes into Ansible Vault
 
-# 3. Add Transit Token to Ansible Vault
-ansible-vault edit inventory/group_vars/secrets_servers/vault.yml
+# 2. Add Transit Token to Ansible Vault
+ansible-vault edit inventory/group_vars/all/secrets.yml
 
 # Add:
 # vault_openbao_transit_token: "hvs.XXXXXXXXXXXX"
 
-# 4. Re-deploy Primary with Auto-Unseal
-ansible-playbook \
-  playbooks/site.yml --tags openbao
+# 3. Deploy Infrastructure (includes both OpenBao instances)
+ansible-playbook playbooks/site.yml
 
-# Output: Primary OpenBao reconfigured with Transit seal stanza
-#         Primary will auto-unseal on next initialization
+# Output: Both Transit (8201) and Primary (8200) OpenBao deployed
+#         Primary uses Transit auto-unseal
 
-# 5. Bootstrap Primary OpenBao
+# 4. Bootstrap Primary OpenBao
 ansible-playbook \
   playbooks/openbao-bootstrap.yml \
   -e openbao_bootstrap_ack=true
@@ -143,7 +139,7 @@ ansible-playbook \
 #         SAVE: 5 primary unseal keys (backup only, not needed for auto-unseal)
 #         Creates WordPress rotation token
 
-# 6. Setup WordPress DB Rotation
+# 5. Setup WordPress DB Rotation
 ansible-playbook \
   playbooks/setup-openbao-rotation.yml
 
@@ -168,11 +164,11 @@ ansible-playbook playbooks/site.yml
 - Configures systemd services
 - Deploys monitoring (seal status checks every 15 min)
 
-**Both instances start SEALED** (expected).
+**Primary will use Transit auto-unseal** (after token is stored).
 
 ---
 
-### Step 2: Bootstrap Transit Instance
+### Step 1: Bootstrap Transit Instance
 
 ```bash
 ansible-playbook \
@@ -211,11 +207,11 @@ Auto-Unseal Token (for Primary):
 
 ---
 
-### Step 3: Add Auto-Unseal Token to Ansible Vault
+### Step 2: Add Auto-Unseal Token to Ansible Vault
 
 ```bash
 # Edit vault file
-ansible-vault edit inventory/group_vars/secrets_servers/vault.yml
+ansible-vault edit inventory/group_vars/all/secrets.yml
 
 # Add this line:
 vault_openbao_transit_token: "hvs.XXXXXXXXXXXXXXXXXXXXXXXXXX"
@@ -225,23 +221,17 @@ vault_openbao_transit_token: "hvs.XXXXXXXXXXXXXXXXXXXXXXXXXX"
 
 ---
 
-### Step 4: Re-deploy Primary with Auto-Unseal Configuration
+### Step 3: Deploy Infrastructure (Primary uses Transit auto-unseal)
 
 ```bash
-ansible-playbook \
-  playbooks/site.yml --tags openbao
+ansible-playbook playbooks/site.yml
 ```
-
-**What this does**:
-- Regenerates Primary OpenBao configuration with Transit seal stanza
-- Restarts Primary OpenBao service
-- Primary now configured to auto-unseal via Transit
 
 **Primary is still SEALED** (needs initialization first).
 
 ---
 
-### Step 5: Bootstrap Primary OpenBao
+### Step 4: Bootstrap Primary OpenBao
 
 ```bash
 ansible-playbook \

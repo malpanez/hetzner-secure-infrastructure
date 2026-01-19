@@ -251,7 +251,7 @@ ansible-inventory --host stag-de-wp-01
 ansible-playbook playbooks/site.yml
 
 # Opción 2: Solo WordPress + Monitorización (por separado)
-ansible-playbook playbooks/wordpress-only.yml
+ansible-playbook playbooks/wordpress.yml
 ansible-playbook playbooks/site.yml --tags monitoring
 
 # Opción 3: Limitar a grupo staging específicamente
@@ -746,7 +746,7 @@ Después de testing:
 2. ⏳ **Crear terraform.production.tfvars**
 3. ⏳ **Desplegar producción**
 4. ⏳ **Configurar DNS en Cloudflare**
-5. ⏳ **Configurar SSL con Let's Encrypt**
+5. ⏳ **Verificar SSL (Let's Encrypt DNS-01 via Ansible)**
 6. ⏳ **Configurar alertas en Grafana**
 7. ⏳ **Instalar LearnDash Pro**
 

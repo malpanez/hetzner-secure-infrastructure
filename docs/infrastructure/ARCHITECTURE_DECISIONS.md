@@ -391,7 +391,7 @@ Edge (Cloudflare → User):
   DV: Domain Validated
 
 Origin (Cloudflare → Server):
-  Certificate: Let's Encrypt (via Certbot)
+  Certificate: Let's Encrypt (via Certbot DNS-01)
   Type: Full (strict) mode
   Renewal: Automated (certbot renew)
   Domains: tudominio.com, www.tudominio.com
@@ -422,8 +422,11 @@ Modes available:
 # 1. Cloudflare (automatic)
 Cloudflare issues Universal SSL within 15 minutes of adding domain
 
-# 2. Server (Ansible deploys)
-certbot --nginx -d tudominio.com -d www.tudominio.com --non-interactive --agree-tos
+# 2. Server (Ansible deploys, DNS-01 via Cloudflare)
+certbot certonly --dns-cloudflare \
+  --dns-cloudflare-credentials /etc/letsencrypt/cloudflare.ini \
+  -d tudominio.com -d www.tudominio.com \
+  --non-interactive --agree-tos
 
 # 3. Auto-renewal (Ansible configures)
 systemctl enable certbot.timer

@@ -21,7 +21,7 @@
 |---------|---------------|---------------------|
 | **DDoS Protection** | ❌ Vulnerable | ✅ Hasta 1 Tbps |
 | **CDN Global** | ❌ No | ✅ 300+ POPs |
-| **SSL/TLS** | ⚠️ Let's Encrypt manual | ✅ Universal SSL |
+| **SSL/TLS** | ✅ Let's Encrypt DNS-01 (Ansible) | ✅ Universal SSL |
 | **WAF** | ❌ No | ✅ Reglas básicas |
 | **Caching** | ⚠️ Server-side solo | ✅ Edge caching |
 | **Rate Limiting** | ⚠️ Fail2ban solo | ✅ Cloudflare + Fail2ban |

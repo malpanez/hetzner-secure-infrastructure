@@ -36,7 +36,7 @@ git --version      # >= 2.30
    - Crear en: https://console.hetzner.cloud/
    - Permisos: Read & Write
 
-2. **Cloudflare API Token** (opcional)
+2. **Cloudflare API Token** (requerido para Let's Encrypt DNS-01)
    - Crear en: https://dash.cloudflare.com/profile/api-tokens
    - Permisos: Zone:DNS:Edit
 
@@ -77,7 +77,7 @@ cat > .env << 'EOF'
 export HCLOUD_TOKEN="tu_token_hetzner_aqui"
 export TF_VAR_hcloud_token="$HCLOUD_TOKEN"
 
-# Cloudflare (opcional)
+# Cloudflare (requerido para DNS-01)
 export CLOUDFLARE_API_TOKEN="tu_token_cloudflare"
 export TF_VAR_cloudflare_api_token="$CLOUDFLARE_API_TOKEN"
 
@@ -98,7 +98,7 @@ chmod 600 ~/.ansible_vault_pass
 
 # Encriptar secretos (ya existen, solo verificar)
 cd ansible
-ansible-vault view group_vars/all/secrets.yml
+ansible-vault view inventory/group_vars/all/secrets.yml
 # Debe pedir password y mostrar contenido encriptado
 ```
 
@@ -181,11 +181,19 @@ ansible all -m ping
 ### 2. Ejecutar Playbook Completo
 
 ```bash
-# Deployment completo (todos los roles)
-ansible-playbook playbooks/site.yml --ask-vault-pass
+# 1) Bootstrap Transit (auto-unseal)
+ansible-playbook -i inventory/production.yml \
+  playbooks/openbao-transit-bootstrap.yml \
+  -e openbao_transit_bootstrap_ack=true --ask-vault-pass
+
+# 2) Guardar el auto-unseal token en Ansible Vault
+ansible-vault edit inventory/group_vars/all/secrets.yml
+
+# 3) Deployment completo (todos los roles)
+ansible-playbook -i inventory/production.yml playbooks/site.yml --ask-vault-pass
 
 # O por tags específicos:
-ansible-playbook playbooks/site.yml \
+ansible-playbook -i inventory/production.yml playbooks/site.yml \
   --tags common,security,nginx,wordpress \
   --ask-vault-pass
 ```
@@ -212,14 +220,13 @@ ansible-playbook playbooks/site.yml \
 cat ../server_ip.txt
 
 # Acceder vía navegador
-https://TU_IP_O_DOMINIO/wp-admin/install.php
+https://TU_DOMINIO/wp-admin
 ```
 
-**Datos de instalación:**
-- Título del sitio: Tu elección
-- Usuario admin: Tu elección
-- Contraseña: Generar segura
-- Email: Tu email
+**Datos de acceso (desde Ansible Vault):**
+- Usuario admin: `vault_nginx_wordpress_admin_user`
+- Contraseña: `vault_nginx_wordpress_admin_password`
+- Email: `vault_nginx_wordpress_admin_email`
 
 ### 2. Configurar Cloudflare (Si Aplica)
 
@@ -240,17 +247,13 @@ Si `enable_cloudflare = true` en `terraform.prod.tfvars`:
 
 ### 3. Configurar SSL/TLS
 
-**Si usas Cloudflare:**
-- Cloudflare → SSL/TLS → Overview
-- Modo: **Full (strict)**
+**Con Cloudflare (proxy ON recomendado):**
+- Cloudflare → SSL/TLS → Overview → **Full (strict)**
 - Edge Certificates → Always Use HTTPS: ✅
+- Ansible emite el cert Let's Encrypt vía DNS-01 (token en Vault).
 
-**Si NO usas Cloudflare:**
-```bash
-# Instalar Let's Encrypt (manual)
-ssh malpanez@TU_IP
-sudo certbot --nginx -d tudominio.com
-```
+**Sin Cloudflare (proxy OFF):**
+- Puedes usar HTTP-01, pero requiere que los registros estén en “DNS only”.
 
 ---
 

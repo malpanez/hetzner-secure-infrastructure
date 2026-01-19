@@ -7,32 +7,32 @@
 ## Complete Deployment (Fresh Install)
 
 ```bash
-# 1. Deploy all infrastructure
-ansible-playbook playbooks/site.yml
-
-# 2. Bootstrap Transit OpenBao (auto-unseal provider)
+# 1. Bootstrap Transit OpenBao (auto-unseal provider)
 ansible-playbook \
   playbooks/openbao-transit-bootstrap.yml \
   -e openbao_transit_bootstrap_ack=true
 
 # SAVE: Transit unseal keys (5) + auto-unseal token
 
-# 3. Add auto-unseal token to vault
-ansible-vault edit inventory/group_vars/secrets_servers/vault.yml
+# 2. Add auto-unseal token to vault
+ansible-vault edit inventory/group_vars/all/secrets.yml
 # Add: vault_openbao_transit_token: "hvs.XXXXX"
 
-# 4. Re-deploy Primary OpenBao with auto-unseal config
-ansible-playbook \
-  playbooks/site.yml --tags openbao
+# 3. Deploy full stack
+ansible-playbook playbooks/site.yml
 
-# 5. Bootstrap Primary OpenBao (will auto-unseal)
+# Tip: site.yml now imports openbao-transit-bootstrap.yml
+# If you want to run bootstrap within site.yml:
+# ansible-playbook playbooks/site.yml -e openbao_transit_bootstrap_ack=true --tags openbao,transit,bootstrap
+
+# 4. Bootstrap Primary OpenBao (will auto-unseal)
 ansible-playbook \
   playbooks/openbao-bootstrap.yml \
   -e openbao_bootstrap_ack=true
 
 # SAVE: Primary unseal keys (5, backup only) + WordPress rotation token
 
-# 6. Setup WordPress DB rotation
+# 5. Setup WordPress DB rotation
 ansible-playbook \
   playbooks/setup-openbao-rotation.yml
 ```
@@ -117,7 +117,7 @@ openbao-transit-bootstrap.yml → Save transit keys + token
   ↓
 Add token to vault
   ↓
-site.yml --tags openbao
+site.yml
   ↓
 openbao-bootstrap.yml → Save primary keys
   ↓

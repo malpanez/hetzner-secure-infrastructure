@@ -54,7 +54,7 @@
 - **Secrets Management**: OpenBao 2.0 (Vault fork)
 - **Firewall**: UFW + Hetzner Cloud Firewall
 - **Intrusion Detection**: Fail2ban
-- **SSL/TLS**: Let's Encrypt (Certbot)
+- **SSL/TLS**: Let's Encrypt (Certbot DNS-01 via Cloudflare)
 - **DNS**: Cloudflare
 
 ---
@@ -197,7 +197,7 @@ graph TB
 - ✅ MariaDB 10.11+ (database)
 - ✅ Valkey 8.0 (cache, socket Unix)
 - ✅ WordPress + Tutor LMS
-- ✅ Certbot (SSL automation)
+- ✅ Certbot DNS-01 (SSL automation)
 - ✅ UFW + Fail2ban (security)
 
 **Exporters para Prometheus:**
@@ -942,25 +942,32 @@ prometheus_scrape_blackbox_exporter: true (:9115)
 vim ansible/inventory/group_vars/all/secrets.yml
 
 # 3. Deploy con Terraform
-cd terraform/environments/production
-tofu init
-tofu plan
-tofu apply
+cd terraform
+terraform init
+terraform plan -var-file=production.tfvars
+terraform apply -var-file=production.tfvars
 
-# 4. Deploy con Ansible
-cd ../../../ansible
+# 4. Bootstrap Transit (auto-unseal)
+cd ../ansible
+ansible-playbook playbooks/openbao-transit-bootstrap.yml \
+  -e openbao_transit_bootstrap_ack=true --ask-vault-pass
+
+# 5. Guardar auto-unseal token
+ansible-vault edit inventory/group_vars/all/secrets.yml
+
+# 6. Deploy con Ansible
 ansible-playbook playbooks/site.yml --ask-vault-pass
 
 # 5. Verificar monitoring
 # - Grafana: https://grafana.tudominio.com (admin/<vault>)
-# - Prometheus: http://YOUR_IP:9090 (local/SSH tunnel)
-# - Loki: http://YOUR_IP:3100/ready (local/SSH tunnel)
+# - Prometheus: https://prometheus.tudominio.com
+# - Loki: http://127.0.0.1:3100/ready (local/SSH tunnel)
 
 # 6. Post-deployment
 # Seguir POST_DEPLOYMENT.md para:
 # - Configurar DNS en Cloudflare
-# - Obtener SSL con Certbot
-# - Instalar WordPress
+# - Verificar SSL (Certbot DNS-01 via Ansible)
+# - Acceso WordPress (credenciales en Vault)
 # - Configurar Valkey cache
 # - Verificar dashboards
 ```

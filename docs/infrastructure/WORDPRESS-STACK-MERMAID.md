@@ -134,7 +134,7 @@ sequenceDiagram
     TF->>TF: Generate Ansible inventory
 
     Note over Dev,Server: Phase 2: Configuration Management
-    Dev->>Ansible: ansible-playbook wordpress-only.yml
+    Dev->>Ansible: ansible-playbook playbooks/wordpress.yml
     Ansible->>Server: 1️⃣ Common (timezone, packages)
     Ansible->>Server: 2️⃣ Security (UFW, Fail2ban, SSH 2FA)
     Ansible->>Server: 3️⃣ MariaDB (database)
@@ -146,7 +146,7 @@ sequenceDiagram
     Note over Dev,User: Phase 3: DNS & SSL
     Dev->>CF: Update DNS A record
     CF->>Server: Point domain → IP
-    Dev->>Server: certbot --nginx (Let's Encrypt)
+    Dev->>Server: certbot certonly --dns-cloudflare (Let's Encrypt)
     Server-->>Dev: ✅ SSL certificate obtained
     Dev->>CF: Enable WAF + Rate Limiting
 
