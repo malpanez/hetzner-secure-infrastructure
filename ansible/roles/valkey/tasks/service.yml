@@ -7,4 +7,13 @@
     enabled: true
     state: started
     daemon_reload: true
+  register: valkey_service_started
+  tags: [valkey, service]
+
+- name: Valkey | Service | Assert Valkey service is running
+  ansible.builtin.assert:
+    that:
+      - valkey_service_started is succeeded
+    success_msg: "Valkey service {{ valkey_service_name }} is running"
+    fail_msg: "Failed to start Valkey service"
   tags: [valkey, service]

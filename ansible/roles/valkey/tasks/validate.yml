@@ -7,14 +7,57 @@
   register: valkey_service_status
   tags: [valkey, validate]
 
-- name: Valkey | Validate | Display Valkey service status
-  ansible.builtin.debug:
-    msg: "Valkey service is {{ valkey_service_status.status.ActiveState }}"
+- name: Valkey | Validate | Assert Valkey service is active
+  ansible.builtin.assert:
+    that:
+      - valkey_service_status.status.ActiveState == "active"
+    success_msg: "Valkey service is active and running"
+    fail_msg: "Valkey service is not active (state: {{ valkey_service_status.status.ActiveState }})"
   tags: [valkey, validate]
 
 - name: Valkey | Validate | Test Valkey connectivity
   ansible.builtin.command: valkey-cli ping
   register: valkey_ping
   changed_when: false
-  failed_when: valkey_ping.stdout != "PONG"
+  failed_when: false
+  tags: [valkey, validate]
+
+- name: Valkey | Validate | Assert Valkey responds to PING
+  ansible.builtin.assert:
+    that:
+      - valkey_ping.stdout == "PONG"
+    success_msg: "Valkey connectivity test passed (PING -> PONG)"
+    fail_msg: "Valkey connectivity failed (expected PONG, got: {{ valkey_ping.stdout }})"
+  tags: [valkey, validate]
+
+- name: Valkey | Validate | Get Valkey server info
+  ansible.builtin.command: valkey-cli INFO server
+  register: valkey_info
+  changed_when: false
+  tags: [valkey, validate]
+
+- name: Valkey | Validate | Check system warnings from Valkey
+  ansible.builtin.command: valkey-cli INFO
+  register: valkey_full_info
+  changed_when: false
+  tags: [valkey, validate]
+
+- name: Valkey | Validate | Parse Valkey version
+  ansible.builtin.set_fact:
+    valkey_version: "{{ valkey_info.stdout | regex_search('valkey_version:([0-9.]+)', '\\1') | first }}"
+    valkey_uptime: "{{ valkey_info.stdout | regex_search('uptime_in_seconds:([0-9]+)', '\\1') | first }}"
+  tags: [valkey, validate]
+
+- name: Valkey | Validate | Display validation summary
+  ansible.builtin.debug:
+    msg:
+      - "=========================================="
+      - "         Valkey Validation Summary        "
+      - "=========================================="
+      - "Service:     {{ valkey_service_status.status.ActiveState }}"
+      - "Version:     {{ valkey_version }}"
+      - "Uptime:      {{ valkey_uptime }} seconds"
+      - "Ping:        {{ valkey_ping.stdout }}"
+      - "Listen:      {{ valkey_bind_address }}:{{ valkey_port }}"
+      - "=========================================="
   tags: [valkey, validate]

@@ -23,37 +23,8 @@
     mode: '0750'
   tags: [valkey, config, directories, molecule-notest]
 
-- name: Valkey | Configure | Deploy Valkey configuration
-  ansible.builtin.template:
-    src: valkey.conf.j2
-    dest: "{{ valkey_config_file }}"
-    owner: "{{ valkey_user }}"
-    group: "{{ valkey_group }}"
-    mode: '0640'
-  notify: restart valkey
-  register: valkey_config_deployed
-  tags: [valkey, config]
-
-- name: Valkey | Configure | Check system configuration
-  ansible.builtin.command:
-    cmd: valkey-server --check-system
-  changed_when: false
-  failed_when: false
-  register: valkey_system_check
-  when: valkey_config_deployed is changed
-  tags: [valkey, config, validate]
-
-- name: Valkey | Configure | Display system check result
-  ansible.builtin.debug:
-    msg:
-      - "Valkey system configuration check:"
-      - "{{ valkey_system_check.stdout_lines }}"
-  when:
-    - valkey_config_deployed is changed
-    - valkey_system_check is defined
-  tags: [valkey, config, validate]
-
-- name: Valkey | Configure | Configure system parameters
+# System tuning MUST happen BEFORE Valkey starts
+- name: Valkey | Configure | Configure system parameters (sysctl)
   ansible.posix.sysctl:
     name: "{{ item.name }}"
     value: "{{ item.value }}"
@@ -63,6 +34,17 @@
   loop:
     - {name: 'vm.overcommit_memory', value: '1'}
     - {name: 'net.core.somaxconn', value: '{{ valkey_tcp_backlog }}'}
+  when: valkey_overcommit_memory
+  register: valkey_sysctl_config
+  notify: restart valkey
+  tags: [valkey, config, sysctl]
+
+- name: Valkey | Configure | Assert sysctl parameters applied
+  ansible.builtin.assert:
+    that:
+      - valkey_sysctl_config is succeeded
+    success_msg: "Sysctl parameters configured (vm.overcommit_memory=1, net.core.somaxconn={{ valkey_tcp_backlog }})"
+    fail_msg: "Failed to configure sysctl parameters for Valkey"
   when: valkey_overcommit_memory
   tags: [valkey, config, sysctl]
 
@@ -80,6 +62,7 @@
           [Service]
           Type=oneshot
           ExecStart=/bin/sh -c 'echo never > /sys/kernel/mm/transparent_hugepage/enabled'
+          RemainAfterExit=yes
 
           [Install]
           WantedBy=multi-user.target
@@ -87,13 +70,51 @@
         owner: root
         group: root
         mode: '0644'
+      register: thp_service_file
 
-    - name: Valkey | Configure | Enable THP disable service
+    - name: Valkey | Configure | Enable and start THP disable service
       ansible.builtin.systemd:
         name: disable-thp
         enabled: true
         daemon_reload: true
         state: started
-      tags: [molecule-notest]
+      register: thp_service_started
+      notify: restart valkey
+
+    - name: Valkey | Configure | Verify THP is disabled
+      ansible.builtin.slurp:
+        src: /sys/kernel/mm/transparent_hugepage/enabled
+      register: thp_status
+
+    - name: Valkey | Configure | Assert THP is disabled
+      ansible.builtin.assert:
+        that:
+          - "'[never]' in (thp_status.content | b64decode) or '[madvise]' in (thp_status.content | b64decode)"
+        success_msg: "Transparent Huge Pages disabled: {{ thp_status.content | b64decode | trim }}"
+        fail_msg: "THP still enabled: {{ thp_status.content | b64decode | trim }}. Valkey performance may be impacted."
   when: valkey_disable_thp
   tags: [valkey, config, thp]
+
+- name: Valkey | Configure | Deploy Valkey configuration
+  ansible.builtin.template:
+    src: valkey.conf.j2
+    dest: "{{ valkey_config_file }}"
+    owner: "{{ valkey_user }}"
+    group: "{{ valkey_group }}"
+    mode: '0640'
+  notify: restart valkey
+  register: valkey_config_deployed
+  tags: [valkey, config]
+
+- name: Valkey | Configure | Assert configuration deployed
+  ansible.builtin.assert:
+    that:
+      - valkey_config_deployed is succeeded
+    success_msg: "Valkey configuration deployed to {{ valkey_config_file }}"
+    fail_msg: "Failed to deploy Valkey configuration"
+  tags: [valkey, config]
+
+# Flush handlers NOW to ensure sysctl/THP changes are applied before Valkey starts
+- name: Valkey | Configure | Flush handlers to apply system changes
+  ansible.builtin.meta: flush_handlers
+  tags: [valkey, config]
