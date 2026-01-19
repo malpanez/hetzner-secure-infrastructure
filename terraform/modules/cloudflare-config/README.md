@@ -258,8 +258,11 @@ When `enable_course_protection = true`:
 | `server_ipv4` | Origin server IPv4 | `string` | - | Yes |
 | `server_ipv6` | Origin server IPv6 | `string` | `null` | No |
 | `environment` | Environment name | `string` | `"prod"` | No |
-| `enable_rate_limiting` | Enable rate limiting | `bool` | `true` | No |
 | `enable_course_protection` | Protect course content | `bool` | `true` | No |
+| `csp_connect_src_admin_extra` | Extra connect-src (wp-admin/wp-login) | `list(string)` | `[]` | No |
+| `csp_frame_src_admin_extra` | Extra frame-src (wp-admin/wp-login) | `list(string)` | `[]` | No |
+| `csp_connect_src_public_extra` | Extra connect-src (public) | `list(string)` | `[]` | No |
+| `csp_frame_src_public_extra` | Extra frame-src (public) | `list(string)` | `[]` | No |
 | `security_level` | Security level | `string` | `"medium"` | No |
 | `ssl_mode` | SSL/TLS mode | `string` | `"full"` | No |
 | `min_tls_version` | Minimum TLS version | `string` | `"1.2"` | No |

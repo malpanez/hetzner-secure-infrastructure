@@ -20,11 +20,13 @@ resource "cloudflare_ruleset" "wordpress_security" {
   }
 
   # Rule 2: Challenge wp-login.php (brute force protection)
+  # Disabled by default: Pi-hole/ad blockers block challenges.cloudflare.com
+  # Security maintained via: Nginx rate limiting + WP 2FA plugin
   rules {
     action      = "challenge"
     expression  = "(http.request.uri.path contains \"/wp-login.php\") or (http.request.uri.path contains \"/wp-admin/\" and http.request.method eq \"POST\")"
     description = "Rate limit WordPress login attempts with CAPTCHA"
-    enabled     = true
+    enabled     = var.wp_admin_challenge_enabled
   }
 
   # Rule 3: Block wp-config.php access

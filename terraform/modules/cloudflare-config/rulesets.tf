@@ -10,6 +10,41 @@
 # --------------------------------------------------------
 # Security Headers (HTTP Response Headers Transform)
 # --------------------------------------------------------
+locals {
+  csp_connect_src_admin_base = [
+    "'self'",
+    "wss:",
+    "https://startertemplates.com",
+    "https://websitedemos.net",
+  ]
+
+  csp_connect_src_public_base = [
+    "'self'",
+    "wss:",
+    "https://startertemplates.com",
+    "https://websitedemos.net",
+  ]
+
+  csp_frame_src_admin_base = [
+    "'self'",
+    "blob:",
+    "https://websitedemos.net",
+    "https://www.youtube.com",
+  ]
+
+  csp_frame_src_public_base = [
+    "'self'",
+    "blob:",
+    "https://websitedemos.net",
+    "https://www.youtube.com",
+  ]
+
+  csp_connect_src_admin = concat(local.csp_connect_src_admin_base, var.csp_connect_src_admin_extra)
+  csp_connect_src_public = concat(local.csp_connect_src_public_base, var.csp_connect_src_public_extra)
+  csp_frame_src_admin = concat(local.csp_frame_src_admin_base, var.csp_frame_src_admin_extra)
+  csp_frame_src_public = concat(local.csp_frame_src_public_base, var.csp_frame_src_public_extra)
+}
+
 resource "cloudflare_ruleset" "security_headers" {
   zone_id     = data.cloudflare_zone.main.id
   name        = "security-headers"
@@ -18,19 +53,66 @@ resource "cloudflare_ruleset" "security_headers" {
   phase       = "http_response_headers_transform"
 
   rules {
-    description = "Add security headers"
-    expression  = "true"
+    description = "Add security headers (WP admin/editor)"
+    expression  = "(starts_with(http.request.uri.path, \"/wp-admin/\") or http.request.uri.path eq \"/wp-login.php\")"
     action      = "rewrite"
     enabled     = true
 
     action_parameters {
       # NOTE: Headers MUST be in alphabetical order by name (Cloudflare sorts them)
-      # CSP: frame-ancestors 'self' allows WordPress Customizer (iframe from same origin)
-      # worker-src 'self' blob: allows Web Workers used by modern WP plugins
+      # CSP tuned for WordPress admin/editor (Astra + Elementor + Gutenberg + LearnDash)
       headers {
         name      = "Content-Security-Policy"
         operation = "set"
-        value     = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' wss:; frame-src 'self' blob:; frame-ancestors 'self'; worker-src 'self' blob:; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"
+        value     = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https:; style-src 'self' 'unsafe-inline' https: https://fonts.googleapis.com; img-src 'self' data: https: blob:; font-src 'self' data: https://fonts.gstatic.com; connect-src ${join(" ", local.csp_connect_src_admin)}; frame-src ${join(" ", local.csp_frame_src_admin)}; frame-ancestors 'self'; worker-src 'self' blob:; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"
+      }
+      headers {
+        name      = "Permissions-Policy"
+        operation = "set"
+        value     = "geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=()"
+      }
+      headers {
+        name      = "Referrer-Policy"
+        operation = "set"
+        value     = "strict-origin-when-cross-origin"
+      }
+      headers {
+        name      = "Strict-Transport-Security"
+        operation = "set"
+        value     = "max-age=31536000; includeSubDomains; preload"
+      }
+      headers {
+        name      = "X-Content-Type-Options"
+        operation = "set"
+        value     = "nosniff"
+      }
+      # X-Frame-Options: SAMEORIGIN allows same-origin iframes (Customizer)
+      # Note: frame-ancestors in CSP supersedes this, but browsers use both
+      headers {
+        name      = "X-Frame-Options"
+        operation = "set"
+        value     = "SAMEORIGIN"
+      }
+      headers {
+        name      = "X-XSS-Protection"
+        operation = "set"
+        value     = "1; mode=block"
+      }
+    }
+  }
+
+  rules {
+    description = "Add security headers (public)"
+    expression  = "not (starts_with(http.request.uri.path, \"/wp-admin/\") or http.request.uri.path eq \"/wp-login.php\")"
+    action      = "rewrite"
+    enabled     = true
+
+    action_parameters {
+      # NOTE: Headers MUST be in alphabetical order by name (Cloudflare sorts them)
+      headers {
+        name      = "Content-Security-Policy"
+        operation = "set"
+        value     = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline' https: https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src ${join(" ", local.csp_connect_src_public)}; frame-src ${join(" ", local.csp_frame_src_public)}; frame-ancestors 'self'; worker-src 'self' blob:; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"
       }
       headers {
         name      = "Permissions-Policy"

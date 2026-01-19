@@ -106,4 +106,10 @@ module "cloudflare" {
   enable_custom_error_pages = false # Optional
   enable_cloudflare_access  = false # Requires paid plan
   custom_error_page_url     = ""
+
+  # CSP allow-lists (admin/editor vs public)
+  csp_connect_src_admin_extra  = var.csp_connect_src_admin_extra
+  csp_frame_src_admin_extra    = var.csp_frame_src_admin_extra
+  csp_connect_src_public_extra = var.csp_connect_src_public_extra
+  csp_frame_src_public_extra   = var.csp_frame_src_public_extra
 }

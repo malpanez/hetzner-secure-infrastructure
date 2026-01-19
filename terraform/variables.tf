@@ -234,3 +234,31 @@ variable "enable_cloudflare" {
   type        = bool
   default     = false # Set to true to enable automatic DNS management
 }
+
+# ============================================================================
+# CSP Allow Lists (passed to Cloudflare module)
+# ============================================================================
+
+variable "csp_connect_src_admin_extra" {
+  description = "Additional connect-src domains for wp-admin/wp-login"
+  type        = list(string)
+  default     = []
+}
+
+variable "csp_frame_src_admin_extra" {
+  description = "Additional frame-src domains for wp-admin/wp-login"
+  type        = list(string)
+  default     = []
+}
+
+variable "csp_connect_src_public_extra" {
+  description = "Additional connect-src domains for public site"
+  type        = list(string)
+  default     = []
+}
+
+variable "csp_frame_src_public_extra" {
+  description = "Additional frame-src domains for public site"
+  type        = list(string)
+  default     = []
+}

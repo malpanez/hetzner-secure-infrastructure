@@ -58,7 +58,8 @@ variable "environment" {
 
 # NOTE: Rate limiting is now handled by WAF ruleset (waf-rulesets.tf)
 # The deprecated cloudflare_rate_limit resource has been removed.
-# Login protection is always enabled via WAF rule 2 (challenge action).
+# Login protection via Cloudflare challenge is disabled by default
+# (blocked by Pi-hole/ad blockers). Use Nginx rate limiting + WP 2FA instead.
 
 variable "enable_course_protection" {
   description = "Enable protection for Tutor LMS course content"
@@ -79,13 +80,41 @@ variable "enable_cloudflare_access" {
 }
 
 # ========================================
+# CSP Allow Lists (WordPress Admin/Editor)
+# ========================================
+
+variable "csp_connect_src_admin_extra" {
+  description = "Additional connect-src domains for wp-admin/wp-login"
+  type        = list(string)
+  default     = []
+}
+
+variable "csp_frame_src_admin_extra" {
+  description = "Additional frame-src domains for wp-admin/wp-login"
+  type        = list(string)
+  default     = []
+}
+
+variable "csp_connect_src_public_extra" {
+  description = "Additional connect-src domains for public site"
+  type        = list(string)
+  default     = []
+}
+
+variable "csp_frame_src_public_extra" {
+  description = "Additional frame-src domains for public site"
+  type        = list(string)
+  default     = []
+}
+
+# ========================================
 # Security Settings
 # ========================================
 
-variable "wp_admin_skip_challenge" {
-  description = "Skip Cloudflare managed challenge for wp-admin/wp-login (recommended: true if using Pi-hole or ad blockers)"
+variable "wp_admin_challenge_enabled" {
+  description = "Enable Cloudflare challenge for wp-admin/wp-login (set false if using Pi-hole or ad blockers that block challenges.cloudflare.com)"
   type        = bool
-  default     = true
+  default     = false  # Disabled by default - security via Nginx rate limiting + WP 2FA
 }
 
 variable "security_level" {
