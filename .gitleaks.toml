@@ -8,9 +8,12 @@ title = "Hetzner Secure Infrastructure - GitLeaks Config"
   description = "Allowlist for archived docs with example/dummy secrets"
 
   # Ignore all files in .archive/ directory (historical docs with examples)
+  # Also ignore deployment guides with example vault values
   paths = [
     '''.archive/.*''',
-    '''\.archive/.*'''
+    '''\.archive/.*''',
+    '''DEPLOYMENT_GUIDE\.md''',
+    '''docs/DEPLOYMENT\.md''',
   ]
 
   # Ignore specific patterns that are known examples
