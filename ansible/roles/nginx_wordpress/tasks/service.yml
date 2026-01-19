@@ -7,6 +7,16 @@
     enabled: true
     state: started
   when: nginx_wordpress_install_nginx
+  register: nginx_service_started
+  tags: [nginx-wordpress, nginx, service]
+
+- name: Nginx WordPress | Service | Assert Nginx service started
+  ansible.builtin.assert:
+    that:
+      - nginx_service_started is succeeded
+    success_msg: "Nginx service is running"
+    fail_msg: "Failed to start Nginx service"
+  when: nginx_wordpress_install_nginx
   tags: [nginx-wordpress, nginx, service]
 
 - name: Nginx WordPress | Service | Enable and start PHP-FPM service
@@ -15,4 +25,51 @@
     enabled: true
     state: started
   when: nginx_wordpress_install_php
+  register: php_fpm_service_started
   tags: [nginx-wordpress, php, service]
+
+- name: Nginx WordPress | Service | Assert PHP-FPM service started
+  ansible.builtin.assert:
+    that:
+      - php_fpm_service_started is succeeded
+    success_msg: "PHP-FPM service is running"
+    fail_msg: "Failed to start PHP-FPM service"
+  when: nginx_wordpress_install_php
+  tags: [nginx-wordpress, php, service]
+
+- name: Nginx WordPress | Service | Verify Nginx is responding
+  ansible.builtin.uri:
+    url: "http://127.0.0.1/"
+    method: GET
+    status_code: [200, 301, 302, 403]
+    timeout: 10
+  register: nginx_http_check
+  failed_when: false
+  when: nginx_wordpress_install_nginx
+  tags: [nginx-wordpress, nginx, service, validate]
+
+- name: Nginx WordPress | Service | Assert Nginx is responding to HTTP
+  ansible.builtin.assert:
+    that:
+      - nginx_http_check.status is defined
+      - nginx_http_check.status in [200, 301, 302, 403]
+    success_msg: "Nginx is responding to HTTP requests (status: {{ nginx_http_check.status }})"
+    fail_msg: "Nginx is not responding to HTTP requests"
+  when:
+    - nginx_wordpress_install_nginx
+    - nginx_http_check is defined
+  tags: [nginx-wordpress, nginx, service, validate]
+
+- name: Nginx WordPress | Service | Display service summary
+  ansible.builtin.debug:
+    msg:
+      - "=========================================="
+      - "    Nginx WordPress Service Summary       "
+      - "=========================================="
+      - "Nginx:       {{ 'running' if nginx_service_started is succeeded else 'not running' }}"
+      - "PHP-FPM:     {{ 'running' if php_fpm_service_started is succeeded else 'not running' }}"
+      - "HTTP Check:  {{ nginx_http_check.status | default('N/A') }}"
+      - "Web Root:    {{ nginx_wordpress_web_root }}"
+      - "=========================================="
+  when: nginx_wordpress_install_nginx
+  tags: [nginx-wordpress, service, validate]

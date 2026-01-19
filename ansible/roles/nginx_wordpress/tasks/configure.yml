@@ -162,7 +162,15 @@
   ansible.builtin.command:
     cmd: nginx -t
   changed_when: false
-  when: nginx_config_deployed is changed
+  register: nginx_config_test
+  tags: [nginx-wordpress, nginx, config, validate]
+
+- name: Nginx WordPress | Configure | Assert Nginx configuration is valid
+  ansible.builtin.assert:
+    that:
+      - nginx_config_test.rc == 0
+    success_msg: "Nginx configuration syntax is valid"
+    fail_msg: "Nginx configuration validation failed: {{ nginx_config_test.stderr | default('unknown error') }}"
   tags: [nginx-wordpress, nginx, config, validate]
 
 - name: Nginx WordPress | Configure | Reload Nginx if configuration is valid
@@ -242,6 +250,18 @@
     - nginx_wordpress_install_wordpress
     - wp_is_installed.rc != 0
   register: wp_core_install
+  tags: [nginx-wordpress, wordpress, molecule-notest]
+
+- name: Nginx WordPress | Configure | Assert WordPress core installed
+  ansible.builtin.assert:
+    that:
+      - wp_core_install is succeeded
+    success_msg: "WordPress core installed successfully at {{ nginx_wordpress_web_root }}"
+    fail_msg: "WordPress core installation failed"
+  when:
+    - nginx_wordpress_install_wordpress
+    - wp_is_installed.rc != 0
+    - wp_core_install is defined
   tags: [nginx-wordpress, wordpress, molecule-notest]
 
 # Keep site URL aligned with the configured domain (avoids mixed content on HTTPS).
