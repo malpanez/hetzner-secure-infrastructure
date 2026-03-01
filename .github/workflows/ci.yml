@@ -63,7 +63,7 @@ jobs:
   ansible-validate:
     name: Validate Ansible
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
 
     steps:
       - name: Checkout code
@@ -82,9 +82,9 @@ jobs:
           source .venv/bin/activate
           cd ansible
           for i in 1 2 3; do
-            ansible-galaxy install -r requirements.yml && break
-            echo "Retry $i/3 failed, waiting 30s..."
-            sleep 30
+            ansible-galaxy install -r requirements.yml --timeout=120 && break
+            echo "Retry $i/3 failed, waiting 10s..."
+            sleep 10
           done
         continue-on-error: false
 
