@@ -115,12 +115,30 @@
     - aide_db_final is defined
   tags: [security, aide]
 
-- name: Security Hardening | AIDE | Parse initialization result
+- name: Security Hardening | AIDE | Extract entries count
+  ansible.builtin.set_fact:
+    aide_entries_match: "{{ aide_result.stdout | default('') | regex_search('Number of entries:\\s*(\\d+)', '\\1') }}"
+  when:
+    - security_hardening_aide_enabled | default(false)
+    - aide_db_final is defined
+    - aide_db_final.stat.exists
+  tags: [security, aide]
+
+- name: Security Hardening | AIDE | Extract runtime
+  ansible.builtin.set_fact:
+    aide_runtime_match: "{{ aide_result.stdout | default('') | regex_search('run time: (.+?)\\)', '\\1') }}"
+  when:
+    - security_hardening_aide_enabled | default(false)
+    - aide_db_final is defined
+    - aide_db_final.stat.exists
+  tags: [security, aide]
+
+- name: Security Hardening | AIDE | Build initialization summary
   ansible.builtin.set_fact:
     aide_summary:
       status: "{{ 'Success' if aide_db_final.stat.exists else 'Failed' }}"
-      entries: "{{ (aide_result.stdout | default('') | regex_search('Number of entries:\\s*(\\d+)', '\\1') | first) | default('N/A') }}"
-      runtime: "{{ (aide_result.stdout | default('') | regex_search('run time: (.+?)\\)', '\\1') | first) | default('N/A') }}"
+      entries: "{{ aide_entries_match[0] if aide_entries_match else 'N/A' }}"
+      runtime: "{{ aide_runtime_match[0] if aide_runtime_match else 'N/A' }}"
       database: "/var/lib/aide/aide.db"
       size_mb: "{{ (aide_db_final.stat.size / 1024 / 1024) | round(2) }}"
   when:

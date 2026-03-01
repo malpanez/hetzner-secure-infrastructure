@@ -108,6 +108,7 @@ wordpress_plugins:
     activate: true
     reason: "2FA for wp-admin login (TOTP, Passkeys, backup codes)"
 
+  # yamllint disable rule:comments-indentation
   # SEO Optimization (lighter than Yoast)
   # - slug: rank-math
   #   state: present
@@ -125,6 +126,7 @@ wordpress_plugins:
   #   state: present
   #   activate: true
   #   reason: "Spam protection (free Cloudflare alternative to Akismet)"
+  # yamllint enable rule:comments-indentation
 
 # ========================================
 # Plugins to AVOID (Redundant with Infrastructure)

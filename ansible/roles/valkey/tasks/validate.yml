@@ -58,6 +58,6 @@
       - "Version:     {{ valkey_version }}"
       - "Uptime:      {{ valkey_uptime }} seconds"
       - "Ping:        {{ valkey_ping.stdout }}"
-      - "Listen:      {{ valkey_bind_address }}:{{ valkey_port }}"
+      - "Listen:      {{ valkey_bind }}:{{ valkey_port }}"
       - "=========================================="
   tags: [valkey, validate]

@@ -15,6 +15,14 @@ title = "Hetzner Secure Infrastructure - GitLeaks Config"
     '''DEPLOYMENT_GUIDE\.md''',
     '''docs/DEPLOYMENT\.md''',
     '''ansible/roles/.*/README\.md''',
+    '''DEPLOY_FROM_SCRATCH\.md''',
+    '''GO_LIVE_TODAY_CHECKLIST\.md''',
+    '''EXECUTION_GUIDE\.md''',
+    '''GUIA_RAPIDA\.md''',
+    '''docs/guides/DEPLOYMENT_AUTOMATION_SETUP\.md''',
+    '''docs/guides/TERRAFORM_CLOUD_SETUP\.md''',
+    '''docs/infrastructure/HETZNER_API_TOKEN\.md''',
+    '''terraform/backend\.tf''',
   ]
 
   # Ignore specific patterns that are known examples
