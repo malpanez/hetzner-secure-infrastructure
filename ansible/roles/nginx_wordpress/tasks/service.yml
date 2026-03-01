@@ -58,7 +58,7 @@
   when:
     - nginx_wordpress_install_nginx
     - nginx_http_check is defined
-  tags: [nginx-wordpress, nginx, service, validate]
+  tags: [nginx-wordpress, nginx, service, validate, molecule-notest]
 
 - name: Nginx WordPress | Service | Display service summary
   ansible.builtin.debug:

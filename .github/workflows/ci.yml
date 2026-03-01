@@ -1,3 +1,4 @@
+---
 name: CI - Validate Infrastructure
 
 on:
@@ -80,7 +81,11 @@ jobs:
         run: |
           source .venv/bin/activate
           cd ansible
-          ansible-galaxy install -r requirements.yml
+          for i in 1 2 3; do
+            ansible-galaxy install -r requirements.yml && break
+            echo "Retry $i/3 failed, waiting 30s..."
+            sleep 30
+          done
         continue-on-error: false
 
       - name: Create dummy vault password for CI
