@@ -107,7 +107,6 @@
   tasks:
     - name: Build post-deployment checklist
       ansible.builtin.set_fact:
-        # yamllint disable rule:line-length
         ssh_commands: >-
           {% for host in groups.get('hetzner', []) %}
           ssh {{ hostvars[host]['ansible_user'] | default('malpanez') }}@{{ hostvars[host]['ansible_host'] | default(host) }}
@@ -116,7 +115,6 @@
         monitoring_host: "{{ hostvars[groups['monitoring_servers'][0]]['ansible_host'] | default('N/A') if groups['monitoring_servers'] is defined and groups['monitoring_servers'] | length > 0 else 'N/A' }}"
         wordpress_host: "{{ hostvars[groups['wordpress_servers'][0]]['ansible_host'] | default('N/A') if groups['wordpress_servers'] is defined and groups['wordpress_servers'] | length > 0 else 'N/A' }}"
         wordpress_domain: "{{ hostvars[groups['wordpress_servers'][0]]['wordpress_domain'] | default(domain_name) | default('example.com') if groups['wordpress_servers'] is defined and groups['wordpress_servers'] | length > 0 else 'example.com' }}"
-        # yamllint enable rule:line-length
       run_once: true
       tags: [info, checklist, always]
 

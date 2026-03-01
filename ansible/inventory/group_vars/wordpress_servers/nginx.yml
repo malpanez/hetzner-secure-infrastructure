@@ -116,9 +116,7 @@ nginx_security_headers:
 
 # CSP (Content Security Policy) - Disabled by default, configure per site
 nginx_csp_enabled: false
-# yamllint disable rule:line-length
 # nginx_csp_header: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';"
-# yamllint enable rule:line-length
 
 # ========================================
 # Rate Limiting

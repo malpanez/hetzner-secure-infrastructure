@@ -369,8 +369,6 @@ jobs:
           gistID: your-gist-id
           filename: hetzner-infra-status.json
           label: build
-          # yamllint disable rule:line-length
           message: ${{ needs.terraform-validate.result == 'success' && needs.ansible-validate.result == 'success' && needs.security-scan.result == 'success' && 'passing' || 'failing' }}
           color: ${{ needs.terraform-validate.result == 'success' && needs.ansible-validate.result == 'success' && needs.security-scan.result == 'success' && 'brightgreen' || 'red' }}
-          # yamllint enable rule:line-length
         continue-on-error: true

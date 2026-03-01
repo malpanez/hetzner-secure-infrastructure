@@ -20,7 +20,6 @@
         state: present
         update_cache: true
 
-    # yamllint disable rule:line-length
     - name: Create secret rotation script
       copy:
         content: |
@@ -107,7 +106,6 @@
         mode: '0750'
         owner: root
         group: root
-    # yamllint enable rule:line-length
 
     - name: Create systemd service for secret rotation
       copy:
@@ -203,9 +201,7 @@
           - "7. Create rotation role:"
           - "   bao write database/roles/wordpress-role \\"
           - "     db_name=mariadb \\"
-          # yamllint disable rule:line-length
           - "     creation_statements=\"CREATE USER '{{name}}'@'localhost' IDENTIFIED BY '{{password}}'; GRANT ALL ON {{ wordpress_db_name }}.* TO '{{name}}'@'localhost';\" \\"
-          # yamllint enable rule:line-length
           - "     default_ttl='24h' \\"
           - "     max_ttl='720h'"
           - "8. Test rotation: sudo /usr/local/bin/rotate-wordpress-secrets.sh"

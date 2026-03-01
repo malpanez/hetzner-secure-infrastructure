@@ -26,7 +26,6 @@
 
 - name: Nginx Repo | Add official nginx.org repository (stable)
   ansible.builtin.apt_repository:
-    # yamllint disable-line rule:line-length
     repo: "deb [arch={{ nginx_wordpress_nginx_repo_arch }} signed-by={{ nginx_wordpress_nginx_repo_keyring_path }}] https://nginx.org/packages/{{ ansible_distribution|lower }}/ {{ ansible_distribution_release }} nginx"
     state: present
     filename: "{{ nginx_wordpress_nginx_repo_filename }}"
