@@ -16,6 +16,7 @@
     openbao_cli: "{{ openbao_binary_path | default('bao') }}"
     openbao_env_base:
       VAULT_ADDR: "{{ openbao_api_addr }}"
+    # yamllint disable-line rule:line-length
     openbao_env: "{{ openbao_env_base | combine(openbao_tls_self_signed | default(true) | bool | ternary({'VAULT_SKIP_VERIFY': '1'}, {})) }}"
 
   pre_tasks:

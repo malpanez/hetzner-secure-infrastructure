@@ -152,7 +152,11 @@ jobs:
           export PATH="$HOME/.cargo/bin:$PATH"
           uv venv
           source .venv/bin/activate
-          uv pip install 'ansible-core>=2.15,<2.18' 'ansible>=8.0,<10.0' molecule 'molecule-plugins[docker]' ansible-lint pytest testinfra
+          uv pip install \
+            'ansible-core>=2.15,<2.18' \
+            'ansible>=8.0,<10.0' \
+            molecule 'molecule-plugins[docker]' \
+            ansible-lint pytest testinfra
 
       - name: Run Molecule Test
         run: |
@@ -283,7 +287,8 @@ jobs:
         run: |
           # Install terraform-docs for pre-commit hook
           TFDOCS_VERSION="v0.19.0"
-          curl -sSLo /tmp/terraform-docs.tar.gz "https://github.com/terraform-docs/terraform-docs/releases/download/${TFDOCS_VERSION}/terraform-docs-${TFDOCS_VERSION}-linux-amd64.tar.gz"
+          curl -sSLo /tmp/terraform-docs.tar.gz \
+            "https://github.com/terraform-docs/terraform-docs/releases/download/${TFDOCS_VERSION}/terraform-docs-${TFDOCS_VERSION}-linux-amd64.tar.gz"
           tar -xzf /tmp/terraform-docs.tar.gz -C /tmp
           chmod +x /tmp/terraform-docs
           sudo mv /tmp/terraform-docs /usr/local/bin/terraform-docs
@@ -364,6 +369,8 @@ jobs:
           gistID: your-gist-id
           filename: hetzner-infra-status.json
           label: build
+          # yamllint disable rule:line-length
           message: ${{ needs.terraform-validate.result == 'success' && needs.ansible-validate.result == 'success' && needs.security-scan.result == 'success' && 'passing' || 'failing' }}
           color: ${{ needs.terraform-validate.result == 'success' && needs.ansible-validate.result == 'success' && needs.security-scan.result == 'success' && 'brightgreen' || 'red' }}
+          # yamllint enable rule:line-length
         continue-on-error: true

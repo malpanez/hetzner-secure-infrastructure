@@ -186,6 +186,7 @@
           - "Server Details:"
           - "  - Host: {{ hostvars[groups['wordpress_servers'][0]]['inventory_hostname'] }}"
           - "  - IP: {{ hostvars[groups['wordpress_servers'][0]]['ansible_host'] }}"
+          # yamllint disable-line rule:line-length
           - "  - SSH: ssh {{ hostvars[groups['wordpress_servers'][0]]['ansible_user'] }}@{{ hostvars[groups['wordpress_servers'][0]]['ansible_host'] }}"
           - ""
           - "WordPress Info:"
