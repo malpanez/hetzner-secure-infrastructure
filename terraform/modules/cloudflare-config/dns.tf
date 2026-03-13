@@ -59,3 +59,51 @@ resource "cloudflare_record" "prometheus" {
   ttl     = 1
   comment = "Prometheus metrics endpoint (Nginx reverse proxy)"
 }
+
+# ========================================
+# Email / Zoho Mail DNS Records
+# ========================================
+
+# SPF record — authorises Zoho Mail + existing SPF include
+resource "cloudflare_record" "spf" {
+  zone_id = data.cloudflare_zone.main.id
+  name    = "@"
+  content = "v=spf1 include:zohomail.eu include:dc-8e814c8572._spfm.twomindstrading.com ~all"
+  type    = "TXT"
+  proxied = false
+  ttl     = 1
+  comment = "SPF record for Zoho Mail"
+}
+
+# DMARC policy
+resource "cloudflare_record" "dmarc" {
+  zone_id = data.cloudflare_zone.main.id
+  name    = "_dmarc"
+  content = "v=DMARC1; p=reject; adkim=r; aspf=r; rua=mailto:dmarc_rua@onsecureserver.net;"
+  type    = "TXT"
+  proxied = false
+  ttl     = 1
+  comment = "DMARC policy"
+}
+
+# Zoho domain verification
+resource "cloudflare_record" "zoho_verification" {
+  zone_id = data.cloudflare_zone.main.id
+  name    = "zac2339136"
+  content = "domain.zoho.com"
+  type    = "TXT"
+  proxied = false
+  ttl     = 1
+  comment = "Zoho Mail domain verification"
+}
+
+# Zoho DKIM
+resource "cloudflare_record" "zoho_dkim" {
+  zone_id = data.cloudflare_zone.main.id
+  name    = "zmail._domainkey"
+  content = "v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC9w/lWORQmgNGmBL32jcS3tOSy9nB7b0LJUtpe7NtPqOL8Wqmz3/+PuSAsY3PlCKF9/tyhHB6S4NJutkkToW4Rz4CPFvW4VnH0Ef+f+pHEsOjNDS4S9wMcWaTzVEUGBJOt/mTCSSFcmaADvJqagr8WEYm0zwMBXzRamreifdjnrwIDAQAB"
+  type    = "TXT"
+  proxied = false
+  ttl     = 1
+  comment = "Zoho Mail DKIM public key"
+}
