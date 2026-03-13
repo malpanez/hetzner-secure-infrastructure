@@ -15,13 +15,13 @@
 
   tasks:
     - name: Install jq for JSON parsing
-      apt:
+      ansible.builtin.apt:
         name: jq
         state: present
         update_cache: true
 
     - name: Create secret rotation script
-      copy:
+      ansible.builtin.copy:
         content: |
           #!/bin/bash
           # WordPress Database Secret Rotation Script
@@ -108,7 +108,7 @@
         group: root
 
     - name: Create systemd service for secret rotation
-      copy:
+      ansible.builtin.copy:
         content: |
           [Unit]
           Description=Rotate WordPress Database Credentials
@@ -129,7 +129,7 @@
         mode: '0644'
 
     - name: Create systemd timer for daily rotation
-      copy:
+      ansible.builtin.copy:
         content: |
           [Unit]
           Description=Rotate WordPress secrets daily
@@ -148,7 +148,7 @@
         mode: '0644'
 
     - name: Create log file for rotation
-      file:
+      ansible.builtin.file:
         path: /var/log/wordpress-secret-rotation.log
         state: touch
         owner: root
@@ -156,52 +156,282 @@
         mode: '0640'
 
     - name: Reload systemd daemon
-      systemd:
+      ansible.builtin.systemd:
         daemon_reload: true
 
     - name: Enable secret rotation timer
-      systemd:
+      ansible.builtin.systemd:
         name: wordpress-secret-rotate.timer
         enabled: true
         state: started
 
     - name: Display timer status
-      command: systemctl status wordpress-secret-rotate.timer --no-pager
+      ansible.builtin.command: systemctl status wordpress-secret-rotate.timer --no-pager
       register: timer_status
       changed_when: false
 
-    - name: Show timer schedule
-      command: systemctl list-timers wordpress-secret-rotate.timer --no-pager
-      register: timer_schedule
-      changed_when: false
-
     - name: Display results
-      debug:
+      ansible.builtin.debug:
         msg:
           - "Secret rotation timer installed successfully"
           - "Timer status: {{ timer_status.stdout_lines }}"
-          - "Next rotation: {{ timer_schedule.stdout_lines }}"
 
-    - name: Create OpenBao token file (manual step required)
-      debug:
+    - name: Create MariaDB root rotation script
+      ansible.builtin.copy:
+        dest: /usr/local/bin/rotate-mariadb-root.sh
+        mode: '0750'
+        owner: root
+        group: root
+        content: |
+          #!/bin/bash
+          # MariaDB Root Password Rotation Script
+          # Managed by Ansible - DO NOT EDIT MANUALLY
+
+          set -euo pipefail
+
+          OPENBAO_ADDR="http://127.0.0.1:8200"
+          LOG_FILE="/var/log/mariadb-root-rotation.log"
+          TOKEN_FILE="/root/.openbao-mariadb-token"
+
+          log() {
+              echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_FILE"
+          }
+
+          error_exit() {
+              log "ERROR: $1"
+              exit 1
+          }
+
+          log "Starting MariaDB root password rotation"
+
+          if ! systemctl is-active --quiet openbao; then
+              error_exit "OpenBao service is not running"
+          fi
+
+          if [ ! -f "$TOKEN_FILE" ]; then
+              error_exit "OpenBao token file not found at $TOKEN_FILE"
+          fi
+
+          export VAULT_TOKEN
+          VAULT_TOKEN=$(cat "$TOKEN_FILE")
+          export VAULT_ADDR="$OPENBAO_ADDR"
+
+          # Renew token to avoid expiry during rotation
+          bao token renew-self > /dev/null 2>&1 || log "WARN: Token renewal failed, continuing"
+
+          # Read current root password from OpenBao KV
+          log "Reading current MariaDB root password from OpenBao"
+          OLD_PASS=$(bao kv get -field=root_password secret/mariadb) || error_exit "Failed to read current password from OpenBao"
+
+          # Generate new password (alphanum only - safe for mysqladmin)
+          NEW_PASS=$(openssl rand -base64 48 | tr -d '/+=\n' | head -c 32)
+
+          # Update MariaDB root password
+          log "Updating MariaDB root password"
+          mysqladmin -uroot -p"${OLD_PASS}" password "${NEW_PASS}" || error_exit "Failed to update MariaDB root password"
+
+          # Store new password in OpenBao
+          log "Storing new password in OpenBao"
+          bao kv put secret/mariadb root_password="${NEW_PASS}" || error_exit "Failed to store new password in OpenBao"
+
+          # MOTD delivery
+          cat > /etc/motd.d/90-rotation-notice <<EOF
+          =================================================================
+            SECRET ROTATION NOTICE
+          =================================================================
+            Last rotation : $(date +'%Y-%m-%d %H:%M:%S')
+
+            Retrieve current credentials:
+              MariaDB root : bao kv get -field=root_password secret/mariadb
+              WP admin     : bao kv get -field=admin_password secret/wordpress
+
+            Dismiss: rm /etc/motd.d/90-rotation-notice
+          =================================================================
+          EOF
+
+          log "MariaDB root rotation completed successfully"
+          exit 0
+
+    - name: Create WordPress admin rotation script
+      ansible.builtin.copy:
+        dest: /usr/local/bin/rotate-wp-admin.sh
+        mode: '0750'
+        owner: root
+        group: root
+        content: |
+          #!/bin/bash
+          # WordPress Admin Password Rotation Script
+          # Managed by Ansible - DO NOT EDIT MANUALLY
+
+          set -euo pipefail
+
+          OPENBAO_ADDR="http://127.0.0.1:8200"
+          LOG_FILE="/var/log/wp-admin-rotation.log"
+          TOKEN_FILE="/root/.openbao-token"
+          WP_PATH="/var/www/wordpress"
+
+          log() {
+              echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_FILE"
+          }
+
+          error_exit() {
+              log "ERROR: $1"
+              exit 1
+          }
+
+          log "Starting WordPress admin password rotation"
+
+          if ! systemctl is-active --quiet openbao; then
+              error_exit "OpenBao service is not running"
+          fi
+
+          if [ ! -f "$TOKEN_FILE" ]; then
+              error_exit "OpenBao token file not found at $TOKEN_FILE"
+          fi
+
+          export VAULT_TOKEN
+          VAULT_TOKEN=$(cat "$TOKEN_FILE")
+          export VAULT_ADDR="$OPENBAO_ADDR"
+
+          # Renew token to avoid expiry during rotation
+          bao token renew-self > /dev/null 2>&1 || log "WARN: Token renewal failed, continuing"
+
+          # Generate new password
+          NEW_PASS=$(openssl rand -base64 48 | tr -d '/+=\n' | head -c 32)
+
+          # Update WordPress admin password (user ID 1)
+          log "Updating WordPress admin password via WP-CLI"
+          sudo -u www-data wp --path="$WP_PATH" user update 1 --user_pass="${NEW_PASS}" || error_exit "Failed to update WP admin password"
+
+          # Store new password in OpenBao (patch preserves other fields like db_name/db_user)
+          log "Storing new password in OpenBao"
+          bao kv patch secret/wordpress admin_password="${NEW_PASS}" || error_exit "Failed to store new password in OpenBao"
+
+          # Append/update MOTD so both notices show together
+          cat > /etc/motd.d/90-rotation-notice <<EOF
+          =================================================================
+            SECRET ROTATION NOTICE
+          =================================================================
+            Last rotation : $(date +'%Y-%m-%d %H:%M:%S')
+
+            Retrieve current credentials:
+              MariaDB root : bao kv get -field=root_password secret/mariadb
+              WP admin     : bao kv get -field=admin_password secret/wordpress
+
+            Dismiss: rm /etc/motd.d/90-rotation-notice
+          =================================================================
+          EOF
+
+          log "WordPress admin rotation completed successfully"
+          exit 0
+
+    - name: Create monthly secret rotation systemd service
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/monthly-secret-rotate.service
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=Rotate MariaDB root and WordPress admin passwords monthly
+          After=network.target openbao.service mariadb.service
+          Requires=openbao.service mariadb.service
+
+          [Service]
+          Type=oneshot
+          User=root
+          ExecStart=/usr/local/bin/rotate-mariadb-root.sh
+          ExecStart=/usr/local/bin/rotate-wp-admin.sh
+          StandardOutput=journal
+          StandardError=journal
+          SyslogIdentifier=monthly-secret-rotate
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Create monthly secret rotation systemd timer
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/monthly-secret-rotate.timer
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=Rotate static secrets monthly (1st of each month at 02:00)
+          Documentation=man:systemd.timer(5)
+
+          [Timer]
+          OnCalendar=*-*-01 02:00:00
+          Persistent=true
+          RandomizedDelaySec=300
+
+          [Install]
+          WantedBy=timers.target
+
+    - name: Create log files for monthly rotation scripts
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: touch
+        owner: root
+        group: root
+        mode: '0640'
+      loop:
+        - /var/log/mariadb-root-rotation.log
+        - /var/log/wp-admin-rotation.log
+
+    - name: Reload systemd daemon after adding monthly timer
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Enable monthly secret rotation timer
+      ansible.builtin.systemd:
+        name: monthly-secret-rotate.timer
+        enabled: true
+        state: started
+
+    - name: Display manual steps required for already-running servers
+      ansible.builtin.debug:
         msg:
-          - "MANUAL STEP REQUIRED:"
-          - "1. SSH to the server: ssh -i ~/.ssh/github_ed25519 malpanez@{{ inventory_hostname }}"
-          - "2. Login to OpenBao: bao login -method=userpass username=admin"
-          - "3. Save token: echo $OPENBAO_TOKEN > /root/.openbao-token"
-          - "4. Set permissions: chmod 600 /root/.openbao-token"
-          - "5. Enable database secret engine: bao secrets enable database"
-          - "6. Configure MariaDB connection:"
-          - "   bao write database/config/mariadb \\"
-          - "     plugin_name=mysql-database-plugin \\"
-          - "     connection_url='{{username}}:{{password}}@tcp(127.0.0.1:3306)/' \\"
-          - "     allowed_roles='wordpress-role' \\"
-          - "     username='openbao' \\"
-          - "     password='{{ openbao_db_password }}'"
-          - "7. Create rotation role:"
-          - "   bao write database/roles/wordpress-role \\"
-          - "     db_name=mariadb \\"
-          - "     creation_statements=\"CREATE USER '{{name}}'@'localhost' IDENTIFIED BY '{{password}}'; GRANT ALL ON {{ wordpress_db_name }}.* TO '{{name}}'@'localhost';\" \\"
-          - "     default_ttl='24h' \\"
-          - "     max_ttl='720h'"
-          - "8. Test rotation: sudo /usr/local/bin/rotate-wordpress-secrets.sh"
+          - "=========================================="
+          - "  MANUAL STEPS REQUIRED (running server) "
+          - "=========================================="
+          - ""
+          - "--- WORDPRESS DB ROTATION (existing) ---"
+          - "1. Place wordpress-rotator token:"
+          - "   echo '<token>' > /root/.openbao-token && chmod 600 /root/.openbao-token"
+          - ""
+          - "--- MARIADB ROOT + WP ADMIN ROTATION (new) ---"
+          - "2. Login to OpenBao with admin credentials:"
+          - "   export VAULT_ADDR=http://127.0.0.1:8200"
+          - "   bao login -method=userpass username=admin"
+          - ""
+          - "3. Update wordpress-rotator policy (add KV write):"
+          - "   bao policy write wordpress-rotator - <<'EOF'"
+          - "   path \"database/creds/wordpress\" { capabilities = [\"read\"] }"
+          - "   path \"secret/data/wordpress\"    { capabilities = [\"create\", \"update\"] }"
+          - "   path \"auth/token/renew-self\"    { capabilities = [\"update\"] }"
+          - "   EOF"
+          - ""
+          - "4. Create mariadb-rotator policy:"
+          - "   bao policy write mariadb-rotator - <<'EOF'"
+          - "   path \"secret/data/mariadb\"   { capabilities = [\"read\", \"create\", \"update\"] }"
+          - "   path \"auth/token/renew-self\" { capabilities = [\"update\"] }"
+          - "   EOF"
+          - ""
+          - "5. Create mariadb-rotator token (save the output):"
+          - "   bao token create -orphan -period=2160h -policy=mariadb-rotator -format=json \\"
+          - "     | jq -r '.auth.client_token' | tee /root/.openbao-mariadb-token"
+          - "   chmod 600 /root/.openbao-mariadb-token"
+          - ""
+          - "6. Seed WP admin password into OpenBao KV:"
+          - "   bao kv patch secret/wordpress admin_password='<current-wp-admin-pass>'"
+          - "   (retrieve current pass from wp-admin or wp-config.php first)"
+          - ""
+          - "--- VERIFICATION ---"
+          - "7. Test MariaDB rotation:"
+          - "   sudo /usr/local/bin/rotate-mariadb-root.sh"
+          - "   mysql -uroot -p$(bao kv get -field=root_password secret/mariadb) -e 'SELECT 1;'"
+          - ""
+          - "8. Test WP admin rotation:"
+          - "   sudo /usr/local/bin/rotate-wp-admin.sh"
+          - "   cat /etc/motd.d/90-rotation-notice"
+          - ""
+          - "9. Check monthly timer:"
+          - "   systemctl list-timers monthly-secret-rotate.timer"
+          - "=========================================="
