@@ -23,6 +23,8 @@ nginx_wordpress_woocommerce_enabled: false       # WooCommerce cache bypass
 # Nginx Configuration
 # ========================================
 
+nginx_wordpress_site_name: "wordpress"
+
 # Nginx Repository Configuration
 nginx_wordpress_use_official_nginx_repo: true   # Use nginx.org official repo (recommended)
 nginx_wordpress_nginx_version: "1.28.1"         # Stable version with security fixes
@@ -63,7 +65,7 @@ nginx_wordpress_letsencrypt_propagation_seconds: 60
 # PHP Configuration
 # ========================================
 
-nginx_wordpress_php_version: "8.4"  # Debian 13 has PHP 8.4
+nginx_wordpress_php_version: "8.3"  # Debian 13 production PHP version (8.4 causes 502 errors on socket paths)
 nginx_wordpress_php_max_execution_time: 300
 nginx_wordpress_php_memory_limit: 256M
 nginx_wordpress_php_upload_max_filesize: 64M
@@ -81,6 +83,9 @@ nginx_wordpress_php_fpm_min_spare_servers: 4
 nginx_wordpress_php_fpm_max_spare_servers: 12
 nginx_wordpress_php_fpm_max_requests: 500
 nginx_wordpress_php_fpm_process_idle_timeout: 10s
+
+nginx_wordpress_redis_database: 0
+nginx_wordpress_redis_prefix: "wp_"
 
 # ========================================
 # WordPress Configuration
