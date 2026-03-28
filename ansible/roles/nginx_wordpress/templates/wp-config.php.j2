@@ -26,6 +26,13 @@ define('NONCE_SALT',       '{{ nginx_wordpress_nonce_salt }}');
 // ** WordPress debugging **
 define('WP_DEBUG', false);
 
+// ** Redis/Valkey object cache **
+define('WP_REDIS_HOST', '127.0.0.1');
+define('WP_REDIS_PORT', 6379);
+define('WP_REDIS_DATABASE', {{ nginx_wordpress_redis_database | default(0) }});
+define('WP_REDIS_PREFIX', '{{ nginx_wordpress_redis_prefix | default("wp_") }}');
+define('WP_CACHE', true);
+
 // ** Database table prefix **
 $table_prefix = 'wp_';
 
