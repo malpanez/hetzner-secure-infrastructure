@@ -21,7 +21,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Un alumno puede descubrir cursos en el main site, comprar en academy, y aprender sin fricciones — con <2s LCP y sin riesgo de perder datos.
-**Current focus:** Phase 01 — iac-refactor
+**Current focus:** Phase 02 — testing-&-validation
 
 ## Current Position
 
@@ -86,6 +86,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T18:33:58.563Z
-Stopped at: Completed 01-iac-refactor/01-02-PLAN.md
+Last session: 2026-03-28
+Stopped at: Phase 01 (IaC Refactor) complete — 4/4 plans, 16/16 requirements verified. Ready to plan Phase 02.
 Resume file: None
