@@ -145,6 +145,7 @@
     group: root
     mode: '0644'
   register: nginx_config_deployed
+  notify: reload nginx
   tags: [nginx-wordpress, nginx, config]
 
 - name: Nginx WordPress | Configure | Enable Nginx site
@@ -174,13 +175,6 @@
     success_msg: "Nginx configuration syntax is valid"
     fail_msg: "Nginx configuration validation failed: {{ nginx_config_test.stderr | default('unknown error') }}"
   tags: [nginx-wordpress, nginx, config, validate]
-
-- name: Nginx WordPress | Configure | Reload Nginx if configuration is valid
-  ansible.builtin.systemd:
-    name: nginx
-    state: reloaded
-  when: nginx_config_deployed is changed
-  tags: [nginx-wordpress, nginx, config]
 
 - name: Nginx WordPress | Configure | Disable default PHP-FPM www pool
   ansible.builtin.file:
