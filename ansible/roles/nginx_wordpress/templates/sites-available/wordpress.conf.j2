@@ -14,6 +14,15 @@
 # - Simple maintenance (update one snippet, affects all sites)
 # ============================================================================
 
+{% if nginx_wordpress_enable_fastcgi_cache | default(true) %}
+fastcgi_cache_path /var/cache/nginx/{{ nginx_wordpress_site_name }}
+    levels=1:2
+    keys_zone={{ nginx_wordpress_site_name }}:100m
+    inactive=60m
+    max_size=512m
+    use_temp_path=off;
+{% endif %}
+
 {% if nginx_wordpress_ssl_enabled %}
 # ============================================================================
 # HTTP to HTTPS Redirect
@@ -79,8 +88,8 @@ server {
     # ========================================================================
     # Logging
     # ========================================================================
-    access_log /var/log/nginx/wordpress-access.log;
-    error_log /var/log/nginx/wordpress-error.log;
+    access_log /var/log/nginx/{{ nginx_wordpress_site_name }}-access.log;
+    error_log /var/log/nginx/{{ nginx_wordpress_site_name }}-error.log;
 
     # ========================================================================
     # Cache Bypass Logic
@@ -101,13 +110,13 @@ server {
     # ========================================================================
     location ~ \.php$ {
         include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-fpm.sock;
+        fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-{{ nginx_wordpress_site_name }}-fpm.sock;
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
         fastcgi_param SCRIPT_NAME $fastcgi_script_name;
 
         {% if nginx_wordpress_enable_fastcgi_cache | default(true) %}
         # FastCGI cache (configured in conf.d/fastcgi-cache.conf)
-        fastcgi_cache wordpress;
+        fastcgi_cache {{ nginx_wordpress_site_name }};
         fastcgi_cache_valid 200 60m;
         fastcgi_cache_valid 404 10m;
         fastcgi_cache_bypass $no_cache;
@@ -137,7 +146,7 @@ server {
         limit_req zone=login burst=3 nodelay;
 
         include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-fpm.sock;
+        fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-{{ nginx_wordpress_site_name }}-fpm.sock;
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
 
         # Never cache login page
@@ -154,7 +163,7 @@ server {
 
         location ~ \.php$ {
             include snippets/fastcgi-php.conf;
-            fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-fpm.sock;
+            fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-{{ nginx_wordpress_site_name }}-fpm.sock;
             fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
 
             # Never cache API responses
@@ -168,10 +177,24 @@ server {
         limit_req zone=api burst=30 nodelay;
 
         include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-fpm.sock;
+        fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-{{ nginx_wordpress_site_name }}-fpm.sock;
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
 
         # Never cache AJAX
+        fastcgi_cache_bypass 1;
+        fastcgi_no_cache 1;
+    }
+    {% endif %}
+
+    {% if nginx_wordpress_learndash_enabled | default(true) %}
+    # ========================================================================
+    # LearnDash Focus Mode and Checkout Bypass
+    # ========================================================================
+    location ~* ^/(ld-focus-mode|learndash-checkout)/ {
+        try_files $uri $uri/ /index.php?$args;
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-{{ nginx_wordpress_site_name }}-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
         fastcgi_cache_bypass 1;
         fastcgi_no_cache 1;
     }
@@ -202,8 +225,8 @@ server {
     root {{ nginx_wordpress_web_root }};
     index index.php index.html;
 
-    access_log /var/log/nginx/wordpress-access.log;
-    error_log /var/log/nginx/wordpress-error.log;
+    access_log /var/log/nginx/{{ nginx_wordpress_site_name }}-access.log;
+    error_log /var/log/nginx/{{ nginx_wordpress_site_name }}-error.log;
 
     # Performance settings
     client_max_body_size {{ nginx_wordpress_php_upload_max_filesize }};
@@ -231,11 +254,11 @@ server {
 
     location ~ \.php$ {
         include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-fpm.sock;
+        fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-{{ nginx_wordpress_site_name }}-fpm.sock;
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
 
         {% if nginx_wordpress_enable_fastcgi_cache | default(true) %}
-        fastcgi_cache wordpress;
+        fastcgi_cache {{ nginx_wordpress_site_name }};
         fastcgi_cache_valid 200 60m;
         fastcgi_cache_valid 404 10m;
         fastcgi_cache_bypass $no_cache;
@@ -256,7 +279,7 @@ server {
     location = /wp-login.php {
         limit_req zone=login burst=3 nodelay;
         include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-fpm.sock;
+        fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-{{ nginx_wordpress_site_name }}-fpm.sock;
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
     }
     {% endif %}
