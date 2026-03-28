@@ -19,11 +19,11 @@
 
 ### IaC — Playbook & Inventory
 
-- [ ] **PLAY-01**: Nuevo playbook `dual-wordpress.yml` con 2 databases, 2 usuarios MariaDB, 2 invocaciones `include_role`
-- [ ] **PLAY-02**: Invocación main site: `nginx_wordpress_site_name=main`, sin LearnDash, sin WooCommerce
-- [ ] **PLAY-03**: Invocación academy: `nginx_wordpress_site_name=academy`, LearnDash enabled, WooCommerce enabled, `letsencrypt_enabled=false`
-- [ ] **PLAY-04**: PHP-FPM pool sizes diferenciados: main=20 workers, academy=30 workers
-- [ ] **PLAY-05**: Vault añade: `vault_wp_main_db_password`, `vault_wp_academy_db_password`, salts independientes para academy
+- [x] **PLAY-01**: Nuevo playbook `dual-wordpress.yml` con 2 databases, 2 usuarios MariaDB, 2 invocaciones `include_role`
+- [x] **PLAY-02**: Invocación main site: `nginx_wordpress_site_name=main`, sin LearnDash, sin WooCommerce
+- [x] **PLAY-03**: Invocación academy: `nginx_wordpress_site_name=academy`, LearnDash enabled, WooCommerce enabled, `letsencrypt_enabled=false`
+- [x] **PLAY-04**: PHP-FPM pool sizes diferenciados: main=20 workers, academy=30 workers
+- [x] **PLAY-05**: Vault añade: `vault_wp_main_db_password`, `vault_wp_academy_db_password`, salts independientes para academy
 
 ### IaC — wp-config.php
 

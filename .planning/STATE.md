@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 01-iac-refactor/01-03-PLAN.md
-last_updated: "2026-03-28T18:32:49.003Z"
+status: verifying
+stopped_at: Completed 01-iac-refactor/01-02-PLAN.md
+last_updated: "2026-03-28T18:33:58.573Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 5
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 
 Phase: 01 (iac-refactor) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-03-28
 
 Progress: [░░░░░░░░░░] 0%
@@ -55,6 +55,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01-iac-refactor P04 | 2 | 1 tasks | 1 files |
 | Phase 01-iac-refactor P01 | 3 | 2 tasks | 5 files |
 | Phase 01-iac-refactor P03 | 4 | 1 tasks | 1 files |
+| Phase 01-iac-refactor P02 | 2min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -70,6 +71,8 @@ Recent decisions affecting current work:
 - [Phase 01-iac-refactor]: proxied=true for academy A record — consistent with all other A records, enables CDN + DDoS protection
 - [Phase 01-iac-refactor]: 01-01: nginx_wordpress_site_name defaults to 'wordpress' for backward compat; fastcgi_cache_path moved to per-vhost wordpress.conf.j2; php_version corrected to 8.3 (Debian 13 production)
 - [Phase 01-iac-refactor]: 01-03: WP_CACHE set unconditionally true — redis-cache plugin is mandatory in the role; | default() filters retained in template as safety net
+- [Phase 01-iac-refactor]: 01-02: Main site reuses existing vault_nginx_wordpress_* salts; academy gets independent vault_wp_academy_* vars
+- [Phase 01-iac-refactor]: 01-02: secrets.yml.example force-committed with git add -f — .example files are documentation despite *secret* gitignore
 
 ### Pending Todos
 
@@ -83,6 +86,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T18:32:48.959Z
-Stopped at: Completed 01-iac-refactor/01-03-PLAN.md
+Last session: 2026-03-28T18:33:58.563Z
+Stopped at: Completed 01-iac-refactor/01-02-PLAN.md
 Resume file: None

@@ -43,7 +43,7 @@ Phase 0 (content backup, XML export, screenshots) is already complete and is not
 Plans:
 
 - [x] 01-01: Refactor nginx_wordpress role — variables, PHP-FPM pool template, vhost template (ROLE-01 to ROLE-07)
-- [ ] 01-02: Build dual-wordpress.yml playbook — MariaDB setup, two include_role invocations, vault vars (PLAY-01 to PLAY-05)
+- [x] 01-02: Build dual-wordpress.yml playbook — MariaDB setup, two include_role invocations, vault vars (PLAY-01 to PLAY-05)
 - [x] 01-03: Update wp-config.php.j2 template for per-site Valkey DB and prefix (WP-01, WP-02, WP-03)
 - [x] 01-04: Add academy DNS A record to Terraform cloudflare-config/dns.tf (TF-01)
 
