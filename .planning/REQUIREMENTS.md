@@ -9,13 +9,13 @@
 
 ### IaC — Role Refactor
 
-- [ ] **ROLE-01**: Variable `nginx_wordpress_site_name` añadida a `defaults/main.yml` como discriminador de instancia
-- [ ] **ROLE-02**: `tasks/configure.yml` parametrizado: vhost conf, pool conf, log names usan `nginx_wordpress_site_name`
-- [ ] **ROLE-03**: `templates/php-fpm-wordpress.conf.j2` parametrizado: pool name + socket path por instancia
-- [ ] **ROLE-04**: `templates/sites-available/wordpress.conf.j2` parametrizado: socket path + `fastcgi_cache_path` + zone name (separados por instancia) + log names
-- [ ] **ROLE-05**: `templates/conf.d/fastcgi-cache.conf.j2` eliminado o vaciado — `fastcgi_cache_path` movido al vhost (previene cross-site cache purge via nginx-helper)
-- [ ] **ROLE-06**: `templates/sites-available/wordpress.conf.j2` añade bypass rules para `/ld-focus-mode/` y `/learndash-checkout/`
-- [ ] **ROLE-07**: `nginx_wordpress_woocommerce_enabled` activado para la invocación de academy
+- [x] **ROLE-01**: Variable `nginx_wordpress_site_name` añadida a `defaults/main.yml` como discriminador de instancia
+- [x] **ROLE-02**: `tasks/configure.yml` parametrizado: vhost conf, pool conf, log names usan `nginx_wordpress_site_name`
+- [x] **ROLE-03**: `templates/php-fpm-wordpress.conf.j2` parametrizado: pool name + socket path por instancia
+- [x] **ROLE-04**: `templates/sites-available/wordpress.conf.j2` parametrizado: socket path + `fastcgi_cache_path` + zone name (separados por instancia) + log names
+- [x] **ROLE-05**: `templates/conf.d/fastcgi-cache.conf.j2` eliminado o vaciado — `fastcgi_cache_path` movido al vhost (previene cross-site cache purge via nginx-helper)
+- [x] **ROLE-06**: `templates/sites-available/wordpress.conf.j2` añade bypass rules para `/ld-focus-mode/` y `/learndash-checkout/`
+- [x] **ROLE-07**: `nginx_wordpress_woocommerce_enabled` activado para la invocación de academy
 
 ### IaC — Playbook & Inventory
 

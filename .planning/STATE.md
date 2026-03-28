@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-04-PLAN.md
-last_updated: "2026-03-28T18:19:40.185Z"
+stopped_at: Completed 01-iac-refactor/01-01-PLAN.md
+last_updated: "2026-03-28T18:22:23.379Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 4
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 ## Current Position
 
 Phase: 01 (iac-refactor) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-03-28
 
@@ -53,6 +53,7 @@ Progress: [░░░░░░░░░░] 0%
 
 *Updated after each plan completion*
 | Phase 01-iac-refactor P04 | 2 | 1 tasks | 1 files |
+| Phase 01-iac-refactor P01 | 3 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -66,6 +67,7 @@ Recent decisions affecting current work:
 - Planning: Valkey DB 0 (main) / DB 1 (academy) with distinct prefixes — prevents object cache key collisions
 - Planning: terraform destroy + apply chosen over surgical approach (clean slate, binary logging from day one)
 - [Phase 01-iac-refactor]: proxied=true for academy A record — consistent with all other A records, enables CDN + DDoS protection
+- [Phase 01-iac-refactor]: 01-01: nginx_wordpress_site_name defaults to 'wordpress' for backward compat; fastcgi_cache_path moved to per-vhost wordpress.conf.j2; php_version corrected to 8.3 (Debian 13 production)
 
 ### Pending Todos
 
@@ -79,6 +81,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T18:19:40.177Z
-Stopped at: Completed 01-04-PLAN.md
+Last session: 2026-03-28T18:22:23.371Z
+Stopped at: Completed 01-iac-refactor/01-01-PLAN.md
 Resume file: None
