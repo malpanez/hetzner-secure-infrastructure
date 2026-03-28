@@ -12,25 +12,30 @@ Un alumno puede descubrir los cursos en el main site, comprar en el academy, y a
 
 ### Validated
 
-(None yet — ship to validate)
+*Validated in Phase 1: IaC Refactor (2026-03-28)*
+
+- [x] Role `nginx_wordpress` refactorizado para soportar múltiples instancias (include_role x2) — parametrizado con `nginx_wordpress_site_name`, PHP 8.3, fastcgi_cache_path per-vhost, LearnDash bypass
+- [x] Nuevo playbook `dual-wordpress.yml` con 2 DBs, 2 usuarios MariaDB, 2 invocaciones del role — pool sizes 20/30, Valkey db 0/1, vault vars documentadas
+- [x] DNS A record `academy.twomindstrading.com` añadido en Terraform/Cloudflare — `cloudflare_record.academy`, proxied, misma IP
+- [x] `wp-config.php.j2` renderiza `WP_REDIS_DATABASE` y `WP_REDIS_PREFIX` distintos por instancia
 
 ### Active
 
 **Infraestructura (IaC)**
-- [ ] Role `nginx_wordpress` refactorizado para soportar múltiples instancias (include_role x2)
-- [ ] Nuevo playbook `dual-wordpress.yml` con 2 DBs, 2 usuarios MariaDB, 2 invocaciones del role
-- [ ] DNS A record `academy.twomindstrading.com` añadido en Terraform/Cloudflare
+- [ ] Molecule tests pasando con el role refactorizado (Phase 2)
 - [ ] MariaDB binary logging aplicado al servidor de producción
 - [ ] AppArmor + fail2ban perfiles actualizados para cubrir ambas rutas web
 - [ ] Servidor reconstruido con `terraform destroy + apply` (clean slate)
 
 **Seguridad y Operaciones**
+
 - [ ] OpenBao rotation (`setup-openbao-rotation.yml`) ejecutado correctamente por primera vez
 - [ ] `WP_PATH` en rotation scripts apunta a `/var/www/twomindstrading.com`
 - [ ] UpdraftPlus activo en ambos sitios con backup a Google Drive
 - [ ] Molecule tests pasando con el role refactorizado
 
 **Main site — twomindstrading.com**
+
 - [ ] WordPress instalado con Kadence + Kadence Blocks (sin Elementor)
 - [ ] Contenido del tercero importado (XML export + reconstrucción en Kadence)
 - [ ] Páginas: home, metodología, cursos (listing con CTAs a academy), instructores, contacto
@@ -38,6 +43,7 @@ Un alumno puede descubrir los cursos en el main site, comprar en el academy, y a
 - [ ] Plugin stack mínimo: kadence-blocks, redis-cache, nginx-helper, wp-mail-smtp, seo-by-rank-math, cookie-notice, limit-login-attempts-reloaded, wordfence-login-security, updraftplus
 
 **Academy — academy.twomindstrading.com**
+
 - [ ] WordPress instalado con Kadence + LearnDash Pro (licencia manual)
 - [ ] WooCommerce configurado para enrollment y pagos
 - [ ] Cursos creados desde cero (no hay backup de contenido)
@@ -53,9 +59,10 @@ Un alumno puede descubrir los cursos en el main site, comprar en el academy, y a
 
 ## Context
 
-**Incidente de seguridad (2026-03-26):** El servidor fue reiniciado tras un patch, OpenBao quedó sellado, y el WP admin perdió acceso. Un usuario con acceso admin previo (techdirector@grupolyown.com) restauró su propio proyecto sobre el WP del usuario a ~03:04 UTC. Se perdió el contenido original de la DB (cursos LearnDash, etc.). El tercero contratado para reconstruir el sitio lo hizo en Elementor en lugar de Kadence.
+**Incidente de seguridad (2026-03-26):** El servidor fue reiniciado tras un patch, OpenBao quedó sellado, y el WP admin perdió acceso. Un usuario con acceso admin previo (<techdirector@grupolyown.com>) restauró su propio proyecto sobre el WP del usuario a ~03:04 UTC. Se perdió el contenido original de la DB (cursos LearnDash, etc.). El tercero contratado para reconstruir el sitio lo hizo en Elementor en lugar de Kadence.
 
 **Estado actual del servidor:**
+
 - WordPress activo con diseño del tercero en Elementor + Hello Elementor theme
 - OpenBao correctamente unsealed (transit en 8201, primary en 8200)
 - `setup-openbao-rotation.yml` NUNCA ejecutado — no hay rotation activa
@@ -63,9 +70,10 @@ Un alumno puede descubrir los cursos en el main site, comprar en el academy, y a
 - AppArmor/fail2ban perfiles referencian `/var/www/wordpress` (obsoleto tras rebuild)
 
 **Decisiones de arquitectura ya tomadas:**
+
 - PHP 8.3 (Debian 13 default en group_vars — hay mismatch con defaults/main.yml que dice 8.4; usar 8.3 explícitamente)
 - Cloudflare Origin wildcard `*.twomindstrading.com` cubre academy sin certbot adicional
-- FastCGI cache zone compartida (cache key incluye `$host`, no hay colisión entre sitios)
+- FastCGI cache SEPARADA por vhost (nginx-helper purge_all() borra por path de filesystem, no por dominio — cache compartida = wipe cross-site)
 - Valkey db 0 para main site, db 1 para academy
 
 ## Constraints
@@ -93,6 +101,7 @@ Un alumno puede descubrir los cursos en el main site, comprar en el academy, y a
 This document evolves at phase transitions and milestone boundaries.
 
 **After each phase transition** (via `/gsd:transition`):
+
 1. Requirements invalidated? → Move to Out of Scope with reason
 2. Requirements validated? → Move to Validated with phase reference
 3. New requirements emerged? → Add to Active
@@ -100,10 +109,11 @@ This document evolves at phase transitions and milestone boundaries.
 5. "What This Is" still accurate? → Update if drifted
 
 **After each milestone** (via `/gsd:complete-milestone`):
+
 1. Full review of all sections
 2. Core Value check — still the right priority?
 3. Audit Out of Scope — reasons still valid?
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 — proyecto inicializado desde sesión de planning*
+*Last updated: 2026-03-28 — Phase 1 (IaC Refactor) complete, 16/16 requirements verified*
