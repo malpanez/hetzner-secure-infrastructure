@@ -33,7 +33,7 @@
 
 ### Terraform / DNS
 
-- [ ] **TF-01**: DNS A record `academy.twomindstrading.com` añadido en `cloudflare-config/dns.tf` (proxied, misma IP)
+- [x] **TF-01**: DNS A record `academy.twomindstrading.com` añadido en `cloudflare-config/dns.tf` (proxied, misma IP)
 
 ### Servidor — Operaciones
 
@@ -119,7 +119,7 @@
 | ROLE-01, ROLE-02, ROLE-03, ROLE-04, ROLE-05, ROLE-06, ROLE-07 | Phase 1 — IaC Refactor | Pending |
 | PLAY-01, PLAY-02, PLAY-03, PLAY-04, PLAY-05 | Phase 1 — IaC Refactor | Pending |
 | WP-01, WP-02, WP-03 | Phase 1 — IaC Refactor | Pending |
-| TF-01 | Phase 1 — IaC Refactor | Pending |
+| TF-01 | Phase 1 — IaC Refactor | Complete |
 | TEST-01, TEST-02 | Phase 2 — Testing & Validation | Pending |
 | INFRA-01, INFRA-02, INFRA-03, INFRA-04 | Phase 3 — Server Rebuild | Pending |
 | OPS-01, OPS-02, OPS-03, OPS-04, OPS-05 | Phase 3 — Server Rebuild | Pending |

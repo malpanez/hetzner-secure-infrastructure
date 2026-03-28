@@ -41,7 +41,7 @@ Plans:
 - [ ] 01-01: Refactor nginx_wordpress role — variables, PHP-FPM pool template, vhost template (ROLE-01 to ROLE-07)
 - [ ] 01-02: Build dual-wordpress.yml playbook — MariaDB setup, two include_role invocations, vault vars (PLAY-01 to PLAY-05)
 - [ ] 01-03: Update wp-config.php.j2 template for per-site Valkey DB and prefix (WP-01, WP-02, WP-03)
-- [ ] 01-04: Add academy DNS A record to Terraform cloudflare-config/dns.tf (TF-01)
+- [x] 01-04: Add academy DNS A record to Terraform cloudflare-config/dns.tf (TF-01)
 
 ### Phase 2: Testing & Validation
 **Goal**: The refactored role passes Molecule tests and the entire codebase is lint-clean on the feature branch, confirming the IaC changes are safe to run against a real server.

@@ -1,3 +1,19 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: executing
+stopped_at: Completed 01-04-PLAN.md
+last_updated: "2026-03-28T18:19:40.185Z"
+last_activity: 2026-03-28
+progress:
+  total_phases: 5
+  completed_phases: 0
+  total_plans: 4
+  completed_plans: 1
+  percent: 0
+---
+
 # Project State
 
 ## Project Reference
@@ -5,20 +21,21 @@
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Un alumno puede descubrir cursos en el main site, comprar en academy, y aprender sin fricciones — con <2s LCP y sin riesgo de perder datos.
-**Current focus:** Phase 1 — IaC Refactor
+**Current focus:** Phase 01 — iac-refactor
 
 ## Current Position
 
-Phase: 1 of 5 (IaC Refactor)
-Plan: 0 of 4 in current phase
-Status: Ready to plan
-Last activity: 2026-03-28 — Roadmap created, STATE initialized
+Phase: 01 (iac-refactor) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
+Last activity: 2026-03-28
 
 Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed: 0
 - Average duration: -
 - Total execution time: -
@@ -30,10 +47,12 @@ Progress: [░░░░░░░░░░] 0%
 | - | - | - | - |
 
 **Recent Trend:**
+
 - Last 5 plans: -
 - Trend: -
 
 *Updated after each plan completion*
+| Phase 01-iac-refactor P04 | 2 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -46,6 +65,7 @@ Recent decisions affecting current work:
 - Planning: FastCGI cache path must be per-vhost — moved from `conf.d/` into `wordpress.conf.j2` (ROLE-05 critical)
 - Planning: Valkey DB 0 (main) / DB 1 (academy) with distinct prefixes — prevents object cache key collisions
 - Planning: terraform destroy + apply chosen over surgical approach (clean slate, binary logging from day one)
+- [Phase 01-iac-refactor]: proxied=true for academy A record — consistent with all other A records, enables CDN + DDoS protection
 
 ### Pending Todos
 
@@ -59,6 +79,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28
-Stopped at: Roadmap and STATE created. Ready to begin planning Phase 1.
+Last session: 2026-03-28T18:19:40.177Z
+Stopped at: Completed 01-04-PLAN.md
 Resume file: None
