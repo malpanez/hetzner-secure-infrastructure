@@ -24,7 +24,7 @@
 
     - name: Check if PHP-FPM is installed
       ansible.builtin.package:
-        name: php8.3-fpm
+        name: "php{{ nginx_wordpress_php_version | default('8.4') }}-fpm"
         state: present
       check_mode: true
       register: php_installed
