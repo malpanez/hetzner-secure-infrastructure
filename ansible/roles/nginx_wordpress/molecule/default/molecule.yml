@@ -20,6 +20,7 @@ provisioner:
   inventory:
     host_vars:
       nginx-wordpress-debian13:
+        nginx_wordpress_site_name: wordpress
         nginx_wordpress_server_name: test.example.com
         nginx_wordpress_db_name: wordpress_test
         nginx_wordpress_db_user: wp_user
