@@ -62,7 +62,7 @@ Plans:
 
 Plans:
 
-- [ ] 02-01: Run and fix Molecule tests for refactored nginx_wordpress role (TEST-01)
+- [x] 02-01: Run and fix Molecule tests for refactored nginx_wordpress role (TEST-01)
 - [ ] 02-02: Run and fix ansible-lint, pre-commit, and terraform validate (TEST-02)
 
 ### Phase 3: Server Rebuild

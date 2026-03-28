@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Completed 01-iac-refactor/01-02-PLAN.md
-last_updated: "2026-03-28T18:38:45.370Z"
+status: executing
+stopped_at: Phase 02 Plan 01 complete — molecule test passing, TEST-01 satisfied. Plan 02-02 is next.
+last_updated: "2026-03-28T20:50:08.225Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 4
-  completed_plans: 4
+  total_plans: 6
+  completed_plans: 5
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Un alumno puede descubrir cursos en el main site, comprar en academy, y aprender sin fricciones — con <2s LCP y sin riesgo de perder datos.
-**Current focus:** Phase 02 — testing-&-validation
+**Current focus:** Phase 02 — testing-validation
 
 ## Current Position
 
-Phase: 2
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 02 (testing-validation) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-03-28
 
 Progress: [░░░░░░░░░░] 0%
@@ -56,6 +56,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01-iac-refactor P01 | 3 | 2 tasks | 5 files |
 | Phase 01-iac-refactor P03 | 4 | 1 tasks | 1 files |
 | Phase 01-iac-refactor P02 | 2min | 2 tasks | 2 files |
+| Phase 02-testing-validation P01 | 55 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -71,8 +72,10 @@ Recent decisions affecting current work:
 - [Phase 01-iac-refactor]: proxied=true for academy A record — consistent with all other A records, enables CDN + DDoS protection
 - [Phase 01-iac-refactor]: 01-01: nginx_wordpress_site_name defaults to 'wordpress' for backward compat; fastcgi_cache_path moved to per-vhost wordpress.conf.j2; php_version corrected to 8.3 (Debian 13 production)
 - [Phase 01-iac-refactor]: 01-03: WP_CACHE set unconditionally true — redis-cache plugin is mandatory in the role; | default() filters retained in template as safety net
-- [Phase 01-iac-refactor]: 01-02: Main site reuses existing vault_nginx_wordpress_* salts; academy gets independent vault_wp_academy_* vars
+- [Phase 01-iac-refactor]: 01-02: Main site reuses existing vault_nginx_wordpress_*salts; academy gets independent vault_wp_academy_* vars
 - [Phase 01-iac-refactor]: 01-02: secrets.yml.example force-committed with git add -f — .example files are documentation despite *secret* gitignore
+- [Phase 02-testing-validation]: PHP 8.4 used in molecule (not 8.3) — Debian 13 container ships 8.4 natively; production continues to use PHP 8.3 via sury.org
+- [Phase 02-testing-validation]: changed_when: false on apt update pre_task in converge.yml — no cache_valid_time per CLAUDE.md constraint; suppression correct for idempotency
 
 ### Pending Todos
 
@@ -86,6 +89,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28
-Stopped at: Phase 01 (IaC Refactor) complete — 4/4 plans, 16/16 requirements verified. Ready to plan Phase 02.
+Last session: 2026-03-28T20:50:08.216Z
+Stopped at: Phase 02 Plan 01 complete — molecule test passing, TEST-01 satisfied. Plan 02-02 is next.
 Resume file: None
