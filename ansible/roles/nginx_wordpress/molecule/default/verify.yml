@@ -39,7 +39,7 @@
 
     - name: Check if WordPress directory exists
       ansible.builtin.stat:
-        path: /var/www/html
+        path: /var/www/wordpress
       register: wordpress_dir
       failed_when: not wordpress_dir.stat.exists
 
