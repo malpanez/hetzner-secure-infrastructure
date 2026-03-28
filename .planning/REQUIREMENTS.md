@@ -27,9 +27,9 @@
 
 ### IaC — wp-config.php
 
-- [ ] **WP-01**: Template `wp-config.php.j2` acepta `WP_REDIS_DATABASE` y `WP_REDIS_PREFIX` como variables por instancia
-- [ ] **WP-02**: Main site: `WP_REDIS_DATABASE=0`, prefix `wp_main_`
-- [ ] **WP-03**: Academy site: `WP_REDIS_DATABASE=1`, prefix `wp_academy_`
+- [x] **WP-01**: Template `wp-config.php.j2` acepta `WP_REDIS_DATABASE` y `WP_REDIS_PREFIX` como variables por instancia
+- [x] **WP-02**: Main site: `WP_REDIS_DATABASE=0`, prefix `wp_main_`
+- [x] **WP-03**: Academy site: `WP_REDIS_DATABASE=1`, prefix `wp_academy_`
 
 ### Terraform / DNS
 
