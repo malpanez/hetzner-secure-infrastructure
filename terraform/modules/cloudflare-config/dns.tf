@@ -60,6 +60,17 @@ resource "cloudflare_record" "prometheus" {
   comment = "Prometheus metrics endpoint (Nginx reverse proxy)"
 }
 
+# Academy subdomain (second WordPress site)
+resource "cloudflare_record" "academy" {
+  zone_id = data.cloudflare_zone.main.id
+  name    = "academy"
+  content = var.server_ipv4
+  type    = "A"
+  proxied = true
+  ttl     = 1
+  comment = "Academy WordPress site (LMS + WooCommerce)"
+}
+
 # ========================================
 # Email / Zoho Mail DNS Records
 # ========================================
