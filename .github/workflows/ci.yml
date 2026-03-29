@@ -62,7 +62,7 @@ jobs:
   # ========================================
   ansible-validate:
     name: Validate Ansible
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest  # ansible-lint OOMs on ubuntu-slim (<= 7GB RAM)
     timeout-minutes: 20
 
     steps:
@@ -75,9 +75,7 @@ jobs:
           export PATH="$HOME/.cargo/bin:$PATH"
           uv venv
           source .venv/bin/activate
-          # ansible-core only (no bundled collections) — avoids loading hundreds of
-          # pip-packaged collections that cause OOM on ubuntu-slim runners.
-          uv pip install 'ansible-core>=2.15,<2.18' ansible-lint yamllint requests python-dateutil
+          uv pip install ansible ansible-lint yamllint requests python-dateutil
 
       - name: Install Ansible Galaxy requirements
         run: |
@@ -103,30 +101,11 @@ jobs:
         run: |
           source .venv/bin/activate
           cd ansible
-          # Install only collections used by our custom code (not heavy monitoring collections).
-          # grafana.grafana + prometheus.prometheus (~300MB+) cause OOM on ubuntu-slim runners.
-          mkdir -p /tmp/lint-collections
-          # Force install into isolated path even if already installed globally.
-          ansible-galaxy collection install \
-            community.general ansible.posix community.mysql \
-            -p /tmp/lint-collections \
-            --force
-          # Lint with isolated collections path and explicit playbook list (exclude monitoring.yml
-          # and site.yml — they only orchestrate Galaxy roles, no custom code to lint).
-          # ANSIBLE_COLLECTIONS_PATH (singular) is the current env var; plural form is deprecated.
-          ANSIBLE_COLLECTIONS_PATH=/tmp/lint-collections \
-          ansible-lint \
-            playbooks/common.yml \
-            playbooks/dual-wordpress.yml \
-            playbooks/openbao.yml \
-            playbooks/openbao-transit-bootstrap.yml \
-            playbooks/openbao-bootstrap.yml \
-            playbooks/setup-openbao-rotation.yml \
-            playbooks/wordpress.yml \
-            playbooks/wordpress-only.yml \
-            playbooks/validate.yml \
-            roles/ \
+          # Exclude vendored roles and Galaxy-installed content (not our code)
+          ansible-lint playbooks/ roles/ \
             --exclude roles/geerlingguy.mysql/ \
+            --exclude ~/.ansible/roles/ \
+            --exclude ~/.ansible/collections/ \
             --parseable | tee ../ansible-lint-report.txt; exit ${PIPESTATUS[0]}
         timeout-minutes: 15
 
