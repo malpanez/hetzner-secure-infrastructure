@@ -153,7 +153,11 @@ repos:
       - id: markdownlint
         name: Markdown Lint
         args: [--config=.markdownlint.json, --fix]
-        exclude: '(^\.planning/|^docs/|^\.woodpecker/|^\.github/|^examples/|CHANGES_SUMMARY\.md|CONTRIBUTING\.md|SECURITY\.md|README\.md|ARCHITECTURE_SELECTION\.md|CLOUDFLARE_TOKEN_SETUP\.md|IMPORT_DNS_RECORDS\.md|MIGRATION\.md|README_INVENTORIES\.md)'
+        exclude: >-
+          (?x)(^\.planning/|^docs/|^\.woodpecker/|^\.github/|^examples/|
+          CHANGES_SUMMARY\.md|CONTRIBUTING\.md|SECURITY\.md|README\.md|
+          ARCHITECTURE_SELECTION\.md|CLOUDFLARE_TOKEN_SETUP\.md|
+          IMPORT_DNS_RECORDS\.md|MIGRATION\.md|README_INVENTORIES\.md)
 
   - repo: https://github.com/tcort/markdown-link-check
     rev: v3.12.2
@@ -178,7 +182,10 @@ repos:
       - id: detect-secrets
         name: Detect Secrets
         args: [--baseline, .secrets.baseline]
-        exclude: '(^docs/|^\.vagrant/|secrets\.yml\.example|ssh_2fa/README|package\.lock\.json)'
+        exclude: >-
+          (?x)(^docs/|^\.vagrant/|^\.planning/|secrets\.yml\.example|
+          ssh_2fa/README|cloudflare_origin_ssl/README|
+          terraform/backend\.tf|package\.lock\.json)
 
   # ============================================
   # Security scanning
