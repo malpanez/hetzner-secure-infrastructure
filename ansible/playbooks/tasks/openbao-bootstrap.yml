@@ -1,4 +1,11 @@
 ---
+# IMPORTANT: Before running this playbook on a fresh server, clear ansible.log first:
+#   > ansible/ansible.log
+# After the run, unseal keys and root token will appear in the debug task output.
+# IMMEDIATELY save them to BitWarden, then clear the log again:
+#   > ansible/ansible.log
+# The wp_admin_user should be set to a non-obvious value (e.g. tmt_admin) in vault vars.
+
 - name: Check OpenBao status
   ansible.builtin.command: "{{ openbao_cli }} status -format=json"
   environment: "{{ openbao_env }}"
@@ -119,6 +126,7 @@
   changed_when: openbao_kv_enable.rc == 0
   failed_when: false
   when: openbao_bootstrap_token is defined
+  no_log: true
   tags: [openbao, bootstrap]
 
 - name: Seed WordPress database credentials in OpenBao
@@ -151,6 +159,7 @@
   changed_when: openbao_db_enable.rc == 0
   failed_when: false
   when: openbao_bootstrap_token is defined
+  no_log: true
   tags: [openbao, bootstrap]
 
 - name: Create OpenBao database user in MariaDB
@@ -215,6 +224,7 @@
   environment: "{{ openbao_env | combine({'VAULT_TOKEN': openbao_bootstrap_token}) }}"
   changed_when: true
   when: openbao_bootstrap_token is defined
+  no_log: true
   tags: [openbao, bootstrap]
 
 - name: Create OpenBao policy for MariaDB root rotation

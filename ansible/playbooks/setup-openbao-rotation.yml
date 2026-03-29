@@ -32,7 +32,7 @@
           # Configuration
           OPENBAO_ADDR="http://127.0.0.1:8200"
           LOG_FILE="/var/log/wordpress-secret-rotation.log"
-          WP_PATH="/var/www/wordpress"
+          WP_PATH="/var/www/twomindstrading.com"
 
           # Logging function
           log() {
@@ -57,12 +57,13 @@
               error_exit "OpenBao token file not found at /root/.openbao-token"
           fi
 
-          export OPENBAO_TOKEN=$(cat /root/.openbao-token)
+          export OPENBAO_TOKEN
+          OPENBAO_TOKEN=$(cat /root/.openbao-token)
 
           # Fetch new database credentials from OpenBao
           log "Fetching new database credentials from OpenBao"
           CREDS=$(curl -s -H "X-Vault-Token: $OPENBAO_TOKEN" \
-                       "$OPENBAO_ADDR/v1/database/creds/wordpress-role" || error_exit "Failed to fetch credentials from OpenBao")
+                       "$OPENBAO_ADDR/v1/database/creds/wordpress" || error_exit "Failed to fetch credentials from OpenBao")
 
           # Parse credentials
           NEW_USER=$(echo "$CREDS" | jq -r '.data.username' || error_exit "Failed to parse username")
@@ -85,7 +86,7 @@
 
           # Restart PHP-FPM to apply changes
           log "Restarting PHP-FPM"
-          systemctl restart php8.4-fpm || error_exit "Failed to restart PHP-FPM"
+          systemctl reload php8.3-fpm || error_exit "Failed to reload PHP-FPM"
 
           # Wait for PHP-FPM to fully restart
           sleep 2
@@ -268,7 +269,7 @@
           OPENBAO_ADDR="http://127.0.0.1:8200"
           LOG_FILE="/var/log/wp-admin-rotation.log"
           TOKEN_FILE="/root/.openbao-token"
-          WP_PATH="/var/www/wordpress"
+          WP_PATH="/var/www/twomindstrading.com"
 
           log() {
               echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_FILE"
@@ -299,9 +300,12 @@
           # Generate new password
           NEW_PASS=$(openssl rand -base64 48 | tr -d '/+=\n' | head -c 32)
 
-          # Update WordPress admin password (user ID 1)
+          # Update WordPress admin password by login name (avoids relying on user ID)
           log "Updating WordPress admin password via WP-CLI"
-          sudo -u www-data wp --path="$WP_PATH" user update 1 --user_pass="${NEW_PASS}" || error_exit "Failed to update WP admin password"
+          WP_ADMIN_USER=$(sudo -u www-data wp --path="$WP_PATH" user list --role=administrator \
+            --fields=user_login --format=csv | tail -n 1) || error_exit "Failed to get admin username"
+          sudo -u www-data wp --path="$WP_PATH" user update "${WP_ADMIN_USER}" \
+            --user_pass="${NEW_PASS}" || error_exit "Failed to update WP admin password"
 
           # Store new password in OpenBao (patch preserves other fields like db_name/db_user)
           log "Storing new password in OpenBao"
