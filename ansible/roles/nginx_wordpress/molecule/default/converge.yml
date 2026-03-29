@@ -4,7 +4,7 @@
   become: true
   vars:
     # Dependencies needed for nginx_wordpress
-    mariadb_root_password: test_root_password
+    mariadb_root_password: test_root_password  # pragma: allowlist secret
     valkey_bind: 127.0.0.1
 
   pre_tasks:
