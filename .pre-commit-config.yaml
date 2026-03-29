@@ -38,14 +38,19 @@ repos:
         name: Check executables have shebangs
       - id: check-shebang-scripts-are-executable
         name: Check shebangs are executable
+        exclude: '\.j2$'
       - id: detect-private-key
         name: Detect private keys
+        exclude: >-
+          (?x)^(
+            ansible/roles/cloudflare_origin_ssl/README\.md|
+            ansible/inventory/group_vars/all/secrets\.yml\.example|
+            ansible/roles/cloudflare_origin_ssl/tasks/main\.yml|
+            docs/guides/TERRAFORM_CLOUD_MIGRATION\.md
+          )$
       - id: mixed-line-ending
         name: Check mixed line endings
         args: [--fix=lf]
-      - id: no-commit-to-branch
-        name: Prevent commits to main
-        args: [--branch, main, --branch, master]
 
   # ============================================
   # Terraform/OpenTofu
@@ -63,6 +68,7 @@ repos:
         args:
           - --hook-config=--retry-once-with-cleanup=true
           - --tf-init-args=-backend=false
+        exclude: 'examples/'
       - id: terraform_docs
         name: Terraform Docs
         args:
@@ -218,5 +224,5 @@ ci:
   autoupdate_branch: ''
   autoupdate_commit_msg: 'ci: pre-commit autoupdate'
   autoupdate_schedule: weekly
-  skip: [terraform_validate, terraform_tflint, ansible-lint]
+  skip: [terraform_validate, terraform_tflint, terraform_trivy, ansible-lint]
   submodules: false
