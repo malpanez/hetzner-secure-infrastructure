@@ -23,3 +23,5 @@
 
   roles:
     - role: nginx_wordpress
+      vars:
+        nginx_wordpress_site_name: "wordpress"

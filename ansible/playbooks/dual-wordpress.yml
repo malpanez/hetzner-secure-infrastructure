@@ -67,6 +67,8 @@
         name: nginx_wordpress
       vars:
         nginx_wordpress_site_name: academy
+        nginx_wordpress_install_nginx: false
+        nginx_wordpress_install_php: false
         nginx_wordpress_server_name: academy.twomindstrading.com
         nginx_wordpress_server_aliases: []
         nginx_wordpress_web_root: /var/www/academy.twomindstrading.com
