@@ -20,3 +20,13 @@ backup_mariadb_backup_user: "backup"
 backup_staging_dir: "/var/backups/wordpress"
 backup_log_file: "/var/log/wordpress-backup.log"
 backup_script_path: "/usr/local/bin/wordpress-backup.sh"
+backup_service_name: "wordpress-backup"
+backup_service_path: "/etc/systemd/system/wordpress-backup.service"
+backup_timer_path: "/etc/systemd/system/wordpress-backup.timer"
+
+backup_packages:
+  - mariadb-client
+  - jq
+  - openssl
+  - curl
+  - unzip

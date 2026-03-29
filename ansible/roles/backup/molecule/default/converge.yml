@@ -12,6 +12,9 @@
     backup_script_path: "/usr/local/bin/wordpress-backup.sh"
     backup_mariadb_host: "127.0.0.1"
     backup_mariadb_port: 3306
+    backup_service_name: "wordpress-backup"
+    backup_service_path: "/etc/systemd/system/wordpress-backup.service"
+    backup_timer_path: "/etc/systemd/system/wordpress-backup.timer"
     backup_sites:
       - name: main
         db_name: wordpress_main

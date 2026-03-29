@@ -17,16 +17,13 @@
           - backup_script.stat.mode == '0700'
         fail_msg: "Backup script missing or not executable"
 
-    - name: Verify | Check systemd timer is enabled
-      ansible.builtin.command: systemctl is-enabled wordpress-backup.timer
-      register: timer_status
-      changed_when: false
-      failed_when: false
+    - name: Verify | Gather service facts
+      ansible.builtin.service_facts:
 
     - name: Verify | Assert timer is enabled
       ansible.builtin.assert:
-        that: timer_status.stdout == "enabled"
-        fail_msg: "wordpress-backup.timer is not enabled"
+        that: "ansible_facts.services[backup_service_name + '.timer']['status'] == 'enabled'"
+        fail_msg: "{{ backup_service_name }}.timer is not enabled"
 
     - name: Verify | Check aws-cli is installed
       ansible.builtin.command: aws --version

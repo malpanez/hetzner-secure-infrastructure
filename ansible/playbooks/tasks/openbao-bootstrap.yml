@@ -240,7 +240,7 @@
 
 - name: Create OpenBao policy for WordPress credential rotation
   ansible.builtin.shell: |
-    set -o pipefail
+    set -euo pipefail
     cat <<'POLICY' | {{ openbao_cli }} policy write wordpress-rotator -
     path "database/creds/wordpress" {
       capabilities = ["read"]
@@ -262,7 +262,7 @@
 
 - name: Create OpenBao policy for WordPress Academy credential rotation
   ansible.builtin.shell: |
-    set -o pipefail
+    set -euo pipefail
     cat <<'POLICY' | {{ openbao_cli }} policy write wordpress-academy-rotator -
     path "database/creds/wordpress-academy" {
       capabilities = ["read"]
@@ -284,7 +284,7 @@
 
 - name: Create OpenBao policy for MariaDB root rotation
   ansible.builtin.shell: |
-    set -o pipefail
+    set -euo pipefail
     cat <<'POLICY' | {{ openbao_cli }} policy write mariadb-rotator -
     path "secret/data/mariadb" {
       capabilities = ["read", "create", "update"]
@@ -315,7 +315,7 @@
 
 - name: Create OpenBao policy for backup reader
   ansible.builtin.shell: |
-    set -o pipefail
+    set -euo pipefail
     cat <<'POLICY' | {{ openbao_cli }} policy write backup-reader -
     path "secret/data/backup" {
       capabilities = ["read"]
