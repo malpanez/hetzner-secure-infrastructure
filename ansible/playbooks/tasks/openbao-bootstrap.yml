@@ -243,6 +243,7 @@
   environment: "{{ openbao_env | combine({'VAULT_TOKEN': openbao_bootstrap_token}) }}"
   changed_when: true
   when: openbao_bootstrap_token is defined
+  no_log: true
   tags: [openbao, bootstrap]
 
 - name: Create OpenBao token for WordPress rotation

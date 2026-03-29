@@ -35,10 +35,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd  # v3
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
@@ -67,7 +67,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
 
       - name: Install UV and Ansible
         run: |
@@ -104,13 +104,12 @@ jobs:
           # Exclude vendored roles to improve performance and focus on our code
           ansible-lint playbooks/ roles/ \
             --exclude roles/geerlingguy.mysql/ \
-            --parseable | tee ../ansible-lint-report.txt || true
-        continue-on-error: true
+            --parseable | tee ../ansible-lint-report.txt; exit ${PIPESTATUS[0]}
         timeout-minutes: 15
 
       - name: Upload lint report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
         with:
           name: ansible-lint-report
           path: ansible-lint-report.txt
@@ -119,7 +118,6 @@ jobs:
         run: |
           source .venv/bin/activate
           yamllint ansible/
-        continue-on-error: true
 
   # ========================================
   # Molecule Tests (Ansible Roles)
@@ -144,7 +142,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
 
       - name: Install UV and Molecule
         run: |
@@ -177,7 +175,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
 
       - name: Run Grype vulnerability scanner
         uses: anchore/scan-action@3343887d815d7b07465f6fdcd395bd66508d486a
@@ -189,7 +187,7 @@ jobs:
           fail-build: false
 
       - name: Upload Grype results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@c10b8064de6f491fea524254123dbe5e09572f13  # v4
         with:
           sarif_file: ${{ steps.grype.outputs.sarif }}
         if: always()
@@ -204,10 +202,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
 
       - name: Check for broken links in Markdown
-        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        uses: gaurav-nelson/github-action-markdown-link-check@5c5dfc0ac2e225883c0e5f03a85311ec2830d368  # v1
         with:
           use-quiet-mode: 'yes'
           use-verbose-mode: 'yes'
@@ -243,16 +241,16 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff  # v5
         with:
           go-version: ${{ env.GO_VERSION }}
           cache-dependency-path: terraform/test/go.sum
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd  # v3
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
@@ -275,7 +273,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
 
       - name: Install UV and pre-commit
         run: |
@@ -297,7 +295,7 @@ jobs:
           terraform-docs --version
 
       - name: Cache pre-commit environments
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4
         with:
           path: ~/.cache/pre-commit
           key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
@@ -308,7 +306,6 @@ jobs:
         run: |
           source .venv/bin/activate
           pre-commit run --all-files --show-diff-on-failure
-        continue-on-error: true
 
   # ========================================
   # CodeQL Analysis
@@ -323,19 +320,19 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
+        uses: github/codeql-action/init@c10b8064de6f491fea524254123dbe5e09572f13  # v4
         with:
           languages: python, go
           queries: security-and-quality
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v4
+        uses: github/codeql-action/autobuild@c10b8064de6f491fea524254123dbe5e09572f13  # v4
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
+        uses: github/codeql-action/analyze@c10b8064de6f491fea524254123dbe5e09572f13  # v4
 
   # ========================================
   # Dependency Review
@@ -347,30 +344,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
 
       - name: Dependency Review
         uses: actions/dependency-review-action@v4
         with:
           fail-on-severity: moderate
 
-  # ========================================
-  # Generate Badge
-  # ========================================
-  generate-badge:
-    name: Generate Status Badge
-    runs-on: ubuntu-slim
-    needs: [terraform-validate, ansible-validate, security-scan]
-    if: always()
-
-    steps:
-      - name: Create badge
-        uses: schneegans/dynamic-badges-action@v1.7.0
-        with:
-          auth: ${{ secrets.GIST_SECRET }}
-          gistID: your-gist-id
-          filename: hetzner-infra-status.json
-          label: build
-          message: ${{ needs.terraform-validate.result == 'success' && needs.ansible-validate.result == 'success' && needs.security-scan.result == 'success' && 'passing' || 'failing' }}
-          color: ${{ needs.terraform-validate.result == 'success' && needs.ansible-validate.result == 'success' && needs.security-scan.result == 'success' && 'brightgreen' || 'red' }}
-        continue-on-error: true

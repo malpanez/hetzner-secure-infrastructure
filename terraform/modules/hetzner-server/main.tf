@@ -54,7 +54,7 @@ resource "hcloud_server" "server" {
 
   # Prevent accidental deletion
   lifecycle {
-    prevent_destroy = false       # Set to true in production to prevent accidental deletion
+    prevent_destroy = true        # Comment out before terraform destroy for planned rebuild
     ignore_changes  = [user_data] # Prevent recreation if cloud-init changes
   }
 }
@@ -147,7 +147,7 @@ resource "hcloud_volume" "server_volume" {
   labels   = local.common_labels
 
   lifecycle {
-    prevent_destroy = false # Set to true in production to prevent accidental deletion
+    prevent_destroy = true # Comment out before terraform destroy for planned rebuild
   }
 }
 
