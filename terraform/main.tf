@@ -34,7 +34,7 @@ provider "hcloud" {
 provider "aws" {
   access_key = var.hetzner_s3_access_key # gitleaks:allow
   secret_key = var.hetzner_s3_secret_key # gitleaks:allow
-  region     = "nbg1"
+  region     = var.hetzner_s3_region
 
   skip_credentials_validation = true
   skip_metadata_api_check     = true
@@ -42,7 +42,7 @@ provider "aws" {
   skip_region_validation      = true
 
   endpoints {
-    s3 = "https://nbg1.your-objectstorage.com"
+    s3 = "https://${var.hetzner_s3_region}.your-objectstorage.com"
   }
 }
 
@@ -120,6 +120,7 @@ module "object_storage" {
   hetzner_s3_access_key = var.hetzner_s3_access_key
   hetzner_s3_secret_key = var.hetzner_s3_secret_key
   bucket_name           = var.backup_bucket_name
+  region                = var.hetzner_s3_region
 }
 
 # Cloudflare DNS and Security Configuration

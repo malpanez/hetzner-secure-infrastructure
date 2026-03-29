@@ -5,5 +5,5 @@ output "bucket_name" {
 
 output "bucket_endpoint" {
   description = "The Hetzner Object Storage endpoint URL"
-  value       = "https://nbg1.your-objectstorage.com"
+  value       = "https://${var.region}.your-objectstorage.com"
 }

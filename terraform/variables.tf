@@ -267,6 +267,12 @@ variable "csp_frame_src_public_extra" {
 # Hetzner Object Storage (S3-compatible backup bucket)
 # ============================================================================
 
+variable "hetzner_s3_region" {
+  description = "Hetzner Object Storage region (nbg1, fsn1, hel1)"
+  type        = string
+  default     = "nbg1"
+}
+
 variable "hetzner_s3_access_key" {
   description = "Hetzner Object Storage S3-compatible access key"
   type        = string
