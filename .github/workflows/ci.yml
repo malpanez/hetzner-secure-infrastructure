@@ -87,13 +87,14 @@ jobs:
         run: |
           source .venv/bin/activate
           cd ansible
-          # Install only collections our custom code uses into an isolated path.
+          # Install only what lint needs: 3 collections + geerlingguy.mysql role.
           # Heavy monitoring collections (grafana.grafana ~200MB, prometheus.prometheus ~100MB)
-          # are not installed here — they would make ansible-lint take >25min to run.
+          # are NOT installed here — they make ansible-lint take >25min to run.
           mkdir -p /tmp/lint-collections
           ansible-galaxy collection install \
             community.general ansible.posix community.mysql \
             -p /tmp/lint-collections --force
+          ansible-galaxy role install geerlingguy.mysql
           # ANSIBLE_COLLECTIONS_PATH (singular) restricts collection discovery to this path.
           # Excludes monitoring.yml and site.yml — they only call Galaxy roles, no custom code.
           ANSIBLE_COLLECTIONS_PATH=/tmp/lint-collections \
