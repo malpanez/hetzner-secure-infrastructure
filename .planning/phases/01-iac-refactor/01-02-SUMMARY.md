@@ -86,6 +86,7 @@ metrics:
 ### Auto-fixed Issues
 
 **1. [Rule 3 - Blocking] secrets.yml.example gitignored by *secret* pattern**
+
 - **Found during:** Task 2 commit
 - **Issue:** `.gitignore` has `*secret*` pattern which matched `secrets.yml.example`
 - **Fix:** Used `git add -f` to force-add the file — it is a documentation template, not an actual secrets file

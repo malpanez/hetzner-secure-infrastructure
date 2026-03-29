@@ -32,15 +32,18 @@ and will flag issues in WP admin if a mismatch is detected.
 **GOTCHA — HIGH PRIORITY:** WooCommerce introduced High-Performance Order Storage (HPOS) as
 default in WooCommerce 8.2+. The LearnDash WooCommerce Integration plugin had partial HPOS
 support as of late 2024. Verify HPOS compatibility before going live:
+
 - In WP Admin → WooCommerce → Settings → Advanced → Features → "Order data storage"
 - If the LearnDash bridge plugin shows a compatibility warning, disable HPOS (keep legacy
-  post-based orders) until LearnDash explicitly confirms HPOS support.
-- Track: https://github.com/LearnDash/learndash-woocommerce/issues
+  post-ba<https://github.com/LearnDash/learndash-woocommerce/issues>ort.
+- Track: <https://github.com/LearnDash/learndash-woocommerce/issues>
 
 ### Is LearnDash WooCommerce Integration still the right bridge? (HIGH confidence)
 
 Yes. There is no better alternative for native LearnDash enrollment from WooCommerce purchase.
+
 The plugin:
+
 - Maps WooCommerce products to LearnDash courses (1:1 or 1:many)
 - Triggers enrollment on order completion
 - Handles refund → unenrollment
@@ -62,6 +65,7 @@ plugin natively across domains.
 ### Real-World Patterns
 
 #### Pattern A: Consolidate shop onto academy.twomindstrading.com (RECOMMENDED)
+
 Put WooCommerce AND LearnDash on the academy site only. The marketing site (twomindstrading.com)
 links directly to course sales pages on academy.twomindstrading.com.
 
@@ -73,9 +77,11 @@ site becomes a link to `academy.twomindstrading.com/courses/[course-name]` or a 
 sales/checkout page on the academy. This is already aligned with the stated enrollment flow.
 
 Confidence: HIGH — this is what the project description already implies. WooCommerce lives on
+
 academy only.
 
 #### Pattern B: WooCommerce on main site, sync enrollment via webhook/API (LOW confidence)
+
 WooCommerce on twomindstrading.com triggers a webhook on order completion. A custom endpoint on
 academy.twomindstrading.com calls `ld_update_course_access()` to enroll the user.
 
@@ -87,10 +93,12 @@ academy.twomindstrading.com calls `ld_update_course_access()` to enroll the user
 
 This pattern is not recommended for a two-person operation or MVP. It is viable at scale if
 the marketing funnel requires full checkout on the main domain, but the added operational
+
 overhead (two user tables to sync, webhook monitoring, token-based auth between sites) is
 not worth it here.
 
 #### Pattern C: WordPress Multisite (REJECTED)
+
 Explicitly out of scope per project brief. Listed only to close the option.
 
 ### Verdict
@@ -171,11 +179,13 @@ UpdraftPlus Free is sufficient for this setup at MVP stage. Reasons:
 1. Sends backups to remote storage (Hetzner Object Storage, Backblaze B2, S3) — critical because
    a backup stored only on the same server is not a backup.
 2. Schedules independent DB and files backups. For WordPress, the DB is the crown jewel;
+
    files (themes/plugins) are reproducible. Run DB backup more frequently than files.
 3. Low overhead: runs during off-peak, does not hold page cache during backup.
 4. Mature codebase, widely documented troubleshooting.
 
 **Recommended schedule:**
+
 - DB backup: daily, retain 7 copies → remote storage
 - Files backup: weekly, retain 4 copies → remote storage
 
@@ -184,12 +194,15 @@ the existing Hetzner infrastructure. UpdraftPlus Free supports S3-compatible end
 
 **GOTCHA:** UpdraftPlus requires WP-cron to fire for scheduled backups. On a Nginx + PHP-FPM
 setup with low traffic, WP-cron may not fire reliably (it's triggered by page visits).
+
 Fix: disable WP-cron from HTTP trigger and add a real cron job:
+
 ```
 # /etc/cron.d/wp-cron-academy
 */15 * * * * www-data /usr/bin/wp --path=/var/www/academy cron event run --due-now --quiet
 */15 * * * * www-data /usr/bin/wp --path=/var/www/wordpress cron event run --due-now --quiet
 ```
+
 Add `define('DISABLE_WP_CRON', true);` to each wp-config.php.
 
 ### WPvivid as alternative (MEDIUM confidence)
@@ -210,12 +223,15 @@ is written and the cache is not invalidated, users can see stale progress data (
 a quiz as "not attempted" immediately after completion).
 
 **Mitigation:**
+
 - Use Redis Object Cache's "selective cache groups" feature to exclude LearnDash user meta keys.
 - Alternatively, add to wp-config.php on the academy site:
+
   ```php
   // Exclude LearnDash user meta from object cache
   // Key groups: 'user_meta', 'sfwd-*'
   ```
+
 - Check the Redis Object Cache plugin settings for group exclusions.
 - This is documented in LearnDash community forums but not in official docs as of 2024.
 
@@ -246,6 +262,7 @@ alongside Kadence.
 
 **GOTCHA:** Kadence's WooCommerce compatibility is included in the Kadence theme, not Kadence
 Blocks. If only Kadence Blocks is active without the Kadence theme (e.g., using a different
+
 base theme), the WooCommerce templates fall back to WooCommerce defaults which may be unstyled.
 
 ### Redis + WooCommerce (MEDIUM confidence)
@@ -257,6 +274,7 @@ WooCommerce session handler). The Redis Object Cache plugin respects this. No co
 sessions). Do not cache this table. Redis Object Cache does not cache DB tables directly, so
 this is only relevant if you add a full-page cache layer that might cache checkout pages.
 Nginx FastCGI cache must exclude:
+
 - `/cart/`, `/checkout/`, `/my-account/`, `/wp-admin/`
 - Cookies: `woocommerce_*`, `wordpress_logged_in_*`
 

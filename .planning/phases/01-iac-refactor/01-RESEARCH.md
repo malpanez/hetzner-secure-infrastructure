@@ -7,6 +7,7 @@
 ---
 
 <phase_requirements>
+
 ## Phase Requirements
 
 | ID | Description | Research Support |
@@ -114,10 +115,12 @@ fastcgi_cache {{ nginx_wordpress_site_name }};
 File: `ansible/roles/nginx_wordpress/templates/php-fpm-wordpress.conf.j2`
 
 Current state:
+
 - Line 4: `[wordpress]` — pool section header
 - Line 8: `listen = /run/php/php{{ nginx_wordpress_php_version }}-fpm.sock` — shared socket path
 
 After parametrization:
+
 - `[{{ nginx_wordpress_site_name }}]`
 - `listen = /run/php/php{{ nginx_wordpress_php_version }}-{{ nginx_wordpress_site_name }}-fpm.sock`
 
@@ -128,6 +131,7 @@ The `listen.owner` and `listen.group` lines reference role variables already and
 File: `ansible/roles/nginx_wordpress/templates/sites-available/wordpress.conf.j2`
 
 **fastcgi_pass — 6 occurrences**, all with identical current value:
+
 - Line 104 (HTTPS, main PHP location)
 - Line 140 (HTTPS, `/wp-login.php`)
 - Line 158 (HTTPS, `/wp-json/` nested location)
@@ -140,12 +144,15 @@ Current value (all 6): `fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_ver
 New value (all 6): `fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-{{ nginx_wordpress_site_name }}-fpm.sock;`
 
 **Log paths — 2 occurrences**, one in each SSL branch:
+
 - Line 82 (HTTPS): `access_log /var/log/nginx/wordpress-access.log;` and line 83: `error_log /var/log/nginx/wordpress-error.log;`
+
 - Line 205 (HTTP): `access_log /var/log/nginx/wordpress-access.log;` and line 206: `error_log /var/log/nginx/wordpress-error.log;`
 
 New pattern: `access_log /var/log/nginx/{{ nginx_wordpress_site_name }}-access.log;` / `error_log /var/log/nginx/{{ nginx_wordpress_site_name }}-error.log;`
 
 **fastcgi_cache zone references — 2 occurrences** (one per SSL branch):
+
 - Line 110: `fastcgi_cache wordpress;`
 - Line 238: `fastcgi_cache wordpress;`
 
@@ -213,12 +220,14 @@ File: `ansible/inventory/group_vars/all/secrets.yml.example`
 Existing pattern: `vault_` prefix + descriptive snake_case name.
 
 Examples already in use:
+
 - `vault_mariadb_root_password`
 - `vault_wordpress_db_password`
 - `vault_nginx_wordpress_admin_password`
 - `vault_nginx_wordpress_auth_key` (and all 8 salts)
 
 New variables required (PLAY-05) — following the same pattern:
+
 - `vault_wp_main_db_password` — MariaDB password for `wp_main` user
 - `vault_wp_academy_db_password` — MariaDB password for `wp_academy` user
 - `vault_wp_academy_auth_key` — academy-specific WP salt (and the other 7 salts)
@@ -355,7 +364,7 @@ Config file: `.yamllint.yml` (the pre-commit hook references `-c=.yamllint.yml`)
 
 `geerlingguy.mysql/` is excluded from yamllint. All new files in `ansible/` (except that role) must pass yamllint with `--strict`.
 
-ansible-lint runs with `--profile=production` — this enforces FQCN for all modules (no shorthand like `copy:`, must be `ansible.builtin.copy:`). The `dual-wordpress.yml` playbook must use FQCN for the `include_role` call: `ansible.builtin.include_role`.
+ansible-lint runs with `--profile=production` — his enforces FQCN for all modules (no shorthand like `copy:`, must be `ansible.builtin.copy:`). The `dual-wordpress.yml` playbook must use FQCN for the `include_role` call: `ansible.builtin.include_role`.
 
 Terraform files must pass `terraform fmt -check -recursive` — the pre-commit hook enforces this. The new `cloudflare_record.academy` block must be formatted consistently with adjacent records (no extra blank lines, aligned `=` signs are not required by `terraform fmt`).
 
@@ -363,15 +372,15 @@ Terraform files must pass `terraform fmt -check -recursive` — the pre-commit h
 
 ## Architecture Patterns
 
-### Role variable override via include_role vars:
+### Role variable overrid via include_role vars
 
 `include_role` with `vars:` creates a per-invocation scope. Variables passed via `vars:` take precedence over `defaults/main.yml`. This is the correct mechanism — no `allow_duplicates: true` in `meta/main.yml` is required.
 
-### fastcgi_cache_path placement:
+### fastcgi_cache_path placement
 
 `fastcgi_cache_path` is valid in `http {}` context. A vhost config file in `sites-available/` is included inside `http {}` by Nginx's main config. Placing `fastcgi_cache_path` at the top of `wordpress.conf.j2` (outside the `server {}` block) is architecturally correct and the standard approach for per-site cache isolation.
 
-### PHP-FPM socket naming:
+### PHP-FPM socket naming
 
 PHP-FPM pools with distinct socket paths (`/run/php/phpX.X-main-fpm.sock`, `/run/php/phpX.X-academy-fpm.sock`) are independent — the pool manager for each listens on its own socket. Nginx connects to the correct socket per vhost.
 
@@ -380,24 +389,29 @@ PHP-FPM pools with distinct socket paths (`/run/php/phpX.X-main-fpm.sock`, `/run
 ## Common Pitfalls
 
 ### Pitfall 1: fastcgi_cache zone name collision
+
 **What goes wrong:** Two vhosts referencing the same `keys_zone` name share a cache memory zone. Nginx will start, but cache entries from different sites collide on keys that don't include `$host`.
 **Why it happens:** The `fastcgi_cache_key` in `fastcgi-cache.conf.j2` includes `$host` — so hits won't collide. But the `fastcgi_cache_path` filesystem directory must still be separate to prevent nginx-helper purge cross-contamination.
 **How to avoid:** Use `{{ nginx_wordpress_site_name }}` in both the `keys_zone` name and the path.
 
 ### Pitfall 2: configure.yml still deploying fastcgi-cache.conf per-invocation
+
 **What goes wrong:** Both `include_role` invocations render `fastcgi-cache.conf.j2` to the same global path `/etc/nginx/conf.d/fastcgi-cache.conf`. The second invocation overwrites the first's file. Since the file only contains global directives (no per-site paths after ROLE-05), this is harmless — but it's an unnecessary duplicate write.
 **How to avoid:** Add `when: nginx_wordpress_site_name == 'main'` to the "Deploy FastCGI cache config" task, OR extract the global directives to a separate always-deployed task that runs outside the per-site role. The `when: nginx_wordpress_site_name == 'main'` guard is the simplest approach.
 
 ### Pitfall 3: PHP-FPM pool conf filename collision
+
 **What goes wrong:** Both invocations write to `{{ php_fpm_pool_dir }}/wordpress.conf` if the dest is not parametrized (line 193 of configure.yml). The second invocation silently overwrites the first pool config.
 **Why it happens:** Line 193 of configure.yml uses a hardcoded `wordpress.conf` destination — this is the exact line that ROLE-02 must fix.
 **How to avoid:** `dest: "{{ nginx_wordpress_php_fpm_pool_dir }}/{{ nginx_wordpress_site_name }}.conf"`
 
 ### Pitfall 4: wp-config.php.j2 idempotency gate
+
 **What goes wrong:** The configure.yml task at line 215 only creates `wp-config.php` if the file does not already exist. Adding new Redis defines is safe in the template — but an existing wp-config.php on a live server will not be updated.
 **Impact for this phase:** Phase 1 is pure IaC (no server apply until Phase 3). On the new rebuilt server (Phase 3), the wp-config.php will never pre-exist, so the new template will be rendered in full. No action needed in Phase 1.
 
 ### Pitfall 5: Molecule test failure after socket rename
+
 **What goes wrong:** Molecule's `verify.yml` or `converge.yml` may assert the old socket path `/run/php/phpX.X-fpm.sock`. After parametrization, the socket name changes to `/run/php/phpX.X-wordpress-fpm.sock` (with the default `nginx_wordpress_site_name: "wordpress"`).
 **How to avoid:** The default value `nginx_wordpress_site_name: "wordpress"` means the rendered socket is `/run/php/php8.4-wordpress-fpm.sock`. Check Molecule verify tasks for hardcoded socket assertions. This is a Phase 2 (TEST-01) concern — flagged for the testing plan.
 
@@ -423,6 +437,7 @@ PHP-FPM pools with distinct socket paths (`/run/php/phpX.X-main-fpm.sock`, `/run
 
 2. **configure.yml global fastcgi-cache task guard**
    - What we know: After ROLE-05, the `fastcgi-cache.conf.j2` task becomes idempotent (second invocation writes same content)
+
    - What's unclear: Whether to add `when: nginx_wordpress_site_name == 'main'` guard or leave it as-is
    - Recommendation: Add the guard — it's explicit and prevents a confusing double-write in `--check` output
 
@@ -436,6 +451,7 @@ PHP-FPM pools with distinct socket paths (`/run/php/phpX.X-main-fpm.sock`, `/run
 ## Sources
 
 ### Primary (HIGH confidence)
+
 - Direct read: `ansible/roles/nginx_wordpress/tasks/configure.yml` — exact line numbers for all hardcoded paths
 - Direct read: `ansible/roles/nginx_wordpress/templates/conf.d/fastcgi-cache.conf.j2` — exact directive to move
 - Direct read: `ansible/roles/nginx_wordpress/templates/sites-available/wordpress.conf.j2` — all 6 fastcgi_pass locations, both log path locations
@@ -443,6 +459,7 @@ PHP-FPM pools with distinct socket paths (`/run/php/phpX.X-main-fpm.sock`, `/run
 - Direct read: `ansible/roles/nginx_wordpress/defaults/main.yml` — full variable inventory
 - Direct read: `ansible/roles/nginx_wordpress/templates/wp-config.php.j2` — confirmed no Redis config exists
 - Direct read: `ansible/playbooks/wordpress.yml` — geerlingguy.mysql vars format
+
 - Direct read: `ansible/inventory/group_vars/all/secrets.yml.example` — vault naming convention
 - Direct read: `terraform/modules/cloudflare-config/dns.tf` — exact HCL pattern for A records
 - Direct read: `.yamllint.yml` + `.pre-commit-config.yaml` — all linting constraints
@@ -450,6 +467,7 @@ PHP-FPM pools with distinct socket paths (`/run/php/phpX.X-main-fpm.sock`, `/run
 - Prior research: `.planning/research/FEATURES.md` — Valkey isolation, WooCommerce bypass requirements
 
 ### Secondary (MEDIUM confidence)
+
 - `.planning/research/SUMMARY.md` — synthesized findings confirming fastcgi_cache_path placement
 
 ---
@@ -457,6 +475,7 @@ PHP-FPM pools with distinct socket paths (`/run/php/phpX.X-main-fpm.sock`, `/run
 ## Metadata
 
 **Confidence breakdown:**
+
 - Exact line references: HIGH — all files read directly
 - Architecture (include_role, cache isolation): HIGH — confirmed in prior research docs
 - Vault naming convention: HIGH — read from secrets.yml.example

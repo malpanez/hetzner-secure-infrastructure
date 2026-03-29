@@ -52,6 +52,7 @@ metrics:
 ### Auto-fixed Issues
 
 **1. [Rule 3 - Blocker] PHP 8.3 not available in Debian 13 Docker container**
+
 - **Found during:** Task 2 — first molecule test run
 - **Issue:** `php8.3-fpm` install failed with "No package matching 'php8.3-fpm' is available". Debian 13 (Trixie) ships PHP 8.4 natively; PHP 8.3 requires the sury.org PPA which is not configured in the geerlingguy Docker image.
 - **Fix:** Added `nginx_wordpress_php_version: "8.4"` to molecule.yml host_vars; parameterized the php-fpm package assertion in verify.yml using `nginx_wordpress_php_version | default('8.4')`. Production server continues to use PHP 8.3 via sury.org (set in group_vars, unaffected).
@@ -59,6 +60,7 @@ metrics:
 - **Commit:** 33c9bdb
 
 **2. [Rule 1 - Bug] apt update pre_task reports changed on every converge run**
+
 - **Found during:** Task 2 — idempotency check failed with `Update apt cache` as changed
 - **Issue:** `ansible.builtin.apt: update_cache: true` always reports changed. `cache_valid_time` cannot be used per CLAUDE.md constraint (Docker image has fresh mtime, causes task failure).
 - **Fix:** Added `changed_when: false` to the Update apt cache pre_task in converge.yml.
@@ -80,6 +82,7 @@ Exit code: 0
 ```
 
 ansible-lint violations fixed:
+
 - no-handler in configure.yml:178 — resolved
 - jinja[spacing] in nginx-repo.yml:29 — resolved
 

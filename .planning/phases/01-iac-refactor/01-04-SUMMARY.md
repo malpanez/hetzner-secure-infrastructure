@@ -44,6 +44,7 @@ completed: 2026-03-28
 - **Files modified:** 1
 
 ## Accomplishments
+
 - Added `cloudflare_record.academy` A record to terraform/modules/cloudflare-config/dns.tf
 - Record inserted after prometheus block, before Email/Zoho Mail section
 - terraform fmt passes — no formatting issues
@@ -57,9 +58,11 @@ Each task was committed atomically:
 **Plan metadata:** (docs commit follows)
 
 ## Files Created/Modified
+
 - `terraform/modules/cloudflare-config/dns.tf` - Added academy A record (11 lines, resource block + section comment)
 
 ## Decisions Made
+
 - `proxied = true` — consistent with all other A records; enables CDN and DDoS protection
 - `var.server_ipv4` reused — academy runs on the same Hetzner VPS, no new variable required
 
@@ -68,12 +71,15 @@ Each task was committed atomically:
 None - plan executed exactly as written.
 
 ## Issues Encountered
+
 None
 
 ## User Setup Required
+
 None - no external service configuration required.
 
 ## Next Phase Readiness
+
 - academy.twomindstrading.com DNS record is ready; Cloudflare will proxy requests to the server once the record is applied via `terraform apply`
 - Nginx vhost for academy can be configured in Phase 3 (Ansible) with confidence that DNS will resolve
 

@@ -22,6 +22,7 @@ Un alumno puede descubrir los cursos en el main site, comprar en el academy, y a
 ### Active
 
 **Infraestructura (IaC)**
+
 - [ ] Molecule tests pasando con el role refactorizado (Phase 2)
 - [ ] MariaDB binary logging aplicado al servidor de producción
 - [ ] AppArmor + fail2ban perfiles actualizados para cubrir ambas rutas web

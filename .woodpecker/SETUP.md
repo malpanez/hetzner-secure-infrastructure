@@ -32,6 +32,7 @@ Woodpecker CI is Codeberg's native CI/CD platform. Follow these steps to enable 
 ### Step 3: Grant Permissions
 
 Woodpecker needs these permissions:
+
 - ✅ **Read repository** - To clone the code
 - ✅ **Read repository metadata** - To detect branches and commits
 - ✅ **Write commit status** - To show build status on commits
@@ -41,12 +42,14 @@ Click **"Allow"** or **"Grant"** when prompted.
 ### Step 4: Trigger First Build
 
 Option A: **Push a commit**
+
 ```bash
 git commit --allow-empty -m "trigger: Initial Woodpecker CI build"
 git push origin main
 ```
 
 Option B: **Manual trigger**
+
 1. Go to your repository in Woodpecker CI
 2. Click **"Restart"** on the latest commit
 
@@ -78,25 +81,31 @@ Option B: **Manual trigger**
 When Woodpecker CI runs `.woodpecker/test.yml`, you should see these stages:
 
 ### 1. **validate-terraform** (~2 minutes)
+
 ```
 ✅ Terraform Format Check
 ✅ Terraform Init
+
 ✅ Terraform Validate
 ```
 
 ### 2. **validate-ansible-syntax** (~1 minute)
+
 ```
 ✅ Ansible Syntax Check
 ```
 
 ### 3. **validate-ansible-lint** (~2 minutes)
+
 ```
 ✅ Ansible Lint Check
 ✅ YAML Lint Check
 ```
 
 ### 4. **test-molecule** (~15 minutes)
+
 ```
+
 ✅ Molecule Test: nginx-wordpress
 ✅ Molecule Test: valkey
 ✅ Molecule Test: mariadb
@@ -104,11 +113,13 @@ When Woodpecker CI runs `.woodpecker/test.yml`, you should see these stages:
 ```
 
 ### 5. **security-scan** (~2 minutes)
+
 ```
 ✅ Trivy Vulnerability Scan
 ```
 
 ### 6. **docs-check** (~1 minute)
+
 ```
 ✅ Verify Required Docs Exist
 ```
@@ -124,6 +135,7 @@ When Woodpecker CI runs `.woodpecker/test.yml`, you should see these stages:
 **Problem**: Can't find repository in the activation list.
 
 **Solution**:
+
 1. Ensure repository exists on Codeberg
 2. Log out of Woodpecker CI and log back in
 3. Check repository is public or you have access
@@ -134,6 +146,7 @@ When Woodpecker CI runs `.woodpecker/test.yml`, you should see these stages:
 **Problem**: Pushed commits but no build starts.
 
 **Solution**:
+
 1. Check webhook is created:
    - Go to Codeberg → Repository Settings → Webhooks
    - Should see a webhook pointing to `ci.codeberg.org`
@@ -145,6 +158,7 @@ When Woodpecker CI runs `.woodpecker/test.yml`, you should see these stages:
 **Problem**: Molecule tests fail with Docker socket permission errors.
 
 **Current Status**: `.woodpecker/test.yml` already has this fix:
+
 ```yaml
 volumes:
   - /var/run/docker.sock:/var/run/docker.sock
@@ -157,8 +171,10 @@ If still failing, check Woodpecker CI runner has Docker access.
 **Problem**: Build runs but no output shown.
 
 **Solution**:
+
 1. Wait for build to complete (can take 20+ minutes)
 2. Click on individual pipeline steps to see detailed logs
+
 3. Check browser console for JavaScript errors
 4. Try different browser
 
@@ -167,11 +183,13 @@ If still failing, check Woodpecker CI runner has Docker access.
 **Problem**: Build status badge shows "unknown" or doesn't load.
 
 **Current Badge URL**:
+
 ```markdown
 [![Build Status](https://ci.codeberg.org/api/badges/malpanez/twomindstrading_hetzner/status.svg)](https://ci.codeberg.org/malpanez/twomindstrading_hetzner)
 ```
 
 **Solution**:
+
 1. Ensure at least one build has completed
 2. Verify repository name matches exactly
 3. Badge updates after each build (may be cached)
@@ -185,6 +203,7 @@ If still failing, check Woodpecker CI runner has Docker access.
 **Location**: `/home/malpanez/repos/hetzner-secure-infrastructure/.woodpecker/test.yml`
 
 **Key Points**:
+
 - Uses Docker images for isolated environments
 - Mounts Docker socket for Molecule tests
 - Runs in parallel where possible
@@ -220,6 +239,7 @@ These control what gets validated:
 ### If All Tests Pass
 
 You'll see:
+
 ```
 ✅ validate-terraform      (2m 15s)
 ✅ validate-ansible-syntax (1m 05s)
@@ -229,12 +249,14 @@ You'll see:
 ✅ docs-check              (45s)
 
 Total: 24m 05s
+
 BUILD SUCCESSFUL
 ```
 
 ### If Tests Fail
 
 Click on the failed step to see:
+
 - ❌ Which command failed
 - 📝 Full error output
 - 🔍 File and line number (for syntax errors)
@@ -246,6 +268,7 @@ Click on the failed step to see:
 Once Woodpecker CI is working:
 
 1. **Add badge to README** (already included):
+
    ```markdown
    [![Build Status](https://ci.codeberg.org/api/badges/malpanez/twomindstrading_hetzner/status.svg)]
    ```
@@ -283,6 +306,7 @@ If you still can't see Woodpecker CI working:
    - CI infrastructure may be down
 
 2. **Try Local Testing**:
+
    ```bash
    # Verify pipeline locally before pushing
    make validate

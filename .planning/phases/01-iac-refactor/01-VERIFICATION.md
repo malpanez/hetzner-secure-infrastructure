@@ -34,7 +34,7 @@ human_verification:
 | 1 | Two include_role invocations with different site_name values produce separate PHP-FPM pools, vhost configs, log files, and cache directories | VERIFIED | configure.yml lines 24, 143, 152-153, 195 all use `{{ nginx_wordpress_site_name }}`; dual-wordpress.yml has 2 include_role calls with site_name=main and site_name=academy |
 | 2 | fastcgi_cache_path is per-vhost (inside wordpress.conf.j2), not global | VERIFIED | fastcgi-cache.conf.j2 has 0 matches for fastcgi_cache_path; wordpress.conf.j2 line 18 has parametrized `fastcgi_cache_path /var/cache/nginx/{{ nginx_wordpress_site_name }}` |
 | 3 | LearnDash bypass rules render conditionally when learndash_enabled is true | VERIFIED | wordpress.conf.j2 lines 189-201: `{% if nginx_wordpress_learndash_enabled %}` wraps location block for `/(ld-focus-mode|learndash-checkout)/` |
-| 4 | WooCommerce bypass rules render conditionally when woocommerce_enabled is true | VERIFIED | wordpress-cache-bypass.conf.j2 wraps `/cart/|/checkout/|/my-account/|/wc-api/` in `{% if nginx_wordpress_woocommerce_enabled %}`; academy invocation passes `true` |
+| 4 | WooCommerce bypass rules render conditionally when woocommerce_enabled is true | VERIFIED | wordpress-cache-bypass.conf.j2 wraps `/cart/|/checkout/|/my-account/|/wc-api/` in `{% if nginx_wordpress_woocommerce_enabled %}`; academy invocation passes`true` |
 | 5 | Default value nginx_wordpress_site_name=wordpress preserves backward compatibility | VERIFIED | defaults/main.yml line 26: `nginx_wordpress_site_name: "wordpress"` |
 | 6 | nginx_wordpress_php_version defaults to 8.3 | VERIFIED | defaults/main.yml line 68: `nginx_wordpress_php_version: "8.3"` |
 | 7 | dual-wordpress.yml creates two MariaDB databases with no cross-access | VERIFIED | mysql_databases has wordpress_main + wordpress_academy; mysql_users has wp_main (priv: wordpress_main.*:ALL) and wp_academy (priv: wordpress_academy.*:ALL) |
@@ -162,5 +162,5 @@ The only unresolved items are the three human verification points above, which c
 
 ---
 
-_Verified: 2026-03-28_
-_Verifier: Claude (gsd-verifier)_
+*Verified: 2026-03-28*
+*Verifier: Claude (gsd-verifier)*

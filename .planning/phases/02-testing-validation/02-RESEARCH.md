@@ -13,6 +13,7 @@ confidence: HIGH
 **Confidence:** HIGH — all findings are from direct execution against the live codebase, not training data assumptions.
 
 <user_constraints>
+
 ## User Constraints (from CONTEXT.md)
 
 ### Locked Decisions
@@ -51,6 +52,7 @@ None surfaced in auto mode.
 </user_constraints>
 
 <phase_requirements>
+
 ## Phase Requirements
 
 | ID | Description | Research Support |
@@ -153,6 +155,7 @@ failure on `dual-wordpress.yml` only occurs when run from outside `ansible/` wit
 The `.pre-commit-config.yaml` has 14 active hook IDs. Failures fall into three categories:
 
 **Category A — Tooling/environment (not code issues):**
+
 - `no-commit-to-branch`: always fails on main (guard hook — expected, cannot "fix")
 - `terraform_tflint`: `.tflint.hcl` uses `module = true` (removed in tflint v0.54+); needs `call_module_type`
 - `terraform_trivy`: `trivy` binary not installed on this machine
@@ -162,6 +165,7 @@ The `.pre-commit-config.yaml` has 14 active hook IDs. Failures fall into three c
 - `ansible-lint` in pre-commit: **crashes** with `ModuleNotFoundError: No module named 'ansible.parsing.yaml.constructor'` — the pre-commit isolated environment's ansible-lint version is incompatible with the installed ansible-core
 
 **Category B — Pre-existing code issues (not from Phase 1):**
+
 - `check-shebang-scripts-are-executable`: 7+ `.j2` template files and shell scripts missing executable bit
 - `yamllint --strict`: warnings on multiple files (`document-start`, `comments`, `line-length`) — warnings with `--strict` become errors
 - `shellcheck`: `ansible/deploy.sh:32` uses `$@` in string context (SC2145)
@@ -235,10 +239,12 @@ ansible version doesn't have `ansible.parsing.yaml.constructor` — this module 
 restructured in newer ansible-core versions. The pre-commit cache may be stale.
 
 **How to fix:** Clear the pre-commit cache for the ansible-lint hook:
+
 ```bash
 pre-commit clean
 pre-commit install
 ```
+
 Or update the ansible-lint pin in `.pre-commit-config.yaml` to a version compatible with
 ansible-core 2.16.3 (e.g., v6.17.x series matches what is installed system-wide).
 
@@ -254,13 +260,16 @@ and treat pre-commit's ansible-lint hook as a known-broken environment issue, no
 syntax removed in v0.54.0.
 
 **How to fix:** In `.tflint.hcl`, replace:
+
 ```hcl
 config {
   module = true
   force   = false
 }
 ```
+
 with:
+
 ```hcl
 config {
   call_module_type = "all"
@@ -280,6 +289,7 @@ files with shell script bodies legitimately have shebangs because the rendered o
 executed on the remote host.
 
 **How to fix:** Two options:
+
 1. Add the `.j2` files to a pre-commit `exclude:` pattern for the `check-shebang-scripts-are-executable` hook
 2. Mark them executable with `chmod +x` + `git add --chmod=+x` (makes them executable in git, does not affect Ansible template rendering)
 
@@ -290,6 +300,7 @@ Option 2 is simpler and safe — Ansible's `template` module renders the file co
 **What goes wrong:** pre-commit fails on files that contain example/documentation key material.
 
 **Files affected:**
+
 - `ansible/roles/cloudflare_origin_ssl/README.md` — example key in documentation
 - `ansible/inventory/group_vars/all/secrets.yml.example` — intentionally force-committed example (CONTEXT.md)
 - `ansible/roles/cloudflare_origin_ssl/tasks/main.yml` — references key path (not a key)
@@ -306,6 +317,7 @@ Since all work happens on `main` (CONTEXT.md decision), this hook will always fa
 read-only audit that still triggers this hook's exit code.
 
 **How to handle:** Either:
+
 1. Run `pre-commit run --all-files` with `SKIP=no-commit-to-branch pre-commit run --all-files`
 2. Or note it as an expected failure in the TEST-02 success criteria documentation
 3. Or remove the branch guard from `.pre-commit-config.yaml` since branching_strategy is "none"
@@ -440,9 +452,11 @@ config {
 | terraform | TEST-02 | Yes | v1.14.3 | — |
 
 **Missing dependencies with no fallback:**
+
 - None that block TEST-01 or TEST-02 core criteria.
 
 **Missing dependencies with fallback:**
+
 - `trivy`: terraform_trivy hook already uses `--args=--exit-code=0` so it should not fail even without trivy binary. The current failure is `command not found` which exits 127 regardless of `--exit-code=0`. Solution: install trivy or skip the hook.
 
 ## State of the Art
@@ -484,6 +498,7 @@ config {
 ## Sources
 
 ### Primary (HIGH confidence)
+
 - Direct execution of `ansible-lint --offline --profile production` against live codebase — all violations enumerated from actual output
 - Direct execution of `pre-commit run --all-files` — all hook failures from actual log output
 - Direct read of molecule/default/{molecule,converge,verify}.yml — exact content verified
@@ -491,11 +506,13 @@ config {
 - `terraform validate` execution — confirmed passing
 
 ### Secondary (MEDIUM confidence)
+
 - tflint v0.54+ changelog: `module` attribute removed, `call_module_type` added — verified by error message and tflint v0.61.0 being installed
 
 ## Metadata
 
 **Confidence breakdown:**
+
 - Molecule scenario analysis: HIGH — files read directly; gap identified (verify.yml path) is concrete
 - ansible-lint violations: HIGH — run against actual codebase; violations are specific file/line numbers
 - pre-commit failures: HIGH — full hook run executed; all failures from actual log

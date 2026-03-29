@@ -14,6 +14,7 @@
 **Consequences:** Application downtime. In this project this was the direct cause of the 2026-03-26 security incident — the admin lockout created an opportunity for an attacker to overwrite the site.
 
 **Prevention:**
+
 - Document and rehearse the unseal runbook before any reboot
 - Add MOTD warning that lists the unseal procedure
 - Consider a UPS or snapshot-before-reboot policy to minimise unplanned reboots
@@ -32,6 +33,7 @@
 **Consequences:** As demonstrated in the 2026-03-26 incident, original LearnDash course data was lost permanently when the attacker restored their project over the existing WordPress. No binary logs, no Hetzner snapshot, no off-site backup.
 
 **Prevention:**
+
 - Enable binary logging (`mariadb_log_bin_enabled: true`) — already added to Ansible, must be applied
 - Configure automated Hetzner snapshots (daily, keep 7)
 - Add off-site backup: `mysqldump` + `restic` or `borgbackup` to Hetzner Object Storage or B2
@@ -50,6 +52,7 @@
 **Consequences:** Static MariaDB root and WP admin credentials never rotate. No `/root/.openbao-token` or `/root/.openbao-mariadb-token` means rotation scripts will fail silently. Demonstrated in this project: `setup-openbao-rotation.yml` was never run.
 
 **Prevention:**
+
 - After writing any rotation playbook, run it immediately and verify the token files and cron entries exist on the server
 - Add a CI smoke-test or Ansible check-mode task that verifies expected cron entries are present
 - Record rotation state explicitly (see MEMORY.md pattern)
@@ -65,6 +68,7 @@
 **What goes wrong:** Firewall rules restrict SSH to one IP. If that IP changes (ISP DHCP, travel, mobile tether) you are locked out of the server permanently unless a recovery console exists.
 
 **Prevention:**
+
 - Always verify Hetzner rescue/VNC console access before making firewall changes
 - Keep a second admin IP (e.g., a VPN exit node or cloud shell) in the allowlist
 - Document the Hetzner console URL and credentials in an offline password manager
@@ -78,6 +82,7 @@
 **Consequences:** As in the 2026-03-26 incident, an external WP admin silently restored a different project over the existing site while the legitimate admin was locked out.
 
 **Prevention:**
+
 - Install WP Activity Log or Simple History before granting any third-party admin access
 - Restrict third-party users to Editor role unless Admin is strictly required
 - Enable Cloudflare Access or HTTP basic auth as a second gate for `/wp-admin`
