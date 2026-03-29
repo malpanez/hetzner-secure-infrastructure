@@ -1,0 +1,63 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Verify | Check backup script exists and is executable
+      ansible.builtin.stat:
+        path: /usr/local/bin/wordpress-backup.sh
+      register: backup_script
+
+    - name: Verify | Assert backup script is present and executable
+      ansible.builtin.assert:
+        that:
+          - backup_script.stat.exists
+          - backup_script.stat.executable
+          - backup_script.stat.mode == '0700'
+        fail_msg: "Backup script missing or not executable"
+
+    - name: Verify | Check systemd timer is enabled
+      ansible.builtin.command: systemctl is-enabled wordpress-backup.timer
+      register: timer_status
+      changed_when: false
+      failed_when: false
+
+    - name: Verify | Assert timer is enabled
+      ansible.builtin.assert:
+        that: timer_status.stdout == "enabled"
+        fail_msg: "wordpress-backup.timer is not enabled"
+
+    - name: Verify | Check aws-cli is installed
+      ansible.builtin.command: aws --version
+      register: aws_version
+      changed_when: false
+      failed_when: aws_version.rc != 0
+
+    - name: Verify | Assert aws-cli v2 is installed
+      ansible.builtin.assert:
+        that: "'aws-cli/2.' in aws_version.stdout or 'aws-cli/2.' in aws_version.stderr"
+        fail_msg: "aws-cli v2 not installed"
+
+    - name: Verify | Check staging directory exists with correct permissions
+      ansible.builtin.stat:
+        path: /var/backups/wordpress
+      register: staging_dir
+
+    - name: Verify | Assert staging directory has mode 0700
+      ansible.builtin.assert:
+        that:
+          - staging_dir.stat.exists
+          - staging_dir.stat.isdir
+          - staging_dir.stat.mode == '0700'
+        fail_msg: "Staging directory missing or has wrong permissions"
+
+    - name: Verify | Check service unit file exists
+      ansible.builtin.stat:
+        path: /etc/systemd/system/wordpress-backup.service
+      register: service_unit
+
+    - name: Verify | Assert service unit is present
+      ansible.builtin.assert:
+        that: service_unit.stat.exists
+        fail_msg: "wordpress-backup.service unit file missing"

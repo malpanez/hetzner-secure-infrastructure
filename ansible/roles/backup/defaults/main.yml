@@ -1,0 +1,22 @@
+---
+backup_bucket: "tmt-backups"
+backup_endpoint: "https://nbg1.your-objectstorage.com"
+backup_openbao_addr: "http://127.0.0.1:8200"
+backup_openbao_token_file: "/root/.openbao-backup-token"
+
+backup_sites:
+  - name: main
+    db_name: wordpress_main
+    db_user: wp_main
+    web_root: /var/www/twomindstrading.com
+  - name: academy
+    db_name: wordpress_academy
+    db_user: wp_academy
+    web_root: /var/www/academy.twomindstrading.com
+
+backup_mariadb_host: "127.0.0.1"
+backup_mariadb_port: 3306
+backup_mariadb_backup_user: "backup"
+backup_staging_dir: "/var/backups/wordpress"
+backup_log_file: "/var/log/wordpress-backup.log"
+backup_script_path: "/usr/local/bin/wordpress-backup.sh"

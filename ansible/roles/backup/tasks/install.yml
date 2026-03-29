@@ -1,0 +1,51 @@
+---
+- name: Backup | Install | Install dependencies (mariadb-client, jq, openssl, curl, unzip)
+  ansible.builtin.apt:
+    name:
+      - mariadb-client
+      - jq
+      - openssl
+      - curl
+      - unzip
+    state: present
+    update_cache: true
+  tags: [backup, install, packages]
+
+- name: Backup | Install | Check if aws-cli v2 is already installed
+  ansible.builtin.command: aws --version
+  register: aws_cli_check
+  changed_when: false
+  failed_when: false
+  tags: [backup, install]
+
+- name: Backup | Install | Download aws-cli v2 ARM64 bundled installer
+  ansible.builtin.get_url:
+    url: "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip"
+    dest: /tmp/awscliv2.zip
+    mode: "0644"
+  when: aws_cli_check.rc != 0
+  tags: [backup, install]
+
+- name: Backup | Install | Extract aws-cli v2 installer
+  ansible.builtin.unarchive:
+    src: /tmp/awscliv2.zip
+    dest: /tmp/
+    remote_src: true
+  when: aws_cli_check.rc != 0
+  tags: [backup, install]
+
+- name: Backup | Install | Run aws-cli v2 installer
+  ansible.builtin.command: /tmp/aws/install
+  changed_when: true
+  when: aws_cli_check.rc != 0
+  tags: [backup, install]
+
+- name: Backup | Install | Remove installer files
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /tmp/awscliv2.zip
+    - /tmp/aws
+  when: aws_cli_check.rc != 0
+  tags: [backup, install]

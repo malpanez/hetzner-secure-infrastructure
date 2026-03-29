@@ -91,6 +91,17 @@ resource "local_file" "ssh_config" {
   file_permission = "0600"
 }
 
+# Hetzner Object Storage — encrypted backup bucket
+# Only provisioned when S3 credentials are provided
+module "object_storage" {
+  count  = var.hetzner_s3_access_key != "" ? 1 : 0
+  source = "./modules/object-storage"
+
+  hetzner_s3_access_key = var.hetzner_s3_access_key
+  hetzner_s3_secret_key = var.hetzner_s3_secret_key
+  bucket_name           = var.backup_bucket_name
+}
+
 # Cloudflare DNS and Security Configuration
 module "cloudflare" {
   count  = var.enable_cloudflare ? 1 : 0

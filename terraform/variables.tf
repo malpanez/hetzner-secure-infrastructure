@@ -262,3 +262,27 @@ variable "csp_frame_src_public_extra" {
   type        = list(string)
   default     = []
 }
+
+# ============================================================================
+# Hetzner Object Storage (S3-compatible backup bucket)
+# ============================================================================
+
+variable "hetzner_s3_access_key" {
+  description = "Hetzner Object Storage S3-compatible access key"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "hetzner_s3_secret_key" {
+  description = "Hetzner Object Storage S3-compatible secret key"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "backup_bucket_name" {
+  description = "Name of the S3 bucket for encrypted backups"
+  type        = string
+  default     = "tmt-backups"
+}

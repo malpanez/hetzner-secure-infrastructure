@@ -301,6 +301,59 @@
   no_log: true
   tags: [openbao, bootstrap]
 
+- name: Seed backup S3 credentials and encryption passphrase in OpenBao
+  ansible.builtin.command: >-
+    {{ openbao_cli }} kv put secret/backup
+    s3_access_key={{ backup_s3_access_key | default(vault_hetzner_s3_access_key) }}
+    s3_secret_key={{ backup_s3_secret_key | default(vault_hetzner_s3_secret_key) }}
+    encryption_passphrase={{ backup_encryption_passphrase | default(vault_backup_encryption_passphrase) }}
+  environment: "{{ openbao_env | combine({'VAULT_TOKEN': openbao_bootstrap_token}) }}"
+  changed_when: true
+  when: openbao_bootstrap_token is defined
+  no_log: true
+  tags: [openbao, bootstrap]
+
+- name: Create OpenBao policy for backup reader
+  ansible.builtin.shell: |
+    set -o pipefail
+    cat <<'POLICY' | {{ openbao_cli }} policy write backup-reader -
+    path "secret/data/backup" {
+      capabilities = ["read"]
+    }
+    path "secret/data/mariadb" {
+      capabilities = ["read"]
+    }
+    path "auth/token/renew-self" {
+      capabilities = ["update"]
+    }
+    POLICY
+  args:
+    executable: /bin/bash
+  environment: "{{ openbao_env | combine({'VAULT_TOKEN': openbao_bootstrap_token}) }}"
+  changed_when: true
+  when: openbao_bootstrap_token is defined
+  no_log: true
+  tags: [openbao, bootstrap]
+
+- name: Create OpenBao token for backup
+  ansible.builtin.command: >-
+    {{ openbao_cli }} token create -format=json -orphan -period=2160h -policy=backup-reader
+  environment: "{{ openbao_env | combine({'VAULT_TOKEN': openbao_bootstrap_token}) }}"
+  register: openbao_backup_token_cmd
+  changed_when: true
+  when: openbao_bootstrap_token is defined
+  no_log: true
+  tags: [openbao, bootstrap]
+
+- name: Capture backup token on controller
+  ansible.builtin.set_fact:
+    openbao_backup_token: "{{ (openbao_backup_token_cmd.stdout | from_json).auth.client_token }}"
+  delegate_to: localhost
+  run_once: true
+  when: openbao_backup_token_cmd is defined
+  no_log: true
+  tags: [openbao, bootstrap]
+
 - name: Create OpenBao token for WordPress rotation
   ansible.builtin.command: >-
     {{ openbao_cli }} token create -format=json -orphan -period=2160h -policy=wordpress-rotator
@@ -416,13 +469,19 @@
       - "  openbao_wordpress_rotation_token: {{ openbao_wordpress_token | default('N/A') }}"
       - "  openbao_academy_rotation_token: {{ openbao_academy_token | default('N/A') }}"
       - "  openbao_mariadb_rotation_token: {{ openbao_mariadb_token | default('N/A') }}"
+      - "  openbao_backup_token: {{ openbao_backup_token | default('N/A') }}"
       - ""
       - "Then place tokens on the server:"
       - "  echo '<token>' > /root/.openbao-token         && chmod 600 /root/.openbao-token"
       - "  echo '<token>' > /root/.openbao-academy-token && chmod 600 /root/.openbao-academy-token"
       - "  echo '<token>' > /root/.openbao-mariadb-token && chmod 600 /root/.openbao-mariadb-token"
+      - "  echo '<token>' > /root/.openbao-backup-token  && chmod 600 /root/.openbao-backup-token"
       - ""
       - "Then re-run setup-openbao-rotation.yml to deploy rotation scripts and timers."
       - "=========================================="
-  when: openbao_wordpress_token is defined or openbao_academy_token is defined or openbao_mariadb_token is defined
+  when: >
+    openbao_wordpress_token is defined or
+    openbao_academy_token is defined or
+    openbao_mariadb_token is defined or
+    openbao_backup_token is defined
   tags: [openbao, bootstrap]

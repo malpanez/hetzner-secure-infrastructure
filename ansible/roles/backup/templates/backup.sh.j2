@@ -1,0 +1,138 @@
+#!/bin/bash
+# WordPress Backup Script — Managed by Ansible, DO NOT EDIT MANUALLY
+# Dumps MariaDB databases and WordPress media, encrypts with AES-256, uploads to Hetzner S3
+
+set -euo pipefail
+
+OPENBAO_ADDR="{{ backup_openbao_addr }}"
+TOKEN_FILE="{{ backup_openbao_token_file }}"
+BUCKET="{{ backup_bucket }}"
+ENDPOINT="{{ backup_endpoint }}"
+STAGING_DIR="{{ backup_staging_dir }}"
+LOG_FILE="{{ backup_log_file }}"
+TIMESTAMP=$(date +'%Y%m%d-%H%M%S')
+DAY_OF_MONTH=$(date +'%d')
+DAY_OF_WEEK=$(date +'%u')  # 1=Mon, 7=Sun
+
+log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*" | tee -a "${LOG_FILE}"; }
+error_exit() { log "ERROR: $1"; exit 1; }
+
+# Determine prefix based on schedule
+if [[ "${DAY_OF_MONTH}" == "01" ]]; then
+    PREFIX="monthly"
+elif [[ "${DAY_OF_WEEK}" == "7" ]]; then
+    PREFIX="weekly"
+else
+    PREFIX="daily"
+fi
+log "Starting ${PREFIX} backup (${TIMESTAMP})"
+
+# Read encryption passphrase from OpenBao
+if [[ ! -f "${TOKEN_FILE}" ]]; then
+    error_exit "OpenBao token file not found: ${TOKEN_FILE}"
+fi
+VAULT_TOKEN=$(cat "${TOKEN_FILE}")
+export VAULT_TOKEN
+
+PASSPHRASE=$(curl -sf \
+    -H "X-Vault-Token: ${VAULT_TOKEN}" \
+    "${OPENBAO_ADDR}/v1/secret/data/backup" \
+    | jq -r '.data.data.encryption_passphrase') \
+    || error_exit "Failed to read backup passphrase from OpenBao"
+
+[[ -z "${PASSPHRASE}" || "${PASSPHRASE}" == "null" ]] && \
+    error_exit "Encryption passphrase is empty or null"
+
+# Read S3 credentials from OpenBao
+AWS_ACCESS_KEY_ID=$(curl -sf \
+    -H "X-Vault-Token: ${VAULT_TOKEN}" \
+    "${OPENBAO_ADDR}/v1/secret/data/backup" \
+    | jq -r '.data.data.s3_access_key') \
+    || error_exit "Failed to read S3 access key from OpenBao"
+
+AWS_SECRET_ACCESS_KEY=$(curl -sf \
+    -H "X-Vault-Token: ${VAULT_TOKEN}" \
+    "${OPENBAO_ADDR}/v1/secret/data/backup" \
+    | jq -r '.data.data.s3_secret_key') \
+    || error_exit "Failed to read S3 secret key from OpenBao"
+
+export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
+unset VAULT_TOKEN PASSPHRASE  # re-read per operation below to avoid env exposure
+
+# Re-fetch cleanly for actual use
+_get_secret() {
+    local field="$1"
+    VAULT_TOKEN=$(cat "${TOKEN_FILE}")
+    curl -sf -H "X-Vault-Token: ${VAULT_TOKEN}" \
+        "${OPENBAO_ADDR}/v1/secret/data/backup" | jq -r ".data.data.${field}"
+}
+
+PASSPHRASE=$(_get_secret "encryption_passphrase")
+AWS_ACCESS_KEY_ID=$(_get_secret "s3_access_key")
+AWS_SECRET_ACCESS_KEY=$(_get_secret "s3_secret_key")
+export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
+
+encrypt_and_upload() {
+    local src_file="$1"
+    local s3_key="$2"
+    local enc_file="${STAGING_DIR}/$(basename "${src_file}").enc"
+
+    log "Encrypting ${src_file} → ${enc_file}"
+    openssl enc -aes-256-cbc -pbkdf2 -iter 100000 \
+        -pass "pass:${PASSPHRASE}" \
+        -in "${src_file}" -out "${enc_file}"
+
+    # Remove plaintext immediately
+    rm -f "${src_file}"
+
+    log "Uploading ${enc_file} → s3://${BUCKET}/${s3_key}"
+    aws s3 cp "${enc_file}" "s3://${BUCKET}/${s3_key}" \
+        --endpoint-url "${ENDPOINT}" \
+        --no-progress
+
+    # Verify upload
+    local size
+    size=$(aws s3api head-object \
+        --bucket "${BUCKET}" \
+        --key "${s3_key}" \
+        --endpoint-url "${ENDPOINT}" \
+        --query ContentLength --output text 2>/dev/null) || \
+        error_exit "Upload verification failed for ${s3_key}"
+
+    [[ "${size}" -gt 0 ]] || error_exit "Uploaded object is empty: ${s3_key}"
+    log "Verified ${s3_key} (${size} bytes)"
+
+    rm -f "${enc_file}"
+}
+
+# Database backups
+{% for site in backup_sites %}
+log "Dumping database: {{ site.db_name }}"
+DB_DUMP="${STAGING_DIR}/{{ site.db_name }}-${TIMESTAMP}.sql.gz"
+mysqldump \
+    --host="{{ backup_mariadb_host }}" \
+    --port={{ backup_mariadb_port }} \
+    --single-transaction \
+    --quick \
+    --lock-tables=false \
+    "{{ site.db_name }}" \
+    | gzip > "${DB_DUMP}"
+encrypt_and_upload "${DB_DUMP}" "${PREFIX}/db/{{ site.db_name }}-${TIMESTAMP}.sql.gz.enc"
+
+# Media backup
+log "Archiving media: {{ site.name }}"
+MEDIA_ARCHIVE="${STAGING_DIR}/{{ site.name }}-media-${TIMESTAMP}.tar.gz"
+tar -czf "${MEDIA_ARCHIVE}" -C "{{ site.web_root }}/wp-content" uploads/ 2>/dev/null || \
+    log "WARN: No uploads directory for {{ site.name }}, skipping media backup"
+if [[ -f "${MEDIA_ARCHIVE}" ]]; then
+    encrypt_and_upload "${MEDIA_ARCHIVE}" "${PREFIX}/media/{{ site.name }}-uploads-${TIMESTAMP}.tar.gz.enc"
+fi
+
+{% endfor %}
+
+# Cleanup any leftover staging files
+find "${STAGING_DIR}" -name "*.sql.gz" -o -name "*.tar.gz" -o -name "*.enc" \
+    -mmin +60 -delete 2>/dev/null || true
+
+unset PASSPHRASE AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
+log "Backup complete (${PREFIX}/${TIMESTAMP})"

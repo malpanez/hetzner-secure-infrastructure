@@ -1,0 +1,12 @@
+---
+- name: Backup | Install dependencies
+  ansible.builtin.include_tasks: install.yml
+  tags: [backup, install]
+
+- name: Backup | Configure backup script
+  ansible.builtin.include_tasks: configure.yml
+  tags: [backup, configure]
+
+- name: Backup | Configure systemd timer
+  ansible.builtin.include_tasks: timer.yml
+  tags: [backup, timer]
