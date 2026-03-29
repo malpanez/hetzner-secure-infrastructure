@@ -4,7 +4,7 @@
 # Archives outdated documentation
 # Date: 2026-01-02
 
-set -e
+set -euo pipefail
 
 ROOT_DIR="/home/malpanez/repos/hetzner-secure-infrastructure"
 ARCHIVE_DIR="$ROOT_DIR/.archive/root-docs-$(date +%Y-%m)"
@@ -22,21 +22,21 @@ mkdir -p "$ARCHIVE_DIR"
 
 # Function to move file
 move_file() {
-    local src="$1"
-    local dest="$2"
-    if [ -f "$src" ]; then
-        echo -e "${YELLOW}Moving:${NC} $(basename $src) → $dest"
-        mv "$src" "$dest"
-    fi
+  local src="$1"
+  local dest="$2"
+  if [ -f "$src" ]; then
+    echo -e "${YELLOW}Moving:${NC} $(basename $src) → $dest"
+    mv "$src" "$dest"
+  fi
 }
 
 # Function to archive file
 archive_file() {
-    local src="$1"
-    if [ -f "$src" ]; then
-        echo -e "${YELLOW}Archiving:${NC} $(basename $src)"
-        mv "$src" "$ARCHIVE_DIR/"
-    fi
+  local src="$1"
+  if [ -f "$src" ]; then
+    echo -e "${YELLOW}Archiving:${NC} $(basename $src)"
+    mv "$src" "$ARCHIVE_DIR/"
+  fi
 }
 
 cd "$ROOT_DIR"
@@ -80,8 +80,8 @@ archive_file "DOCUMENTATION_CONSOLIDATION_SUMMARY.md"
 
 # Archive guides/ folder if it exists (old location)
 if [ -d "guides" ]; then
-    echo -e "${YELLOW}Archiving old guides/ folder...${NC}"
-    mv "guides" "$ARCHIVE_DIR/"
+  echo -e "${YELLOW}Archiving old guides/ folder...${NC}"
+  mv "guides" "$ARCHIVE_DIR/"
 fi
 
 #==========================================
@@ -91,19 +91,19 @@ echo -e "${GREEN}[5/5] Removing duplicate documentation...${NC}"
 
 # Remove old SSH-2FA.md if SSH_2FA_INITIAL_SETUP.md exists
 if [ -f "docs/security/SSH_2FA_INITIAL_SETUP.md" ] && [ -f "docs/security/SSH-2FA.md" ]; then
-    echo -e "${YELLOW}Removing duplicate:${NC} docs/security/SSH-2FA.md"
-    rm "docs/security/SSH-2FA.md"
+  echo -e "${YELLOW}Removing duplicate:${NC} docs/security/SSH-2FA.md"
+  rm "docs/security/SSH-2FA.md"
 fi
 
 # Remove duplicate ARM comparison docs
 if [ -f "docs/performance/ARM64_vs_X86_COMPARISON.md" ] && [ -f "docs/infrastructure/ARM_VS_X86_COMPARISON.md" ]; then
-    echo -e "${YELLOW}Removing duplicate:${NC} docs/infrastructure/ARM_VS_X86_COMPARISON.md"
-    rm "docs/infrastructure/ARM_VS_X86_COMPARISON.md"
+  echo -e "${YELLOW}Removing duplicate:${NC} docs/infrastructure/ARM_VS_X86_COMPARISON.md"
+  rm "docs/infrastructure/ARM_VS_X86_COMPARISON.md"
 fi
 
 # Remove old benchmark if new one exists
 if [ -f "docs/performance/X86_STAGING_BENCHMARK_WITH_MONITORING.md" ] && [ -f "docs/performance/BENCHMARK_RESULTS_x86_CX23.md" ]; then
-    archive_file "docs/performance/BENCHMARK_RESULTS_x86_CX23.md"
+  archive_file "docs/performance/BENCHMARK_RESULTS_x86_CX23.md"
 fi
 
 #==========================================
@@ -112,7 +112,7 @@ fi
 echo ""
 echo -e "${GREEN}Creating documentation index...${NC}"
 
-cat > docs/INDEX.md << 'EOF'
+cat >docs/INDEX.md <<'EOF'
 # Documentation Index
 
 **Last Updated**: $(date +%Y-%m-%d)

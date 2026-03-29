@@ -10,7 +10,7 @@
 #
 # Usage: ./scripts/production-setup-today.sh
 
-set -e
+set -euo pipefail
 
 # Colors for output
 RED='\033[0;31m'
@@ -25,17 +25,17 @@ echo ""
 
 # Check we're in the right directory
 if [ ! -f "ansible/ansible.cfg" ]; then
-    echo -e "${RED}ERROR: Please run this script from the repository root${NC}"
-    exit 1
+  echo -e "${RED}ERROR: Please run this script from the repository root${NC}"
+  exit 1
 fi
 
 # Step 1: Generate ansible automation SSH key
 echo -e "${YELLOW}[Step 1/5] Generating ansible automation SSH key...${NC}"
 if [ ! -f "$HOME/.ssh/ansible_automation" ]; then
-    ssh-keygen -t ed25519 -C "ansible-automation@hetzner" -f "$HOME/.ssh/ansible_automation" -N ""
-    echo -e "${GREEN}✓ SSH key generated: $HOME/.ssh/ansible_automation${NC}"
+  ssh-keygen -t ed25519 -C "ansible-automation@hetzner" -f "$HOME/.ssh/ansible_automation" -N ""
+  echo -e "${GREEN}✓ SSH key generated: $HOME/.ssh/ansible_automation${NC}"
 else
-    echo -e "${YELLOW}⚠ SSH key already exists, skipping${NC}"
+  echo -e "${YELLOW}⚠ SSH key already exists, skipping${NC}"
 fi
 
 echo ""
@@ -56,8 +56,8 @@ echo ""
 read -p "Continue? (y/n) " -n 1 -r
 echo
 if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo -e "${RED}Aborted${NC}"
-    exit 1
+  echo -e "${RED}Aborted${NC}"
+  exit 1
 fi
 
 cd ansible
@@ -71,20 +71,20 @@ echo -e "${YELLOW}[Step 3/5] Testing ansible user SSH connection...${NC}"
 SERVER_IP=$(ansible-inventory -i inventory/hetzner.hcloud.yml --list | jq -r '._meta.hostvars | to_entries[0].value.ansible_host')
 
 if [ -z "$SERVER_IP" ]; then
-    echo -e "${RED}ERROR: Could not determine server IP from inventory${NC}"
-    exit 1
+  echo -e "${RED}ERROR: Could not determine server IP from inventory${NC}"
+  exit 1
 fi
 
 echo "Testing connection to ansible@$SERVER_IP..."
 if ssh -i "$HOME/.ssh/ansible_automation" -o StrictHostKeyChecking=no -o ConnectTimeout=5 ansible@$SERVER_IP "echo 'Connection successful!'" 2>/dev/null; then
-    echo -e "${GREEN}✓ SSH connection successful${NC}"
+  echo -e "${GREEN}✓ SSH connection successful${NC}"
 else
-    echo -e "${RED}✗ SSH connection failed${NC}"
-    echo -e "${YELLOW}Please check:${NC}"
-    echo "  1. Server is running"
-    echo "  2. UFW allows SSH (port 22)"
-    echo "  3. SSH service is running"
-    exit 1
+  echo -e "${RED}✗ SSH connection failed${NC}"
+  echo -e "${YELLOW}Please check:${NC}"
+  echo "  1. Server is running"
+  echo "  2. UFW allows SSH (port 22)"
+  echo "  3. SSH service is running"
+  exit 1
 fi
 
 # Step 4: Setup OpenBao rotation
@@ -96,10 +96,10 @@ echo ""
 read -p "Continue? (y/n) " -n 1 -r
 echo
 if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo -e "${YELLOW}Skipping OpenBao setup${NC}"
+  echo -e "${YELLOW}Skipping OpenBao setup${NC}"
 else
-    ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/setup-openbao-rotation.yml
-    echo -e "${GREEN}✓ OpenBao rotation configured${NC}"
+  ansible-playbook -i inventory/hetzner.hcloud.yml playbooks/setup-openbao-rotation.yml
+  echo -e "${GREEN}✓ OpenBao rotation configured${NC}"
 fi
 
 # Step 5: Cloudflare DNS migration instructions

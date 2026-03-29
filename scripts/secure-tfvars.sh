@@ -4,7 +4,7 @@
 # This script removes sensitive data from tfvars files
 # Secrets should be stored in Terraform Cloud, not in files!
 
-set -e
+set -euo pipefail
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -18,8 +18,8 @@ echo ""
 
 # Check if we're in the right directory
 if [ ! -f "terraform/terraform.staging.tfvars" ]; then
-    echo -e "${RED}ERROR: Run this script from the repository root${NC}"
-    exit 1
+  echo -e "${RED}ERROR: Run this script from the repository root${NC}"
+  exit 1
 fi
 
 # Backup original file
@@ -47,11 +47,11 @@ echo ""
 # Verify file is safe
 echo -e "${YELLOW}[3/3] Verifying file is safe to commit...${NC}"
 if grep -q "hcloud_token = " terraform/terraform.staging.tfvars; then
-    echo -e "${RED}✗ WARNING: hcloud_token still found in file!${NC}"
-    echo -e "${RED}  Manual cleanup required${NC}"
-    exit 1
+  echo -e "${RED}✗ WARNING: hcloud_token still found in file!${NC}"
+  echo -e "${RED}  Manual cleanup required${NC}"
+  exit 1
 else
-    echo -e "${GREEN}✓ File is safe to commit (no tokens found)${NC}"
+  echo -e "${GREEN}✓ File is safe to commit (no tokens found)${NC}"
 fi
 echo ""
 
