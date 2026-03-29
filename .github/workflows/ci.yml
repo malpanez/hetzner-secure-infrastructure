@@ -69,13 +69,48 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
 
-      - name: Install UV and Ansible
+      - name: Install UV and Ansible (core only)
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
           export PATH="$HOME/.cargo/bin:$PATH"
           uv venv
           source .venv/bin/activate
-          uv pip install ansible ansible-lint yamllint requests python-dateutil
+          # ansible-core only (no bundled collections) — keeps lint fast and memory-safe.
+          # The full 'ansible' package bundles 200+ collections into site-packages which
+          # ansible-lint loads and makes the lint step slow/OOM even with exclusions.
+          uv pip install 'ansible-core>=2.15,<2.18' ansible-lint yamllint requests python-dateutil
+
+      - name: Create dummy vault password for CI
+        run: echo "dummy_password_for_ci_only" > ~/.ansible_vault_pass
+
+      - name: Ansible Lint (own code only)
+        run: |
+          source .venv/bin/activate
+          cd ansible
+          # Install only collections our custom code uses into an isolated path.
+          # Heavy monitoring collections (grafana.grafana ~200MB, prometheus.prometheus ~100MB)
+          # are not installed here — they would make ansible-lint take >25min to run.
+          mkdir -p /tmp/lint-collections
+          ansible-galaxy collection install \
+            community.general ansible.posix community.mysql \
+            -p /tmp/lint-collections --force
+          # ANSIBLE_COLLECTIONS_PATH (singular) restricts collection discovery to this path.
+          # Excludes monitoring.yml and site.yml — they only call Galaxy roles, no custom code.
+          ANSIBLE_COLLECTIONS_PATH=/tmp/lint-collections \
+          ansible-lint \
+            playbooks/common.yml \
+            playbooks/dual-wordpress.yml \
+            playbooks/openbao.yml \
+            playbooks/openbao-transit-bootstrap.yml \
+            playbooks/openbao-bootstrap.yml \
+            playbooks/setup-openbao-rotation.yml \
+            playbooks/wordpress.yml \
+            playbooks/wordpress-only.yml \
+            playbooks/validate.yml \
+            roles/ \
+            --exclude roles/geerlingguy.mysql/ \
+            --parseable | tee ../ansible-lint-report.txt; exit ${PIPESTATUS[0]}
+        timeout-minutes: 15
 
       - name: Install Ansible Galaxy requirements
         run: |
@@ -88,26 +123,11 @@ jobs:
           done
         continue-on-error: false
 
-      - name: Create dummy vault password for CI
-        run: echo "dummy_password_for_ci_only" > ~/.ansible_vault_pass
-
       - name: Ansible Syntax Check
         run: |
           source .venv/bin/activate
           cd ansible
           ansible-playbook playbooks/site.yml --syntax-check
-
-      - name: Ansible Lint (own code only)
-        run: |
-          source .venv/bin/activate
-          cd ansible
-          # Exclude vendored roles and Galaxy-installed content (not our code)
-          ansible-lint playbooks/ roles/ \
-            --exclude roles/geerlingguy.mysql/ \
-            --exclude ~/.ansible/roles/ \
-            --exclude ~/.ansible/collections/ \
-            --parseable | tee ../ansible-lint-report.txt; exit ${PIPESTATUS[0]}
-        timeout-minutes: 25
 
       - name: Upload lint report
         if: always()
