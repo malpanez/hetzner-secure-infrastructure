@@ -47,6 +47,7 @@
         nginx_wordpress_php_fpm_start_servers: 5
         nginx_wordpress_php_fpm_min_spare_servers: 3
         nginx_wordpress_php_fpm_max_spare_servers: 8
+        nginx_wordpress_admin_user: tmt_admin
         nginx_wordpress_learndash_enabled: false
         nginx_wordpress_woocommerce_enabled: false
         nginx_wordpress_redis_database: 0
@@ -76,6 +77,7 @@
         nginx_wordpress_php_fpm_start_servers: 8
         nginx_wordpress_php_fpm_min_spare_servers: 4
         nginx_wordpress_php_fpm_max_spare_servers: 12
+        nginx_wordpress_admin_user: tmt_admin
         nginx_wordpress_learndash_enabled: true
         nginx_wordpress_woocommerce_enabled: true
         nginx_wordpress_letsencrypt_enabled: false
