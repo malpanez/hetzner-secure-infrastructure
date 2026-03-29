@@ -9,21 +9,6 @@ terraform {
   }
 }
 
-provider "aws" {
-  access_key = var.hetzner_s3_access_key
-  secret_key = var.hetzner_s3_secret_key
-  region     = var.region
-
-  skip_credentials_validation = true
-  skip_metadata_api_check     = true
-  skip_requesting_account_id  = true
-  skip_region_validation      = true
-
-  endpoints {
-    s3 = "https://nbg1.your-objectstorage.com"
-  }
-}
-
 resource "aws_s3_bucket" "tmt_backups" {
   bucket = var.bucket_name
 }
