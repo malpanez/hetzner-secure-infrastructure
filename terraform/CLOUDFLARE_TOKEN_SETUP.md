@@ -4,7 +4,7 @@
 
 ### 1. Ir a Cloudflare Dashboard
 
-https://dash.cloudflare.com/profile/api-tokens
+<https://dash.cloudflare.com/profile/api-tokens>
 
 ### 2. Crear "Custom Token"
 
@@ -27,6 +27,7 @@ El token necesita estos permisos **EXACTOS** (basados en homelabforge.dev workin
 **NOTA**: ~~Page Rules~~ ya NO se usan (deprecated). Ahora usamos **Rulesets v5** (mejor y sin límites en Free plan).
 
 **Permisos Específicos Necesarios**:
+
 - **Account Rulesets:Edit**: Para crear/modificar rulesets a nivel de cuenta
 - **Cache Rules:Edit**: Para configurar reglas de caché (wp-content, static assets)
 - **Transform Rules:Edit**: Para security headers (CSP, HSTS, X-Frame-Options)
@@ -70,6 +71,7 @@ export TF_VAR_cloudflare_api_token="$CLOUDFLARE_API_TOKEN"
 **Causa**: Token sin permisos suficientes
 
 **Solución**:
+
 1. Verifica que el token tenga **Page Rules:Edit** y **Account Rulesets:Edit**
 2. Verifica que el scope sea la zona correcta (`twomindstrading.com`)
 3. Si usas un token antiguo, créalo de nuevo con los permisos completos
@@ -135,11 +137,13 @@ Luego configura DNS manualmente en Cloudflare Dashboard.
 ## ✅ Ventajas de Rulesets v5 (vs Page Rules deprecated)
 
 **Page Rules (deprecated)**:
+
 - ❌ Máximo 3 en Free plan
 - ❌ Deprecated por Cloudflare
 - ❌ Menos flexible
 
 **Rulesets v5 (actual)**:
+
 - ✅ **Ilimitados en Free plan**
 - ✅ API moderna
 - ✅ Más potente (expresiones complejas)

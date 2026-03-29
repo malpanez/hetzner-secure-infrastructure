@@ -30,6 +30,7 @@ curl -s -X GET "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/dns_record
 ```
 
 **Output esperado**:
+
 ```
 A       twomindstrading.com         <ROOT_ID>
 CNAME   www.twomindstrading.com     <WWW_ID>
@@ -56,6 +57,7 @@ terraform import 'module.cloudflare[0].cloudflare_record.prometheus' ${ZONE_ID}/
 ```
 
 **Ejemplo completo**:
+
 ```bash
 terraform import 'module.cloudflare[0].cloudflare_record.root' 00b35219c140d12c739f52a894ba91e2/81af5b8a737ac1938a9385de45e7447a
 terraform import 'module.cloudflare[0].cloudflare_record.www' 00b35219c140d12c739f52a894ba91e2/54c4b9daf22889c39e1addd04e9208c8
@@ -70,6 +72,7 @@ terraform plan -var-file=../../terraform.prod.tfvars
 ```
 
 **Resultado esperado**:
+
 ```
 No changes. Your infrastructure matches the configuration.
 ```
@@ -88,7 +91,7 @@ terraform apply -var-file=../../terraform.prod.tfvars
 
 Si prefieres eliminar los registros existentes:
 
-1. Ir a: https://dash.cloudflare.com/
+1. Ir a: <https://dash.cloudflare.com/>
 2. Seleccionar zona: twomindstrading.com
 3. DNS → Records
 4. Eliminar: www, grafana, prometheus (NO eliminar root @)
@@ -105,6 +108,7 @@ Si prefieres eliminar los registros existentes:
 **Causa**: Token no configurado o sintaxis incorrecta
 
 **Solución**:
+
 ```bash
 # Verificar token
 echo "Token: ${CLOUDFLARE_API_TOKEN:0:10}..."
@@ -118,6 +122,7 @@ export CLOUDFLARE_API_TOKEN="tu_token_aqui"
 **Causa**: ZONE_ID incorrecto o falta en URL
 
 **Solución**: Verificar que ZONE_ID esté en la URL:
+
 ```bash
 # Correcto
 curl "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/dns_records"

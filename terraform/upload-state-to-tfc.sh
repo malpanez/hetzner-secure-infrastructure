@@ -28,7 +28,7 @@ CURRENT_SERIAL=$(cat "$STATE_FILE" | grep '"serial"' | head -1 | grep -o '[0-9]*
 echo "Current serial: $CURRENT_SERIAL"
 
 # Create the JSON payload
-cat > /tmp/state-upload.json <<EOF
+cat >/tmp/state-upload.json <<EOF
 {
   "data": {
     "type": "state-versions",

@@ -12,18 +12,18 @@ Host ${hostname}
     IdentitiesOnly yes
     StrictHostKeyChecking ask
     UserKnownHostsFile ~/.ssh/known_hosts
-    
+
     # Yubikey FIDO2
     SecurityKeyProvider internal
-    
+
     # Connection settings
     ServerAliveInterval 60
     ServerAliveCountMax 3
     TCPKeepAlive yes
-    
+
     # Compression
     Compression yes
-    
+
     # Forward agent (disable for security)
     ForwardAgent no
     ForwardX11 no

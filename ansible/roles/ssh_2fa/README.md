@@ -330,6 +330,7 @@ sudo rm -rf /var/run/faillock/*
    - Break-glass users in `ansible-automation` group
 
 2. **Emergency Unlock Commands**
+
    ```bash
    # Unlock specific user
    sudo faillock --user <username> --reset
@@ -366,6 +367,7 @@ ssh_2fa_break_glass_users:
 ```
 
 **Benefits:**
+
 - Can deploy and modify infrastructure without 2FA prompts
 - Member of `ansible-automation` group (SSH key only)
 - Fast iteration during development
@@ -386,12 +388,15 @@ ssh_2fa_ansible_user_sudo_nopasswd: true  # For automation
 ```
 
 This creates a dedicated `ansible` user with:
+
 - **Break-glass SSH access**: Member of `ansible-automation` group (SSH key only, no 2FA)
 - **NOPASSWD sudo**: Via `/etc/sudoers.d/ansible-automation` for the group
 - **Separate from admin users**: `malpanez` stays in built-in `sudo` group for admin access
+
 - **Best practice**: Uses custom group instead of polluting `sudo`/`wheel` with service accounts
 
 **Why group-based sudo?**
+
 - Multiple service accounts can share the same policy
 - `malpanez` user keeps existing `sudo` group membership (unaffected)
 - `ansible` user only needs `ansible-automation` group membership
@@ -570,13 +575,16 @@ ssh breakglass-user@hostname
 ### Issue: Locked Out of SSH
 
 **Solution:**
+
 1. Access via console/IPMI
 2. Check faillock status: `sudo faillock --user <username>`
+
 3. Reset: `sudo faillock --user <username> --reset`
 
 ### Issue: 2FA Not Working
 
 **Check PAM configuration:**
+
 ```bash
 # Verify 2FA module is enabled
 grep -r pam_google_authenticator /etc/pam.d/
@@ -585,18 +593,21 @@ grep -r pam_google_authenticator /etc/pam.d/
 grep ChallengeResponseAuthentication /etc/ssh/sshd_config.d/*.conf
 
 # Test PAM stack manually (requires pamtester)
+
 pamtester sshd <username> authenticate
 ```
 
 ### Issue: Faillock Not Activating
 
 **Verify faillock is enabled:**
+
 ```bash
 # Check pam-auth-update status
 pam-auth-update --list
 
 # Verify PAM configuration
 grep pam_faillock /etc/pam.d/common-auth
+
 
 # Check faillock.conf
 cat /etc/security/faillock.conf
@@ -605,6 +616,7 @@ cat /etc/security/faillock.conf
 ### Issue: Break-glass Not Working
 
 **Verify group membership:**
+
 ```bash
 # Check user is in ansible-automation group
 groups <username>

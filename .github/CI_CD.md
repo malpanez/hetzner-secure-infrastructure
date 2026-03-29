@@ -5,6 +5,7 @@
 This repository uses **automated testing** on every commit to ensure infrastructure quality.
 
 **CI Platforms**:
+
 - ✅ **Woodpecker CI** (Codeberg native) - Primary
 - ✅ **GitHub Actions** (if mirrored to GitHub) - Secondary
 
@@ -62,17 +63,21 @@ This repository uses **automated testing** on every commit to ensure infrastruct
 ## 🚀 Triggers
 
 ### Automatic (on every push to main)
+
 - ✅ Terraform validation
 - ✅ Ansible validation
 - ✅ Molecule tests
 - ✅ Security scans
 
 ### Pull Request
+
 - ✅ All validation stages
 - ✅ All test stages
+
 - 🔒 Blocks merge if tests fail
 
 ### Manual
+
 ```bash
 # Run locally before pushing
 make ci
@@ -103,6 +108,7 @@ make ci
 ### Setup
 
 1. **Enable Woodpecker CI**:
+
    ```
    Codeberg → Repository Settings → Integrations → Woodpecker CI
    ```
@@ -126,6 +132,7 @@ make ci
 ### Setup
 
 1. **Mirror to GitHub**:
+
    ```bash
    git remote add github https://github.com/yourusername/hetzner-infrastructure.git
    git push github main
@@ -169,6 +176,7 @@ make ci
 ### Woodpecker CI Fails
 
 **Problem**: Docker permission denied
+
 ```yaml
 # Add to .woodpecker/test.yml
 volumes:
@@ -176,6 +184,7 @@ volumes:
 ```
 
 **Problem**: Ansible collection not found
+
 ```yaml
 # Add installation step
 - ansible-galaxy collection install -r requirements.yml
@@ -184,12 +193,14 @@ volumes:
 ### GitHub Actions Fails
 
 **Problem**: Molecule test timeout
+
 ```yaml
 # Increase timeout
 timeout-minutes: 30
 ```
 
 **Problem**: Docker not available
+
 ```yaml
 # Use services
 services:
@@ -223,10 +234,12 @@ services:
    - Cache Docker images
 
 3. **Skip on Docs-Only Changes**
+
    ```yaml
    when:
      - path:
-         exclude: 
+         exclude:
+
            - '**.md'
            - 'docs/**'
    ```
@@ -238,11 +251,13 @@ services:
 ### Secrets in CI
 
 **Never commit**:
+
 - ❌ Hetzner API tokens
 - ❌ Ansible Vault passwords
 - ❌ SSH private keys
 
 **Safe for CI**:
+
 - ✅ Validation (no secrets needed)
 - ✅ Molecule tests (local Docker)
 - ✅ Syntax checks
@@ -250,6 +265,7 @@ services:
 ### Production Deploys
 
 **NOT in CI** (manual only):
+
 - Terraform apply (creates real servers)
 - Ansible deploy (configures production)
 
@@ -263,6 +279,7 @@ services:
 
 - ✅ Terraform format valid
 - ✅ Terraform syntax valid
+
 - ✅ Ansible syntax valid
 - ✅ All 12 Molecule tests pass
 - ✅ No high-severity vulnerabilities
@@ -277,15 +294,19 @@ Pull requests cannot merge if any check fails.
 ## 🎯 CI Best Practices
 
 ### 1. Run Locally First
+
 ```bash
+
 make ci  # Before pushing
 ```
 
 ### 2. Keep Pipelines Fast
+
 - Current: ~20 minutes
 - Target: <15 minutes
 
 ### 3. Meaningful Commit Messages
+
 ```
 feat: add Valkey role with caching
 test: add Molecule tests for Valkey role
@@ -293,6 +314,7 @@ docs: update caching documentation
 ```
 
 ### 4. Small, Focused PRs
+
 - One feature per PR
 - Easier to review
 - Faster CI execution

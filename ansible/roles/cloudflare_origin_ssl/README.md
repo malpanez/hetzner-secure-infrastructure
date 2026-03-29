@@ -55,6 +55,7 @@ vault_cloudflare_origin_key: |
 ```
 
 The `cloudflare_origin_ssl` role automatically sets:
+
 - `nginx_wordpress_ssl_enabled: true`
 - `nginx_wordpress_ssl_cert_path: /etc/ssl/cloudflare/origin.pem`
 - `nginx_wordpress_ssl_key_path: /etc/ssl/cloudflare/origin.key`
@@ -62,6 +63,7 @@ The `cloudflare_origin_ssl` role automatically sets:
 ### 4. Configure Cloudflare SSL Mode
 
 In Cloudflare Dashboard → SSL/TLS → Overview:
+
 - Set to **Full (strict)**
 
 ## Role Variables
@@ -92,6 +94,7 @@ In Cloudflare Dashboard → SSL/TLS → Overview:
 ### Error 521 (Web server is down)
 
 Cloudflare can't connect to your origin. Check:
+
 1. Nginx is running: `systemctl status nginx`
 2. Port 443 is open: `ss -tlnp | grep 443`
 3. Certificate is valid: `openssl x509 -in /etc/ssl/cloudflare/origin.pem -noout -dates`
@@ -99,6 +102,7 @@ Cloudflare can't connect to your origin. Check:
 ### Error 526 (Invalid SSL certificate)
 
 Certificate issue. Check:
+
 1. Certificate matches your domain
 2. Certificate hasn't expired
 3. Full certificate chain is included
@@ -106,6 +110,7 @@ Certificate issue. Check:
 ### SSL Handshake Failure
 
 Verify certificate and key match:
+
 ```bash
 openssl x509 -noout -modulus -in /etc/ssl/cloudflare/origin.pem | md5sum
 openssl rsa -noout -modulus -in /etc/ssl/cloudflare/origin.key | md5sum
