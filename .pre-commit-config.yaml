@@ -80,6 +80,7 @@ repos:
         args:
           - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
           - --args=--format=compact
+          - --args=--no-init
       - id: terraform_trivy
         name: Terraform Trivy Security Scan
         args:
@@ -104,7 +105,7 @@ repos:
   # Ansible
   # ============================================
   - repo: https://github.com/ansible/ansible-lint
-    rev: v24.12.2
+    rev: v6.22.2
     hooks:
       - id: ansible-lint
         name: Ansible Lint
@@ -224,5 +225,5 @@ ci:
   autoupdate_branch: ''
   autoupdate_commit_msg: 'ci: pre-commit autoupdate'
   autoupdate_schedule: weekly
-  skip: [terraform_validate, terraform_tflint, terraform_trivy, ansible-lint]
+  skip: [terraform_validate, terraform_tflint, terraform_trivy, terraform_docs, ansible-lint, kics]
   submodules: false

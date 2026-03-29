@@ -7,13 +7,13 @@ set -e
 USER=$1
 
 if [ -z "$USER" ]; then
-    echo "Usage: $0 <username>"
-    exit 1
+  echo "Usage: $0 <username>"
+  exit 1
 fi
 
 if [ ! -d "/home/$USER" ]; then
-    echo "Error: User $USER does not exist"
-    exit 1
+  echo "Error: User $USER does not exist"
+  exit 1
 fi
 
 echo "========================================"
