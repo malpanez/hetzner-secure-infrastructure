@@ -35,10 +35,10 @@ warn_list:
   - no-changed-when
 
 # Use specific Ansible version
-#ansible_version: "2.15"
+# ansible_version: "2.15"
 
 # Offline mode (don't check for updates)
 offline: false
 
 # Parseable format for CI
-#parseable: true
+# parseable: true

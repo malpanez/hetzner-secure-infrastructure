@@ -32,3 +32,5 @@ ignore: |
   *.egg-info/
   ansible/roles/geerlingguy.mysql/
   terraform/modules/hetzner-server/templates/cloud-init.yml
+  .github/
+  .woodpecker/

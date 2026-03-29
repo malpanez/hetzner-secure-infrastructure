@@ -1,3 +1,4 @@
+---
 # Dynamic inventory plugin for Hetzner Cloud
 # This reads servers from both Terraform output AND Hetzner API
 

@@ -80,7 +80,6 @@ repos:
         args:
           - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
           - --args=--format=compact
-          - --args=--no-init
       - id: terraform_trivy
         name: Terraform Trivy Security Scan
         args:
@@ -114,6 +113,8 @@ repos:
           - --force-color
           - --offline
           - --profile=production
+        additional_dependencies:
+          - ansible-core>=2.13.3,<2.17
 
   # ============================================
   # YAML
@@ -152,7 +153,28 @@ repos:
       - id: markdownlint
         name: Markdown Lint
         args: [--config=.markdownlint.json, --fix]
-        exclude: '(\.planning/|docs/)'
+        exclude: >-
+          (?x)^(
+            \.planning/|
+            docs/|
+            CHANGES_SUMMARY\.md|
+            CONTRIBUTING\.md|
+            SECURITY\.md|
+            README\.md|
+            \.woodpecker/|
+            examples/|
+            terraform/ARCHITECTURE_SELECTION\.md|
+            terraform/CLOUDFLARE_TOKEN_SETUP\.md|
+            terraform/IMPORT_DNS_RECORDS\.md|
+            terraform/modules/cloudflare-config/MIGRATION\.md|
+            ansible/inventory/README.*|
+            ansible/inventory/README_INVENTORIES\.md|
+            ansible/logs/README\.md|
+            ansible/roles/nginx_wordpress/README\.md|
+            ansible/roles/valkey/README\.md|
+            ansible/roles/ssh_2fa/README\.md|
+            ansible/roles/cloudflare_origin_ssl/README\.md
+          )$
 
   - repo: https://github.com/tcort/markdown-link-check
     rev: v3.12.2
@@ -177,7 +199,12 @@ repos:
       - id: detect-secrets
         name: Detect Secrets
         args: [--baseline, .secrets.baseline]
-        exclude: package.lock.json
+        exclude: >-
+          (?x)^(
+            package\.lock\.json|
+            docs/|
+            \.vagrant/
+          )$
 
   # ============================================
   # Security scanning

@@ -30,8 +30,9 @@ firewall_allowed_ports:
     port: "443"
     proto: tcp
     comment: "HTTPS"
-  # Monitoring ports - localhost only (accessed via Nginx reverse proxy)
-  # No external ports needed - Prometheus/Grafana accessible via subdomains
+
+# Monitoring ports - localhost only (accessed via Nginx reverse proxy)
+# No external ports needed - Prometheus/Grafana accessible via subdomains
 
 # ========================================
 # Monitoring Configuration (All-in-One)

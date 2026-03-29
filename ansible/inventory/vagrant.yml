@@ -43,9 +43,9 @@ all:
     # WordPress configuration
     wordpress_db_name: wordpress_test
     wordpress_db_user: wp_test
-    wordpress_db_password: "test_password_change_me"
+    wordpress_db_password: "test_password_change_me"  # pragma: allowlist secret
     nginx_wordpress_server_name: wordpress-test.local
-    nginx_wordpress_admin_password: "admin_test_password"
+    nginx_wordpress_admin_password: "admin_test_password"  # pragma: allowlist secret
     nginx_wordpress_admin_email: "admin@wordpress-test.local"
     nginx_wordpress_ssl_enabled: false  # No SSL in test environment
 
