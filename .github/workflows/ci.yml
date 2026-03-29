@@ -104,6 +104,8 @@ jobs:
           # Exclude vendored roles to improve performance and focus on our code
           ansible-lint playbooks/ roles/ \
             --exclude roles/geerlingguy.mysql/ \
+            --exclude ~/.ansible/roles/ \
+            --exclude ~/.ansible/collections/ \
             --parseable | tee ../ansible-lint-report.txt; exit ${PIPESTATUS[0]}
         timeout-minutes: 15
 
