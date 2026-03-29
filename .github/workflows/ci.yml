@@ -107,7 +107,7 @@ jobs:
           ANSIBLE_COLLECTIONS_PATHS=/tmp/lint-collections \
             ansible-galaxy collection install \
               community.general ansible.posix community.mysql \
-              -p /tmp/lint-collections --quiet
+              -p /tmp/lint-collections
           # Lint with isolated collections path and explicit playbook list (exclude monitoring.yml
           # and site.yml — they only orchestrate Galaxy roles, no custom code to lint).
           ANSIBLE_COLLECTIONS_PATHS=/tmp/lint-collections \
