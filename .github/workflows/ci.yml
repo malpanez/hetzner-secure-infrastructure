@@ -75,7 +75,9 @@ jobs:
           export PATH="$HOME/.cargo/bin:$PATH"
           uv venv
           source .venv/bin/activate
-          uv pip install ansible ansible-lint yamllint requests python-dateutil
+          # ansible-core only (no bundled collections) — avoids loading hundreds of
+          # pip-packaged collections that cause OOM on ubuntu-slim runners.
+          uv pip install 'ansible-core>=2.15,<2.18' ansible-lint yamllint requests python-dateutil
 
       - name: Install Ansible Galaxy requirements
         run: |
