@@ -326,6 +326,7 @@ This diagram shows how a user request travels through the system.
 |-----------|-----------|---------|
 | Cloudflare | CDN | Edge caching, WAF |
 | Server | Nginx | Web server |
+
 ```
 
 ---

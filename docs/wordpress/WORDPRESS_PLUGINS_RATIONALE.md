@@ -47,6 +47,7 @@ Plugins are organized by priority and purpose:
   - Essential for handling concurrent students
 
 **Infrastructure Dependency**:
+
 ```yaml
 # Requires Valkey role to be deployed
 - Valkey runs on port 6379 (default)
@@ -56,8 +57,9 @@ Plugins are organized by priority and purpose:
 
 **Without this plugin**: Valkey infrastructure is useless for WordPress
 
-**References**:
-- WordPress.org: https://wordpress.org/plugins/redis-cache/
+**References**:<https://wordpress.org/plugins/redis-cache/>
+
+- WordPress.org: <https://wordpress.org/plugins/redis-cache/>
 - Valkey role: `ansible/roles/valkey/`
 
 ---
@@ -79,6 +81,7 @@ Plugins are organized by priority and purpose:
   5. Next visitor gets fresh content
 
 **Infrastructure Dependency**:
+
 ```yaml
 # Requires Nginx FastCGI cache (already configured)
 - Cache path: /var/cache/nginx/fastcgi
@@ -86,10 +89,11 @@ Plugins are organized by priority and purpose:
 - Ansible auto-configures: wp option update rt_wp_nginx_helper_options
 ```
 
-**Without this plugin**: Students see outdated course content until cache expires (hours)
+**Without this pl<https://wordpress.org/plugins/nginx-helper/>t until cache expires (hours)
 
 **References**:
-- WordPress.org: https://wordpress.org/plugins/nginx-helper/
+
+- WordPress.org: <https://wordpress.org/plugins/nginx-helper/>
 - Nginx config: `ansible/roles/nginx_wordpress/templates/conf.d/fastcgi-cache.conf.j2`
 
 ---
@@ -104,30 +108,36 @@ Plugins are organized by priority and purpose:
 - **Problem**: Password-only login is vulnerable to credential stuffing
 - **Solution**: Requires TOTP code (Google Authenticator, Authy) after password
 - **Security Layer**:
+
   - Layer 1: Password (something you know)
   - Layer 2: TOTP app (something you have)
 
 **Why NOT full Wordfence**:
+
 ```yaml
 # Full Wordfence duplicates infrastructure features:
 ❌ Wordfence WAF      → Cloudflare WAF (better, at edge)
 ❌ Wordfence Firewall → UFW + Fail2ban (server-level)
 ❌ Malware scanning   → AppArmor + AIDE (system-level)
 
+
 # We ONLY need:
 ✅ Login Security module → 2FA/MFA for WordPress admin
 ```
 
 **Infrastructure Coverage**:
+
 - ✅ Cloudflare WAF: DDoS, bot blocking, rate limiting
 - ✅ Fail2ban: Brute force protection at server level
-- ✅ AppArmor: Process isolation and mandatory access control
+
+- ✅ AppArmor: Pro<https://wordpress.org/plugins/wordfence-login-security/>
 - ✅ UFW: Firewall rules (only Cloudflare IPs allowed)
 
 **Without this plugin**: Admin accounts vulnerable to credential theft
 
 **References**:
-- WordPress.org: https://wordpress.org/plugins/wordfence-login-security/
+
+- WordPress.org: <https://wordpress.org/plugins/wordfence-login-security/>
 - Infrastructure security: `docs/infrastructure/CLOUDFLARE_SETUP.md`
 
 ---
@@ -146,6 +156,7 @@ Plugins are organized by priority and purpose:
 
 | Feature | Fail2ban (Server) | This Plugin (WordPress) |
 |---------|-------------------|------------------------|
+
 | Scope | System-wide, all services | WordPress only |
 | Action | Blocks IP via iptables | Locks WordPress account |
 | Bypass | Hard (requires UFW/iptables) | Easy (admin can unlock) |
@@ -153,11 +164,13 @@ Plugins are organized by priority and purpose:
 | Whitelist | IP-based only | Username + IP |
 
 **Why both are needed**:
+
 ```yaml
 # Fail2ban: Protects infrastructure
 - Blocks IPs after 3 SSH failures
 - Blocks IPs after 5 wp-login.php attempts
 - No easy unlock (requires SSH)
+
 
 # limit-login-attempts: Protects WordPress accounts
 - Locks accounts after 3 login failures
@@ -165,7 +178,8 @@ Plugins are organized by priority and purpose:
 - User sees clear message: "Account locked for 60 minutes"
 ```
 
-**Configuration**:
+**Configuration**<https://wordpress.org/plugins/limit-login-attempts-reloaded/>
+
 - Max attempts: 3
 - Lockout duration: 60 minutes
 - Can whitelist trusted IPs (office, admin home)
@@ -173,7 +187,8 @@ Plugins are organized by priority and purpose:
 **Without this plugin**: Only hard IP blocks, no granular account protection
 
 **References**:
-- WordPress.org: https://wordpress.org/plugins/limit-login-attempts-reloaded/
+
+- WordPress.org: <https://wordpress.org/plugins/limit-login-attempts-reloaded/>
 - Fail2ban config: `ansible/roles/security_hardening/templates/jail.local.j2`
 
 ---
@@ -188,6 +203,7 @@ Plugins are organized by priority and purpose:
 **Why Critical**:
 
 **Current Situation**:
+
 ```yaml
 ❌ NO automated backups currently deployed
 ❌ Restic documented but NOT implemented
@@ -196,31 +212,39 @@ Plugins are organized by priority and purpose:
 ```
 
 **What gets backed up**:
+
 1. **Database**:
    - All courses, lessons, quizzes
    - Student progress and grades
    - User accounts and enrollments
    - Plugin settings
 2. **Files**:
+
    - Uploaded videos/PDFs
    - Student assignments
    - Certificates
    - Theme customizations
 
 **Backup destinations (all FREE)**:
+
 - Google Drive: 15GB free
 - Dropbox: 2GB free
 - Microsoft OneDrive: 5GB free
 - Email (small backups only)
 
 **Recommended Schedule**:
+
 ```yaml
 Database: Daily (small, critical)
+
 Files: Weekly (larger, changes less)
 Retention: 30 days
 ```
 
 **Alternative (future)**:
+
+<https://wordpress.org/plugins/updraftplus/>
+
 ```bash
 # Restic (not yet implemented)
 # Pros: Encrypted, incremental, deduplicated
@@ -230,12 +254,15 @@ Retention: 30 days
 ```
 
 **Without this plugin**:
+
 - NO backups = catastrophic data loss risk
 - Hardware failure = lose all courses and students
+
 - Ransomware/hack = no recovery
 
 **References**:
-- WordPress.org: https://wordpress.org/plugins/updraftplus/
+
+- WordPress.org: <https://wordpress.org/plugins/updraftplus/>
 - Backup strategy: `docs/security/BACKUP_RECOVERY.md` (Restic planned, not implemented)
 
 ---
@@ -243,11 +270,13 @@ Retention: 30 days
 ### 6. wp-mail-smtp (CRITICAL)
 
 **Slug**: `wp-mail-smtp`
+
 **Purpose**: Send WordPress emails via SMTP instead of PHP mail()
 **Price**: FREE
 **Why Critical for LMS**:
 
 **Problem with PHP mail()**:
+
 ```yaml
 # WordPress default email method:
 PHP mail() function → sendmail → Internet
@@ -260,6 +289,7 @@ Issues:
 ```
 
 **LearnDash Email Volume**:
+
 ```yaml
 High-frequency emails:
 - New student registration confirmation
@@ -267,6 +297,7 @@ High-frequency emails:
 - Lesson completion notifications
 - Quiz results
 - Certificate delivery
+
 - Course progress reminders
 - Instructor notifications
 - Password resets
@@ -274,6 +305,7 @@ High-frequency emails:
 
 Estimated: 10-50 emails/day initially
 Peak: 100-300 emails/day with active courses
+
 ```
 
 **SMTP Provider Comparison**:
@@ -286,28 +318,34 @@ Peak: 100-300 emails/day with active courses
 | Amazon SES | 62,000/month (first year) | Advanced users, requires AWS | Hard |
 
 **Why Brevo Free is Recommended**:
+
 - ✅ 300 emails/day (enough for 50-100 active students)
-- ✅ Easy setup (API key only)
+
+- ✅ Easy set<https://app.brevo.com>
 - ✅ Email analytics dashboard
 - ✅ SPF/DKIM configured automatically
 - ✅ No credit card required
 
 **Zoho Mail Clarification**:
+
 ```yaml
+
 # User mentioned having "Zoho Mail Free"
 Zoho Mail Free:
   Purpose: Email hosting (receive & read emails)
   SMTP sending: NOT included in free tier
   Use case: Webmail access only
 
-WP Mail SMTP + Brevo:
-  Purpose: Transactional emails FROM WordPress
-  Different service: Not a replacement for Zoho
+
+WP Mail SMTP + Br<https://wordpress.org/plugins/wp-mail-smtp/>
+  Purpose: Trans<https://app.brevo.com/account/register>
+  Different service: Not a replacement <https://www.brevo.com/blog/email-deliverability/>
   Use case: Course notifications, registrations
 ```
 
 **Configuration Steps**:
-1. Sign up: https://app.brevo.com (free)
+
+1. Sign up: <https://app.brevo.com> (free)
 2. Get API key: Settings → SMTP & API → API Keys
 3. WordPress: WP Mail SMTP → Settings → Brevo
 4. Paste API key
@@ -315,15 +353,17 @@ WP Mail SMTP + Brevo:
 6. Verify: Check spam folder, move to inbox
 
 **Without this plugin**:
+
 - Students don't receive course emails
 - Certificates never arrive
 - Password resets fail
 - Poor user experience = bad reviews
 
 **References**:
-- WordPress.org: https://wordpress.org/plugins/wp-mail-smtp/
-- Brevo signup: https://app.brevo.com/account/register
-- Email deliverability best practices: https://www.brevo.com/blog/email-deliverability/
+
+- WordPress.org: <https://wordpress.org/plugins/wp-mail-smtp/>
+- Brevo signup: <https://app.brevo.com/account/register>
+- Email deliverability best practices: <https://www.brevo.com/blog/email-deliverability/>
 
 ---
 
@@ -335,6 +375,7 @@ WP Mail SMTP + Brevo:
 **Why Essential for LMS**:
 
 **Business Impact**:
+
 ```yaml
 # Course discovery funnel:
 Google Search → Course Page → Enrollment → Revenue
@@ -345,11 +386,13 @@ Without SEO:
 ❌ 100% reliance on paid ads
 ❌ High customer acquisition cost
 
+
 With SEO:
 ✅ Courses rank for relevant keywords
 ✅ Organic traffic (free)
 ✅ Lower CAC (customer acquisition cost)
 ✅ Passive student enrollment
+
 ```
 
 **Rank Math FREE vs Yoast FREE**:
@@ -370,17 +413,20 @@ Comparison (2026 data):
 | **Performance** | Faster | Slower |
 
 **Sources**:
+
 - [Rank Math vs. Yoast 2026: 10 Reasons to Switch](https://onlinemediamasters.com/rank-math-vs-yoast/)
 - [Kinsta: Rank Math vs Yoast SEO](https://kinsta.com/blog/rank-math-vs-yoast/)
 - [Zapier: Which plugin is best? [2025]](https://zapier.com/blog/rank-math-vs-yoast/)
 
 **Why Rank Math Wins**:
+
 ```yaml
 1. Schema Markup for Courses:
    - LearnDash courses = "Course" schema
-   - Google shows rich results (rating, price, provider)
-   - Higher click-through rate
 
+   - Google shows<https://wordpress.org/plugins/seo-by-rank-math/>
+   - Higher click-thro<https://rankmath.com/kb/rich-snippets/>
+<https://schema.org/Course>
 2. Multiple Keywords:
    - Course: "day trading course"
    - Keywords: "forex", "technical analysis", "beginners", "online", "certification"
@@ -394,20 +440,23 @@ Comparison (2026 data):
    - Suggests linking related courses
    - Improves site structure and SEO
 
+
 5. Social Preview:
    - See how course looks when shared on Facebook/Twitter
    - Optimize thumbnails and descriptions
 ```
 
 **Without this plugin**:
+
 - Courses hard to find in Google
 - Lower enrollment from organic search
 - Higher reliance on paid advertising
 
 **References**:
-- WordPress.org: https://wordpress.org/plugins/seo-by-rank-math/
-- Schema markup docs: https://rankmath.com/kb/rich-snippets/
-- Course schema: https://schema.org/Course
+
+- WordPress.org: <https://wordpress.org/plugins/seo-by-rank-math/>
+- Schema markup docs: <https://rankmath.com/kb/rich-snippets/>
+- Course schema: <https://schema.org/Course>
 
 ---
 
@@ -421,6 +470,7 @@ Comparison (2026 data):
 **Why Important**:
 
 **Relationship to Kadence Theme**:
+
 ```yaml
 Kadence Theme (already installed):
   - Base theme framework
@@ -443,6 +493,7 @@ Kadence Blocks (this plugin):
    - Perfect for course landing page headers
 
 2. **Icon List**:
+
    - "What you'll learn" sections
    - Course features/benefits
    - Testimonial highlights
@@ -459,6 +510,7 @@ Kadence Blocks (this plugin):
 
 5. **Accordion/Tabs**:
    - Course curriculum preview
+
    - FAQ sections
    - Collapsible content
 
@@ -472,7 +524,9 @@ Kadence Blocks (this plugin):
    - Responsive columns
    - No page builder needed
 
-**Why NOT a Page Builder**:
+<https://wordpress.org/plugins/kadence-blocks/>
+**Why NOT a Page <https://www.kadencewp.com/kadence-blocks/>
+
 ```yaml
 Page Builders (Elementor, Divi, etc.):
 ❌ Heavy (500KB+ JavaScript)
@@ -484,11 +538,13 @@ Kadence Blocks + Gutenberg:
 ✅ Native WordPress (built-in editor)
 ✅ Lightweight (~100KB)
 ✅ Works with any theme
+
 ✅ Cache-friendly
 ✅ Future-proof (WordPress default)
 ```
 
 **Use Cases**:
+
 - Course landing pages
 - Instructor bio pages
 - About page
@@ -496,13 +552,15 @@ Kadence Blocks + Gutenberg:
 - Testimonials page
 
 **Without this plugin**:
+
 - Limited to basic Gutenberg blocks
 - Need page builder (heavy, slow)
 - Or hire developer for custom blocks
 
 **References**:
-- WordPress.org: https://wordpress.org/plugins/kadence-blocks/
-- Block library: https://www.kadencewp.com/kadence-blocks/
+
+- WordPress.org: <https://wordpress.org/plugins/kadence-blocks/>
+- Block library: <https://www.kadencewp.com/kadence-blocks/>
 - Kadence theme integration: `ansible/roles/nginx_wordpress/tasks/wordpress-themes.yml`
 
 ---
@@ -512,10 +570,13 @@ Kadence Blocks + Gutenberg:
 **Slug**: `cookie-notice`
 **Purpose**: GDPR/CCPA cookie consent compliance
 **Price**: FREE
+
 **Why Important**:
 
 **Legal Requirement**:
+
 ```yaml
+
 # GDPR (EU Law) - May 2018
 Applies if:
   ✅ You have EU visitors (even if not targeting them)
@@ -532,6 +593,7 @@ Applies if:
   ✅ California residents visit your site
   ✅ You collect personal data
 
+
 Penalty:
   - $7,500 per intentional violation
 ```
@@ -539,22 +601,29 @@ Penalty:
 **What Cookies WordPress Uses**:
 
 1. **Essential (always set)**:
+
    ```
+
    wordpress_test_cookie - Check if cookies enabled
    wordpress_logged_in_* - Keep user logged in
    wp-settings-* - User preferences
    ```
 
 2. **LearnDash (course progress)**:
-   ```
-   learndash_* - Track course progress
+
+<https://wordpress.org/plugins/cookie-notice/>
+
+   ```<https://gdpr.eu/cookies/>
+   learndash_* - Tr<https://oag.ca.gov/privacy/ccpa>
    ```
 
 3. **Third-party (if used)**:
+
    ```
    Google Analytics - _ga, _gid
    Facebook Pixel - _fbp
    Cloudflare - __cfduid (if using certain features)
+
    ```
 
 **Plugin Features (FREE)**:
@@ -562,11 +631,13 @@ Penalty:
 - ✅ Cookie consent banner
 - ✅ Customizable text and colors
 - ✅ Accept/Reject buttons
+
 - ✅ Cookie policy page link
 - ✅ EU-only targeting (show only to EU visitors)
 - ✅ Script blocking (block Google Analytics until consent)
 
 **Configuration**:
+
 ```yaml
 Banner position: Bottom bar (less intrusive)
 Button text: "Accept" / "Reject"
@@ -576,15 +647,17 @@ EU only: Show only to EU visitors (saves bandwidth)
 ```
 
 **Without this plugin**:
+
 - ❌ GDPR violation (if selling to EU)
 - ❌ Legal liability
 - ❌ Cannot use Google Analytics legally in EU
 - ❌ Fines risk
 
 **References**:
-- WordPress.org: https://wordpress.org/plugins/cookie-notice/
-- GDPR official: https://gdpr.eu/cookies/
-- CCPA compliance: https://oag.ca.gov/privacy/ccpa
+
+- WordPress.org: <https://wordpress.org/plugins/cookie-notice/>
+- GDPR official: <https://gdpr.eu/cookies/>
+- CCPA compliance: <https://oag.ca.gov/privacy/ccpa>
 
 ---
 
@@ -593,13 +666,16 @@ EU only: Show only to EU visitors (saves bandwidth)
 ### ❌ Caching Plugins
 
 **NOT needed**:
+
 - WP Super Cache
 - W3 Total Cache
 - WP Rocket ($59/year)
 - LiteSpeed Cache
+
 - Swift Performance
 
 **Why NOT**:
+
 ```yaml
 Infrastructure already provides:
 
@@ -619,10 +695,12 @@ Infrastructure already provides:
    - Edge caching at 300+ locations worldwide
    - Static assets (images, CSS, JS)
    - Automatic minification
+
    - DDoS protection included
 ```
 
 **Installing caching plugins would**:
+
 - ❌ Duplicate functionality
 - ❌ Slow down site (plugin overhead)
 - ❌ Cause cache conflicts
@@ -633,12 +711,14 @@ Infrastructure already provides:
 ### ❌ Full Security Suites
 
 **NOT needed**:
+
 - Wordfence (full version)
 - Sucuri Security
 - iThemes Security
 - All In One WP Security
 
 **Why NOT**:
+
 ```yaml
 Infrastructure provides better security:
 
@@ -655,6 +735,7 @@ Infrastructure provides better security:
    - Fail2ban: Brute force protection
    - AppArmor: Process isolation
 
+
 3. Application Security:
    - Wordfence Login Security: 2FA (lightweight module only)
    - Limit Login Attempts: Account protection
@@ -662,8 +743,10 @@ Infrastructure provides better security:
 ```
 
 **Full security plugins would**:
+
 - ❌ Duplicate WAF (Cloudflare better)
 - ❌ Duplicate firewall (UFW + Fail2ban better)
+
 - ❌ Slow down WordPress (resource intensive)
 - ❌ Cost money (Sucuri $200/year, Wordfence Premium $119/year)
 
@@ -672,11 +755,13 @@ Infrastructure provides better security:
 ### ❌ CDN Plugins
 
 **NOT needed**:
+
 - Jetpack CDN
 - BunnyCDN plugin
 - Any CDN integration plugin
 
 **Why NOT**:
+
 ```yaml
 Cloudflare is already configured:
 
@@ -700,8 +785,10 @@ Cloudflare is already configured:
 ```
 
 **CDN plugins would**:
+
 - ❌ Add unnecessary complexity
 - ❌ Potential cache conflicts
+
 - ❌ No benefit (Cloudflare already active)
 
 **Reference**: `docs/infrastructure/CLOUDFLARE_SETUP.md`
@@ -711,11 +798,13 @@ Cloudflare is already configured:
 ### ❌ Image Optimization Plugins
 
 **MAYBE needed** (situational):
+
 - Smush
 - ShortPixel
 - Imagify
 
 **Why NOT included**:
+
 ```yaml
 Cloudflare FREE does NOT include:
   ❌ Polish (image compression)
@@ -747,11 +836,13 @@ Current recommendation:
 ### ❌ Database Optimization
 
 **NOT needed**:
+
 - WP-Optimize
 - Advanced Database Cleaner
 - WP-Sweep
 
 **Why NOT**:
+
 ```yaml
 Valkey (Redis) handles query caching:
   - Stores frequent queries in memory
@@ -767,6 +858,7 @@ Database optimization plugins:
 ```
 
 **When to manually optimize**:
+
 - Database > 1GB (rarely happens)
 - After 6+ months of use
 - Only if performance issues observed
@@ -788,6 +880,7 @@ Database optimization plugins:
 | **seo-by-rank-math** | FREE | $59/year (vs Pro) |
 | **kadence-blocks** | FREE | $99/year (vs Pro) |
 | **cookie-notice** | FREE | $29/year (vs Pro) |
+
 | **TOTAL** | **$0** | **$425/year saved** |
 
 ### NOT Installed Savings
@@ -795,6 +888,7 @@ Database optimization plugins:
 | NOT Installed | Reason | Savings |
 |---------------|--------|---------|
 | WP Rocket | Nginx FastCGI + Valkey | $59/year |
+
 | Wordfence Premium | Cloudflare WAF | $119/year |
 | Sucuri Security | Infrastructure security | $200/year |
 | Jetpack Premium | Cloudflare CDN | $120/year |
@@ -843,6 +937,7 @@ ROI: Infinite (free plugins on cheap infrastructure)
 **Post-Installation Requirements**:
 
 User must configure (5-10 minutes):
+
 1. UpdraftPlus → Connect Google Drive/Dropbox
 2. WP Mail SMTP → Add Brevo API key
 3. Rank Math → Run setup wizard
@@ -850,6 +945,7 @@ User must configure (5-10 minutes):
 5. Wordfence Login Security → Enable 2FA for admins
 
 **References**:
+
 - WordPress plugin installation: `ansible/roles/nginx_wordpress/tasks/wordpress-plugins.yml`
 - Infrastructure security: `docs/infrastructure/CLOUDFLARE_SETUP.md`
 - Backup strategy: `docs/security/BACKUP_RECOVERY.md`

@@ -42,11 +42,13 @@ ansible-playbook \
 ## What to Save
 
 ### Transit OpenBao (Port 8201)
+
 - ✅ 5 unseal keys (password manager)
 - ✅ Root token (password manager)
 - ✅ Auto-unseal token (Ansible Vault)
 
 ### Primary OpenBao (Port 8200)
+
 - ✅ 5 unseal keys (password manager, backup only)
 - ✅ Root token (password manager)
 - ✅ WordPress rotation token (Ansible Vault)

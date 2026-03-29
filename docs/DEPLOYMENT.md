@@ -104,6 +104,7 @@ make deploy
 ## Rollback
 
 If server becomes locked:
+
 ```bash
 ansible-playbook playbooks/common.yml --tags security -e security_rollback=true
 ```

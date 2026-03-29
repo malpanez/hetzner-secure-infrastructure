@@ -52,6 +52,7 @@ Guide for designing an accessible trading academy website for users with ADHD, A
 | Line length | 50-75 characters | Optimal reading |
 
 #### Dyslexia-Friendly Fonts
+
 - OpenDyslexic (free)
 - Lexie Readable
 - Sylexiad
@@ -184,6 +185,7 @@ Layout:
 ## Implementation Checklist
 
 ### Design Base
+
 - [ ] Palette with maximum 3 colors + neutrals
 - [ ] Dark gray/off-white contrast (not pure black/white)
 - [ ] Sans-serif typography (Inter or Manrope)
@@ -191,18 +193,21 @@ Layout:
 - [ ] Increased letter spacing (+0.5px)
 
 ### Navigation
+
 - [ ] Consistent menu on all pages
 - [ ] Visible breadcrumbs
 - [ ] Prominent search
 - [ ] Clear labels (not icon-only)
 
 ### Content
+
 - [ ] Hierarchical headings (H1 → H2 → H3)
 - [ ] Short paragraphs (3-4 lines max)
 - [ ] Bullet lists instead of text blocks
 - [ ] Direct language, no complex metaphors
 
 ### Multimedia
+
 - [ ] No autoplay videos
 - [ ] Visible pause/stop button
 - [ ] Playback speed control
@@ -210,6 +215,7 @@ Layout:
 - [ ] Option to disable animations
 
 ### LearnDash
+
 - [ ] Lessons max 10 minutes
 - [ ] Clear visual progress
 - [ ] Quizzes without time limit
@@ -217,6 +223,7 @@ Layout:
 - [ ] Certificates as positive reinforcement
 
 ### Accessibility Plugin
+
 - [ ] Install Readabler or similar
 - [ ] ADHD mode available
 - [ ] Dyslexia font option
@@ -226,6 +233,7 @@ Layout:
 ## Testing
 
 ### Manual Testing
+
 1. Navigate entire site using only keyboard
 2. Use screen reader (NVDA, VoiceOver)
 3. Test with browser zoom at 200%
@@ -233,11 +241,13 @@ Layout:
 5. Test with high contrast mode
 
 ### Automated Tools
+
 - [WAVE](https://wave.webaim.org/) - Accessibility evaluation
 - [axe DevTools](https://www.deque.com/axe/) - Browser extension
 - [Lighthouse](https://developers.google.com/web/tools/lighthouse) - Chrome DevTools
 
 ### User Testing
+
 - Recruit neurodivergent beta testers
 - Gather feedback on:
   - Cognitive load
@@ -248,16 +258,19 @@ Layout:
 ## Resources
 
 ### Guidelines
+
 - [WCAG 2.1](https://www.w3.org/WAI/WCAG21/quickref/) - Web Content Accessibility Guidelines
 - [AASPIRE Guidelines](https://www.liebertpub.com/doi/10.1089/aut.2018.0020) - Autism-specific web accessibility
 - [Neurodiversity Design System](https://www.neurodiversity.design/) - Design standards
 
 ### Articles
+
 - [Designing for Neurodiversity - Smashing Magazine](https://www.smashingmagazine.com/2025/06/designing-for-neurodiversity/)
 - [Neurodiversity and UX - Stéphanie Walter](https://stephaniewalter.design/blog/neurodiversity-and-ux-essential-resources-for-cognitive-accessibility/)
 - [How Inclusive Design Supports Learners on the Autism Spectrum - D2L](https://www.d2l.com/en-apac/blog/how-inclusive-design-supports-learners-on-the-autism-spectrum/)
 
 ### Fonts
+
 - [Inter](https://fonts.google.com/specimen/Inter) - Clean, accessible sans-serif
 - [Manrope](https://fonts.google.com/specimen/Manrope) - Modern, readable
 - [OpenDyslexic](https://opendyslexic.org/) - Designed for dyslexia

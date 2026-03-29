@@ -29,6 +29,7 @@ Three distinct issues were causing boot/console problems:
 5. **DISABLED auditd** in `security_hardening/defaults/main.yml` (`security_hardening_auditd_enabled: false`)
 
 **Result**: System boots correctly but with reduced security:
+
 - ❌ auditd **DISABLED** - `audit=1` causes emergency mode boot failure
 - ✅ AppArmor with `apparmor=1 security=apparmor` kernel parameters
 - ✅ Root console access preserved (Hetzner Cloud Console)
@@ -36,6 +37,7 @@ Three distinct issues were causing boot/console problems:
 - ✅ System boots correctly
 
 **TODO**: Investigate why `audit=1` causes boot failures on Debian 13. May need to check:
+
 - auditd service dependencies
 - audit rules syntax
 - kernel audit buffer configuration
@@ -48,6 +50,7 @@ Three distinct issues were causing boot/console problems:
 After running Ansible playbook successfully, the system requires a reboot (due to kernel parameters like `audit=1`). After reboot:
 
 **Symptom 1**: Root console login blocked with message:
+
 ```
 Cannot open access to console, the root account is locked.
 ```
@@ -74,20 +77,24 @@ Cannot open access to console, the root account is locked.
 **File**: `ansible/roles/common/tasks/users.yml:61-66`
 
 **What it did**:
+
 ```yaml
 - name: Common | Users | Disable root account password
   ansible.builtin.user:
     name: root
     password: "!"  # ← This LOCKS the account
+
   when: common_disable_root_password | default(true)
 ```
 
 **Timeline**:
+
 1. Cloud-init unlocks root: `passwd -u root` (line 104 in cloud-init.yml)
 2. Ansible runs and **locks root again**: `password: "!"`
 3. Console login blocked: "Cannot open access to console, the root account is locked"
 
 **Fix Applied**: Commented out the entire task in `users.yml`:
+
 ```yaml
 # - name: Common | Users | Disable root account password
 #   ansible.builtin.user:
@@ -110,6 +117,7 @@ Cannot open access to console, the root account is locked.
 3. **Low loglevel** - Default loglevel=3 hides most messages
 
 **What Hetzner Cloud Console Needs**:
+
 - Output on VGA console (`console=tty0`)
 - Visible boot messages (no `quiet` or explicit verbose mode)
 - Standard Linux console terminal (not serial-only)
@@ -117,6 +125,7 @@ Cannot open access to console, the root account is locked.
 **Fix Applied**:
 
 1. **Created new GRUB drop-in**: `ansible/roles/common/templates/grub-console.cfg.j2`
+
    ```jinja2
    # Console output configuration
    GRUB_CMDLINE_LINUX="console=tty0 console=ttyS0,115200n8"
@@ -126,6 +135,7 @@ Cannot open access to console, the root account is locked.
    GRUB_CMDLINE_LINUX_DEFAULT="loglevel=7 systemd.show_status=true rd.systemd.show_status=yes"
    {% else %}
    # Production mode: quiet boot
+
    GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=3"
    {% endif %}
 
@@ -134,9 +144,11 @@ Cannot open access to console, the root account is locked.
    ```
 
 2. **Removed `quiet` from AppArmor config**: `ansible/roles/apparmor/defaults/main.yml:36`
+
    ```yaml
    # Before:
    apparmor_grub_cmdline: "quiet apparmor=1 security=apparmor"
+
 
    # After:
    apparmor_grub_cmdline: "apparmor=1 security=apparmor"
@@ -147,6 +159,7 @@ Cannot open access to console, the root account is locked.
    - Console output is now managed centrally by `00-console.cfg`
 
 **Files Changed**:
+
 - `ansible/roles/apparmor/templates/grub-apparmor.cfg.j2:14`
 - `ansible/roles/security_hardening/templates/grub-audit.cfg.j2:16`
 
@@ -157,11 +170,13 @@ Cannot open access to console, the root account is locked.
 **Root Cause**: Multiple roles (apparmor, security_hardening) had duplicate `update grub` handlers that **shadowed** (overwrote) each other.
 
 **How Ansible Handlers Work**:
+
 - Handlers are **play-scoped** (global), not role-scoped
 - Multiple handlers with same name → only last loaded executes
 - This is called "handler shadowing"
 
 **What Was Happening**:
+
 1. `common` role defines: `update grub` handler
 2. `apparmor` role defines: **duplicate** `update grub` handler → shadows common's handler
 3. When apparmor notifies "update grub" → executes apparmor's handler (not common's)
@@ -179,6 +194,7 @@ Cannot open access to console, the root account is locked.
 # NOTE: Debian 13 does NOT require update-initramfs for AppArmor/audit basic functionality
 # initramfs update is only needed for advanced early-boot confinement of systemd/init
 
+
 - name: update grub
   ansible.builtin.command: update-grub
   changed_when: true
@@ -191,6 +207,7 @@ Cannot open access to console, the root account is locked.
 ```
 
 **Removed duplicate handlers from**:
+
 - `ansible/roles/apparmor/handlers/main.yml` - Removed duplicate `update grub`
 - `ansible/roles/security_hardening/handlers/main.yml` - Removed duplicate `update grub` and `reboot required`
 
@@ -201,8 +218,10 @@ Cannot open access to console, the root account is locked.
 **Root Cause**: When `audit=1` kernel parameter is enabled, the system enters **emergency mode** during boot and becomes completely unbootable.
 
 **Symptoms**:
+
 ```
 Cannot open access to console, the root account is locked.
+
 See "systemctl status emergency.target" for details.
 
 You might want to save "/run/initramfs/rdsosreport.txt" to a USB stick or /boot
@@ -210,6 +229,7 @@ after mounting them and attach it to a bug report.
 ```
 
 **Timeline**:
+
 1. ✅ Ansible deploys GRUB config with `audit=1` → triggers reboot
 2. ❌ System boots with `audit=1` in kernel cmdline
 3. ❌ **Systemd enters emergency mode** (unknown reason)
@@ -217,12 +237,14 @@ after mounting them and attach it to a bug report.
 5. ❌ Root is locked → **complete deadlock** (system unbootable)
 
 **Why This Happens**:
+
 - `audit=1` tells kernel to enable audit subsystem from boot
 - If auditd service or audit rules fail during early boot → kernel/systemd may panic
 - On Debian 13, this consistently triggers emergency mode
 - Emergency mode + locked root = no recovery without rescue mode
 
 **Temporary Solution Applied**:
+
 Disabled auditd in `ansible/roles/security_hardening/defaults/main.yml`:
 
 ```yaml
@@ -233,12 +255,15 @@ security_hardening_auditd_enabled: false
 ```
 
 **Security Impact**:
+
 - ❌ No audit logging of security events
 - ❌ No compliance with CIS/STIG benchmarks requiring audit
+
 - ✅ System boots reliably
 - ✅ AppArmor still enabled (mandatory access control)
 
 **Next Steps** (TODO):
+
 1. Access server via Hetzner Rescue Mode after failed boot
 2. Check logs: `journalctl -b -1 --priority=err`
 3. Investigate:
@@ -250,8 +275,10 @@ security_hardening_auditd_enabled: false
    - First: Install auditd without `audit=1` kernel param
    - Then: Add `audit=1` and check for boot issues
    - Finally: Add audit rules one by one
+>
 
 **References**:
+
 - [Linux Audit Documentation](https://linux-audit.com/)
 - [Systemd Emergency Mode](https://www.freedesktop.org/software/systemd/man/systemd.special.html#emergency.target)
 
@@ -268,17 +295,20 @@ According to [Debian Wiki on AppArmor](https://wiki.debian.org/AppArmor/HowToUse
 > AppArmor is a Mandatory Access Control (MAC) system available in Debian 13. By default, AppArmor is "loaded" but most application profiles are in "unconfined" or "complain" mode.
 >
 > To fully enable AppArmor in the boot process, you typically need to:
+>
 > 1. Install AppArmor packages
 > 2. Enable in Boot Arguments (security=apparmor lsm=...)
 > 3. **Update Initramfs**: After making changes that affect early boot, you **may** need to ensure the initramfs is updated to include AppArmor components, **if necessary for early system confinement**
 
 **Key Points**:
+
 - AppArmor works WITHOUT initramfs updates for normal profiles
 - Audit works WITHOUT initramfs updates
 - Initramfs update is only needed for **early boot confinement** (advanced security scenario)
 - Our initial diagnosis was **incorrect** - the boot hang was NOT due to missing initramfs
 
 **What Actually Needed Fixing**:
+
 1. Console output visibility (console=tty0, no quiet)
 2. Root account locking
 3. Handler execution order (shadowing issue)
@@ -326,6 +356,7 @@ According to [Debian Wiki on AppArmor](https://wiki.debian.org/AppArmor/HowToUse
 ### Current Status (Updated 2026-01-14)
 
 **Security features status**:
+
 - ❌ **auditd DISABLED** - `audit=1` causes emergency mode boot failure (see Issue #4 below)
 - ✅ AppArmor with `apparmor=1 security=apparmor` kernel parameters
 - ✅ Root console access preserved
@@ -338,6 +369,7 @@ According to [Debian Wiki on AppArmor](https://wiki.debian.org/AppArmor/HowToUse
 ## Testing the Fix
 
 ### Prerequisites
+
 - Destroy current server and redeploy fresh
 - Ensure latest code is pulled from git
 
@@ -375,17 +407,20 @@ ansible-playbook playbooks/site.yml
 # 7. Wait for server to come back (may take 2-3 minutes)
 ssh admin@<server-ip>
 
+
 # 8. Verify kernel parameters are active
 cat /proc/cmdline
 # Should show: console=tty0 console=ttyS0 loglevel=7 audit=1 apparmor=1
 
 # 9. Verify services are running
 systemctl status auditd
+
 systemctl status apparmor
 sudo aa-status
 
 # 10. Test console access via Hetzner Console
 # Should still work with root password
+
 
 # 11. Verify root SSH is still blocked
 ssh root@<server-ip>
@@ -399,19 +434,24 @@ ssh root@<server-ip>
 ### If Console Still Shows Nothing
 
 1. **Check GRUB config was updated**:
+
    ```bash
    sudo cat /etc/default/grub.d/00-console.cfg
    sudo grep "console=tty0" /boot/grub/grub.cfg
    ```
 
 2. **Verify kernel cmdline**:
+
    ```bash
+
    cat /proc/cmdline | grep console
    # Should show: console=tty0 console=ttyS0,115200n8
    ```
 
 3. **Check for GRUB terminal misconfiguration**:
+
    ```bash
+
    grep "GRUB_TERMINAL" /etc/default/grub /etc/default/grub.d/*.cfg
    # Should show: GRUB_TERMINAL=console (NOT serial)
    ```
@@ -423,6 +463,7 @@ ssh root@<server-ip>
 sudo passwd root
 # Set a new password
 
+
 # Or unlock the account
 sudo passwd -u root
 sudo grep "^root:" /etc/shadow
@@ -432,15 +473,19 @@ sudo grep "^root:" /etc/shadow
 ### If Boot Hangs
 
 Boot hangs are unlikely now that we:
+
 1. Removed unnecessary initramfs updates
 2. Fixed console output visibility
 3. Preserved root console access
 
 If it still hangs:
+
 1. **Access Hetzner Rescue Mode**
 2. **Check logs**:
+
    ```bash
    mount /dev/sda1 /mnt
+
    chroot /mnt
    journalctl -b -1 | tail -100
    ```
@@ -450,16 +495,19 @@ If it still hangs:
 ## References
 
 ### Internal Documentation
+
 - [Security Hardening Role](../../ansible/roles/security_hardening/)
 - [AppArmor Role](../../ansible/roles/apparmor/)
 - [Common Role](../../ansible/roles/common/)
 
 ### Commit History
+
 - 2026-01-14: `fix: console output visibility and handler centralization`
 - 2026-01-14: `fix: remove initramfs handler - not needed for Debian 13 AppArmor/audit`
 - 2026-01-13: Initial workaround (disabled auditd and apparmor GRUB management)
 
 ### External Resources
+
 - [Debian Wiki - AppArmor](https://wiki.debian.org/AppArmor/HowToUse)
 - [Debian Wiki - Initramfs](https://wiki.debian.org/initramfs)
 - [Ansible Handlers Documentation](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_handlers.html)
@@ -471,6 +519,7 @@ If it still hangs:
 ## Status Updates
 
 ### 2026-01-14 (Evening) - ✅ FINAL ROOT CAUSE FIXED
+
 - ✅ **Corrected diagnosis**: AppArmor/audit do NOT require initramfs in Debian 13
 - ✅ **Removed initramfs handler** from common role
 - ✅ **Fixed console visibility**: Added 00-console.cfg with console=tty0
@@ -479,12 +528,14 @@ If it still hangs:
 - ✅ All security features working correctly
 
 ### 2026-01-14 (Afternoon) - ⚠️ INCORRECT DIAGNOSIS
+
 - ⚠️ Initially thought missing initramfs was the problem
 - ⚠️ Added initramfs handlers (not actually needed)
 - ✅ Fixed root password locking issue
 - ✅ Fixed handler duplication
 
 ### 2026-01-13 - Initial workaround applied
+
 - ⚠️ Temporarily disabled auditd GRUB management
 - ⚠️ Temporarily disabled apparmor GRUB management
 - ✅ Fixed root password locking issue

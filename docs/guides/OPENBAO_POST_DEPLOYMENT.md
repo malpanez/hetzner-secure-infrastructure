@@ -29,14 +29,14 @@ OpenBao es un fork open-source de HashiCorp Vault mantenido por la Linux Foundat
 
 ## ¿Cuándo usar OpenBao?
 
-### ✅ USAR OpenBao cuando:
+### ✅ USAR OpenBao cuando
 
 1. **Múltiples servicios necesitan secretos** (ej: WordPress, API externa, backups)
 2. **Rotación automática de passwords** (ej: MySQL, Valkey)
 3. **Compliance o auditoría** requerida
 4. **Múltiples administradores** necesitan acceso controlado
 
-### ⚠️ NO USAR OpenBao cuando:
+### ⚠️ NO USAR OpenBao cuando
 
 1. **Infraestructura simple** (1 servidor, 1 WordPress)
 2. **Pocos secretos** (solo root password de DB)
@@ -63,11 +63,13 @@ OpenBao es un fork open-source de HashiCorp Vault mantenido por la Linux Foundat
 ```
 
 **Pros:**
+
 - Sin coste adicional
 - Configuración simplificada
 - Suficiente para 1-2 servicios
 
 **Contras:**
+
 - Recursos compartidos con WordPress
 - Menos aislamiento de seguridad
 
@@ -84,11 +86,13 @@ OpenBao es un fork open-source de HashiCorp Vault mantenido por la Linux Foundat
 ```
 
 **Pros:**
+
 - Mejor aislamiento
 - No afecta performance de WordPress
 - Escalable para múltiples servicios
 
 **Contras:**
+
 - Coste adicional: +€4.66/mes
 - Mayor complejidad de red
 
@@ -284,9 +288,9 @@ bao operator unseal <KEY_3>
 
 ## Recursos
 
-- **Documentación oficial**: https://openbao.org/docs/
-- **GitHub**: https://github.com/openbao/openbao
-- **Tutorial Vault (compatible)**: https://developer.hashicorp.com/vault/tutorials
+- **Documentación oficial**: <https://openbao.org/docs/>
+- **GitHub**: <https://github.com/openbao/openbao>
+- **Tutorial Vault (compatible)**: <https://developer.hashicorp.com/vault/tutorials>
 
 ---
 

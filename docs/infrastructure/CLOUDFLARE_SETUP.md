@@ -757,6 +757,7 @@ curl -I https://tu-dominio.com
 - High error rate (5xx)
 
 **Última actualización:** 2026-01-09
+
 - SSL certificate expiring
 
 ---

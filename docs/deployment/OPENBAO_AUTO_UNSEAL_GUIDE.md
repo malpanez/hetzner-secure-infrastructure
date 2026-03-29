@@ -88,7 +88,7 @@
 8. WordPress rotation works normally ✅
 ```
 
-###  Comparison: With vs Without Auto-Unseal
+### omparison: With vs Without Auto-Unseal
 
 | Scenario | Without Auto-Unseal | With Transit Auto-Unseal |
 |----------|---------------------|--------------------------|
@@ -158,6 +158,7 @@ ansible-playbook playbooks/site.yml
 ```
 
 **What this does**:
+
 - Installs OpenBao binary
 - Creates Transit instance (port 8201)
 - Creates Primary instance (port 8200)
@@ -177,6 +178,7 @@ ansible-playbook \
 ```
 
 **What this does**:
+
 1. Initializes Transit OpenBao (Shamir's secret sharing: 5 keys, threshold 3)
 2. Unseals Transit using 3 of 5 keys
 3. Enables Transit secrets engine
@@ -202,6 +204,7 @@ Auto-Unseal Token (for Primary):
 ```
 
 **Where to store**:
+
 - Transit unseal keys → Password manager (1Password, Bitwarden)
 - Auto-unseal token → Ansible Vault
 
@@ -237,9 +240,11 @@ ansible-playbook playbooks/site.yml
 ansible-playbook \
   playbooks/openbao-bootstrap.yml \
   -e openbao_bootstrap_ack=true
+
 ```
 
 **What this does**:
+
 1. Initializes Primary OpenBao
 2. **AUTO-UNSEALS** using Transit (no manual unseal keys needed!)
 3. Enables KV-v2 secrets engine
@@ -273,10 +278,12 @@ WordPress Rotation Token:
 
 ```bash
 ansible-playbook \
+
   playbooks/setup-openbao-rotation.yml
 ```
 
 **What this does**:
+
 - Creates rotation script: `/usr/local/bin/rotate-wordpress-secrets.sh`
 - Creates systemd timer: Daily at 3 AM
 - Rotation will work because Primary auto-unseals after reboot
@@ -309,17 +316,20 @@ journalctl -t openbao-alert -p crit
 
 # Check next scheduled check
 systemctl list-timers openbao-seal-check.timer
+
 ```
 
 ### Alert When Sealed
 
 When OpenBao is sealed:
+
 1. Check script creates `/var/run/openbao-sealed.alert`
 2. systemd marks service as failed
 3. Alert service logs critical message
 4. Visible in `systemctl status openbao-seal-check.service`
 
 **Example alert**:
+
 ```
 CRITICAL: OpenBao is SEALED! Secret rotation will fail. Unseal required.
 ```
@@ -331,6 +341,7 @@ CRITICAL: OpenBao is SEALED! Secret rotation will fail. Unseal required.
 ### Problem: Primary OpenBao is Sealed After Reboot
 
 **Diagnosis**:
+
 ```bash
 # Check Primary status
 curl -k https://127.0.0.1:8200/v1/sys/health
@@ -366,6 +377,7 @@ sudo systemctl restart openbao
 # Verify Primary unsealed
 export VAULT_ADDR='https://127.0.0.1:8200'
 bao status
+
 # Should show: Sealed = false
 ```
 
@@ -374,6 +386,7 @@ bao status
 ### Problem: WordPress Rotation Failing
 
 **Diagnosis**:
+
 ```bash
 # Check rotation logs
 sudo tail -100 /var/log/wordpress-secret-rotation.log
@@ -383,6 +396,7 @@ sudo tail -100 /var/log/wordpress-secret-rotation.log
 ```
 
 **Common causes**:
+
 1. Transit is sealed → Unseal Transit
 2. Transit token expired → Regenerate token
 3. Primary service down → `systemctl restart openbao`
@@ -411,12 +425,14 @@ Tests now verify:
 **Q**: If an attacker compromises the server, can they access secrets?
 
 **A**: Depends on timing:
+
 - **When unsealed**: Yes (same as any Vault/OpenBao setup)
 - **When sealed**: No (secrets encrypted, keys in RAM only)
 
 **Q**: Is Transit auto-unseal less secure than Shamir unsealing?
 
 **A**: No, equivalent security:
+
 - Shamir: 3 of 5 keys needed (keys stored offline)
 - Transit: 3 of 5 Transit keys needed (Transit keys stored offline)
 - Both require human intervention after reboot
@@ -434,6 +450,7 @@ Tests now verify:
 ### Why This Is Secure
 
 1. **Transit unsealing still requires human intervention** (3 of 5 keys)
+
 2. **Transit stores no production secrets** (only encryption key)
 3. **Primary secrets remain encrypted at rest** (even with auto-unseal)
 4. **Compromise of Transit alone doesn't expose secrets** (needs Primary data too)
@@ -446,12 +463,14 @@ Tests now verify:
 ### What Changed
 
 **Before** (Manual Unsealing):
+
 - Server reboots → Primary OpenBao SEALED
 - Must manually unseal Primary (3 of 5 keys)
 - Until unsealed: Secret rotation FAILS
 - WordPress DB credentials expire → Site DOWN
 
 **After** (Transit Auto-Unseal):
+
 - Server reboots → Both Transit and Primary SEALED
 - Manually unseal Transit (3 of 5 keys) - one time
 - Primary AUTO-UNSEALS (no action needed)

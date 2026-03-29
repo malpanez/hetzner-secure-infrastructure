@@ -7,6 +7,7 @@ Two Minds Trading is a **global trading education platform** selling courses wor
 ## 🎯 Target Audience
 
 ### Primary Markets
+
 - 🇺🇸 **United States** - Primary market, largest customer base
 - 🇪🇸 **Spain / Europe** - European market, Spanish-speaking
 - 🇲🇽 **Mexico** - North American Spanish market
@@ -14,6 +15,7 @@ Two Minds Trading is a **global trading education platform** selling courses wor
 - 🇧🇷 **Brazil** - Portuguese-speaking market
 
 ### Future Expansion
+
 - 🇩🇪 Germany
 - 🇫🇷 France
 - 🌏 Asia-Pacific (future consideration)
@@ -23,6 +25,7 @@ Two Minds Trading is a **global trading education platform** selling courses wor
 ### Server Configuration: UTC Only
 
 **Why UTC?**
+
 1. ✅ **Log Correlation** - All system logs use consistent timestamps
 2. ✅ **Payment Processing** - Stripe, PayPal, payment gateways use UTC
 3. ✅ **Analytics** - Google Analytics reports in UTC
@@ -31,12 +34,14 @@ Two Minds Trading is a **global trading education platform** selling courses wor
 6. ✅ **API Compatibility** - Industry standard for APIs
 
 **Configuration:**
+
 ```yaml
 # ansible/inventory/group_vars/all/common.yml
 system_timezone: "UTC"
 ```
 
 ❌ **DO NOT USE:**
+
 - `Europe/Dublin` - Regional timezone, confuses global operations
 - `America/New_York` - Excludes other markets
 - `Europe/Madrid` - Regional preference
@@ -44,6 +49,7 @@ system_timezone: "UTC"
 ### Application Layer: User-Specific Timezones
 
 **WordPress Configuration:**
+
 1. **WordPress Settings:**
    - Set WordPress to UTC: `Settings > General > Timezone > UTC+0`
    - Let users select their timezone in their profile
@@ -57,6 +63,7 @@ system_timezone: "UTC"
    - Email notifications show user's local time
 
 **Implementation:**
+
 ```javascript
 // Example: Convert UTC to user's local timezone
 const utcDate = new Date('2026-01-15T14:00:00Z');
@@ -84,11 +91,13 @@ additional_locales:
 ### WordPress Multi-Language
 
 **Recommended Plugins:**
+
 1. **WPML** (WordPress Multilingual) - Premium, best for e-commerce
 2. **Polylang** - Free alternative
 3. **TranslatePress** - Visual translation editor
 
 **URL Structure:**
+
 - `twomindstrading.com/en/` - English
 - `twomindstrading.com/es/` - Spanish
 - `twomindstrading.com/pt/` - Portuguese
@@ -96,6 +105,7 @@ additional_locales:
 ### Currency Support
 
 **WooCommerce Multi-Currency:**
+
 - Base currency: USD (United States Dollar)
 - Supported: EUR, GBP, MXN, ARS, BRL
 - Payment gateway: Stripe (supports 135+ currencies)
@@ -113,6 +123,7 @@ ntp_servers:
 ```
 
 **Why Anycast?**
+
 - ✅ Routes to nearest server automatically
 - ✅ DDoS resistant
 - ✅ High availability (multiple locations)
@@ -145,6 +156,7 @@ sudo systemctl restart systemd-timesyncd
 ### Current Deployment: Hetzner Germany (Nuremberg)
 
 **Why Nuremberg?**
+
 1. ✅ **Central Location** - Optimal latency to US, Europe, Latin America
 2. ✅ **GDPR Compliance** - EU data protection regulations
 3. ✅ **Network Quality** - Excellent connectivity worldwide
@@ -152,6 +164,7 @@ sudo systemctl restart systemd-timesyncd
 5. ✅ **Hetzner Reliability** - 99.9% uptime SLA
 
 **Average Latency:**
+
 | Region | Latency |
 |--------|---------|
 | Germany | 1-5 ms |
@@ -165,11 +178,13 @@ sudo systemctl restart systemd-timesyncd
 ### Future: CDN for Static Assets
 
 **Recommended CDN:**
+
 - Cloudflare (free tier available)
 - AWS CloudFront
 - Bunny CDN (cost-effective)
 
 **Benefits:**
+
 - Cache static assets (images, CSS, JS) globally
 - Reduce server load
 - Improve page load times worldwide
@@ -184,6 +199,7 @@ ALTER DATABASE wordpress CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 **Why utf8mb4?**
+
 - ✅ Supports emojis 😊🎯🌍
 - ✅ All languages and scripts
 - ✅ Required for international content
@@ -201,11 +217,13 @@ SET time_zone = '+00:00';
 ### Transactional Email Service
 
 **Recommended:**
+
 1. **SendGrid** - 100 emails/day free
 2. **Amazon SES** - $0.10 per 1,000 emails
 3. **Mailgun** - Good for high volume
 
 **Configuration:**
+
 - Send from: `noreply@twomindstrading.com`
 - Reply-to: `support@twomindstrading.com`
 - DKIM/SPF/DMARC properly configured
@@ -213,6 +231,7 @@ SET time_zone = '+00:00';
 ### Email Localization
 
 WooCommerce can send emails in user's language:
+
 - Order confirmations in Spanish for Spanish customers
 - Receipt in Portuguese for Brazilian customers
 
@@ -221,16 +240,19 @@ WooCommerce can send emails in user's language:
 ### Compliance Requirements
 
 **GDPR (Europe):**
+
 - Cookie consent required
 - Privacy policy in local language
 - Right to data deletion
 - Data processing agreements
 
 **PCI-DSS (Global):**
+
 - Credit card data handled by Stripe (Level 1 PCI compliant)
 - No card data stored on server
 
 **CCPA (California, USA):**
+
 - Privacy policy disclosure
 - Opt-out of data sale
 
@@ -263,17 +285,20 @@ server {
 ### Time-Based Analytics
 
 **Google Analytics:**
+
 - Use UTC for reports
 - Filter by user location
 - Analyze peak times by geography
 
 **WordPress Plugin:**
+
 - WooCommerce Admin Dashboard shows sales by country
 - Peak times by timezone
 
 ### Server Monitoring
 
 **Key Metrics:**
+
 - Response time from different regions (use Pingdom)
 - Error rates by geography
 - Payment success rates by country
@@ -311,6 +336,7 @@ server {
 **Symptom:** Course launch times show incorrect time
 **Cause:** WordPress timezone not set to UTC
 **Fix:**
+
 ```php
 // wp-config.php
 define('WP_DEBUG', false);
@@ -322,6 +348,7 @@ update_option('timezone_string', 'UTC');
 **Symptom:** Stripe payment time differs from WordPress order time
 **Cause:** Server not using UTC
 **Fix:**
+
 ```bash
 ansible-playbook -i inventory/production ansible/playbooks/site.yml --tags common
 ```
@@ -331,6 +358,7 @@ ansible-playbook -i inventory/production ansible/playbooks/site.yml --tags commo
 **Symptom:** `timedatectl` shows "System clock unsynchronized"
 **Cause:** Firewall blocking NTP (UDP 123)
 **Fix:**
+
 ```bash
 sudo ufw allow 123/udp
 sudo systemctl restart systemd-timesyncd

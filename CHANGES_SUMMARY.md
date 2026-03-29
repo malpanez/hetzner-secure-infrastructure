@@ -10,7 +10,8 @@
 
 This update addresses **critical security lockout risks** and configures the infrastructure for **Two Minds Trading's global business** with audiences in USA, Spain, Mexico, Argentina, Brazil, and worldwide.
 
-### Key Changes:
+### Key Changes
+
 1. ✅ **Boot lockout prevention** - Root console access preserved
 2. ✅ **Global deployment** - UTC timezone, multi-language support, global NTP
 3. ✅ **Security safety** - AppArmor complain mode, mutable audit by default
@@ -26,6 +27,7 @@ This update addresses **critical security lockout risks** and configures the inf
 #### File: `ansible/inventory/group_vars/all/common.yml`
 
 **Changed: Timezone from Irish to US English (Global Standard)**
+
 ```yaml
 # BEFORE (WRONG for global business):
 system_locale: "en_IE.UTF-8"  # Irish English
@@ -36,6 +38,7 @@ system_timezone: "UTC"         # Mandatory for global operations
 ```
 
 **Added: Multi-language locale support**
+
 ```yaml
 additional_locales:
   - en_US.UTF-8     # US English (primary)
@@ -49,6 +52,7 @@ additional_locales:
 ```
 
 **Enhanced: Global anycast NTP configuration**
+
 ```yaml
 ntp_servers:
   - time.cloudflare.com    # Global anycast (ultra-reliable)
@@ -63,6 +67,7 @@ ntp_fallback_servers:
 ```
 
 **Rationale:**
+
 - Two Minds Trading is a **GLOBAL** business, not regional
 - Customers from US, Europe, Latin America need consistent time handling
 - Payment processors (Stripe, PayPal) use UTC
@@ -76,6 +81,7 @@ ntp_fallback_servers:
 #### File: `ansible/inventory/group_vars/all/common.yml`
 
 **Added: Safe defaults for initial deployment**
+
 ```yaml
 # AppArmor: Start in complain mode (logs but doesn't block)
 apparmor_enforce_mode: false  # Set to true after testing
@@ -91,6 +97,7 @@ ssh_2fa_pam_google_authenticator_ssh_options: "nullok forward_pass"
 ```
 
 **Rationale:**
+
 - **Prevents boot lockouts** - Can recover via Hetzner console
 - **Allows testing** - Security can be enabled gradually
 - **Emergency access** - Multiple fallback mechanisms
@@ -103,6 +110,7 @@ ssh_2fa_pam_google_authenticator_ssh_options: "nullok forward_pass"
 #### File: `ansible/roles/security_hardening/templates/audit.rules.j2`
 
 **Fixed: Inconsistent variable naming**
+
 ```diff
 - -e {{ audit_immutable | default('1') }}
 + -e {{ audit_immutable_mode | default('1') }}
@@ -117,6 +125,7 @@ ssh_2fa_pam_google_authenticator_ssh_options: "nullok forward_pass"
 #### File: `ansible/roles/common/tasks/users.yml`
 
 **Already implemented correctly (verified):**
+
 ```yaml
 - name: Common | Users | Ensure root account is UNLOCKED for console access
   ansible.builtin.command: passwd -u root
@@ -137,6 +146,7 @@ ssh_2fa_pam_google_authenticator_ssh_options: "nullok forward_pass"
 **Created: Emergency recovery playbook**
 
 Features:
+
 - ✅ Puts AppArmor in complain mode / disables it
 - ✅ Unlocks root account for console access
 - ✅ Temporarily enables root SSH
@@ -147,12 +157,14 @@ Features:
 - ✅ Provides clear recovery instructions
 
 **Usage:**
+
 ```bash
 # If server becomes locked after security hardening
 ansible-playbook -i inventory/production rollback-security.yml
 ```
 
 **Safeguards:**
+
 - `safe_mode: true` option to skip dangerous operations
 - Comprehensive error handling with `ignore_errors: true`
 - Clear instructions displayed at completion
@@ -167,6 +179,7 @@ ansible-playbook -i inventory/production rollback-security.yml
 **Created: Comprehensive global deployment guide**
 
 Sections:
+
 1. 🌍 **Target Audience** - US, Spain, Mexico, Argentina, Brazil
 2. ⏰ **Timezone Strategy** - Why UTC, how to handle user timezones
 3. 🌐 **Multi-Language Support** - Locales, WordPress plugins, URLs
@@ -179,6 +192,7 @@ Sections:
 10. 🔧 **Troubleshooting** - Common timezone/NTP issues
 
 **Key insights:**
+
 - Why UTC is mandatory for global business
 - How to show local times to users
 - Latency expectations from different regions
@@ -192,11 +206,13 @@ Sections:
 #### File: `README.md`
 
 **Added: Global deployment highlight**
+
 ```markdown
 - ✅ **Global Deployment**: UTC timezone, multi-language support, global NTP
 ```
 
 **Added: Documentation link**
+
 ```markdown
 - **[GLOBAL_DEPLOYMENT_STRATEGY.md](docs/deployment/GLOBAL_DEPLOYMENT_STRATEGY.md)** - 🌍 **NEW!** Global deployment for worldwide audiences
 ```
@@ -244,18 +260,22 @@ The following items were **already implemented correctly** in the codebase:
 ## 🚀 Deployment Impact
 
 ### Minimal Risk Changes
+
 These changes are **safe for existing deployments**:
+
 - Timezone change (UTC → UTC, just documented)
 - Locale change (en_IE → en_US, minimal impact)
 - Variable additions (defaults match current behavior)
 - Documentation additions (no code changes)
 
 ### No Breaking Changes
+
 - All existing playbooks continue to work
 - Default security settings are **safer** (complain mode, mutable audit)
 - Emergency rollback available if needed
 
 ### Testing Recommendation
+
 ```bash
 # 1. Test in staging first
 cd ansible
@@ -274,15 +294,18 @@ ansible all -i inventory/production -m shell -a "locale"
 ## 📚 Files Modified
 
 ### Configuration Files
+
 1. `ansible/inventory/group_vars/all/common.yml` - Global config, timezone, NTP, security defaults
 2. `ansible/roles/security_hardening/templates/audit.rules.j2` - Variable name fix
 
 ### New Files
+
 1. `ansible/rollback-security.yml` - Emergency recovery playbook
 2. `docs/deployment/GLOBAL_DEPLOYMENT_STRATEGY.md` - Global deployment guide
 3. `CHANGES_SUMMARY.md` - This document
 
 ### Updated Documentation
+
 1. `README.md` - Added global deployment references
 
 ---
@@ -290,13 +313,16 @@ ansible all -i inventory/production -m shell -a "locale"
 ## 🔒 Security Considerations
 
 ### Boot Lockout Prevention
+
 **Before this fix:**
+
 - Root account locked → Cannot use Hetzner console
 - AppArmor enforce mode → Services blocked immediately
 - Auditd immutable (-e 2) → Cannot change rules without reboot
 - SSH 2FA without nullok → Cannot login if 2FA not configured
 
 **After this fix:**
+
 - ✅ Root account unlocked → Can use Hetzner console
 - ✅ AppArmor complain mode → Logs violations, doesn't block
 - ✅ Auditd mutable (-e 1) → Can modify rules without reboot
@@ -304,7 +330,9 @@ ansible all -i inventory/production -m shell -a "locale"
 - ✅ Rollback playbook → Emergency recovery available
 
 ### Production Hardening Path
+
 After initial deployment and testing:
+
 1. Set `apparmor_enforce_mode: true`
 2. Set `audit_immutable_mode: "2"`
 3. Remove `nullok` from 2FA options
@@ -315,7 +343,9 @@ After initial deployment and testing:
 ## 🌍 Business Impact
 
 ### Global Readiness
+
 Two Minds Trading can now:
+
 - ✅ Serve customers in **any timezone** with correct time display
 - ✅ Accept payments from **any country** with UTC consistency
 - ✅ Show content in **8 languages** (system-level support)
@@ -324,6 +354,7 @@ Two Minds Trading can now:
 - ✅ Track analytics and logs with **consistent timestamps**
 
 ### Cost Impact
+
 **Zero cost increase** - All changes are configuration only.
 
 ---
@@ -341,6 +372,7 @@ Two Minds Trading can now:
 ## 📖 Next Steps
 
 ### For Deployment
+
 1. Review changes in this document
 2. Test in staging environment
 3. Apply to production during maintenance window
@@ -348,6 +380,7 @@ Two Minds Trading can now:
 5. Keep rollback playbook handy
 
 ### For Future
+
 1. Configure WordPress multi-language plugin (WPML/Polylang)
 2. Set up WooCommerce multi-currency
 3. Configure CDN (Cloudflare) for global performance
@@ -359,6 +392,7 @@ Two Minds Trading can now:
 ## 📞 Support
 
 If you encounter issues:
+
 1. Check [docs/deployment/GLOBAL_DEPLOYMENT_STRATEGY.md](docs/deployment/GLOBAL_DEPLOYMENT_STRATEGY.md)
 2. Use rollback playbook: `ansible-playbook ansible/rollback-security.yml`
 3. Review [docs/troubleshooting/ANSIBLE_POST_REBOOT_LOCKOUT.md](docs/troubleshooting/ANSIBLE_POST_REBOOT_LOCKOUT.md)

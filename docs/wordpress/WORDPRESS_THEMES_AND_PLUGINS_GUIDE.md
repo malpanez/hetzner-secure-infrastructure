@@ -20,6 +20,7 @@
 ### Free Professional Themes (LearnDash Compatible)
 
 #### 1. **Kadence Theme** ⭐ RECOMMENDED FREE
+
 - **Price**: FREE (Pro version available but not needed)
 - **Why**:
   - Native LearnDash integration
@@ -33,6 +34,7 @@
 - **Rating**: 5/5 stars, 100k+ active installations
 
 #### 2. **Astra Theme** (Free version)
+
 - **Price**: FREE (Pro $59/year if needed later)
 - **Why**:
   - Official LearnDash partner theme
@@ -45,6 +47,7 @@
 - **Rating**: 5/5 stars, 1.7M+ active installations
 
 #### 3. **Neve Theme** (Free version)
+
 - **Price**: FREE (Pro available)
 - **Why**:
   - Mobile-first design
@@ -53,9 +56,11 @@
   - Starter sites available
   - Very fast performance
 - **Perfect for**: Modern, mobile-focused learning
+
 - **Download**: WordPress.org repository
 
 #### 4. **GeneratePress** (Free version)
+
 - **Price**: FREE (Premium $59/year)
 - **Why**:
   - Extremely lightweight and fast
@@ -68,19 +73,23 @@
 ### Free Page Builders (If Needed)
 
 #### 1. **Elementor** (Free version)
+
 - **Price**: FREE (Pro $59/year)
 - **Why**: Most popular, easy to use, LearnDash integration
 - **Note**: Free version is powerful enough for most needs
 
 #### 2. **Beaver Builder Lite**
+
 - **Price**: FREE (Standard $99/year)
 - **Why**: Lightweight, clean code, no bloat
 
 #### 3. **Block Editor (Gutenberg)** ⭐ RECOMMENDED
+
 - **Price**: FREE (built into WordPress)
 - **Why**:
   - No plugin needed
   - Fast, native performance
+
   - Modern block-based editing
   - **Use with Kadence Blocks** (free) for advanced features
 - **Perfect for**: Minimal setup, maximum performance
@@ -88,18 +97,21 @@
 ### Paid Options (If Budget Allows)
 
 #### 1. **Astra Pro** - $59/year
+
 - All starter templates
 - Advanced customization
 - Header/footer builder
 - Premium support
 
 #### 2. **Kadence Theme Pro** - $129/year (lifetime deal available)
+
 - Lifetime updates
 - All pro features
 - Header/footer builder pro
 - WooCommerce features
 
 #### 3. **Generate Press Premium** - $59/year
+
 - Site Library access
 - Advanced hooks
 - Premium modules
@@ -113,42 +125,53 @@
 ### What We ACTUALLY Need
 
 #### 1. **LearnDash LMS** (Manual Install - REQUIRED)
+
 - **Price**: Your existing license
 - **Why**: The core LMS platform
 - **Install**: Manually from LearnDash account
 
 #### 2. **Wordfence Login Security** (FREE) ⭐
+
 - **Why**: Two-Factor Authentication (2FA/MFA)
 - **Note**: We have Cloudflare WAF, but 2FA for admin logins is essential
+
 - **Lightweight**: Only login security, not full Wordfence
 
 #### 3. **Limit Login Attempts Reloaded** (FREE) ⭐
+
 - **Why**: Brute force protection at application level
 - **Note**: Complements Fail2ban, adds user-friendly lockouts
 
 #### 4. **Redis Object Cache** (FREE) ⭐
+
 - **Why**: Connects WordPress to Valkey (already installed)
 - **Automatically installed**: Already configured in your setup
 - **Status**: Active and configured
 
 #### 5. **Nginx Helper** (FREE) ⭐
+
 - **Why**: Purges Nginx FastCGI cache on content updates
 - **Automatically installed**: Already configured in your setup
+
 - **Status**: Active and configured
 
 ### Optional (Evaluate Based on Needs)
 
 #### 6. **UpdraftPlus** (FREE) - Backups
+
 - **Why**: Easy backup/restore of database and files
 - **Alternative**: Manual backups via Ansible playbooks
+
 - **Decision**: Your choice
 
 #### 7. **Really Simple SSL** (FREE) - If needed
+
 - **Why**: Forces HTTPS, fixes mixed content
 - **Note**: May not be needed if Cloudflare handles this
 - **Decision**: Test first without it
 
 #### 8. **Contact Form Plugin** (FREE) - If needed
+
 - Options: Contact Form 7, WPForms Lite, Fluent Forms
 - **Only if**: You need contact forms beyond LearnDash
 
@@ -157,6 +180,7 @@
 ## What We DON'T Need (Already Provided)
 
 ### ❌ Caching Plugins - REMOVE IF INSTALLED
+
 - **WP Super Cache** - Redundant (Nginx FastCGI Cache)
 - **W3 Total Cache** - Redundant (Nginx + Valkey)
 - **WP Rocket** - Redundant and paid ($59/year saved!)
@@ -164,17 +188,20 @@
 - **Swift Performance** - Unnecessary complexity
 
 **Why**: Our infrastructure provides:
+
 - **Nginx FastCGI Cache**: Full page caching
 - **Valkey (Redis)**: Object and database caching
 - **Cloudflare**: CDN and edge caching
 
 ### ❌ Heavy Security Plugins - REMOVE IF INSTALLED
+
 - **Wordfence (Full)** - Use only Login Security module
 - **Sucuri Security** - Redundant (Cloudflare WAF)
 - **iThemes Security** - Overkill (Fail2ban + AppArmor + UFW)
 - **All In One WP Security** - Redundant features
 
 **Why**: Our infrastructure provides:
+
 - **Cloudflare WAF**: DDoS protection, bot blocking, rate limiting
 - **Fail2ban**: Brute force protection
 - **AppArmor**: Mandatory access control
@@ -182,11 +209,13 @@
 - **Nginx rate limiting**: Request throttling
 
 ### ❌ CDN Plugins - REMOVE IF INSTALLED
+
 - **Jetpack CDN** - Cloudflare is better
 - **BunnyCDN Plugin** - Unnecessary
 - **Any other CDN plugin** - Cloudflare handles this
 
 ### ❌ Database Optimization - REMOVE IF INSTALLED
+
 - **WP-Optimize** - Manual optimize better
 - **Advanced Database Cleaner** - Risky automation
 - **WP-Sweep** - Unnecessary
@@ -194,6 +223,7 @@
 **Why**: Valkey handles query caching automatically
 
 ### ❌ Asset Optimization - EVALUATE CAREFULLY
+
 - **Autoptimize** - May conflict with Cloudflare
 - **Fast Velocity Minify** - Test first
 - **Asset CleanUp** - May break things
@@ -205,10 +235,12 @@
 ## Step-by-Step Setup Guide
 
 ### Phase 1: WordPress Installation (Already Done)
+
 ✅ WordPress core installed
 ✅ Nginx configured with FastCGI caching
 ✅ Valkey (Redis) object cache active
 ✅ SSL/TLS via Cloudflare
+
 ✅ Basic security hardening
 
 ### Phase 2: Theme Installation
@@ -218,11 +250,14 @@
 **Kadence Theme** (FREE) is automatically installed and activated by the Ansible playbook.
 
 **Configuration**: `ansible/roles/nginx_wordpress/defaults/main.yml:129`
+
 ```yaml
 nginx_wordpress_theme: kadence  # Auto-installed and activated
+
 ```
 
 **To change theme**, edit the variable before running Ansible:
+
 - `kadence` (Recommended - Best LearnDash integration)
 - `astra` (Popular, lightweight)
 - `neve` (Mobile-first)
@@ -235,6 +270,7 @@ nginx_wordpress_theme: kadence  # Auto-installed and activated
 If you prefer to install manually:
 
 **Option A: Kadence Theme**
+
 ```bash
 # From WordPress admin
 1. Go to: Appearance → Themes → Add New
@@ -247,6 +283,7 @@ If you prefer to install manually:
 ```
 
 **Option B: Astra Theme**
+
 ```bash
 1. Go to: Appearance → Themes → Add New
 2. Search: "Astra"
@@ -259,7 +296,8 @@ If you prefer to install manually:
 ### Phase 3: Essential Plugins Installation
 
 ```bash
-# From WordPress admin: Plugins → Add New
+# From WordPress admin Plugins → Add New
+
 
 1. Search "Wordfence Login Security" → Install → Activate
    - Setup 2FA for admin users
@@ -280,6 +318,7 @@ If you prefer to install manually:
 ### Phase 4: LearnDash Pro Installation
 
 ```bash
+
 1. Download LearnDash from your account
 2. WordPress admin: Plugins → Add New → Upload Plugin
 3. Choose downloaded .zip file
@@ -289,13 +328,15 @@ If you prefer to install manually:
 
 ### Phase 5: Theme Customization
 
-#### For Kadence Theme:
+#### For Kadence Theme
+
 ```bash
 1. Appearance → Customizer
    - Set logo and site title
    - Choose color scheme
    - Configure headers/footers
    - Set typography
+
 
 2. Appearance → Kadence → Header Builder
    - Design custom header
@@ -309,13 +350,15 @@ If you prefer to install manually:
    - Certificates setup
 ```
 
-#### For Astra Theme:
+#### For Astra Theme
+
 ```bash
 1. Appearance → Customize → Astra Settings
    - Header Builder
    - Footer Builder
    - Typography
    - Colors
+
 
 2. Site Identity:
    - Logo
@@ -327,7 +370,8 @@ If you prefer to install manually:
 
 ### Phase 6: Performance Optimization
 
-#### Cloudflare Settings (Recommended):
+#### Cloudflare Settings (Recommended)
+
 ```bash
 1. Cloudflare Dashboard → Speed → Optimization
    - Auto Minify: ☑ JavaScript ☑ CSS ☑ HTML
@@ -347,7 +391,8 @@ If you prefer to install manually:
    - Edge Cache TTL: 2 hours
 ```
 
-#### WordPress Settings:
+#### WordPress Settings
+
 ```bash
 1. Settings → General:
    - Force HTTPS URLs
@@ -377,6 +422,7 @@ If you prefer to install manually:
    - Regular updates (auto-update minor releases)
    - Limit user registration (if not needed)
 
+
 4. Remove default "admin" username:
    - Create new admin user with unique name
    - Delete old "admin" user
@@ -394,6 +440,7 @@ If you prefer to install manually:
    - Test mode first, then production
 
 3. Create First Course:
+
    - LearnDash LMS → Courses → Add New
    - Add lessons, topics, quizzes
    - Set pricing or free
@@ -410,16 +457,21 @@ If you prefer to install manually:
 
 ## Final Checklist
 
-### Pre-Launch:
+### Pre-Launch
+
 - [x] Theme installed automatically (Kadence FREE)
-- [ ] Theme customized via Appearance → Customize
+- [ ] Theme customized via ppearance → Customize
+
 - [ ] Logo and branding complete
+
 - [ ] LearnDash Pro activated with license
 - [ ] Payment gateways configured and tested
 - [ ] 2FA enabled for all admins
 - [ ] Redis Object Cache: Connected
-- [ ] Nginx Helper: Cache purging works
+- [ ] Nginx Helper Cache purging works
+
 - [ ] Cloudflare: Auto minify enabled
+
 - [ ] SSL certificate: Valid and active
 - [ ] Test course created and functional
 - [ ] Mobile responsive: Tested on phone/tablet
@@ -427,35 +479,45 @@ If you prefer to install manually:
 - [ ] Email notifications working
 - [ ] Backup strategy in place
 
-### Post-Launch Monitoring:
+### Post-Launch Monitoring
+
 - [ ] Cloudflare Analytics: Traffic patterns
 - [ ] WordPress → Tools → Site Health: Check for issues
 - [ ] Redis cache: Monitor hit rate
 - [ ] Nginx cache: Verify purging on updates
 - [ ] Security logs: Check Fail2ban blocks
 - [ ] Performance: Test page load times
+
 - [ ] User feedback: Survey first students
 
 ---
 
 ## Recommended Free Theme Combinations
 
-### Best for Beginners:
+### Best for Beginners
+
 **Kadence Theme (Free)** + **Block Editor (Gutenberg)** + **Kadence Blocks (Free)**
+
 - Zero learning curve if familiar with WordPress
 - No page builder needed
 - Professional results
 - Best performance
 
-### Best for Design Control:
-**Astra Theme (Free)** + **Elementor (Free)**
+### Best for Design Control
+
+**Astra Them<https://www.kadencewp.com/documentation/>
+
 - Drag-and-drop simplicity
 - Huge template library
-- More visual control
+- More visual cntrol
 
-### Best for Speed:
+<https://wpastra.com/docs/>
+
+### Best for Speed<https://wpastra.com/guides/learndash-integration/>
+
 **GeneratePress (Free)** + **Block Editor**
-- Absolute minimal weight
+
+- Absolute minimal we<https://www.learndash.com/support/docs/>
 - Maximum performance
 - Clean, professional look
 
@@ -464,18 +526,21 @@ If you prefer to install manually:
 ## Budget Breakdown
 
 ### Option 1: Completely Free
+
 - Theme: Kadence Free
 - Page Builder: Gutenberg (built-in)
 - Plugins: All free recommendations
 - **Total annual cost: $0** (except LearnDash license)
 
 ### Option 2: Minimal Investment
+
 - Theme: Astra Pro ($59/year)
 - Page Builder: Elementor Free
 - Plugins: All free recommendations
 - **Total annual cost: $59/year**
 
 ### Option 3: Best Value
+
 - Theme: Kadence Pro ($129 lifetime)
 - Page Builder: Elementor Pro ($59/year)
 - Plugins: All free recommendations
@@ -486,18 +551,21 @@ If you prefer to install manually:
 
 ## Support and Resources
 
-### Kadence Theme:
-- **Docs**: https://www.kadencewp.com/documentation/
+### Kadence Theme
+
+- **Docs**: <https://www.kadencewp.com/documentation/>
 - **YouTube**: Kadence WP channel (excellent tutorials)
 - **Community**: Facebook group "Kadence Theme Users"
 
-### Astra Theme:
-- **Docs**: https://wpastra.com/docs/
-- **LearnDash Guide**: https://wpastra.com/guides/learndash-integration/
+### Astra Theme
+
+- **Docs**: <https://wpastra.com/docs/>
+- **LearnDash Guide**: <https://wpastra.com/guides/learndash-integration/>
 - **Support**: Forum at wpastra.com/support
 
-### LearnDash:
-- **Official Docs**: https://www.learndash.com/support/docs/
+### LearnDash
+
+- **Official Docs**: <https://www.learndash.com/support/docs/>
 - **Video Tutorials**: LearnDash YouTube channel
 - **Community**: LearnDash Facebook group
 
@@ -506,6 +574,7 @@ If you prefer to install manually:
 ## Conclusion
 
 **Recommended Free Setup**:
+
 1. **Kadence Theme** (free) - Best all-around choice
 2. **Block Editor** - Built-in, no plugin needed
 3. **Kadence Blocks** (free) - Advanced blocks if needed
@@ -514,6 +583,7 @@ If you prefer to install manually:
 This setup gives you a professional, fast, and secure LearnDash LMS platform without spending a cent on themes or plugins (beyond LearnDash license).
 
 **If budget allows later**, consider:
+
 - Kadence Pro ($129 lifetime) - Excellent value
 - Or Astra Pro ($59/year) - Annual but cheaper upfront
 

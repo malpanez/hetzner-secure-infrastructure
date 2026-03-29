@@ -33,14 +33,15 @@ git --version      # >= 2.30
 ### Cuentas y Tokens
 
 1. **Hetzner Cloud API Token**
-   - Crear en: https://console.hetzner.cloud/
+   - Crear en: <https://console.hetzner.cloud/>/>
    - Permisos: Read & Write
 
 2. **Cloudflare API Token** (requerido para Let's Encrypt DNS-01)
-   - Crear en: https://dash.cloudflare.com/profile/api-tokens
+   - Crear en: <https://dash.cloudflare.com/profile/api-tokens>s>
    - Permisos: Zone:DNS:Edit
 
 3. **SSH Key**
+
    ```bash
    # Si no tienes una, generar:
    ssh-keygen -t ed25519 -C "tu-email@ejemplo.com"
@@ -116,6 +117,7 @@ cat production.tfvars
 ```
 
 **Personalizar (obligatorio):**
+
 ```hcl
 # DEBES cambiar tu IP pública (por seguridad SSH está restringido):
 ssh_allowed_ips = ["TU_IP_PUBLICA/32"]  # Obtén con: curl ifconfig.me
@@ -147,11 +149,14 @@ terraform output -raw server_ipv4 > ../server_ip.txt
 ```
 
 **¿Qué son los workspaces?**
+
 - Permiten gestionar múltiples entornos (production, staging) con el mismo código
 - Estados de Terraform aislados por workspace
+
 - Uso: `terraform workspace select <nombre>`
 
 **Recursos creados:**
+
 - ✅ Servidor ARM64 CAX11
 - ✅ Firewall (SSH + HTTP/HTTPS)
 - ✅ Reverse DNS
@@ -195,10 +200,12 @@ ansible-playbook -i inventory/production.yml playbooks/site.yml --ask-vault-pass
 # O por tags específicos:
 ansible-playbook -i inventory/production.yml playbooks/site.yml \
   --tags common,security,nginx,wordpress \
+
   --ask-vault-pass
 ```
 
 **Roles desplegados:**
+
 1. `common` - Usuario, SSH, packages
 2. `security_hardening` - Kernel, sysctl, fail2ban
 3. `firewall` - UFW rules
@@ -219,11 +226,13 @@ ansible-playbook -i inventory/production.yml playbooks/site.yml \
 # Obtener IP del servidor
 cat ../server_ip.txt
 
+
 # Acceder vía navegador
 https://TU_DOMINIO/wp-admin
 ```
 
 **Datos de acceso (desde Ansible Vault):**
+
 - Usuario admin: `vault_nginx_wordpress_admin_user`
 - Contraseña: `vault_nginx_wordpress_admin_password`
 - Email: `vault_nginx_wordpress_admin_email`
@@ -233,6 +242,7 @@ https://TU_DOMINIO/wp-admin
 #### Opción A: DNS Automático (Terraform)
 
 Si `enable_cloudflare = true` en `terraform.prod.tfvars`:
+
 - ✅ DNS A record creado automáticamente
 - Solo necesitas: Cambiar nameservers en tu registrar
 
@@ -241,6 +251,7 @@ Si `enable_cloudflare = true` en `terraform.prod.tfvars`:
 1. Ir a Cloudflare Dashboard
 2. Agregar sitio: `tudominio.com`
 3. Crear A record:
+
    - Nombre: `@`
    - IPv4: `[IP del servidor]`
    - Proxy: ✅ Proxied (naranja)
@@ -248,11 +259,13 @@ Si `enable_cloudflare = true` en `terraform.prod.tfvars`:
 ### 3. Configurar SSL/TLS
 
 **Con Cloudflare (proxy ON recomendado):**
+
 - Cloudflare → SSL/TLS → Overview → **Full (strict)**
 - Edge Certificates → Always Use HTTPS: ✅
 - Ansible emite el cert Let's Encrypt vía DNS-01 (token en Vault).
 
 **Sin Cloudflare (proxy OFF):**
+
 - Puedes usar HTTP-01, pero requiere que los registros estén en “DNS only”.
 
 ---
@@ -292,6 +305,7 @@ Pass: (ver en ansible/group_vars/all/secrets.yml desencriptado)
 ```
 
 **Dashboards instalados:**
+
 - Node Exporter Full (métricas sistema)
 - Loki Logs Dashboard (logs centralizados)
 - Prometheus Stats

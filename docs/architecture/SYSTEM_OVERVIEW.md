@@ -122,6 +122,7 @@ graph TB
 | **Valkey** | 8.0 | Object cache (Redis fork) | 6379 (localhost) |
 
 **Nginx 1.28.1 Features**:
+
 - ✅ CVE-2025-53859 security fix (memory disclosure in SMTP proxy)
 - ✅ HTTP/3 improvements (QUIC)
 - ✅ FastCGI cache enhancements
@@ -376,6 +377,7 @@ www            → Hetzner Server IP (Proxied ☁️)
 4. **limit-login-attempts-reloaded** - Login rate limiting (ESSENTIAL)
 
 **Removed Plugins** (infrastructure handles):
+
 - ❌ Caching plugins (WP Super Cache, W3 Total Cache) - Nginx FastCGI + Valkey
 - ❌ Security plugins (Wordfence Full, Sucuri) - Cloudflare WAF + Fail2ban
 - ❌ CDN plugins - Cloudflare
@@ -603,6 +605,7 @@ graph LR
 | **Architecture** | ARM64 (aarch64) |
 
 **Why ARM over x86**:
+
 - ✅ Always available (no stock issues)
 - ✅ Modern Ampere Altra processors
 - ✅ Mejor rendimiento por €0.37/mo extra vs CX23
@@ -675,26 +678,32 @@ graph TB
 ### Deployment Flow
 
 1. **Infrastructure Provisioning** (Terraform)
+
    ```bash
    cd terraform/environments/production
    terraform init
    terraform plan
+
    terraform apply
    ```
 
 2. **Server Configuration** (Ansible)
+
    ```bash
+
    cd ansible
    ansible-playbook playbooks/site.yml
    ```
 
 3. **OpenBao Setup** (First-time only)
+
    ```bash
    ansible-playbook playbooks/openbao-bootstrap.yml
    # Save unseal keys and root token securely
    ```
 
 4. **Secret Rotation Setup**
+
    ```bash
    ansible-playbook playbooks/setup-openbao-rotation.yml
    ```
@@ -843,11 +852,11 @@ CAX11 (€4.05/mo) → CAX21 (~€8.10/mo)
 - 🔮 Grafana alerting with email notifications
 - 🔮 Automated backups to Hetzner Storage Box
 - 🔮 Multi-region failover
-- 🔮 Blue-green deployments
+- 🔮 Blue-green <https://github.com/malpanez/hetzner-secure-infrastructure>
 - 🔮 Terraform Cloud migration (state management, CI/CD)
 
 ---
 
 **Last Updated**: 2026-01-09
 **Maintained By**: Infrastructure Team
-**Repository**: https://github.com/malpanez/hetzner-secure-infrastructure
+**Repository**: <https://github.com/malpanez/hetzner-secure-infrastructure>

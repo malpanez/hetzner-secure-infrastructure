@@ -287,11 +287,11 @@ wordpress_plugins:
   - slug: redis-cache
     reason: "Connects WordPress to Valkey object cache"
     alternative: none
-    
+
   - slug: nginx-helper
     reason: "Purges Nginx FastCGI cache on content updates"
     alternative: none
-    
+
   # Cloudflare Integration (Required)
   - slug: cloudflare
     reason: "Auto-purge Cloudflare cache on updates"
@@ -314,17 +314,17 @@ wordpress_plugins:
   - slug: rank-math  # Alternative to Yoast
     reason: "SEO optimization (lighter than Yoast)"
     alternative: Manual SEO or no plugin
-    
+
   # Page Builder (Optional - Reconsider)
   - slug: gutenberg  # Built-in, no install needed
     reason: "Modern block editor, fast"
     alternative: Elementor (heavier) or custom theme
-    
+
   # Forms (Optional)
   - slug: contact-form-7
     reason: "Simple contact forms"
     alternative: Custom forms or remove if not needed
-    
+
   # Anti-spam (Optional)
   - slug: cloudflare-turnstile  # Free Cloudflare CAPTCHA
     reason: "Spam protection (lighter than Akismet)"

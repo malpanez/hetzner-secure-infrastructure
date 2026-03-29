@@ -17,16 +17,19 @@ Removed all unnecessary GRUB kernel parameter modifications for AppArmor and aud
 ### 1. AppArmor Role Simplification
 
 **Files Modified**:
+
 - `ansible/roles/apparmor/tasks/configure.yml`
 - `ansible/roles/apparmor/defaults/main.yml`
 
 **What Was Removed**:
+
 - GRUB drop-in directory creation task
 - GRUB drop-in deployment task (`/etc/default/grub.d/99-apparmor.cfg`)
 - Variables: `apparmor_manage_grub`, `apparmor_grub_cmdline`
 - Kernel parameters: `apparmor=1 security=apparmor`
 
 **Why It Was Removed**:
+
 ```
 Source: https://wiki.debian.org/AppArmor/HowToUse
 Quote: "If you are using Debian 10 'Buster' or newer, AppArmor is enabled by default"
@@ -38,21 +41,25 @@ Kernel parameters are NOT needed.
 ### 2. Auditd Role Simplification
 
 **Files Modified**:
+
 - `ansible/roles/security_hardening/tasks/auditd.yml`
 - `ansible/roles/security_hardening/defaults/main.yml`
 
 **What Was Removed**:
+
 - Kernel audit check task (`grep 'audit=' /proc/cmdline`)
 - GRUB drop-in directory creation task
 - GRUB drop-in deployment task (`/etc/default/grub.d/99-audit.cfg`)
 - GRUB drop-in removal task (cleanup)
 - Warning message task for missing audit=1
 - GRUB update trigger task
+
 - Conditional service start (only if audit=1 present)
 - Variables: `security_hardening_manage_grub`, `security_hardening_audit_kernel_params`
 - Kernel parameters: `audit=1 audit_backlog_limit=8192`
 
 **Why It Was Removed**:
+
 ```
 Source: https://www.server-world.info/en/note?os=Debian_13&p=audit&f=1
 Quote: "Install auditd package, configure rules, and start service"
@@ -73,17 +80,20 @@ WARNING: audit=1 can cause emergency mode boot failures.
 The ONLY GRUB modification that remains is console output configuration for Hetzner Cloud Console visibility:
 
 ```yaml
+
 # /etc/default/grub.d/00-console.cfg
 GRUB_CMDLINE_LINUX="console=tty0 console=ttyS0,115200n8"
 GRUB_CMDLINE_LINUX_DEFAULT="loglevel=7 systemd.show_status=true rd.systemd.show_status=yes"
 ```
 
 **Purpose**:
+
 - `console=tty0`: VGA console output (Hetzner Cloud Console viewer)
 - `console=ttyS0,115200n8`: Serial console (for rescue/debugging)
 - `loglevel=7`: Verbose boot messages (for troubleshooting)
 
 **Why This Is Kept**:
+
 - Essential for troubleshooting boot issues via Hetzner Cloud Console
 - Does NOT interfere with boot process
 - Does NOT cause emergency mode failures
@@ -105,6 +115,7 @@ Despite appearing in the grep search, this role does NOT touch GRUB at all. The 
 After these changes, verify:
 
 ### 1. Clean Boot
+
 ```bash
 # Server should boot without emergency mode
 # No "root account is locked" messages
@@ -112,6 +123,7 @@ After these changes, verify:
 ```
 
 ### 2. AppArmor Active
+
 ```bash
 $ sudo aa-status
 # Should show:
@@ -121,6 +133,7 @@ $ sudo aa-status
 ```
 
 ### 3. Auditd Active
+
 ```bash
 $ sudo systemctl status auditd
 # Should be: active (running)
@@ -130,6 +143,7 @@ $ sudo auditctl -l
 ```
 
 ### 4. No GRUB Drop-ins (except console)
+
 ```bash
 $ ls /etc/default/grub.d/
 # Should show ONLY:
@@ -141,6 +155,7 @@ $ ls /etc/default/grub.d/
 ```
 
 ### 5. Console Access Works
+
 ```bash
 # Hetzner Cloud Console should show boot messages
 # Root account should be unlocked for console access
@@ -152,30 +167,35 @@ $ ls /etc/default/grub.d/
 ## Root Cause Analysis
 
 ### Problem
+
 Ansible roles were adding kernel parameters that:
+
 1. Are NOT required on Debian 13
 2. Cause boot failures and emergency mode
 3. Trigger unnecessary reboots
 4. Lock root account preventing console recovery
+<https://wiki.debian.org/AppArmor/HowToUse>
 
 ### Diagnosis Path
-1. User reported "Cannot open access to console, the root account is locked"
+
+1. User reporte<https://www.server-world.info/en/note?os=Debian_13&p=audit&f=1>
 2. System enters emergency mode repeatedly
 3. AppArmor logs show profile loads during boot
 4. Identified `audit=1` causing emergency mode
 5. Discovered official documentation showing parameters NOT needed
 
 ### Solution
+
 Remove ALL kernel parameter modifications except console output configuration.
 
 ---
 
 ## Documentation References
 
-1. **AppArmor**: https://wiki.debian.org/AppArmor/HowToUse
+1. **AppArmor**: <https://wiki.debian.org/AppArmor/HowToUse>
    - "AppArmor is enabled by default" (Debian 10+)
 
-2. **Auditd**: https://www.server-world.info/en/note?os=Debian_13&p=audit&f=1
+2. **Auditd**: <https://www.server-world.info/en/note?os=Debian_13&p=audit&f=1>
    - No GRUB changes mentioned
    - Install package + start service = working auditd
 
@@ -208,6 +228,7 @@ sudo rm -f /etc/default/grub.d/99-apparmor.cfg
 sudo rm -f /etc/default/grub.d/99-audit.cfg
 
 # Update GRUB
+
 sudo update-grub
 
 # Verify only console configuration remains
@@ -225,6 +246,7 @@ sudo reboot
 ### For New Servers
 
 Simply run the updated Ansible playbook. It will:
+
 - Install AppArmor (already enabled by default)
 - Install auditd + configure rules
 - Only configure console output in GRUB

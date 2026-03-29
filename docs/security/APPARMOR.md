@@ -129,18 +129,18 @@ sudo aa-status
 
 /path/to/binary {
   #include <abstractions/base>
-  
+
   capability cap_name,
-  
+
   /path/to/file r,    # read
   /path/to/file w,    # write
   /path/to/file rw,   # read-write
   /path/to/file ix,   # execute (inherit)
   /path/to/file Px,   # execute (profile transition)
   /path/to/file Ux,   # execute (unconfined)
-  
+
   network inet stream,
-  
+
   # Child profile
   profile child_name {
     ...
@@ -216,26 +216,26 @@ sudo nano /etc/apparmor.d/usr.bin.myapp
 
 /usr/bin/myapp {
   #include <abstractions/base>
-  
+
   # Binary itself
   /usr/bin/myapp mr,
-  
+
   # Config files
   /etc/myapp/** r,
-  
+
   # Data directory
   owner /var/lib/myapp/** rw,
-  
+
   # Temp files
   /tmp/myapp-* rw,
-  
+
   # Logs
   /var/log/myapp/*.log w,
-  
+
   # Network (if needed)
   network inet stream,
   network inet6 stream,
-  
+
   # Capabilities (if needed)
   capability net_bind_service,
 }
@@ -527,23 +527,23 @@ Our Ansible deployment includes a complete SSHD profile. Key points:
 /usr/sbin/sshd {
   #include <abstractions/authentication>
   #include <abstractions/nameservice>
-  
+
   # Capabilities needed
   capability sys_chroot,      # For privilege separation
   capability setuid,          # To drop privileges
   capability setgid,
-  
+
   # SSH config
   /etc/ssh/sshd_config r,
   /etc/ssh/ssh_host_*_key r,
-  
+
   # PAM (for 2FA)
   /etc/pam.d/sshd r,
   owner @{HOME}/.google_authenticator r,
-  
+
   # Yubikey FIDO2
   /dev/hidraw* rw,
-  
+
   # User shells (transition)
   /bin/bash Ux,  # Unconfined for user sessions
 }
@@ -564,32 +564,32 @@ Our Ansible deployment includes a complete SSHD profile. Key points:
   #include <abstractions/base>
   #include <abstractions/nameservice>
   #include <abstractions/ssl_certs>
-  
+
   capability dac_override,
   capability setuid,
   capability setgid,
   capability net_bind_service,
-  
+
   # Binary
   /usr/sbin/nginx mr,
-  
+
   # Config
   /etc/nginx/** r,
-  
+
   # Web content (read-only)
   /var/www/** r,
   /usr/share/nginx/** r,
-  
+
   # Logs
   /var/log/nginx/*.log w,
-  
+
   # Runtime
   /run/nginx.pid rw,
-  
+
   # Network
   network inet stream,
   network inet6 stream,
-  
+
   # No write to web content!
 }
 ```
@@ -613,36 +613,36 @@ Key points:
 /usr/bin/python3.11 flags=(attach_disconnected) {
   #include <abstractions/base>
   #include <abstractions/python>
-  
+
   # Python binary
   /usr/bin/python3.11 mr,
-  
+
   # Your app
   /opt/myapp/** r,
   /opt/myapp/myapp.py r,
-  
+
   # App-specific data
   owner /var/lib/myapp/** rw,
-  
+
   # Config (read-only)
   /etc/myapp/*.conf r,
-  
+
   # Logs
   /var/log/myapp/*.log w,
-  
+
   # Temp files (scoped to app)
   owner /tmp/myapp-* rw,
-  
+
   # Network if needed
   network inet stream,
-  
+
   # Database socket
   /var/run/postgresql/.s.PGSQL.5432 rw,
-  
+
   # No shell access
   deny /bin/** x,
   deny /usr/bin/** x,
-  
+
   # Specific libraries only
   /usr/lib/python3/dist-packages/** r,
 }
