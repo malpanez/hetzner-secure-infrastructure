@@ -5,7 +5,7 @@
 security_hardening_auditd_enabled: false
 
 # Passwordless sudo for automation in staging
-common_admin_user_passwordless_sudo: true
+common_admin_user_passwordless_sudo: true  # pragma: allowlist secret
 
 # SSH 2FA Configuration for staging
 # Enable 2FA with break-glass for Ansible automation

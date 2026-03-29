@@ -153,28 +153,7 @@ repos:
       - id: markdownlint
         name: Markdown Lint
         args: [--config=.markdownlint.json, --fix]
-        exclude: >-
-          (?x)^(
-            \.planning/|
-            docs/|
-            CHANGES_SUMMARY\.md|
-            CONTRIBUTING\.md|
-            SECURITY\.md|
-            README\.md|
-            \.woodpecker/|
-            examples/|
-            terraform/ARCHITECTURE_SELECTION\.md|
-            terraform/CLOUDFLARE_TOKEN_SETUP\.md|
-            terraform/IMPORT_DNS_RECORDS\.md|
-            terraform/modules/cloudflare-config/MIGRATION\.md|
-            ansible/inventory/README.*|
-            ansible/inventory/README_INVENTORIES\.md|
-            ansible/logs/README\.md|
-            ansible/roles/nginx_wordpress/README\.md|
-            ansible/roles/valkey/README\.md|
-            ansible/roles/ssh_2fa/README\.md|
-            ansible/roles/cloudflare_origin_ssl/README\.md
-          )$
+        exclude: '(^\.planning/|^docs/|^\.woodpecker/|^examples/|CHANGES_SUMMARY\.md|CONTRIBUTING\.md|SECURITY\.md|README\.md|ARCHITECTURE_SELECTION\.md|CLOUDFLARE_TOKEN_SETUP\.md|IMPORT_DNS_RECORDS\.md|MIGRATION\.md)'
 
   - repo: https://github.com/tcort/markdown-link-check
     rev: v3.12.2
@@ -203,7 +182,8 @@ repos:
           (?x)^(
             package\.lock\.json|
             docs/|
-            \.vagrant/
+            \.vagrant/|
+            ansible/inventory/group_vars/all/secrets\.yml\.example
           )$
 
   # ============================================

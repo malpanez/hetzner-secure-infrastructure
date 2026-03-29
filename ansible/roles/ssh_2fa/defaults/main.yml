@@ -31,7 +31,7 @@ ssh_2fa_address_family: inet
 ssh_2fa_permit_root_login: "prohibit-password"
 
 # Allow password authentication
-ssh_2fa_password_authentication: "no"
+ssh_2fa_password_authentication: "no"  # pragma: allowlist secret
 
 # Challenge response authentication (required for 2FA)
 ssh_2fa_challenge_response_authentication: "yes"
