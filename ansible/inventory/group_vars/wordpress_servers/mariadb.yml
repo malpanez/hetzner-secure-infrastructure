@@ -73,8 +73,17 @@ mariadb_slow_query_log_file: /var/log/mysql/slow.log
 mariadb_long_query_time: 2  # Log queries slower than 2 seconds
 mariadb_log_queries_not_using_indexes: 0
 
-# Binary logging (disabled for single server)
-mariadb_log_bin_enabled: false
+# Binary logging — point-in-time recovery (7 days, ~500MB–1.5GB on disk)
+mariadb_log_bin_enabled: true
+mariadb_binlog_dir: /var/log/mysql
+mariadb_binlog_format: MIXED        # ROW for DML, STATEMENT for DDL — balance space/reliability
+mariadb_binlog_max_size: "100M"     # Rotate file at 100MB
+mariadb_binlog_expire_days: 7       # Keep 7 days of logs
+
+mysql_config_include_dir: /etc/mysql/mariadb.conf.d
+mysql_config_include_files:
+  - src: 60-binlog.cnf.j2
+    force: true
 
 # ========================================
 # MariaDB Security

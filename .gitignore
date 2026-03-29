@@ -519,3 +519,6 @@ gitleaks-report.json
 !.gitattributes
 terraform/.envrc
 terraform/tfplan
+
+# Archive (local reference docs, not for version control)
+.archive/
