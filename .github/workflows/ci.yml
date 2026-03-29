@@ -104,13 +104,15 @@ jobs:
           # Install only collections used by our custom code (not heavy monitoring collections).
           # grafana.grafana + prometheus.prometheus (~300MB+) cause OOM on ubuntu-slim runners.
           mkdir -p /tmp/lint-collections
-          ANSIBLE_COLLECTIONS_PATHS=/tmp/lint-collections \
-            ansible-galaxy collection install \
-              community.general ansible.posix community.mysql \
-              -p /tmp/lint-collections
+          # Force install into isolated path even if already installed globally.
+          ansible-galaxy collection install \
+            community.general ansible.posix community.mysql \
+            -p /tmp/lint-collections \
+            --force
           # Lint with isolated collections path and explicit playbook list (exclude monitoring.yml
           # and site.yml — they only orchestrate Galaxy roles, no custom code to lint).
-          ANSIBLE_COLLECTIONS_PATHS=/tmp/lint-collections \
+          # ANSIBLE_COLLECTIONS_PATH (singular) is the current env var; plural form is deprecated.
+          ANSIBLE_COLLECTIONS_PATH=/tmp/lint-collections \
           ansible-lint \
             playbooks/common.yml \
             playbooks/dual-wordpress.yml \
