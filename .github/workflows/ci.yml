@@ -101,11 +101,28 @@ jobs:
         run: |
           source .venv/bin/activate
           cd ansible
-          # Exclude vendored roles to improve performance and focus on our code
-          ansible-lint playbooks/ roles/ \
+          # Install only collections used by our custom code (not heavy monitoring collections).
+          # grafana.grafana + prometheus.prometheus (~300MB+) cause OOM on ubuntu-slim runners.
+          mkdir -p /tmp/lint-collections
+          ANSIBLE_COLLECTIONS_PATHS=/tmp/lint-collections \
+            ansible-galaxy collection install \
+              community.general ansible.posix community.mysql \
+              -p /tmp/lint-collections --quiet
+          # Lint with isolated collections path and explicit playbook list (exclude monitoring.yml
+          # and site.yml — they only orchestrate Galaxy roles, no custom code to lint).
+          ANSIBLE_COLLECTIONS_PATHS=/tmp/lint-collections \
+          ansible-lint \
+            playbooks/common.yml \
+            playbooks/dual-wordpress.yml \
+            playbooks/openbao.yml \
+            playbooks/openbao-transit-bootstrap.yml \
+            playbooks/openbao-bootstrap.yml \
+            playbooks/setup-openbao-rotation.yml \
+            playbooks/wordpress.yml \
+            playbooks/wordpress-only.yml \
+            playbooks/validate.yml \
+            roles/ \
             --exclude roles/geerlingguy.mysql/ \
-            --exclude ~/.ansible/roles/ \
-            --exclude ~/.ansible/collections/ \
             --parseable | tee ../ansible-lint-report.txt; exit ${PIPESTATUS[0]}
         timeout-minutes: 15
 
