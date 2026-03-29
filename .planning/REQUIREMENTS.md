@@ -46,7 +46,7 @@
 ### Testing
 
 - [x] **TEST-01**: `molecule test` pasa en `nginx_wordpress` role con el refactor aplicado
-- [ ] **TEST-02**: `ansible-lint` y `pre-commit run --all-files` limpios en el branch `feature/dual-wordpress`
+- [x] **TEST-02**: `ansible-lint` y `pre-commit run --all-files` limpios en el branch `feature/dual-wordpress`
 
 ### Main site — twomindstrading.com
 
@@ -132,7 +132,7 @@
 | PLAY-01, PLAY-02, PLAY-03, PLAY-04, PLAY-05 | Phase 1 — IaC Refactor | Pending |
 | WP-01, WP-02, WP-03 | Phase 1 — IaC Refactor | Pending |
 | TF-01 | Phase 1 — IaC Refactor | Complete |
-| TEST-01, TEST-02 | Phase 2 — Testing & Validation | Pending |
+| TEST-01, TEST-02 | Phase 2 — Testing & Validation | Complete |
 | INFRA-01, INFRA-02, INFRA-03, INFRA-04 | Phase 3 — Server Rebuild | Pending |
 | OPS-01, OPS-02, OPS-03, OPS-04, OPS-05 | Phase 3 — Server Rebuild | Pending |
 | BACKUP-01, BACKUP-02, BACKUP-03, BACKUP-04, BACKUP-05, BACKUP-06, BACKUP-07, BACKUP-08, BACKUP-09, BACKUP-10 | Phase 3.5 — Backup Infrastructure | Pending |

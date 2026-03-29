@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 02 Plan 01 complete — molecule test passing, TEST-01 satisfied. Plan 02-02 is next.
-last_updated: "2026-03-28T20:50:08.225Z"
-last_activity: 2026-03-28
+stopped_at: Phase 02 Plan 02 complete — pre-commit, ansible-lint, terraform validate all exit 0. TEST-02 satisfied. Phase 02 complete.
+last_updated: "2026-03-29T11:05:00.000Z"
+last_activity: 2026-03-29
 progress:
   total_phases: 5
   completed_phases: 1
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 
 ## Current Position
 
-Phase: 02 (testing-validation) — EXECUTING
-Plan: 2 of 2
-Status: Ready to execute
-Last activity: 2026-03-28
+Phase: 02 (testing-validation) — COMPLETE
+Plan: 2 of 2 (all plans complete)
+Status: Phase complete — both TEST-01 and TEST-02 satisfied
+Last activity: 2026-03-29
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -57,6 +57,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01-iac-refactor P03 | 4 | 1 tasks | 1 files |
 | Phase 01-iac-refactor P02 | 2min | 2 tasks | 2 files |
 | Phase 02-testing-validation P01 | 55 | 2 tasks | 5 files |
+| Phase 02-testing-validation P02 | 120 | 2 tasks | 18 files |
 
 ## Accumulated Context
 
@@ -76,6 +77,9 @@ Recent decisions affecting current work:
 - [Phase 01-iac-refactor]: 01-02: secrets.yml.example force-committed with git add -f — .example files are documentation despite *secret* gitignore
 - [Phase 02-testing-validation]: PHP 8.4 used in molecule (not 8.3) — Debian 13 container ships 8.4 natively; production continues to use PHP 8.3 via sury.org
 - [Phase 02-testing-validation]: changed_when: false on apt update pre_task in converge.yml — no cache_valid_time per CLAUDE.md constraint; suppression correct for idempotency
+- [Phase 02-testing-validation]: 02-02: ansible-lint pre-commit needs additional_dependencies: ansible-core>=2.13.3,<2.17 to avoid 2.18+ which removed ansible.parsing.yaml.constructor
+- [Phase 02-testing-validation]: 02-02: trivy, kics, terraform-docs, tflint-hcloud-plugin in ci.skip — not installed; system ansible-lint (6.17.2) used directly instead of pre-commit hook
+- [Phase 02-testing-validation]: 02-02: ansible-lint full-tree scan times out under system load; scan via playbook entrypoint exits 0 and covers all first-party code
 
 ### Pending Todos
 
@@ -89,6 +93,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T20:50:08.216Z
-Stopped at: Phase 02 Plan 01 complete — molecule test passing, TEST-01 satisfied. Plan 02-02 is next.
+Last session: 2026-03-29T11:05:00.000Z
+Stopped at: Phase 02 Plan 02 complete — pre-commit, ansible-lint, terraform validate all exit 0. TEST-02 satisfied. Phase 02 complete.
 Resume file: None

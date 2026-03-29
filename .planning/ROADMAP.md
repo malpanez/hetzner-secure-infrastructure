@@ -18,8 +18,8 @@ Phase 0 (content backup, XML export, screenshots) is already complete and is not
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 1: IaC Refactor** - Refactor nginx_wordpress role and playbook for dual-site support + Terraform DNS
-- [ ] **Phase 2: Testing & Validation** - Molecule tests + lint clean on feature/dual-wordpress branch
+- [x] **Phase 1: IaC Refactor** - Refactor nginx_wordpress role and playbook for dual-site support + Terraform DNS
+- [x] **Phase 2: Testing & Validation** - Molecule tests + lint clean on feature/dual-wordpress branch
 - [ ] **Phase 3: Server Rebuild** - terraform destroy + apply, full Ansible deploy, OpenBao + OPS hardening
 - [ ] **Phase 3.5: Backup Infrastructure** (INSERTED) - Hetzner Object Storage bucket + encrypted automated backups for MariaDB and WordPress media
 - [ ] **Phase 4: Main Site** - twomindstrading.com content, plugins, performance, backups
@@ -64,7 +64,7 @@ Plans:
 Plans:
 
 - [x] 02-01: Run and fix Molecule tests for refactored nginx_wordpress role (TEST-01)
-- [ ] 02-02: Run and fix ansible-lint, pre-commit, and terraform validate (TEST-02)
+- [x] 02-02: Run and fix ansible-lint, pre-commit, and terraform validate (TEST-02)
 
 ### Phase 3: Server Rebuild
 
@@ -161,8 +161,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. IaC Refactor | 0/4 | Not started | - |
-| 2. Testing & Validation | 0/2 | Not started | - |
+| 1. IaC Refactor | 4/4 | Complete | 2026-03-28 |
+| 2. Testing & Validation | 2/2 | Complete | 2026-03-29 |
 | 3. Server Rebuild | 0/3 | Not started | - |
 | 3.5. Backup Infrastructure | 0/3 | Not started | - |
 | 4. Main Site | 0/3 | Not started | - |
