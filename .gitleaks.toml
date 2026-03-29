@@ -12,6 +12,7 @@ title = "Hetzner Secure Infrastructure - GitLeaks Config"
   paths = [
     '''.archive/.*''',
     '''\.archive/.*''',
+    '''\.planning/.*''',
     '''DEPLOYMENT_GUIDE\.md''',
     '''docs/DEPLOYMENT\.md''',
     '''ansible/roles/.*/README\.md''',
