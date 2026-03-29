@@ -23,9 +23,9 @@ module "web_server" {
 
   # Basic configuration
   server_name    = "example-web-01"
-  server_type    = "cx11"  # Smallest server type
+  server_type    = "cx11" # Smallest server type
   image          = "debian-12"
-  location       = "nbg1"  # Nuremberg
+  location       = "nbg1" # Nuremberg
   environment    = "production"
   admin_username = "admin"
 
@@ -33,7 +33,7 @@ module "web_server" {
   ssh_public_key = var.ssh_public_key
   ssh_port       = 22
   ssh_allowed_ips = [
-    "0.0.0.0/0",  # Allow from anywhere (not recommended for production)
+    "0.0.0.0/0", # Allow from anywhere (not recommended for production)
     "::/0"
   ]
 
@@ -44,7 +44,7 @@ module "web_server" {
 
   # Optional features
   enable_floating_ip = false
-  volume_size        = 0  # No additional volume
+  volume_size        = 0 # No additional volume
 
   # Labels for organization
   labels = {
@@ -53,7 +53,7 @@ module "web_server" {
   }
 
   # Lifecycle
-  prevent_destroy = false  # Allow destruction for example
+  prevent_destroy = false # Allow destruction for example
 }
 
 # Outputs

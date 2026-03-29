@@ -44,8 +44,8 @@ module "wordpress_server" {
 
   # Server configuration
   server_name = "wordpress-prod"
-  server_type = "cx21" # 2 vCPU, 4 GB RAM, 40 GB SSD - Good for WordPress
-  location    = "nbg1" # Nuremberg, Germany
+  server_type = "cx21"      # 2 vCPU, 4 GB RAM, 40 GB SSD - Good for WordPress
+  location    = "nbg1"      # Nuremberg, Germany
   image       = "debian-13" # Latest Debian version
 
   # SSH access
@@ -73,7 +73,7 @@ module "wordpress_server" {
   ]
 
   # Additional volume for WordPress uploads and backups
-  volume_size      = 20  # 20 GB for media files
+  volume_size      = 20 # 20 GB for media files
   volume_automount = true
   volume_format    = "ext4"
 
@@ -160,16 +160,16 @@ locals {
   # Ansible inventory configuration
   ansible_inventory = {
     wordpress_prod = {
-      ansible_host = module.wordpress_server.ipv4_address
-      ansible_user = "admin"
+      ansible_host                 = module.wordpress_server.ipv4_address
+      ansible_user                 = "admin"
       ansible_ssh_private_key_file = var.ssh_private_key_path
 
       # Variables for Ansible roles
-      cloudflare_enabled = true
-      cloudflare_ip_ranges = local.cloudflare_ipv4_ranges
-      wordpress_domain = var.domain_name
+      cloudflare_enabled     = true
+      cloudflare_ip_ranges   = local.cloudflare_ipv4_ranges
+      wordpress_domain       = var.domain_name
       wordpress_volume_mount = "/mnt/wordpress-data"
-      tutor_lms_enabled = true
+      tutor_lms_enabled      = true
     }
   }
 }
@@ -272,7 +272,7 @@ output "cloudflare_ip_ranges" {
 # Setup instructions
 output "setup_instructions" {
   description = "Next steps to complete setup"
-  value = <<-EOT
+  value       = <<-EOT
     ================================================================================
     WordPress Production Environment - Setup Instructions
     ================================================================================
