@@ -69,6 +69,7 @@ jobs:
         if: always()
         with:
           sarif_file: ${{ steps.grype.outputs.sarif }}
+        continue-on-error: true
 
   shellcheck:
     name: ShellCheck - Shell Script Linter

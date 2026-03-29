@@ -193,6 +193,7 @@ jobs:
         with:
           sarif_file: ${{ steps.grype.outputs.sarif }}
         if: always()
+        continue-on-error: true
 
   # ========================================
   # Documentation Check
