@@ -234,5 +234,5 @@ ci:
   autoupdate_branch: ''
   autoupdate_commit_msg: 'ci: pre-commit autoupdate'
   autoupdate_schedule: weekly
-  skip: [terraform_validate, terraform_tflint, terraform_trivy, terraform_docs, ansible-lint, kics, markdown-link-check]
+  skip: [terraform_validate, terraform_tflint, terraform_trivy, terraform_docs, ansible-lint, kics, markdown-link-check, terraform_tflint]
   submodules: false
