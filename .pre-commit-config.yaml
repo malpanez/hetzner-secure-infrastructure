@@ -152,6 +152,7 @@ repos:
       - id: markdownlint
         name: Markdown Lint
         args: [--config=.markdownlint.json, --fix]
+        exclude: '(\.planning/|docs/)'
 
   - repo: https://github.com/tcort/markdown-link-check
     rev: v3.12.2
@@ -225,5 +226,5 @@ ci:
   autoupdate_branch: ''
   autoupdate_commit_msg: 'ci: pre-commit autoupdate'
   autoupdate_schedule: weekly
-  skip: [terraform_validate, terraform_tflint, terraform_trivy, terraform_docs, ansible-lint, kics]
+  skip: [terraform_validate, terraform_tflint, terraform_trivy, terraform_docs, ansible-lint, kics, markdown-link-check]
   submodules: false

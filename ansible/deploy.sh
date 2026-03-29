@@ -12,7 +12,7 @@
 #   ./deploy.sh -u root playbooks/site.yml --check  # dry-run
 #
 
-set -e  # Exit on error
+set -e # Exit on error
 
 # Create logs directory if it doesn't exist
 mkdir -p logs
@@ -29,7 +29,7 @@ echo "=========================================="
 echo "Ansible Deployment - $(date)"
 echo "=========================================="
 echo "Log file: ${LOG_FILE}"
-echo "Command: ansible-playbook $@"
+echo "Command: ansible-playbook $*"
 echo "=========================================="
 echo ""
 

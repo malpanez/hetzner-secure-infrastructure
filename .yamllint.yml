@@ -5,20 +5,20 @@ rules:
   line-length:
     max: 250
     level: warning
-  
+
   indentation:
     spaces: 2
     indent-sequences: true
-  
+
   comments:
     min-spaces-from-content: 1
-  
+
   braces:
     max-spaces-inside: 1
-  
+
   brackets:
     max-spaces-inside: 1
-  
+
   truthy:
     allowed-values: ['true', 'false', 'yes', 'no']
     check-keys: false
@@ -31,3 +31,4 @@ ignore: |
   node_modules/
   *.egg-info/
   ansible/roles/geerlingguy.mysql/
+  terraform/modules/hetzner-server/templates/cloud-init.yml

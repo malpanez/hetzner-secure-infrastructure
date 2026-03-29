@@ -13,6 +13,11 @@
   vars:
     ansible_automation_user: ansible
     ansible_automation_ssh_key: "{{ lookup('file', lookup('env', 'HOME') + '/.ssh/ansible_automation.pub') }}"
+    ansible_automation_sudo_cmds: >-
+      /usr/bin/apt, /usr/bin/apt-get, /usr/bin/systemctl, /usr/bin/nginx,
+      /usr/bin/mysql, /usr/bin/mariadb, /usr/bin/wp, /usr/bin/certbot,
+      /usr/bin/ufw, /bin/cp, /bin/mv, /bin/mkdir, /bin/chown, /bin/chmod,
+      /usr/bin/tee, /usr/bin/ln, /usr/bin/rm
 
   tasks:
     - name: Create ansible automation user
@@ -33,7 +38,7 @@
       ansible.builtin.copy:
         content: |
           # Ansible automation user - passwordless sudo for specific commands
-          {{ ansible_automation_user }} ALL=(ALL) NOPASSWD: /usr/bin/apt, /usr/bin/apt-get, /usr/bin/systemctl, /usr/bin/nginx, /usr/bin/mysql, /usr/bin/mariadb, /usr/bin/wp, /usr/bin/certbot, /usr/bin/ufw, /bin/cp, /bin/mv, /bin/mkdir, /bin/chown, /bin/chmod, /usr/bin/tee, /usr/bin/ln, /usr/bin/rm
+          {{ ansible_automation_user }} ALL=(ALL) NOPASSWD: {{ ansible_automation_sudo_cmds }}
         dest: /etc/sudoers.d/ansible-automation
         mode: '0440'
         validate: 'visudo -cf %s'
