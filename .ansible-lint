@@ -9,7 +9,8 @@ exclude_paths:
   - .terraform/
   - venv/
   - '**/*.md'
-  - ansible/roles/geerlingguy.*  # Third-party roles from Ansible Galaxy
+  - ansible/roles/geerlingguy.*  # Third-party roles from Ansible Galaxy (repo root invocation)
+  - roles/geerlingguy.*          # Third-party roles from Ansible Galaxy (ansible/ dir invocation)
 
 # Enable specific rules
 enable_list:
@@ -25,6 +26,7 @@ skip_list:
   - yaml[truthy]      # Allow yes/no as valid truthy values
   - run-once          # Allow run_once in tasks
   - key-order         # Allow flexible key ordering
+  - schema[meta]      # ansible-lint 6.17.2 schema doesn't include Debian 13 Trixie
 
 # Warn only (don't fail)
 warn_list:

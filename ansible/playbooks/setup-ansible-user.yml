@@ -16,7 +16,7 @@
 
   tasks:
     - name: Create ansible automation user
-      user:
+      ansible.builtin.user:
         name: "{{ ansible_automation_user }}"
         comment: "Ansible Automation User"
         shell: /bin/bash
@@ -24,13 +24,13 @@
         state: present
 
     - name: Add ansible user to sudo group
-      user:
+      ansible.builtin.user:
         name: "{{ ansible_automation_user }}"
         groups: sudo
         append: true
 
     - name: Configure passwordless sudo for ansible user
-      copy:
+      ansible.builtin.copy:
         content: |
           # Ansible automation user - passwordless sudo for specific commands
           {{ ansible_automation_user }} ALL=(ALL) NOPASSWD: /usr/bin/apt, /usr/bin/apt-get, /usr/bin/systemctl, /usr/bin/nginx, /usr/bin/mysql, /usr/bin/mariadb, /usr/bin/wp, /usr/bin/certbot, /usr/bin/ufw, /bin/cp, /bin/mv, /bin/mkdir, /bin/chown, /bin/chmod, /usr/bin/tee, /usr/bin/ln, /usr/bin/rm
@@ -39,7 +39,7 @@
         validate: 'visudo -cf %s'
 
     - name: Create .ssh directory for ansible user
-      file:
+      ansible.builtin.file:
         path: /home/{{ ansible_automation_user }}/.ssh
         state: directory
         owner: "{{ ansible_automation_user }}"
@@ -47,13 +47,13 @@
         mode: '0700'
 
     - name: Add SSH public key for ansible user
-      authorized_key:
+      ansible.posix.authorized_key:
         user: "{{ ansible_automation_user }}"
         key: "{{ ansible_automation_ssh_key }}"
         state: present
 
     - name: Exclude ansible user from 2FA requirement
-      blockinfile:
+      ansible.builtin.blockinfile:
         path: /etc/ssh/sshd_config.d/2fa.conf
         marker: "# {mark} ANSIBLE MANAGED BLOCK - Exclude ansible user from 2FA"
         block: |
@@ -64,11 +64,11 @@
       notify: Restart SSH
 
     - name: Verify SSH configuration is valid
-      command: sshd -t
+      ansible.builtin.command: sshd -t
       changed_when: false
 
     - name: Create ansible user activity log directory
-      file:
+      ansible.builtin.file:
         path: /var/log/ansible-automation
         state: directory
         owner: root
@@ -76,7 +76,7 @@
         mode: '0750'
 
     - name: Configure sudo logging for ansible user
-      copy:
+      ansible.builtin.copy:
         content: |
           # Log all ansible automation user commands
           Defaults:{{ ansible_automation_user }} log_output
@@ -87,7 +87,7 @@
         validate: 'visudo -cf %s'
 
     - name: Restrict ansible user SSH key types
-      blockinfile:
+      ansible.builtin.blockinfile:
         path: /etc/ssh/sshd_config.d/ansible-key-restrictions.conf
         create: true
         mode: '0644'
@@ -101,7 +101,7 @@
       notify: Restart SSH
 
     - name: Configure fail2ban to monitor ansible user
-      copy:
+      ansible.builtin.copy:
         content: |
           # Fail2ban jail for ansible automation user
           [ansible-automation]
@@ -118,7 +118,7 @@
       when: ansible_facts['os_family'] == "Debian"
 
     - name: Create fail2ban filter for ansible user
-      copy:
+      ansible.builtin.copy:
         content: |
           # Fail2ban filter for ansible automation user failed login attempts
           [Definition]
@@ -132,7 +132,7 @@
       when: ansible_facts['os_family'] == "Debian"
 
     - name: Display ansible user security summary
-      debug:
+      ansible.builtin.debug:
         msg:
           - "Ansible automation user created with enhanced security:"
           - "  - User: {{ ansible_automation_user }}"
@@ -149,11 +149,11 @@
 
   handlers:
     - name: Restart SSH
-      systemd:
+      ansible.builtin.systemd:
         name: sshd
         state: restarted
 
     - name: Restart fail2ban
-      systemd:
+      ansible.builtin.systemd:
         name: fail2ban
         state: restarted
