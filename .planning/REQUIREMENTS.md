@@ -45,7 +45,7 @@
 
 ### Testing
 
-- [ ] **TEST-01**: `molecule test` pasa en `nginx_wordpress` role con el refactor aplicado
+- [x] **TEST-01**: `molecule test` pasa en `nginx_wordpress` role con el refactor aplicado
 - [ ] **TEST-02**: `ansible-lint` y `pre-commit run --all-files` limpios en el branch `feature/dual-wordpress`
 
 ### Main site — twomindstrading.com
@@ -72,6 +72,19 @@
 - [ ] **ACAD-08**: WP-cron desactivado, system cron via Ansible
 - [ ] **ACAD-09**: Verificar compatibilidad WooCommerce HPOS + LearnDash WC Integration bridge (deshabilitar HPOS si hay warning)
 
+### Backups — Hetzner Object Storage
+
+- [ ] **BACKUP-01**: Hetzner Object Storage bucket `tmt-backups` provisionado via Terraform (hashicorp/aws provider con endpoint FSN1); bucket privado, lifecycle policy 7-daily/4-weekly/3-monthly
+- [ ] **BACKUP-02**: Nuevo Ansible role `backup` con script que hace `mysqldump` de `wordpress_main` y `wordpress_academy` por separado, comprime con gzip y cifra con AES-256 (openssl), sube a S3 via aws-cli v2
+- [ ] **BACKUP-03**: Script hace backup de media: `tar.gz` cifrado de `wp-content/uploads/` de ambos sites y sube a S3
+- [ ] **BACKUP-04**: Credenciales S3 (access key + secret) almacenadas en OpenBao KV `secret/backup`; script lee de OpenBao en runtime, nunca en disco
+- [ ] **BACKUP-05**: Passphrase de cifrado AES-256 almacenada en OpenBao KV `secret/backup`; nunca en disco ni en logs
+- [ ] **BACKUP-06**: Systemd timer lanza backup diariamente a las 02:30 (tras rotation timer a las 02:00); Persistent=true
+- [ ] **BACKUP-07**: Política OpenBao `backup-reader` + token en `/root/.openbao-backup-token` con periodo 2160h
+- [ ] **BACKUP-08**: Script incluye verificación post-upload (lista el objeto en S3 y comprueba tamaño > 0)
+- [ ] **BACKUP-09**: Molecule test para el role `backup` (unit test con mock S3 o sin upload real)
+- [ ] **BACKUP-10**: `openbao-bootstrap.yml` siembra `secret/backup` con s3_access_key, s3_secret_key y encryption_passphrase en la primera inicialización
+
 ### Infraestructura Servidor — Post-destroy
 
 - [ ] **INFRA-01**: `terraform destroy + apply` ejecutado en ventana de mantenimiento
@@ -89,7 +102,6 @@
 - PHP-FPM `pm = ondemand` en academy si tráfico bajo
 - Cloudflare Cache Rules para `/courses/*` bypass en plan Free
 - Hetzner snapshots automáticos diarios (7 días retención)
-- Restic/borgbackup a Hetzner Object Storage como backup offsite adicional
 
 ### Seguridad post-incidente
 
@@ -123,5 +135,6 @@
 | TEST-01, TEST-02 | Phase 2 — Testing & Validation | Pending |
 | INFRA-01, INFRA-02, INFRA-03, INFRA-04 | Phase 3 — Server Rebuild | Pending |
 | OPS-01, OPS-02, OPS-03, OPS-04, OPS-05 | Phase 3 — Server Rebuild | Pending |
+| BACKUP-01, BACKUP-02, BACKUP-03, BACKUP-04, BACKUP-05, BACKUP-06, BACKUP-07, BACKUP-08, BACKUP-09, BACKUP-10 | Phase 3.5 — Backup Infrastructure | Pending |
 | MAIN-01, MAIN-02, MAIN-04, MAIN-05, MAIN-06, MAIN-07, MAIN-08, MAIN-09, MAIN-10 | Phase 4 — Main Site | Pending |
 | ACAD-01, ACAD-02, ACAD-03, ACAD-04, ACAD-05, ACAD-06, ACAD-07, ACAD-08, ACAD-09 | Phase 5 — Academy Site | Pending |

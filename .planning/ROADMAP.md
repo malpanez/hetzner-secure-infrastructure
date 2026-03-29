@@ -21,6 +21,7 @@ Phase 0 (content backup, XML export, screenshots) is already complete and is not
 - [ ] **Phase 1: IaC Refactor** - Refactor nginx_wordpress role and playbook for dual-site support + Terraform DNS
 - [ ] **Phase 2: Testing & Validation** - Molecule tests + lint clean on feature/dual-wordpress branch
 - [ ] **Phase 3: Server Rebuild** - terraform destroy + apply, full Ansible deploy, OpenBao + OPS hardening
+- [ ] **Phase 3.5: Backup Infrastructure** (INSERTED) - Hetzner Object Storage bucket + encrypted automated backups for MariaDB and WordPress media
 - [ ] **Phase 4: Main Site** - twomindstrading.com content, plugins, performance, backups
 - [ ] **Phase 5: Academy Site** - academy.twomindstrading.com LMS, WooCommerce, course setup, backups
 
@@ -86,6 +87,27 @@ Plans:
 - [ ] 03-02: Run site.yml + dual-wordpress.yml on new server; apply binary logging tag; configure OPS hardening — Valkey maxmemory, fail2ban dual-path, AppArmor wildcard paths (INFRA-04, OPS-01, OPS-02, OPS-04, OPS-05)
 - [ ] 03-03: Run setup-openbao-rotation.yml; verify cron entries, token files, and WP_PATH pointing to /var/www/twomindstrading.com (OPS-03)
 
+### Phase 3.5: Backup Infrastructure (INSERTED)
+
+**Goal**: Automated encrypted backups for both MariaDB databases and WordPress media directories are running daily to Hetzner Object Storage, with credentials managed via OpenBao and 7-daily/4-weekly/3-monthly retention enforced via S3 lifecycle policy.
+**Depends on**: Phase 3
+**Requirements**: BACKUP-01, BACKUP-02, BACKUP-03, BACKUP-04, BACKUP-05, BACKUP-06, BACKUP-07, BACKUP-08, BACKUP-09, BACKUP-10
+**Success Criteria** (what must be TRUE):
+
+  1. Hetzner Object Storage bucket `tmt-backups` exists and is accessible from the VPS
+  2. `systemctl status backup-wordpress.timer` shows the timer active and next trigger at 02:30
+  3. Manual run of backup script completes without errors and lists uploaded objects in S3
+  4. Backup files in S3 are non-zero, AES-256 encrypted, and named with date/type prefix
+  5. S3 credentials are NOT present in any file on disk — script reads from OpenBao at runtime
+  6. `molecule test` passes in the `backup` role
+**Plans**: 3 plans
+
+Plans:
+
+- [ ] 03.5-01: Terraform — Hetzner Object Storage bucket + lifecycle policy (BACKUP-01)
+- [ ] 03.5-02: Ansible role `backup` — mysqldump + media tar + encrypt + S3 upload + systemd timer (BACKUP-02, BACKUP-03, BACKUP-06, BACKUP-08, BACKUP-09)
+- [ ] 03.5-03: OpenBao integration — seed secret/backup, policy backup-reader, token at /root/.openbao-backup-token; update openbao-bootstrap.yml (BACKUP-04, BACKUP-05, BACKUP-07, BACKUP-10)
+
 ### Phase 4: Main Site
 
 **Goal**: twomindstrading.com is live with Kadence theme, imported content rebuilt as Kadence Blocks pages, minimum plugin stack active, UpdraftPlus backing up daily to Google Drive, and LCP under 2 seconds on mobile.
@@ -142,5 +164,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. IaC Refactor | 0/4 | Not started | - |
 | 2. Testing & Validation | 0/2 | Not started | - |
 | 3. Server Rebuild | 0/3 | Not started | - |
+| 3.5. Backup Infrastructure | 0/3 | Not started | - |
 | 4. Main Site | 0/3 | Not started | - |
 | 5. Academy Site | 0/4 | Not started | - |
