@@ -13,6 +13,7 @@ exclude_paths:
   - roles/geerlingguy.*
   - ~/.ansible/roles/
   - ~/.ansible/collections/
+  - '**/molecule/*/roles/'
 
 # Enable specific rules
 enable_list:
