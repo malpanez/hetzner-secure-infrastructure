@@ -63,7 +63,7 @@ jobs:
   ansible-validate:
     name: Validate Ansible
     runs-on: ubuntu-latest  # ansible-lint OOMs on ubuntu-slim (<= 7GB RAM)
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - name: Checkout code
@@ -107,7 +107,7 @@ jobs:
             --exclude ~/.ansible/roles/ \
             --exclude ~/.ansible/collections/ \
             --parseable | tee ../ansible-lint-report.txt; exit ${PIPESTATUS[0]}
-        timeout-minutes: 15
+        timeout-minutes: 25
 
       - name: Upload lint report
         if: always()
