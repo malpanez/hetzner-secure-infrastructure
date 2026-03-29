@@ -46,8 +46,8 @@ validate_terraform() {
   fi
 
   print_info "Validating configuration..."
-  if terraform -chdir=terraform/environments/production init -backend=false > /dev/null 2>&1 && \
-     terraform -chdir=terraform/environments/production validate > /dev/null; then
+  if terraform -chdir=terraform/environments/production init -backend=false >/dev/null 2>&1 \
+    && terraform -chdir=terraform/environments/production validate >/dev/null; then
     print_success "Terraform validation OK"
   else
     print_error "Terraform validation failed"
@@ -71,8 +71,8 @@ validate_ansible() {
 validate_yaml() {
   print_header "Validating YAML"
 
-  if command -v yamllint &> /dev/null; then
-    if yamllint -c .yamllint.yml ansible/ .woodpecker/ .github/ > /dev/null 2>&1; then
+  if command -v yamllint &>/dev/null; then
+    if yamllint -c .yamllint.yml ansible/ .woodpecker/ .github/ >/dev/null 2>&1; then
       print_success "YAML lint OK"
     else
       print_error "YAML lint found issues (warnings ignored)"
@@ -85,8 +85,8 @@ validate_yaml() {
 validate_markdown() {
   print_header "Validating Markdown"
 
-  if command -v markdownlint &> /dev/null; then
-    if markdownlint -c .markdownlint.json *.md docs/*.md > /dev/null 2>&1; then
+  if command -v markdownlint &>/dev/null; then
+    if markdownlint -c .markdownlint.json *.md docs/*.md >/dev/null 2>&1; then
       print_success "Markdown lint OK"
     else
       print_error "Markdown lint found issues (warnings ignored)"
@@ -99,8 +99,8 @@ validate_markdown() {
 check_secrets() {
   print_header "Checking for Secrets"
 
-  if command -v gitleaks &> /dev/null; then
-    if gitleaks detect --no-git --verbose > /dev/null 2>&1; then
+  if command -v gitleaks &>/dev/null; then
+    if gitleaks detect --no-git --verbose >/dev/null 2>&1; then
       print_success "No secrets detected"
     else
       print_error "Potential secrets found!"

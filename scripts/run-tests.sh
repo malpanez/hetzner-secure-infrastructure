@@ -72,7 +72,7 @@ check_dependencies() {
   local missing_deps=()
 
   for dep in "${deps[@]}"; do
-    if command -v "$dep" &> /dev/null; then
+    if command -v "$dep" &>/dev/null; then
       print_success "$dep found: $(command -v "$dep")"
     else
       print_error "$dep not found"
@@ -98,17 +98,17 @@ test_terraform_format() {
   cd terraform/environments/production || return 1
   terraform fmt -check -recursive
   local result=$?
-  cd - > /dev/null || return 1
+  cd - >/dev/null || return 1
   return $result
 }
 
 test_terraform_validate() {
   print_header "Terraform Validate"
   cd terraform/environments/production || return 1
-  terraform init -backend=false > /dev/null 2>&1
+  terraform init -backend=false >/dev/null 2>&1
   terraform validate
   local result=$?
-  cd - > /dev/null || return 1
+  cd - >/dev/null || return 1
   return $result
 }
 
@@ -117,7 +117,7 @@ test_ansible_syntax() {
   cd ansible || return 1
   ansible-playbook playbooks/site.yml --syntax-check
   local result=$?
-  cd - > /dev/null || return 1
+  cd - >/dev/null || return 1
   return $result
 }
 
@@ -126,20 +126,20 @@ test_ansible_lint() {
   cd ansible || return 1
   ansible-lint playbooks/site.yml --offline || true
   local result=$?
-  cd - > /dev/null || return 1
-  return 0  # Don't fail on ansible-lint warnings
+  cd - >/dev/null || return 1
+  return 0 # Don't fail on ansible-lint warnings
 }
 
 test_yaml_lint() {
   print_header "YAML Lint"
   yamllint -c .yamllint.yml ansible/ .woodpecker/ .github/ || true
-  return 0  # Don't fail on yamllint warnings
+  return 0 # Don't fail on yamllint warnings
 }
 
 test_shell_scripts() {
   print_header "ShellCheck"
 
-  if ! command -v shellcheck &> /dev/null; then
+  if ! command -v shellcheck &>/dev/null; then
     print_warning "shellcheck not found, skipping"
     return 0
   fi
@@ -151,7 +151,7 @@ test_shell_scripts() {
 test_molecule() {
   print_header "Molecule Tests"
 
-  if ! command -v molecule &> /dev/null; then
+  if ! command -v molecule &>/dev/null; then
     print_warning "molecule not found, skipping"
     return 0
   fi
@@ -174,13 +174,13 @@ test_molecule() {
       print_info "Testing role: $role"
       (cd "$role" && molecule test --all) || {
         print_error "Molecule test failed for $role"
-        cd - > /dev/null || return 1
+        cd - >/dev/null || return 1
         return 1
       }
     fi
   done
 
-  cd - > /dev/null || return 1
+  cd - >/dev/null || return 1
   return 0
 }
 
@@ -195,7 +195,7 @@ test_terratest() {
   cd terraform/test || return 1
   go test -v -timeout 15m -short
   local result=$?
-  cd - > /dev/null || return 1
+  cd - >/dev/null || return 1
   return $result
 }
 
