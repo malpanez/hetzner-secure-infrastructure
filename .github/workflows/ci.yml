@@ -292,7 +292,7 @@ jobs:
   # ========================================
   pre-commit:
     name: Pre-commit Checks
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
