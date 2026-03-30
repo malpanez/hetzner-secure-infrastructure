@@ -132,7 +132,7 @@ nginx_wordpress_plugins_mandatory:
 
 # Operations (3 plugins — all sites)
 nginx_wordpress_plugins_operations:
-  - wp-mail-smtp                     # SMTP email (Brevo free 300/day) - CRITICAL
+  - wp-mail-smtp                     # SMTP email via Zoho Mail (client has paid plan) - CRITICAL
   - seo-by-rank-math                 # SEO (free tier: 5 keywords, 20+ schemas) - ESSENTIAL
   - cookie-notice                    # GDPR/CCPA consent banner - REQUIRED (EU)
 
