@@ -337,6 +337,7 @@ $RECYCLE.BIN/
 # Secret files
 *secret*
 *SECRET*
+!.secrets.baseline
 *.pem
 *.key
 *.crt

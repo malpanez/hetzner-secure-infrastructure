@@ -329,6 +329,9 @@ jobs:
         run: |
           source .venv/bin/activate
           pre-commit run --all-files --show-diff-on-failure
+        env:
+          # Skip hooks covered by dedicated CI jobs or requiring unavailable tools
+          SKIP: terraform_fmt,terraform_validate,terraform_tflint,terraform_trivy,tfsec,kics,ansible-lint,markdown-link-check
 
   # ========================================
   # CodeQL Analysis
@@ -373,4 +376,3 @@ jobs:
         uses: actions/dependency-review-action@9129d7d40b8c12c1ed0f60400d00c92d437adcce  # v4.1.3
         with:
           fail-on-severity: moderate
-
