@@ -147,12 +147,6 @@ nginx_wordpress_plugins_design:
 nginx_wordpress_plugins_forms:
   - fluentform                       # Lead capture, contact forms, conditional logic (free)
 
-# eCommerce — selling courses/subscriptions via SureCart
-# SureCart: $49/year (0% transaction fee) or free (2% fee)
-# Integrates natively with LearnDash for enrollment on purchase
-# Override to [] on main site (marketing only — links to academy for purchase)
-nginx_wordpress_plugins_ecommerce: []
-
 # Accessibility & UX (neurodivergent-friendly)
 nginx_wordpress_plugins_accessibility:
   - accessibility-assistant          # Reading mask, dyslexia fonts, ADHD mode (free)
@@ -164,12 +158,16 @@ nginx_wordpress_plugins_remove:
 
 # Plugins requiring manual upload (commercial licenses)
 # Install via wp-admin → Plugins → Add New → Upload Plugin
+#
+# Payment model: one-time purchase per course ($1000+)
+# LearnDash built-in Stripe handles this natively — no SureCart/WooCommerce needed
+# Videos hosted on Infoprotector — embedded in lesson content, no Presto Player needed
 nginx_wordpress_plugins_manual:
   # - learndash         # LearnDash Pro $199/year — academy only (sfwd-lms)
+  #                       Includes: Stripe checkout, enrollment, progress, certificates
+  #                       Configure: LearnDash → Settings → Payment → Stripe
   # - kadence-pro       # Kadence Pro Bundle $129/year — PENDING AUTHORIZATION
-  #                       Unlocks: Header/Footer builder, WooCommerce, advanced sections
-  # - surecart          # SureCart $49/year — academy only, after LearnDash installed
-  # - presto-player-pro # Presto Player Pro $99/year — OPTIONAL, if self-hosting video
+  #                       Unlocks: Header/Footer builder (needed to replicate existing design)
 
 # ========================================
 # WordPress Theme Configuration

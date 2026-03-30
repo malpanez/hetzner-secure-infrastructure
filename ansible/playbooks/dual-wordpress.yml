@@ -92,9 +92,8 @@
         # Import Business Courses starter template (clean base for LearnDash)
         nginx_wordpress_starter_template_import: true
         nginx_wordpress_starter_template_name: "Business Courses"
-        # SureCart handles payments + LearnDash enrollment (install manually after LearnDash)
-        # Set here so the task runs if surecart is added to ecommerce list post-authorization
-        nginx_wordpress_plugins_ecommerce: []  # uncomment after Kadence Pro authorized: [surecart]
+        # Payments: LearnDash built-in Stripe (one-time $1000+ per course — no SureCart needed)
+        # Videos: Infoprotector embeds in lesson content (no Presto Player needed)
         nginx_wordpress_auth_key: "{{ vault_wp_academy_auth_key }}"
         nginx_wordpress_secure_auth_key: "{{ vault_wp_academy_secure_auth_key }}"
         nginx_wordpress_logged_in_key: "{{ vault_wp_academy_logged_in_key }}"
