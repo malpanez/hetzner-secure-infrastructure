@@ -19,7 +19,7 @@
 - name: Firewall | Configure | Set UFW default policies
   community.general.ufw:
     direction: "{{ item.direction }}"
-    policy: "{{ item.policy }}"
+    policy: "{{ item.policy }}"  # noqa: args[module]
   loop:
     - { direction: incoming, policy: "{{ firewall_default_incoming_policy }}" }
     - { direction: outgoing, policy: "{{ firewall_default_outgoing_policy }}" }

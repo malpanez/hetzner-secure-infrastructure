@@ -30,6 +30,7 @@ skip_list:
   - run-once          # Allow run_once in tasks
   - key-order         # Allow flexible key ordering
   - schema[meta]      # ansible-lint 6.17.2 schema doesn't include Debian 13 Trixie
+  - partial-become    # become_user at task level when become: true is set at play level is valid
 
 # Warn only (don't fail)
 warn_list:
