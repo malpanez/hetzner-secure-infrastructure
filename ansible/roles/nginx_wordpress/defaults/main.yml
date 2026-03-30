@@ -159,20 +159,22 @@ nginx_wordpress_plugins_remove:
 # Plugins requiring manual upload (commercial licenses)
 # Install via wp-admin → Plugins → Add New → Upload Plugin
 #
-# Payment model: one-time purchase per course ($1000+)
-# LearnDash built-in Stripe handles this natively — no SureCart/WooCommerce needed
-# Videos hosted on Infoprotector — embedded in lesson content, no Presto Player needed
+# Payment model: one-time purchase per course ($1000+) via Stripe
+# - LearnDash built-in Stripe integration (no extra plugin needed)
+# - Enable Stripe Tax (+0.5%/transaction) for automatic EU VAT handling
+# - Keep course language educational: "metodología/análisis/formación" not "señales/garantías"
+# - Activate: LearnDash → Settings → Payments → Stripe Connect
 #
-# Design assessment: current twomindstrading.com design CAN be replicated with Kadence FREE
-# Dark palette + card layouts + cyan accent + CSS snippet for two-tone headings = 85% coverage
-# Hero animated background → replace with static trading chart image (cleaner result)
-# Kadence Pro is a nice-to-have for visual Footer/Header builder, NOT required for this design
+# Mentorías: LearnDash lessons with Zoom link + date (no extra plugin needed)
+# Videos: Infoprotector embeds in lesson content (added progressively as produced)
+#
+# Design: Kadence FREE sufficient — dark navy palette built from scratch via Global Colors
+# Hero: static trading chart image (replaces animated particles — cleaner + faster)
+# Kadence Pro ($129/year): optional post-launch if Header/Footer visual builder needed
 nginx_wordpress_plugins_manual:
-  # - learndash         # LearnDash Pro $199/year — academy only (sfwd-lms)
-  #                       Includes: Stripe checkout, enrollment, progress, certificates
-  #                       Configure: LearnDash → Settings → Payment → Stripe
-  # - kadence-pro       # Kadence Pro Bundle $129/year — OPTIONAL, not required
-  #                       Only needed if visual Footer/Header builder is preferred over CSS
+  # - learndash         # LearnDash Pro $199/year — academy only (license already purchased)
+  #                       Configure: LearnDash → Settings → Payments → Stripe Connect
+  #                       Enable Stripe Tax for EU VAT automation
 
 # ========================================
 # WordPress Theme Configuration
