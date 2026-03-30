@@ -52,6 +52,10 @@
         nginx_wordpress_woocommerce_enabled: false
         nginx_wordpress_redis_database: 0
         nginx_wordpress_redis_prefix: "wp_main_"
+        # Migrating existing design from Elementor to Kadence — no starter template
+        nginx_wordpress_starter_template_import: false
+        # eCommerce not needed on main site (marketing only — links to academy)
+        nginx_wordpress_plugins_ecommerce: []
         nginx_wordpress_auth_key: "{{ vault_nginx_wordpress_auth_key }}"
         nginx_wordpress_secure_auth_key: "{{ vault_nginx_wordpress_secure_auth_key }}"
         nginx_wordpress_logged_in_key: "{{ vault_nginx_wordpress_logged_in_key }}"
@@ -81,10 +85,16 @@
         nginx_wordpress_php_fpm_max_spare_servers: 12
         nginx_wordpress_admin_user: tmt_admin
         nginx_wordpress_learndash_enabled: true
-        nginx_wordpress_woocommerce_enabled: true
+        nginx_wordpress_woocommerce_enabled: false
         nginx_wordpress_letsencrypt_enabled: false
         nginx_wordpress_redis_database: 1
         nginx_wordpress_redis_prefix: "wp_academy_"
+        # Import Business Courses starter template (clean base for LearnDash)
+        nginx_wordpress_starter_template_import: true
+        nginx_wordpress_starter_template_name: "Business Courses"
+        # SureCart handles payments + LearnDash enrollment (install manually after LearnDash)
+        # Set here so the task runs if surecart is added to ecommerce list post-authorization
+        nginx_wordpress_plugins_ecommerce: []  # uncomment after Kadence Pro authorized: [surecart]
         nginx_wordpress_auth_key: "{{ vault_wp_academy_auth_key }}"
         nginx_wordpress_secure_auth_key: "{{ vault_wp_academy_secure_auth_key }}"
         nginx_wordpress_logged_in_key: "{{ vault_wp_academy_logged_in_key }}"

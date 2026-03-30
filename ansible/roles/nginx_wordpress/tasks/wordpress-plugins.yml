@@ -46,35 +46,65 @@
     - nginx_wordpress_plugins_mandatory | default([]) | length > 0
   tags: [nginx-wordpress, wordpress, plugins, molecule-notest]
 
-- name: Nginx WordPress | Plugins | Install LMS critical plugins
+- name: Nginx WordPress | Plugins | Install operations plugins
   ansible.builtin.command:
     cmd: >-
       {{ nginx_wordpress_wpcli_path }} plugin install
-      {{ nginx_wordpress_plugins_lms_critical | join(' ') }} --activate
+      {{ nginx_wordpress_plugins_operations | join(' ') }} --activate
       --path={{ nginx_wordpress_web_root }}
   become_user: "{{ nginx_wordpress_nginx_user }}"
-  register: lms_plugin_install
-  changed_when: "'Installing' in lms_plugin_install.stdout"
+  register: operations_plugin_install
+  changed_when: "'Installing' in operations_plugin_install.stdout"
   failed_when: false
   when:
     - wp_config_check.stat.exists
-    - nginx_wordpress_plugins_lms_critical | default([]) | length > 0
-  tags: [nginx-wordpress, wordpress, plugins, lms, molecule-notest]
+    - nginx_wordpress_plugins_operations | default([]) | length > 0
+  tags: [nginx-wordpress, wordpress, plugins, molecule-notest]
 
-- name: Nginx WordPress | Plugins | Install page builder plugins
+- name: Nginx WordPress | Plugins | Install design plugins
   ansible.builtin.command:
     cmd: >-
       {{ nginx_wordpress_wpcli_path }} plugin install
-      {{ nginx_wordpress_plugins_page_builder | join(' ') }} --activate
+      {{ nginx_wordpress_plugins_design | join(' ') }} --activate
       --path={{ nginx_wordpress_web_root }}
   become_user: "{{ nginx_wordpress_nginx_user }}"
-  register: pagebuilder_plugin_install
-  changed_when: "'Installing' in pagebuilder_plugin_install.stdout"
+  register: design_plugin_install
+  changed_when: "'Installing' in design_plugin_install.stdout"
   failed_when: false
   when:
     - wp_config_check.stat.exists
-    - nginx_wordpress_plugins_page_builder | default([]) | length > 0
-  tags: [nginx-wordpress, wordpress, plugins, pagebuilder, molecule-notest]
+    - nginx_wordpress_plugins_design | default([]) | length > 0
+  tags: [nginx-wordpress, wordpress, plugins, molecule-notest]
+
+- name: Nginx WordPress | Plugins | Install forms plugins
+  ansible.builtin.command:
+    cmd: >-
+      {{ nginx_wordpress_wpcli_path }} plugin install
+      {{ nginx_wordpress_plugins_forms | join(' ') }} --activate
+      --path={{ nginx_wordpress_web_root }}
+  become_user: "{{ nginx_wordpress_nginx_user }}"
+  register: forms_plugin_install
+  changed_when: "'Installing' in forms_plugin_install.stdout"
+  failed_when: false
+  when:
+    - wp_config_check.stat.exists
+    - nginx_wordpress_plugins_forms | default([]) | length > 0
+  tags: [nginx-wordpress, wordpress, plugins, molecule-notest]
+
+- name: Nginx WordPress | Plugins | Install ecommerce plugins
+  ansible.builtin.command:
+    cmd: >-
+      {{ nginx_wordpress_wpcli_path }} plugin install
+      {{ nginx_wordpress_plugins_ecommerce | join(' ') }} --activate
+      --path={{ nginx_wordpress_web_root }}
+  become_user: "{{ nginx_wordpress_nginx_user }}"
+  register: ecommerce_plugin_install
+  changed_when: "'Installing' in ecommerce_plugin_install.stdout"
+  failed_when: false
+  when:
+    - wp_config_check.stat.exists
+    - nginx_wordpress_plugins_ecommerce | default([]) | length > 0
+  tags: [nginx-wordpress, wordpress, plugins, molecule-notest]
 
 - name: Nginx WordPress | Plugins | Install accessibility plugins
   ansible.builtin.command:
@@ -89,22 +119,7 @@
   when:
     - wp_config_check.stat.exists
     - nginx_wordpress_plugins_accessibility | default([]) | length > 0
-  tags: [nginx-wordpress, wordpress, plugins, accessibility, molecule-notest]
-
-- name: Nginx WordPress | Plugins | Install recommended plugins
-  ansible.builtin.command:
-    cmd: >-
-      {{ nginx_wordpress_wpcli_path }} plugin install
-      {{ nginx_wordpress_plugins_recommended | join(' ') }} --activate
-      --path={{ nginx_wordpress_web_root }}
-  become_user: "{{ nginx_wordpress_nginx_user }}"
-  register: recommended_plugin_install
-  changed_when: "'Installing' in recommended_plugin_install.stdout"
-  failed_when: false
-  when:
-    - wp_config_check.stat.exists
-    - nginx_wordpress_plugins_recommended | default([]) | length > 0
-  tags: [nginx-wordpress, wordpress, plugins, recommended, molecule-notest]
+  tags: [nginx-wordpress, wordpress, plugins, molecule-notest]
 
 # ========================================
 # Display Installed Plugins
@@ -124,36 +139,44 @@
 - name: Nginx WordPress | Plugins | Display installed plugins summary
   ansible.builtin.debug:
     msg: "{{ ['========================================',
-             'WordPress Plugins - Kadence + LearnDash Stack',
+             'WordPress Plugins — ' + nginx_wordpress_site_name | upper + ' site',
              '========================================',
              '',
-             'INFRASTRUCTURE (4):',
+             'INFRASTRUCTURE (3):',
              '  ✓ redis-cache - Valkey object cache',
              '  ✓ nginx-helper - FastCGI cache purging',
-             '  ✓ wordfence-login-security - 2FA/MFA',
-             '  ✓ limit-login-attempts-reloaded - Login protection',
+             '  ✓ wordfence-login-security - 2FA/MFA for admin',
              '',
-             'LMS OPERATIONS (3):',
-             '  ✓ updraftplus - Backups',
-             '  ✓ wp-mail-smtp - Email delivery',
-             '  ✓ seo-by-rank-math - SEO optimization',
+             'OPERATIONS (3):',
+             '  ✓ wp-mail-smtp - Email (Brevo free 300/day)',
+             '  ✓ seo-by-rank-math - SEO',
+             '  ✓ cookie-notice - GDPR/CCPA consent',
              '',
-             'KADENCE DESIGN (2):',
-             '  ✓ kadence-blocks - Advanced Gutenberg blocks',
+             'DESIGN — Kadence stack (Gutenberg-native):',
+             '  ✓ kadence-blocks - Advanced blocks (free)',
              '  ✓ kadence-starter-templates - Template importer',
+             '  ⚠ kadence-pro - PENDING AUTHORIZATION ($129/year)',
              '',
-             'ACCESSIBILITY (1):',
+             'FORMS:',
+             '  ✓ fluentform - Lead capture, contact forms',
+             '',
+             'ECOMMERCE (academy only):',
+             '  ⚠ surecart - MANUAL INSTALL ($49/year, after LearnDash)',
+             '',
+             'ACCESSIBILITY:',
              '  ✓ accessibility-assistant - ADHD/Dyslexia modes',
              '',
-             'COMPLIANCE (1):',
-             '  ✓ cookie-notice - GDPR consent',
+             'MANUAL INSTALL REQUIRED (academy):',
+             '  ⚠ LearnDash Pro - $199/year (sfwd-lms)',
+             '  ⚠ Kadence Pro Bundle - $129/year (PENDING AUTH)',
+             '  ⚠ SureCart - $49/year (after LearnDash)',
              '',
              'REMOVED BLOAT:',
-             '  ✗ hello - Hello Dolly (useless)',
-             '  ✗ akismet - Spam (not needed)',
+             '  ✗ hello - Hello Dolly',
+             '  ✗ akismet - Spam (comments disabled)',
              '',
              '========================================',
-             'Total: 11 plugins (Gutenberg-native, no Elementor)',
+             'Annual cost: ~$377/year (LearnDash + Kadence + SureCart)',
              '========================================'] }}"
   when:
     - wp_config_check.stat.exists
@@ -227,74 +250,44 @@
 - name: Nginx WordPress | Plugins | Post-installation instructions
   ansible.builtin.debug:
     msg:
-      - "========================================="
-      - "WordPress Post-Installation Wizards"
-      - "========================================="
+      - "============================================"
+      - "Post-Install Checklist — {{ nginx_wordpress_site_name | upper }} site"
+      - "============================================"
       - ""
-      - "STEP 1 - Import Starter Template:"
-      - "   Appearance → Kadence → Starter Templates"
-      - "   → Select 'Gutenberg' as page builder"
-      - "   → Choose 'Business Courses' template"
-      - "   → Click 'Import Complete Site'"
+      - "AUTO-CONFIGURED (no action needed):"
+      - "  ✓ Redis Object Cache connected to Valkey"
+      - "  ✓ Nginx Helper FastCGI cache purging"
+      - "  ✓ Cloudflare WAF + Fail2ban + AppArmor"
+      - "  ✓ Backups: Ansible role → Hetzner S3"
       - ""
-      - "STEP 2 - Customize Branding:"
-      - "   Appearance → Customize → Site Identity"
-      - "   → Upload logo and favicon"
-      - "   → Set site title/tagline"
+      - "CONFIGURE MANUALLY:"
       - ""
-      - "STEP 3 - Backups (UpdraftPlus):"
-      - "   Settings → UpdraftPlus Backups"
-      - "   → Connect Google Drive or Dropbox"
-      - "   → Schedule: Daily DB, Weekly files"
+      - "  1. Email (WP Mail SMTP):"
+      - "     WP Mail SMTP → Settings → Brevo"
+      - "     API key at: app.brevo.com/settings/keys/api"
       - ""
-      - "STEP 4 - Email (WP Mail SMTP):"
-      - "   WP Mail SMTP → Settings"
-      - "   → Mailer: Brevo (300 emails/day free)"
-      - "   → Get API key: https://app.brevo.com/settings/keys/api"
-      - "   → Send test email"
+      - "  2. SEO (Rank Math):"
+      - "     Rank Math → Setup Wizard → connect Google Search Console"
       - ""
-      - "STEP 5 - SEO (Rank Math):"
-      - "   Rank Math → Setup Wizard"
-      - "   → Connect Google Search Console (optional)"
-      - "   → Configure sitemap"
+      - "  3. 2FA (Wordfence Login Security):"
+      - "     Users → Your Profile → Enable 2FA"
       - ""
-      - "STEP 6 - GDPR (Cookie Notice):"
-      - "   Settings → Cookie Notice"
-      - "   → Enable banner"
-      - "   → Customize text/colors"
+      - "  4. GDPR (Cookie Notice):"
+      - "     Settings → Cookie Notice → customize colors to match brand"
       - ""
-      - "STEP 7 - 2FA (Wordfence Login Security):"
-      - "   Users → Your Profile"
-      - "   → Enable 2FA with authenticator app"
+      - "MAIN SITE — design migration:"
+      - "  • Kadence Customizer: reproduce existing dark color palette"
+      - "  • Use screenshots of current site as reference"
+      - "  • Kadence Pro Bundle ($129/year) — install once authorized:"
+      - "    Unlocks: Header/Footer builder, advanced sections, WooCommerce"
       - ""
-      - "STEP 8 - Accessibility:"
-      - "   Settings → Accessibility Assistant"
-      - "   → Enable widget on frontend"
-      - "   → Configure ADHD/Dyslexia modes"
+      - "ACADEMY — manual installs (in order):"
+      - "  1. LearnDash Pro ZIP ($199/year) — Plugins → Upload"
+      - "  2. Kadence Pro Bundle ZIP ($129/year) — PENDING AUTHORIZATION"
+      - "  3. SureCart ($49/year) — after LearnDash, connects enrollment to payment"
+      - "  4. Starter template: Appearance → Kadence → Business Courses"
       - ""
-      - "MANUAL INSTALL REQUIRED:"
-      - ""
-      - "STEP 9 - LearnDash Pro:"
-      - "   Plugins → Add New → Upload Plugin"
-      - "   → Upload LearnDash zip from your account"
-      - "   → Activate with license key"
-      - "   → Run LearnDash Setup Wizard"
-      - ""
-      - "STEP 10 - Kadence Pro (optional, $149/year):"
-      - "   Plugins → Add New → Upload Plugin"
-      - "   → Upload Kadence Pro zip"
-      - "   → Unlocks: Header/Footer builder, WooCommerce, Advanced Hooked Elements"
-      - ""
-      - "========================================="
-      - "ALREADY CONFIGURED (no action needed):"
-      - "========================================="
-      - "  ✓ Redis Object Cache - Valkey connected"
-      - "  ✓ Nginx Helper - Cache purging enabled"
-      - "  ✓ Cloudflare WAF - DDoS protection"
-      - "  ✓ Fail2ban - Brute force protection"
-      - "  ✓ AppArmor - Process isolation"
-      - ""
-      - "========================================="
+      - "============================================"
   when: wp_config_check.stat.exists
   run_once: true
   tags: [nginx-wordpress, wordpress, plugins, info]
