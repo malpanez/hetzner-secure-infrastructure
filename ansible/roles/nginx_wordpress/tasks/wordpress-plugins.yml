@@ -154,7 +154,7 @@
              '',
              'MANUAL INSTALL REQUIRED (academy):',
              '  ⚠ LearnDash Pro - $199/year (sfwd-lms)',
-             '  ⚠ Kadence Pro Bundle - $129/year (PENDING AUTH)',
+             '  ○ Kadence Pro Bundle - $129/year (OPTIONAL — Free sufficient for current design)',
              '',
              'REMOVED BLOAT:',
              '  ✗ hello - Hello Dolly',
@@ -268,7 +268,7 @@
       - ""
       - "ACADEMY — manual installs (in order):"
       - "  1. LearnDash Pro ZIP ($199/year) — Plugins → Upload"
-      - "  2. Kadence Pro Bundle ZIP ($129/year) — PENDING AUTHORIZATION"
+      - "  2. Kadence Pro Bundle ZIP ($129/year) — OPTIONAL (Free tier sufficient)"
       - "  3. Starter template: Appearance → Kadence → Business Courses"
       - "  4. LearnDash → Settings → Payments → Stripe (one-time per course)"
       - ""

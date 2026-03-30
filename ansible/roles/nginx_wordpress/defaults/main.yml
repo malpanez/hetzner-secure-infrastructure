@@ -162,12 +162,17 @@ nginx_wordpress_plugins_remove:
 # Payment model: one-time purchase per course ($1000+)
 # LearnDash built-in Stripe handles this natively — no SureCart/WooCommerce needed
 # Videos hosted on Infoprotector — embedded in lesson content, no Presto Player needed
+#
+# Design assessment: current twomindstrading.com design CAN be replicated with Kadence FREE
+# Dark palette + card layouts + cyan accent + CSS snippet for two-tone headings = 85% coverage
+# Hero animated background → replace with static trading chart image (cleaner result)
+# Kadence Pro is a nice-to-have for visual Footer/Header builder, NOT required for this design
 nginx_wordpress_plugins_manual:
   # - learndash         # LearnDash Pro $199/year — academy only (sfwd-lms)
   #                       Includes: Stripe checkout, enrollment, progress, certificates
   #                       Configure: LearnDash → Settings → Payment → Stripe
-  # - kadence-pro       # Kadence Pro Bundle $129/year — PENDING AUTHORIZATION
-  #                       Unlocks: Header/Footer builder (needed to replicate existing design)
+  # - kadence-pro       # Kadence Pro Bundle $129/year — OPTIONAL, not required
+  #                       Only needed if visual Footer/Header builder is preferred over CSS
 
 # ========================================
 # WordPress Theme Configuration
