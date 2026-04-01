@@ -32,8 +32,8 @@ provider "hcloud" {
 
 # Hetzner Object Storage — S3-compatible via hashicorp/aws provider
 provider "aws" {
-  access_key = var.hetzner_s3_access_key # gitleaks:allow
-  secret_key = var.hetzner_s3_secret_key # gitleaks:allow
+  access_key = var.hetzner_s3_access_key != "" ? var.hetzner_s3_access_key : "placeholder" # gitleaks:allow
+  secret_key = var.hetzner_s3_secret_key != "" ? var.hetzner_s3_secret_key : "placeholder" # gitleaks:allow
   region     = var.hetzner_s3_region
 
   skip_credentials_validation = true
