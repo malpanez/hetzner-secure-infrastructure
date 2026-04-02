@@ -10,6 +10,10 @@
   vars:
     openbao_transit_enabled: false
     openbao_transit_instance_enabled: true
+  pre_tasks:
+    - name: Skip first pass if transit token already in vault (re-run)
+      ansible.builtin.meta: end_play
+      when: vault_openbao_transit_token | default('') != ''
   roles:
     - role: openbao
       tags: [openbao, install]
