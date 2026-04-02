@@ -1,6 +1,6 @@
 # Deployment Playbook
 
-Fresh server deployment sequence. The `ansible.cfg` sets the default inventory
+Fresh server deployment. The `ansible.cfg` sets the default inventory
 (`inventory/hetzner.hcloud.yml`) — no `-i` flag needed.
 
 ## Prerequisites
@@ -31,102 +31,73 @@ terraform apply
 
 ---
 
-## Step 3 — Base deployment
+## Step 3 — Full deployment
 
 ```bash
 cd ansible
-ansible-playbook playbooks/site.yml
+ansible-playbook playbooks/deploy.yml \
+  -e "openbao_transit_bootstrap_ack=true openbao_bootstrap_ack=true"
 ```
 
-Expected: play fails on OpenBao initialized assert. Everything else (common,
-security, firewall, MariaDB, nginx, monitoring) applies cleanly. Transit is
-running; primary is up but not yet initialized.
+`deploy.yml` runs the entire sequence automatically: base hardening, OpenBao
+install, transit bootstrap, primary bootstrap, WordPress (dual-site), monitoring,
+rotation timers, and final validation. It pauses twice for credential saving:
 
----
+- **Pause 1 (transit):** Save the 5 transit unseal keys, root token, and
+  auto-unseal token to password manager. Press Enter to continue.
+- **Pause 2 (primary):** Save the recovery keys and root token to password
+  manager. Press Enter to continue.
 
-## Step 4 — Bootstrap transit (one-time)
-
-```bash
-ansible-playbook playbooks/openbao-transit-bootstrap.yml -e openbao_transit_bootstrap_ack=true
-```
-
-**STOP — save to password manager before continuing:**
-- 5x Transit unseal keys (need 3 of 5 after every reboot)
-- Transit root token
-- Auto-unseal token (used in Step 5)
-
----
-
-## Step 5 — Add auto-unseal token to Ansible Vault
+After deployment completes, add the auto-unseal token to Ansible Vault for
+future re-runs:
 
 ```bash
 ansible-vault edit inventory/group_vars/all/secrets.yml
-```
-
-Set (remove any duplicate entry):
-```yaml
-vault_openbao_transit_token: "<auto-unseal token from Step 4>"
+# Set: vault_openbao_transit_token: "<auto-unseal token from Pause 1>"
 ```
 
 ---
 
-## Step 6 — Re-deploy OpenBao primary with auto-unseal
+## Re-runs / Idempotency
 
 ```bash
+ansible-playbook playbooks/deploy.yml
+```
+
+No extra vars needed on re-runs. The bootstraps and pauses are skipped when
+OpenBao is already initialized.
+
+---
+
+## Day-2 Operations
+
+```bash
+# Base hardening only
+ansible-playbook playbooks/site.yml --tags common
+
+# OpenBao role only
 ansible-playbook playbooks/site.yml --tags openbao
-```
 
-Primary now starts with the correct transit token and auto-unseals.
-
----
-
-## Step 7 — Bootstrap primary OpenBao
-
-```bash
-ansible-playbook playbooks/openbao-bootstrap.yml -e openbao_bootstrap_ack=true
-```
-
-**STOP — save to password manager when displayed:**
-- 5x Recovery keys
-- Root token
-
-If the play fails mid-run, the root token is preserved at
-`/root/.openbao-bootstrap-token` (mode 600). Re-run the same command — it will
-load the token from disk and resume seeding without re-initializing.
-
-The file is deleted automatically on successful completion.
-
----
-
-## Step 8 — Deploy WordPress (dual-site)
-
-```bash
+# WordPress (dual-site)
 ansible-playbook playbooks/dual-wordpress.yml
-```
 
----
+# Monitoring stack
+ansible-playbook playbooks/monitoring.yml
 
-## Step 9 — Deploy rotation scripts and timers
-
-```bash
+# Rotation timers
 ansible-playbook playbooks/setup-openbao-rotation.yml
+
+# Validation
+ansible-playbook playbooks/validate.yml
 ```
 
 ---
 
-## Step 10 — Verify
+## Verification
 
 ```bash
-# MariaDB binary logging
-ssh 91.98.232.248 "sudo mysql -e \"SHOW VARIABLES LIKE 'log_bin';\""
-# Expected: log_bin = ON
-
-# OpenBao rotation timers
-ssh 91.98.232.248 "systemctl list-timers | grep rotate"
-# Expected: rotate-mariadb, rotate-wordpress, rotate-wordpress-academy timers
-
-# Both WordPress sites reachable
 curl -sI https://twomindstrading.com | head -1
 curl -sI https://academy.twomindstrading.com | head -1
-# Expected: HTTP/2 200
+ssh <server-ip> "systemctl list-timers | grep rotate"
+ssh <server-ip> "sudo mysql -e \"SHOW VARIABLES LIKE 'log_bin';\""
 ```
