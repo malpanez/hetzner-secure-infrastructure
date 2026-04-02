@@ -168,7 +168,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 3.5 → 4 → 5 → 6 → 7
 | 4. Main Site | 0/3 | Not started | - |
 | 5. Academy Site | 0/4 | Not started | - |
 | 6. OpenBao Secret Coverage | 2/2 | Complete   | 2026-04-02 |
-| 7. Unified deploy.yml | 0/2 | Not started | - |
+| 7. Unified deploy.yml | 2/2 | Complete   | 2026-04-02 |
 
 ### Phase 6: Complete OpenBao secret coverage and rotation — academy scripts, Grafana/exporter/SMTP/Stripe in KV, static credentials MOTD
 
@@ -186,8 +186,8 @@ Plans:
 **Goal:** A single `ansible-playbook playbooks/deploy.yml` command deploys the entire stack on a fresh server, with automatic pause checkpoints at transit and primary OpenBao initialization for credential saving, and full idempotency on re-runs.
 **Requirements**: DEPLOY-01, DEPLOY-02, DEPLOY-03
 **Depends on:** Phase 6
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 07-01: Create deploy.yml unified orchestrator with inline OpenBao bootstrap plays and conditional pauses + safe default for transit token (DEPLOY-01, DEPLOY-02)
-- [ ] 07-02: Rewrite deployment-playbook.md to 3-step workflow with day-2 operations reference (DEPLOY-03)
+- [x] 07-01: Create deploy.yml unified orchestrator with inline OpenBao bootstrap plays and conditional pauses + safe default for transit token (DEPLOY-01, DEPLOY-02)
+- [x] 07-02: Rewrite deployment-playbook.md to 3-step workflow with day-2 operations reference (DEPLOY-03)
