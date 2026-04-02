@@ -146,4 +146,4 @@ common_disable_root_password: false
 # Transit runs on the same host and provides auto-unseal for the primary instance.
 openbao_transit_instance_enabled: true
 openbao_transit_enabled: true
-openbao_transit_token: "{{ vault_openbao_transit_token }}"
+openbao_transit_token: "{{ vault_openbao_transit_token | default('') }}"
