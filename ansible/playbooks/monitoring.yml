@@ -5,7 +5,7 @@
 # - Node Exporter on all monitored servers
 # - Prometheus metrics database
 # - Loki log aggregation
-# - Promtail log shipper
+# - Grafana Alloy log shipper (replaces Promtail, removed in Loki 3.x)
 # - Grafana visualization
 #
 # Usage:
@@ -16,7 +16,7 @@
 #   - node_exporter, metrics: System metrics
 #   - prometheus: Metrics database
 #   - loki, logging: Log aggregation
-#   - promtail: Log shipper
+#   - alloy: Log shipper
 #   - grafana: Visualization
 
 # ========================================
@@ -60,9 +60,9 @@
       tags: [monitoring, loki, logging]
       when: deploy_loki | default(true) | bool
 
-    - role: grafana.grafana.promtail
-      tags: [monitoring, promtail, logging]
-      when: deploy_promtail | default(true) | bool
+    - role: grafana.grafana.alloy
+      tags: [monitoring, alloy, logging]
+      when: deploy_alloy | default(true) | bool
 
     - role: grafana.grafana.grafana
       tags: [monitoring, grafana]

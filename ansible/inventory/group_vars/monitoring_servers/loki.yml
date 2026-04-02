@@ -6,7 +6,7 @@
 deploy_loki: true
 
 # Version
-loki_version: "latest"
+loki_version: "3.4.2"
 
 # Server configuration - bind to localhost only for security
 loki_http_listen_address: "127.0.0.1"
