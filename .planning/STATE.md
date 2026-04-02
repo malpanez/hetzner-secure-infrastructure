@@ -85,7 +85,8 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Phase 6 added: Complete OpenBao secret coverage and rotation — academy scripts, Grafana/exporter/SMTP/Stripe in KV, static credentials MOTD
+- Complete OpenBao secret coverage and rotation — academy scripts, Grafana/exporter/SMTP/Stripe in KV, static credentials MOTD
+- Migrate Promtail to Grafana Alloy — Promtail removed from Loki 3.x, use grafana.grafana.alloy role with River syntax scrape config
 
 ### Roadmap Evolution
 
