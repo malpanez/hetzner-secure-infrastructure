@@ -93,6 +93,51 @@
   no_log: true
   tags: [openbao, bootstrap]
 
+# Persist token to disk immediately after init so it survives play failures.
+# File is removed at the end of a successful bootstrap.
+- name: Persist bootstrap token to server (survives play failure)
+  ansible.builtin.copy:
+    content: "{{ openbao_bootstrap_token }}"
+    dest: /root/.openbao-bootstrap-token
+    owner: root
+    group: root
+    mode: "0600"
+  when: openbao_bootstrap_token is defined
+  no_log: true
+  tags: [openbao, bootstrap]
+
+# Recovery path: if already initialized and token file exists from a previous
+# partial run, load it so seeding tasks can resume without re-initializing.
+- name: Check for persisted bootstrap token (recovery path)
+  ansible.builtin.stat:
+    path: /root/.openbao-bootstrap-token
+  register: openbao_token_file
+  when:
+    - openbao_bootstrap_token is not defined
+    - (openbao_status | default({})).initialized | default(false) | bool
+  tags: [openbao, bootstrap]
+
+- name: Load persisted bootstrap token (recovery path)
+  ansible.builtin.slurp:
+    src: /root/.openbao-bootstrap-token
+  register: openbao_token_slurp
+  when:
+    - openbao_bootstrap_token is not defined
+    - openbao_token_file is defined
+    - openbao_token_file.stat is defined
+    - openbao_token_file.stat.exists
+  no_log: true
+  tags: [openbao, bootstrap]
+
+- name: Set bootstrap token from persisted file (recovery path)
+  ansible.builtin.set_fact:
+    openbao_bootstrap_token: "{{ openbao_token_slurp.content | b64decode | trim }}"
+  when:
+    - openbao_token_slurp is defined
+    - not (openbao_token_slurp.skipped | default(true))
+  no_log: true
+  tags: [openbao, bootstrap]
+
 # Transit auto-unseal: wait for OpenBao to auto-unseal itself
 - name: Wait for OpenBao to auto-unseal (Transit mode)
   ansible.builtin.command: "{{ openbao_cli }} status -format=json"
@@ -309,7 +354,11 @@
     encryption_passphrase={{ backup_encryption_passphrase | default(vault_backup_encryption_passphrase) }}
   environment: "{{ openbao_env | combine({'VAULT_TOKEN': openbao_bootstrap_token}) }}"
   changed_when: true
-  when: openbao_bootstrap_token is defined
+  when:
+    - openbao_bootstrap_token is defined
+    - vault_hetzner_s3_access_key is defined
+    - vault_hetzner_s3_secret_key is defined
+    - vault_backup_encryption_passphrase is defined
   no_log: true
   tags: [openbao, bootstrap]
 
@@ -350,7 +399,9 @@
     openbao_backup_token: "{{ (openbao_backup_token_cmd.stdout | from_json).auth.client_token }}"
   delegate_to: localhost
   run_once: true
-  when: openbao_backup_token_cmd is defined
+  when:
+    - openbao_backup_token_cmd is defined
+    - not (openbao_backup_token_cmd.skipped | default(false))
   no_log: true
   tags: [openbao, bootstrap]
 
@@ -369,7 +420,9 @@
     openbao_wordpress_token: "{{ (openbao_wordpress_token_cmd.stdout | from_json).auth.client_token }}"
   delegate_to: localhost
   run_once: true
-  when: openbao_wordpress_token_cmd is defined
+  when:
+    - openbao_wordpress_token_cmd is defined
+    - not (openbao_wordpress_token_cmd.skipped | default(false))
   no_log: true
   tags: [openbao, bootstrap]
 
@@ -388,7 +441,9 @@
     openbao_academy_token: "{{ (openbao_academy_token_cmd.stdout | from_json).auth.client_token }}"
   delegate_to: localhost
   run_once: true
-  when: openbao_academy_token_cmd is defined
+  when:
+    - openbao_academy_token_cmd is defined
+    - not (openbao_academy_token_cmd.skipped | default(false))
   no_log: true
   tags: [openbao, bootstrap]
 
@@ -407,7 +462,9 @@
     openbao_mariadb_token: "{{ (openbao_mariadb_token_cmd.stdout | from_json).auth.client_token }}"
   delegate_to: localhost
   run_once: true
-  when: openbao_mariadb_token_cmd is defined
+  when:
+    - openbao_mariadb_token_cmd is defined
+    - not (openbao_mariadb_token_cmd.skipped | default(false))
   no_log: true
   tags: [openbao, bootstrap]
 
@@ -430,10 +487,30 @@
       - ""
       - "NOTE: Recovery keys are for emergency access only."
       - "OpenBao will auto-unseal via Transit instance."
+      - "Token also saved to /root/.openbao-bootstrap-token (removed on success)."
       - "=========================================="
   when:
     - openbao_init is defined
     - openbao_transit_enabled | default(false) | bool
+  tags: [openbao, bootstrap]
+
+- name: Display root token (recovery path — bootstrap already initialized)
+  ansible.builtin.debug:
+    msg:
+      - "=========================================="
+      - "  BOOTSTRAP TOKEN LOADED FROM FILE        "
+      - "=========================================="
+      - ""
+      - "OpenBao was already initialized. Token loaded from:"
+      - "  /root/.openbao-bootstrap-token"
+      - ""
+      - "Root Token: {{ openbao_bootstrap_token }}"
+      - ""
+      - "If seeding fails again, the token is still in that file."
+      - "=========================================="
+  when:
+    - openbao_bootstrap_token is defined
+    - openbao_init is not defined
   tags: [openbao, bootstrap]
 
 - name: Display OpenBao init keys and root token (standard mode)
@@ -484,4 +561,11 @@
     openbao_academy_token is defined or
     openbao_mariadb_token is defined or
     openbao_backup_token is defined
+  tags: [openbao, bootstrap]
+
+- name: Remove persisted bootstrap token (bootstrap complete)
+  ansible.builtin.file:
+    path: /root/.openbao-bootstrap-token
+    state: absent
+  when: openbao_bootstrap_token is defined
   tags: [openbao, bootstrap]
