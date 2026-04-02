@@ -83,7 +83,11 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+- Phase 6 added: Complete OpenBao secret coverage and rotation — academy scripts, Grafana/exporter/SMTP/Stripe in KV, static credentials MOTD
+
+### Roadmap Evolution
+
+- Phase 6 added: Complete OpenBao secret coverage and rotation — academy scripts, Grafana/exporter/SMTP/Stripe in KV, static credentials MOTD
 
 ### Blockers/Concerns
 
