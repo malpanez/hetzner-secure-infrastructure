@@ -93,6 +93,36 @@
   no_log: true
   tags: [openbao, bootstrap]
 
+- name: Display OpenBao primary init credentials (SAVE NOW)
+  ansible.builtin.debug:
+    msg: "{{ init_display.split('\n') }}"
+  vars:
+    init_display: |
+      ========================================
+      PRIMARY OPENBAO INITIALIZED — SAVE NOW
+      ========================================
+
+      Recovery Keys (need {{ openbao_key_threshold }} of {{ openbao_key_shares }} to regenerate root token):
+      {% if openbao_init.recovery_keys_b64 is defined %}
+      {% for key in openbao_init.recovery_keys_b64 %}
+      Recovery Key {{ loop.index }}: {{ key }}
+      {% endfor %}
+      {% elif openbao_init.unseal_keys_b64 is defined %}
+      {% for key in openbao_init.unseal_keys_b64 %}
+      Unseal Key {{ loop.index }}: {{ key }}
+      {% endfor %}
+      {% endif %}
+
+      Root Token: {{ openbao_bootstrap_token }}
+
+      ========================================
+      CRITICAL — STORE IN PASSWORD MANAGER
+      ========================================
+  when:
+    - openbao_init is defined
+    - openbao_bootstrap_token is defined
+  tags: [openbao, bootstrap]
+
 # Persist token to disk immediately after init so it survives play failures.
 # File is removed at the end of a successful bootstrap.
 - name: Persist bootstrap token to server (survives play failure)
