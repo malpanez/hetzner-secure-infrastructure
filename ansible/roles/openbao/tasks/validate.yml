@@ -52,6 +52,7 @@
   when:
     - openbao_status is defined
     - openbao_transit_enabled | default(false)
+    - not (openbao_skip_initialized_assert | default(false))
   tags: [openbao, validate]
 
 - name: OpenBao | Validate | Display validation summary

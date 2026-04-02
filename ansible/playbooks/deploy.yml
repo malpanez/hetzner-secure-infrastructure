@@ -184,6 +184,7 @@
   gather_facts: true
   vars:
     openbao_transit_enabled: true
+    openbao_skip_initialized_assert: true
     openbao_transit_token: >-
       {{ hostvars[inventory_hostname]['deploy_transit_token']
          | default(vault_openbao_transit_token | default('')) }}
