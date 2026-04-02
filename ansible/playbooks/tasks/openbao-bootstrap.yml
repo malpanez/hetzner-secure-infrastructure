@@ -240,55 +240,6 @@
   no_log: true
   tags: [openbao, bootstrap]
 
-- name: Create OpenBao database user in MariaDB
-  community.mysql.mysql_user:
-    name: openbao
-    password: "{{ openbao_mariadb_password | default(mariadb_root_password) }}"
-    priv: "*.*:ALL,GRANT"
-    host: "localhost"
-    state: present
-    login_unix_socket: /var/run/mysqld/mysqld.sock
-  when: openbao_bootstrap_token is defined
-  no_log: true
-  tags: [openbao, bootstrap, mysql]
-
-- name: Configure MariaDB database connection for OpenBao
-  ansible.builtin.command:
-    argv:
-      - "{{ openbao_cli }}"
-      - write
-      - database/config/wordpress
-      - "plugin_name=mysql-database-plugin"
-      - "allowed_roles=wordpress"
-      - "connection_url={{ openbao_db_connection_url }}"
-      - "username=openbao"
-      - "password={{ openbao_mariadb_password | default(mariadb_root_password) }}"
-  vars:
-    openbao_db_connection_url: "{{ '{{' }}username{{ '}}' }}:{{ '{{' }}password{{ '}}' }}@tcp({{ mariadb_bind_address | default('127.0.0.1') }}:{{ mariadb_port | default(3306) }})/"
-  environment: "{{ openbao_env | combine({'VAULT_TOKEN': openbao_bootstrap_token}) }}"
-  changed_when: true
-  when: openbao_bootstrap_token is defined
-  no_log: true
-  tags: [openbao, bootstrap]
-
-- name: Configure MariaDB database connection for OpenBao (academy)
-  ansible.builtin.command:
-    argv:
-      - "{{ openbao_cli }}"
-      - write
-      - database/config/wordpress-academy
-      - "plugin_name=mysql-database-plugin"
-      - "allowed_roles=wordpress-academy"
-      - "connection_url={{ openbao_db_connection_url }}"
-      - "username=openbao"
-      - "password={{ openbao_mariadb_password | default(mariadb_root_password) }}"
-  vars:
-    openbao_db_connection_url: "{{ '{{' }}username{{ '}}' }}:{{ '{{' }}password{{ '}}' }}@tcp({{ mariadb_bind_address | default('127.0.0.1') }}:{{ mariadb_port | default(3306) }})/"
-  environment: "{{ openbao_env | combine({'VAULT_TOKEN': openbao_bootstrap_token}) }}"
-  changed_when: true
-  when: openbao_bootstrap_token is defined
-  no_log: true
-  tags: [openbao, bootstrap]
 
 - name: Configure OpenBao role for WordPress DB credentials
   ansible.builtin.command: >-

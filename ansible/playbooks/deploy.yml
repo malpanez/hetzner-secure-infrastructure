@@ -245,6 +245,20 @@
   ansible.builtin.import_playbook: dual-wordpress.yml
   tags: [wordpress, application]
 
+- name: Finalize OpenBao MariaDB integration (post-WordPress)
+  hosts: secrets_servers
+  become: true
+  gather_facts: false
+  vars:
+    openbao_cli: "{{ openbao_binary_path | default('bao') }}"
+    openbao_env_base:
+      VAULT_ADDR: "{{ openbao_api_addr }}"
+    openbao_env: "{{ openbao_env_base | combine(openbao_tls_self_signed | default(true) | bool | ternary({'VAULT_SKIP_VERIFY': '1'}, {})) }}"
+  tasks:
+    - name: Include OpenBao MariaDB integration tasks
+      ansible.builtin.include_tasks: tasks/openbao-mariadb-integration.yml
+      tags: [openbao, mariadb, integration]
+
 - name: Wait for operator to place rotation token files
   hosts: secrets_servers
   become: true
