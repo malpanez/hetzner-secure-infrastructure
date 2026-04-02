@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 02 Plan 02 complete — pre-commit, ansible-lint, terraform validate all exit 0. TEST-02 satisfied. Phase 02 complete.
-last_updated: "2026-03-29T11:05:00.000Z"
-last_activity: 2026-03-29
+stopped_at: Completed Phase 06 Plan 02 — academy rotation scripts, fixed mariadb kv patch, static MOTD
+last_updated: "2026-04-02T18:09:41.948Z"
+last_activity: 2026-04-02
 progress:
-  total_phases: 5
-  completed_phases: 1
-  total_plans: 6
-  completed_plans: 5
+  total_phases: 7
+  completed_phases: 3
+  total_plans: 11
+  completed_plans: 8
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Un alumno puede descubrir cursos en el main site, comprar en academy, y aprender sin fricciones — con <2s LCP y sin riesgo de perder datos.
-**Current focus:** Phase 02 — testing-validation
+**Current focus:** Phase 06 — complete-openbao-secret-coverage-and-rotation-academy-scripts-grafana-exporter-smtp-stripe-in-kv-static-credentials-motd
 
 ## Current Position
 
-Phase: 02 (testing-validation) — COMPLETE
-Plan: 2 of 2 (all plans complete)
-Status: Phase complete — both TEST-01 and TEST-02 satisfied
-Last activity: 2026-03-29
+Phase: 06 (complete-openbao-secret-coverage-and-rotation-academy-scripts-grafana-exporter-smtp-stripe-in-kv-static-credentials-motd) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
+Last activity: 2026-04-02
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -97,6 +97,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-29T11:05:00.000Z
-Stopped at: Phase 02 Plan 02 complete — pre-commit, ansible-lint, terraform validate all exit 0. TEST-02 satisfied. Phase 02 complete.
+Last session: 2026-04-02T18:09:41.938Z
+Stopped at: Completed Phase 06 Plan 02 — academy rotation scripts, fixed mariadb kv patch, static MOTD
 Resume file: None

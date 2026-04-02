@@ -167,15 +167,15 @@ Phases execute in numeric order: 1 → 2 → 3 → 3.5 → 4 → 5 → 6
 | 3.5. Backup Infrastructure | 0/3 | Not started | - |
 | 4. Main Site | 0/3 | Not started | - |
 | 5. Academy Site | 0/4 | Not started | - |
-| 6. OpenBao Secret Coverage | 0/2 | Not started | - |
+| 6. OpenBao Secret Coverage | 2/2 | Complete   | 2026-04-02 |
 
 ### Phase 6: Complete OpenBao secret coverage and rotation — academy scripts, Grafana/exporter/SMTP/Stripe in KV, static credentials MOTD
 
 **Goal:** All service credentials are stored in OpenBao KV, both sites have rotation coverage (DB daily + admin monthly), and a static MOTD shows retrieval commands so any operator SSHing into the server can immediately find any credential.
 **Requirements**: OPS-03
 **Depends on:** Phase 5
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 06-01: Extend openbao-bootstrap.yml with KV seeding for Grafana, MariaDB exporter, SMTP, Stripe, and academy WP admin + update secrets.yml.example (OPS-03)
-- [ ] 06-02: Add academy rotation scripts (DB daily + WP admin monthly), update monthly service, deploy static credentials MOTD (OPS-03)
+- [x] 06-01: Extend openbao-bootstrap.yml with KV seeding for Grafana, MariaDB exporter, SMTP, Stripe, and academy WP admin + update secrets.yml.example (OPS-03)
+- [x] 06-02: Add academy rotation scripts (DB daily + WP admin monthly), update monthly service, deploy static credentials MOTD (OPS-03)

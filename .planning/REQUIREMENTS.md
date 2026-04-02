@@ -39,7 +39,7 @@
 
 - [ ] **OPS-01**: `valkey_maxmemory` aumentado a 512MB en `ansible/inventory/group_vars/wordpress_servers/valkey.yml`
 - [ ] **OPS-02**: MariaDB binary logging aplicado al servidor (ya en group_vars, pendiente `ansible-playbook --tags mariadb`)
-- [ ] **OPS-03**: `setup-openbao-rotation.yml` ejecutado por primera vez correctamente; `WP_PATH` apunta a `/var/www/twomindstrading.com`
+- [x] **OPS-03**: `setup-openbao-rotation.yml` ejecutado por primera vez correctamente; `WP_PATH` apunta a `/var/www/twomindstrading.com`
 - [ ] **OPS-04**: Fail2ban jails configurados para monitorear ambos log paths (`/var/log/nginx/main-*.log`, `/var/log/nginx/academy-*.log`)
 - [ ] **OPS-05**: AppArmor perfiles actualizados para cubrir `/var/www/*/` (ambas rutas web)
 
