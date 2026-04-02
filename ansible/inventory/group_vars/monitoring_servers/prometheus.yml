@@ -5,7 +5,7 @@
 # ========================================
 # Prometheus Version
 # ========================================
-prometheus_version: "2.48.0"
+prometheus_version: "2.55.1"
 
 # ========================================
 # Prometheus Connection

@@ -6,7 +6,7 @@
 # ========================================
 # Node Exporter Version
 # ========================================
-node_exporter_version: "1.7.0"
+node_exporter_version: "1.10.2"
 
 # ========================================
 # Node Exporter Connection

@@ -120,7 +120,7 @@ mariadb_backup_databases:
 # MariaDB Monitoring
 # ========================================
 mariadb_exporter_enabled: true
-mariadb_exporter_version: "0.15.0"
+mariadb_exporter_version: "0.19.0"
 mariadb_exporter_port: 9104
 mariadb_exporter_user: exporter
 mariadb_exporter_password: "{{ vault_mariadb_exporter_password | default('changeme') }}"

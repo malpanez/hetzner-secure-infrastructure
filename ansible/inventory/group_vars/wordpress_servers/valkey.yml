@@ -79,7 +79,7 @@ wordpress_redis_read_timeout: 1
 # Valkey Monitoring
 # ========================================
 valkey_exporter_enabled: true
-valkey_exporter_version: "1.55.0"
+valkey_exporter_version: "1.82.0"
 valkey_exporter_port: 9121
 valkey_exporter_namespace: valkey
 
