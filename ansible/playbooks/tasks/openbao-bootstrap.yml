@@ -191,9 +191,12 @@
   ansible.builtin.command: >-
     {{ openbao_cli }} kv put secret/mariadb
     root_password={{ mariadb_root_password | default(vault_mariadb_root_password) }}
+    exporter_password={{ vault_mariadb_exporter_password }}
   environment: "{{ openbao_env | combine({'VAULT_TOKEN': openbao_bootstrap_token}) }}"
   changed_when: true
-  when: openbao_bootstrap_token is defined
+  when:
+    - openbao_bootstrap_token is defined
+    - vault_mariadb_exporter_password is defined
   no_log: true
   tags: [openbao, bootstrap]
 
@@ -313,7 +316,7 @@
       capabilities = ["read"]
     }
     path "secret/data/wordpress-academy" {
-      capabilities = ["create", "update"]
+      capabilities = ["create", "update", "patch"]
     }
     path "auth/token/renew-self" {
       capabilities = ["update"]
@@ -359,6 +362,58 @@
     - vault_hetzner_s3_access_key is defined
     - vault_hetzner_s3_secret_key is defined
     - vault_backup_encryption_passphrase is defined
+  no_log: true
+  tags: [openbao, bootstrap]
+
+- name: Seed Grafana admin password in OpenBao
+  ansible.builtin.command: >-
+    {{ openbao_cli }} kv put secret/grafana
+    admin_password={{ vault_grafana_admin_password }}
+  environment: "{{ openbao_env | combine({'VAULT_TOKEN': openbao_bootstrap_token}) }}"
+  changed_when: true
+  when:
+    - openbao_bootstrap_token is defined
+    - vault_grafana_admin_password is defined
+  no_log: true
+  tags: [openbao, bootstrap]
+
+- name: Seed SMTP credentials in OpenBao
+  ansible.builtin.command: >-
+    {{ openbao_cli }} kv put secret/smtp
+    user={{ vault_smtp_user }}
+    app_password={{ vault_smtp_app_password }}
+  environment: "{{ openbao_env | combine({'VAULT_TOKEN': openbao_bootstrap_token}) }}"
+  changed_when: true
+  when:
+    - openbao_bootstrap_token is defined
+    - vault_smtp_user is defined
+    - vault_smtp_app_password is defined
+  no_log: true
+  tags: [openbao, bootstrap]
+
+- name: Seed Stripe keys in OpenBao
+  ansible.builtin.command: >-
+    {{ openbao_cli }} kv put secret/stripe
+    publishable_key={{ vault_stripe_publishable_key }}
+    secret_key={{ vault_stripe_secret_key }}
+  environment: "{{ openbao_env | combine({'VAULT_TOKEN': openbao_bootstrap_token}) }}"
+  changed_when: true
+  when:
+    - openbao_bootstrap_token is defined
+    - vault_stripe_publishable_key is defined
+    - vault_stripe_secret_key is defined
+  no_log: true
+  tags: [openbao, bootstrap]
+
+- name: Seed WordPress Academy admin password in OpenBao
+  ansible.builtin.command: >-
+    {{ openbao_cli }} kv put secret/wordpress-academy
+    admin_password={{ vault_wordpress_academy_admin_password }}
+  environment: "{{ openbao_env | combine({'VAULT_TOKEN': openbao_bootstrap_token}) }}"
+  changed_when: true
+  when:
+    - openbao_bootstrap_token is defined
+    - vault_wordpress_academy_admin_password is defined
   no_log: true
   tags: [openbao, bootstrap]
 
