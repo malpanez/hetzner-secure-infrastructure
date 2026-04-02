@@ -177,6 +177,132 @@
           - "Secret rotation timer installed successfully"
           - "Timer status: {{ timer_status.stdout_lines }}"
 
+    - name: Create academy secret rotation script
+      ansible.builtin.copy:
+        content: |
+          #!/bin/bash
+          set -euo pipefail
+
+          OPENBAO_ADDR="http://127.0.0.1:8200"
+          LOG_FILE="/var/log/wordpress-academy-secret-rotation.log"
+          WP_PATH="/var/www/academy.twomindstrading.com"
+          TOKEN_FILE="/root/.openbao-academy-token"
+
+          log() {
+              echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_FILE"
+          }
+
+          error_exit() {
+              log "ERROR: $1"
+              exit 1
+          }
+
+          log "Starting WordPress Academy database secret rotation"
+
+          if ! systemctl is-active --quiet openbao; then
+              error_exit "OpenBao service is not running"
+          fi
+
+          if [ ! -f "$TOKEN_FILE" ]; then
+              error_exit "OpenBao token file not found at $TOKEN_FILE"
+          fi
+
+          export OPENBAO_TOKEN
+          OPENBAO_TOKEN=$(cat "$TOKEN_FILE")
+
+          log "Fetching new database credentials from OpenBao"
+          CREDS=$(curl -s -H "X-Vault-Token: $OPENBAO_TOKEN" \
+                       "$OPENBAO_ADDR/v1/database/creds/wordpress-academy" || error_exit "Failed to fetch credentials from OpenBao")
+
+          NEW_USER=$(echo "$CREDS" | jq -r '.data.username' || error_exit "Failed to parse username")
+          NEW_PASS=$(echo "$CREDS" | jq -r '.data.password' || error_exit "Failed to parse password")
+
+          if [ "$NEW_USER" == "null" ] || [ "$NEW_PASS" == "null" ]; then
+              error_exit "Invalid credentials received from OpenBao"
+          fi
+
+          log "New credentials generated: user=$NEW_USER"
+
+          log "Updating wp-config.php with new credentials"
+          sudo -u www-data wp --path="$WP_PATH" config set DB_USER "$NEW_USER" --type=constant || error_exit "Failed to update DB_USER"
+          sudo -u www-data wp --path="$WP_PATH" config set DB_PASSWORD "$NEW_PASS" --type=constant || error_exit "Failed to update DB_PASSWORD"
+
+          log "Testing database connection"
+          sudo -u www-data wp --path="$WP_PATH" db check || error_exit "Database connection test failed"
+
+          log "Reloading PHP-FPM"
+          systemctl reload php8.3-fpm || error_exit "Failed to reload PHP-FPM"
+
+          sleep 2
+
+          log "Verifying WordPress database connectivity"
+          sudo -u www-data wp --path="$WP_PATH" db query "SELECT 1;" > /dev/null || error_exit "WordPress cannot connect to database"
+
+          log "WordPress Academy database secret rotation completed successfully"
+          log "Old user credentials will expire in 24 hours"
+
+          exit 0
+        dest: /usr/local/bin/rotate-wordpress-academy-secrets.sh
+        mode: '0750'
+        owner: root
+        group: root
+
+    - name: Create academy secret rotation systemd service
+      ansible.builtin.copy:
+        content: |
+          [Unit]
+          Description=Rotate WordPress Academy Database Credentials
+          After=network.target openbao.service mariadb.service
+          Requires=openbao.service mariadb.service
+
+          [Service]
+          Type=oneshot
+          User=root
+          ExecStart=/usr/local/bin/rotate-wordpress-academy-secrets.sh
+          StandardOutput=journal
+          StandardError=journal
+          SyslogIdentifier=wordpress-academy-rotation
+
+          [Install]
+          WantedBy=multi-user.target
+        dest: /etc/systemd/system/wordpress-academy-secret-rotate.service
+        mode: '0644'
+
+    - name: Create academy secret rotation systemd timer
+      ansible.builtin.copy:
+        content: |
+          [Unit]
+          Description=Rotate WordPress Academy secrets daily
+          Documentation=man:systemd.timer(5)
+
+          [Timer]
+          OnCalendar=*-*-* 03:30:00
+          Persistent=true
+          RandomizedDelaySec=300
+
+          [Install]
+          WantedBy=timers.target
+        dest: /etc/systemd/system/wordpress-academy-secret-rotate.timer
+        mode: '0644'
+
+    - name: Create log file for academy rotation
+      ansible.builtin.file:
+        path: /var/log/wordpress-academy-secret-rotation.log
+        state: touch
+        owner: root
+        group: root
+        mode: '0640'
+
+    - name: Reload systemd daemon after adding academy timer
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Enable academy secret rotation timer
+      ansible.builtin.systemd:
+        name: wordpress-academy-secret-rotate.timer
+        enabled: true
+        state: started
+
     - name: Create MariaDB root rotation script
       ansible.builtin.copy:
         dest: /usr/local/bin/rotate-mariadb-root.sh
