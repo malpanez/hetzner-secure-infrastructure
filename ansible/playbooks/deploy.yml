@@ -11,9 +11,15 @@
     openbao_transit_enabled: false
     openbao_transit_instance_enabled: true
   pre_tasks:
-    - name: Skip first pass if transit token already in vault (re-run)
+    - name: Check if OpenBao binary exists (fresh server detection)
+      ansible.builtin.stat:
+        path: "{{ openbao_install_dir | default('/usr/bin') }}/bao"
+      register: bao_binary_check
+    - name: Skip first pass if OpenBao already installed with transit token (re-run)
       ansible.builtin.meta: end_play
-      when: vault_openbao_transit_token | default('') != ''
+      when:
+        - vault_openbao_transit_token | default('') != ''
+        - bao_binary_check.stat.exists
   roles:
     - role: openbao
       tags: [openbao, install]
