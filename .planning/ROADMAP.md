@@ -179,3 +179,13 @@ Phases execute in numeric order: 1 → 2 → 3 → 3.5 → 4 → 5 → 6
 Plans:
 - [x] 06-01: Extend openbao-bootstrap.yml with KV seeding for Grafana, MariaDB exporter, SMTP, Stripe, and academy WP admin + update secrets.yml.example (OPS-03)
 - [x] 06-02: Add academy rotation scripts (DB daily + WP admin monthly), update monthly service, deploy static credentials MOTD (OPS-03)
+
+### Phase 7: Unified deploy.yml orchestrator — single-command fresh deployment with auto-pause checkpoints for OpenBao transit and primary initialization
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 6
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 7 to break down)

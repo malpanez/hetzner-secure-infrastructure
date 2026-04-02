@@ -88,6 +88,7 @@ Recent decisions affecting current work:
 ### Roadmap Evolution
 
 - Phase 6 added: Complete OpenBao secret coverage and rotation — academy scripts, Grafana/exporter/SMTP/Stripe in KV, static credentials MOTD
+- Phase 7 added: Unified deploy.yml orchestrator — single-command fresh deployment with auto-pause checkpoints for OpenBao transit and primary initialization
 
 ### Blockers/Concerns
 
