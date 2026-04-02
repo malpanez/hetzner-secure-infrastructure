@@ -359,7 +359,7 @@
 
           # Store new password in OpenBao
           log "Storing new password in OpenBao"
-          bao kv put secret/mariadb root_password="${NEW_PASS}" || error_exit "Failed to store new password in OpenBao"
+          bao kv patch secret/mariadb root_password="${NEW_PASS}" || error_exit "Failed to store new password in OpenBao"
 
           # MOTD delivery
           cat > /etc/motd.d/90-rotation-notice <<EOF
@@ -455,6 +455,60 @@
           log "WordPress admin rotation completed successfully"
           exit 0
 
+    - name: Create academy WordPress admin rotation script
+      ansible.builtin.copy:
+        dest: /usr/local/bin/rotate-wp-admin-academy.sh
+        mode: '0750'
+        owner: root
+        group: root
+        content: |
+          #!/bin/bash
+          set -euo pipefail
+
+          OPENBAO_ADDR="http://127.0.0.1:8200"
+          LOG_FILE="/var/log/wp-admin-academy-rotation.log"
+          TOKEN_FILE="/root/.openbao-academy-token"
+          WP_PATH="/var/www/academy.twomindstrading.com"
+
+          log() {
+              echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_FILE"
+          }
+
+          error_exit() {
+              log "ERROR: $1"
+              exit 1
+          }
+
+          log "Starting WordPress Academy admin password rotation"
+
+          if ! systemctl is-active --quiet openbao; then
+              error_exit "OpenBao service is not running"
+          fi
+
+          if [ ! -f "$TOKEN_FILE" ]; then
+              error_exit "OpenBao token file not found at $TOKEN_FILE"
+          fi
+
+          export VAULT_TOKEN
+          VAULT_TOKEN=$(cat "$TOKEN_FILE")
+          export VAULT_ADDR="$OPENBAO_ADDR"
+
+          bao token renew-self > /dev/null 2>&1 || log "WARN: Token renewal failed, continuing"
+
+          NEW_PASS=$(openssl rand -base64 48 | tr -d '/+=\n' | head -c 32)
+
+          log "Updating WordPress Academy admin password via WP-CLI"
+          WP_ADMIN_USER=$(sudo -u www-data wp --path="$WP_PATH" user list --role=administrator \
+            --fields=user_login --format=csv | tail -n 1) || error_exit "Failed to get admin username"
+          sudo -u www-data wp --path="$WP_PATH" user update "${WP_ADMIN_USER}" \
+            --user_pass="${NEW_PASS}" || error_exit "Failed to update WP admin password"
+
+          log "Storing new password in OpenBao"
+          bao kv patch secret/wordpress-academy admin_password="${NEW_PASS}" || error_exit "Failed to store new password in OpenBao"
+
+          log "WordPress Academy admin rotation completed successfully"
+          exit 0
+
     - name: Create monthly secret rotation systemd service
       ansible.builtin.copy:
         dest: /etc/systemd/system/monthly-secret-rotate.service
@@ -470,6 +524,7 @@
           User=root
           ExecStart=/usr/local/bin/rotate-mariadb-root.sh
           ExecStart=/usr/local/bin/rotate-wp-admin.sh
+          ExecStart=/usr/local/bin/rotate-wp-admin-academy.sh
           StandardOutput=journal
           StandardError=journal
           SyslogIdentifier=monthly-secret-rotate
@@ -504,6 +559,7 @@
       loop:
         - /var/log/mariadb-root-rotation.log
         - /var/log/wp-admin-rotation.log
+        - /var/log/wp-admin-academy-rotation.log
 
     - name: Reload systemd daemon after adding monthly timer
       ansible.builtin.systemd:
@@ -514,6 +570,28 @@
         name: monthly-secret-rotate.timer
         enabled: true
         state: started
+
+    - name: Deploy static credentials MOTD
+      ansible.builtin.copy:
+        dest: /etc/motd.d/80-credentials
+        mode: '0644'
+        owner: root
+        group: root
+        content: |
+          =================================================================
+            CREDENTIAL RETRIEVAL (requires OpenBao unsealed)
+          =================================================================
+            export VAULT_ADDR=http://127.0.0.1:8200
+
+            MariaDB root    : bao kv get -field=root_password secret/mariadb
+            MariaDB exporter: bao kv get -field=exporter_password secret/mariadb
+            WP admin (main) : bao kv get -field=admin_password secret/wordpress
+            WP admin (acad) : bao kv get -field=admin_password secret/wordpress-academy
+            Grafana admin   : bao kv get -field=admin_password secret/grafana
+            SMTP (if configured)   : bao kv get secret/smtp
+            Stripe (if configured) : bao kv get secret/stripe
+            Backup S3       : bao kv get secret/backup
+          =================================================================
 
     - name: Display manual steps required for already-running servers
       ansible.builtin.debug:
@@ -583,4 +661,18 @@
           - ""
           - "9. Check monthly timer:"
           - "   systemctl list-timers monthly-secret-rotate.timer"
+          - ""
+          - "--- ACADEMY ROTATION ---"
+          - "10. Place wordpress-academy-rotator token:"
+          - "   echo '<token>' > /root/.openbao-academy-token && chmod 600 /root/.openbao-academy-token"
+          - "   (token value from bootstrap output or: bao token create -orphan -period=2160h -policy=wordpress-academy-rotator)"
+          - ""
+          - "11. Test Academy DB rotation:"
+          - "   sudo /usr/local/bin/rotate-wordpress-academy-secrets.sh"
+          - ""
+          - "12. Test Academy WP admin rotation:"
+          - "   sudo /usr/local/bin/rotate-wp-admin-academy.sh"
+          - ""
+          - "13. Check academy timer:"
+          - "   systemctl list-timers wordpress-academy-secret-rotate.timer"
           - "=========================================="

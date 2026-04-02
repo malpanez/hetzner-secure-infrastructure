@@ -335,7 +335,7 @@
     set -euo pipefail
     cat <<'POLICY' | {{ openbao_cli }} policy write mariadb-rotator -
     path "secret/data/mariadb" {
-      capabilities = ["read", "create", "update"]
+      capabilities = ["read", "create", "update", "patch"]
     }
     path "auth/token/renew-self" {
       capabilities = ["update"]
