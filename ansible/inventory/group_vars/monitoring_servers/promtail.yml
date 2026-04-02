@@ -6,7 +6,7 @@
 deploy_promtail: true
 
 # Version
-promtail_version: "3.4.2"
+promtail_version: "3.7.1"
 
 # Server configuration - bind to localhost only for security
 promtail_http_listen_address: "127.0.0.1"
