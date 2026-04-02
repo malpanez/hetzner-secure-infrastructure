@@ -41,6 +41,11 @@ collections:
   - name: hetzner.hcloud
     source: https://galaxy.ansible.com
 
+  # Ansible Utils Collection
+  # Required by grafana.grafana.alloy role preflight (ipaddr filter)
+  - name: ansible.utils
+    source: https://galaxy.ansible.com
+
 # ============================================
 # Roles - Third Party Quality Roles
 # ============================================

@@ -3,7 +3,7 @@
 # Replaces Promtail (removed in Loki 3.x) as log shipper
 # Official grafana.grafana.alloy role configuration
 
-alloy_version: "1.8.1"
+alloy_version: "latest"
 alloy_expose_port: false
 
 alloy_user_groups:
@@ -15,29 +15,28 @@ alloy_env_file_vars:
 
 alloy_config: |
   // Log shipping configuration for Loki
-  // Replaces Promtail scrape_configs
 
   local.file_match "system_logs" {
     path_targets = [
-      {__address__ = "localhost", __path__ = "/var/log/syslog",       job = "syslog",        instance = "{{ ansible_facts['fqdn'] }}"},
-      {__address__ = "localhost", __path__ = "/var/log/auth.log",     job = "auth",          instance = "{{ ansible_facts['fqdn'] }}"},
-      {__address__ = "localhost", __path__ = "/var/log/fail2ban.log",  job = "fail2ban",      instance = "{{ ansible_facts['fqdn'] }}"},
+      {"__address__" = "localhost", "__path__" = "/var/log/syslog",       "job" = "syslog",    "instance" = "{{ ansible_facts['fqdn'] }}"},
+      {"__address__" = "localhost", "__path__" = "/var/log/auth.log",     "job" = "auth",      "instance" = "{{ ansible_facts['fqdn'] }}"},
+      {"__address__" = "localhost", "__path__" = "/var/log/fail2ban.log", "job" = "fail2ban",  "instance" = "{{ ansible_facts['fqdn'] }}"},
     ]
   }
 
   local.file_match "nginx_logs" {
     path_targets = [
-      {__address__ = "localhost", __path__ = "/var/log/nginx/access.log", job = "nginx_access", instance = "{{ ansible_facts['fqdn'] }}"},
-      {__address__ = "localhost", __path__ = "/var/log/nginx/error.log",  job = "nginx_error",  instance = "{{ ansible_facts['fqdn'] }}"},
+      {"__address__" = "localhost", "__path__" = "/var/log/nginx/access.log", "job" = "nginx_access", "instance" = "{{ ansible_facts['fqdn'] }}"},
+      {"__address__" = "localhost", "__path__" = "/var/log/nginx/error.log",  "job" = "nginx_error",  "instance" = "{{ ansible_facts['fqdn'] }}"},
     ]
   }
 
   local.file_match "app_logs" {
     path_targets = [
-      {__address__ = "localhost", __path__ = "/var/log/php*-fpm.log",              job = "php_fpm",       instance = "{{ ansible_facts['fqdn'] }}"},
-      {__address__ = "localhost", __path__ = "/var/log/mysql/error.log",           job = "mariadb_error", instance = "{{ ansible_facts['fqdn'] }}"},
-      {__address__ = "localhost", __path__ = "/var/log/mysql/slow.log",            job = "mariadb_slow",  instance = "{{ ansible_facts['fqdn'] }}"},
-      {__address__ = "localhost", __path__ = "/var/www/html/wp-content/debug.log", job = "wordpress",     instance = "{{ ansible_facts['fqdn'] }}"},
+      {"__address__" = "localhost", "__path__" = "/var/log/php*-fpm.log",                             "job" = "php_fpm",       "instance" = "{{ ansible_facts['fqdn'] }}"},
+      {"__address__" = "localhost", "__path__" = "/var/log/mysql/error.log",                          "job" = "mariadb_error", "instance" = "{{ ansible_facts['fqdn'] }}"},
+      {"__address__" = "localhost", "__path__" = "/var/log/mysql/slow.log",                           "job" = "mariadb_slow",  "instance" = "{{ ansible_facts['fqdn'] }}"},
+      {"__address__" = "localhost", "__path__" = "{{ wordpress_root }}/wp-content/debug.log",         "job" = "wordpress",     "instance" = "{{ ansible_facts['fqdn'] }}"},
     ]
   }
 
