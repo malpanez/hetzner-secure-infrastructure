@@ -8,7 +8,7 @@
 
 collections:
   # Grafana Official Collection
-  # Includes: grafana, loki, promtail, mimir, alloy
+  # Includes: grafana, loki, alloy, mimir
   # Docs: https://github.com/grafana/grafana-ansible-collection
   - name: grafana.grafana
     source: https://galaxy.ansible.com

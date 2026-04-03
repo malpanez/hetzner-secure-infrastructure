@@ -41,7 +41,7 @@ firewall_allowed_ports:
 # Enable monitoring stack deployment
 deploy_monitoring: true
 deploy_loki: true
-deploy_promtail: true
+deploy_alloy: true
 node_exporter_enabled: true
 
 # Prometheus configuration
@@ -98,9 +98,8 @@ grafana_ini:
 loki_version: latest
 loki_http_listen_port: 3100
 
-# Promtail configuration
-promtail_version: latest
-promtail_loki_url: "http://localhost:3100"
+# Alloy configuration (replaces Promtail — removed in Loki 3.x)
+alloy_version: "latest"
 
 # Node Exporter configuration
 node_exporter_version: latest

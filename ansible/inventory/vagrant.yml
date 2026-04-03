@@ -57,7 +57,7 @@ all:
     # Monitoring
     deploy_monitoring: true
     deploy_loki: true
-    deploy_promtail: true
+    deploy_alloy: true
 
     # Feature flags
     firewall_enabled: true
