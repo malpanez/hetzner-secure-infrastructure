@@ -84,9 +84,15 @@
         nginx_wordpress_php_fpm_min_spare_servers: 4
         nginx_wordpress_php_fpm_max_spare_servers: 12
         nginx_wordpress_admin_user: tmt_admin
+        nginx_wordpress_admin_password: "{{ vault_wordpress_academy_admin_password }}"
         nginx_wordpress_learndash_enabled: true
         nginx_wordpress_woocommerce_enabled: false
-        nginx_wordpress_letsencrypt_enabled: false
+        nginx_wordpress_letsencrypt_enabled: true
+        nginx_wordpress_letsencrypt_domains:
+          - academy.twomindstrading.com
+        nginx_wordpress_letsencrypt_cloudflare_api_token: "{{ vault_cloudflare_api_token }}"
+        nginx_wordpress_ssl_cert_path: "/etc/letsencrypt/live/academy.twomindstrading.com/fullchain.pem"
+        nginx_wordpress_ssl_key_path: "/etc/letsencrypt/live/academy.twomindstrading.com/privkey.pem"
         nginx_wordpress_redis_database: 1
         nginx_wordpress_redis_prefix: "wp_academy_"
         # Import Business Courses starter template (clean base for LearnDash)
