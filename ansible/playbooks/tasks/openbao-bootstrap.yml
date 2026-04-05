@@ -168,6 +168,18 @@
   no_log: true
   tags: [openbao, bootstrap]
 
+# Re-run path: accept an explicit admin token via extra-vars so seeding tasks
+# can execute against an already-initialized vault without needing the bootstrap
+# token file. Pass as: --extra-vars "openbao_admin_token=<root-or-admin-token>"
+- name: Use provided admin token as bootstrap token (re-run path)
+  ansible.builtin.set_fact:
+    openbao_bootstrap_token: "{{ openbao_admin_token }}"
+  when:
+    - openbao_bootstrap_token is not defined
+    - openbao_admin_token is defined
+  no_log: true
+  tags: [openbao, bootstrap]
+
 # Transit auto-unseal: wait for OpenBao to auto-unseal itself
 - name: Wait for OpenBao to auto-unseal (Transit mode)
   ansible.builtin.command: "{{ openbao_cli }} status -format=json"
@@ -389,12 +401,16 @@
 - name: Seed WordPress Academy admin password in OpenBao
   ansible.builtin.command: >-
     {{ openbao_cli }} kv put secret/wordpress-academy
+    db_name=wordpress_academy
+    db_user=wp_academy
+    db_password={{ vault_wp_academy_db_password }}
     admin_password={{ vault_wordpress_academy_admin_password }}
   environment: "{{ openbao_env | combine({'VAULT_TOKEN': openbao_bootstrap_token}) }}"
   changed_when: true
   when:
     - openbao_bootstrap_token is defined
     - vault_wordpress_academy_admin_password is defined
+    - vault_wp_academy_db_password is defined
   no_log: true
   tags: [openbao, bootstrap]
 
