@@ -1,0 +1,28 @@
+# ============================================================================
+# Nginx JSON Logging Configuration
+# ============================================================================
+# Managed by Ansible - nginx_wordpress role
+#
+# Structured JSON log format for Loki/Grafana ingestion.
+# $request_id is a 32-char hex unique ID per request (nginx >= 1.11.0).
+# escape=json prevents special characters in user-agent/referer breaking JSON.
+# ============================================================================
+
+{% if nginx_wordpress_enable_json_logging | default(true) %}
+log_format json_combined escape=json
+  '{'
+    '"time_local":"$time_local",'
+    '"request_id":"$request_id",'
+    '"remote_addr":"$remote_addr",'
+    '"host":"$host",'
+    '"request":"$request",'
+    '"status":$status,'
+    '"body_bytes_sent":$body_bytes_sent,'
+    '"request_time":$request_time,'
+    '"upstream_response_time":"$upstream_response_time",'
+    '"upstream_cache_status":"$upstream_cache_status",'
+    '"http_referer":"$http_referer",'
+    '"http_user_agent":"$http_user_agent",'
+    '"http_x_forwarded_for":"$http_x_forwarded_for"'
+  '}';
+{% endif %}

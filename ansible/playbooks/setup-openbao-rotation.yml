@@ -571,28 +571,6 @@
         enabled: true
         state: started
 
-    - name: Deploy static credentials MOTD
-      ansible.builtin.copy:
-        dest: /etc/motd.d/80-credentials
-        mode: '0644'
-        owner: root
-        group: root
-        content: |
-          =================================================================
-            CREDENTIAL RETRIEVAL (requires OpenBao unsealed)
-          =================================================================
-            export VAULT_ADDR=http://127.0.0.1:8200
-
-            MariaDB root    : bao kv get -field=root_password secret/mariadb
-            MariaDB exporter: bao kv get -field=exporter_password secret/mariadb
-            WP admin (main) : bao kv get -field=admin_password secret/wordpress
-            WP admin (acad) : bao kv get -field=admin_password secret/wordpress-academy
-            Grafana admin   : bao kv get -field=admin_password secret/grafana
-            SMTP (if configured)   : bao kv get secret/smtp
-            Stripe (if configured) : bao kv get secret/stripe
-            Backup S3       : bao kv get secret/backup
-          =================================================================
-
     - name: Display manual steps required for already-running servers
       ansible.builtin.debug:
         msg:

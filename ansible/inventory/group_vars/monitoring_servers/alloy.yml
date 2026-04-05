@@ -3,7 +3,7 @@
 # Replaces Promtail (removed in Loki 3.x) as log shipper
 # Official grafana.grafana.alloy role configuration
 
-alloy_version: "latest"
+alloy_version: "1.15.0"
 alloy_expose_port: false
 
 alloy_user_groups:
@@ -24,10 +24,15 @@ alloy_config: |
     ]
   }
 
-  local.file_match "nginx_logs" {
+  local.file_match "nginx_access_logs" {
     path_targets = [
-      {"__address__" = "localhost", "__path__" = "/var/log/nginx/access.log", "job" = "nginx_access", "instance" = "{{ ansible_facts['fqdn'] }}"},
-      {"__address__" = "localhost", "__path__" = "/var/log/nginx/error.log",  "job" = "nginx_error",  "instance" = "{{ ansible_facts['fqdn'] }}"},
+      {"__address__" = "localhost", "__path__" = "/var/log/nginx/*-access.log", "job" = "nginx_access", "instance" = "{{ ansible_facts['fqdn'] }}"},
+    ]
+  }
+
+  local.file_match "nginx_error_logs" {
+    path_targets = [
+      {"__address__" = "localhost", "__path__" = "/var/log/nginx/*-error.log", "job" = "nginx_error", "instance" = "{{ ansible_facts['fqdn'] }}"},
     ]
   }
 
@@ -45,8 +50,48 @@ alloy_config: |
     forward_to = [loki.write.local.receiver]
   }
 
-  loki.source.file "nginx_logs" {
-    targets    = local.file_match.nginx_logs.targets
+  loki.source.file "nginx_access_logs" {
+    targets    = local.file_match.nginx_access_logs.targets
+    forward_to = [loki.process.nginx_json.receiver]
+  }
+
+  loki.source.file "nginx_error_logs" {
+    targets    = local.file_match.nginx_error_logs.targets
+    forward_to = [loki.write.local.receiver]
+  }
+
+  loki.process "nginx_json" {
+    stage.json {
+      expressions = {
+        request_id            = "request_id",
+        status                = "status",
+        request_time          = "request_time",
+        upstream_cache_status = "upstream_cache_status",
+        host                  = "host",
+        remote_addr           = "remote_addr",
+      }
+    }
+
+    stage.labels {
+      values = {
+        status = "status",
+        host   = "host",
+      }
+    }
+
+    stage.structured_metadata {
+      values = {
+        request_id            = "request_id",
+        upstream_cache_status = "upstream_cache_status",
+        remote_addr           = "remote_addr",
+      }
+    }
+
+    stage.timestamp {
+      source = "time_local"
+      format = "02/Jan/2006:15:04:05 -0700"
+    }
+
     forward_to = [loki.write.local.receiver]
   }
 

@@ -70,6 +70,9 @@ server {
     add_header Permissions-Policy $permissions_policy always;
     add_header Content-Security-Policy $content_security_policy always;
     {% endif %}
+    {% if nginx_wordpress_enable_request_id_header | default(true) %}
+    add_header X-Request-ID $request_id always;
+    {% endif %}
 
     # ========================================================================
     # Performance Optimizations
@@ -88,7 +91,11 @@ server {
     # ========================================================================
     # Logging
     # ========================================================================
+    {% if nginx_wordpress_enable_json_logging | default(true) %}
+    access_log /var/log/nginx/{{ nginx_wordpress_site_name }}-access.log json_combined;
+    {% else %}
     access_log /var/log/nginx/{{ nginx_wordpress_site_name }}-access.log;
+    {% endif %}
     error_log /var/log/nginx/{{ nginx_wordpress_site_name }}-error.log;
 
     # ========================================================================
@@ -104,6 +111,22 @@ server {
     location / {
         try_files $uri $uri/ /index.php?$args;
     }
+
+    {% if nginx_wordpress_enable_location_timeouts | default(true) %}
+    # ========================================================================
+    # WordPress Admin - Extended Timeouts
+    # ========================================================================
+    location ^~ /wp-admin/ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-{{ nginx_wordpress_site_name }}-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param SCRIPT_NAME $fastcgi_script_name;
+        fastcgi_cache_bypass 1;
+        fastcgi_no_cache 1;
+        include snippets/wp-admin-timeouts.conf;
+        add_header X-FastCGI-Cache $upstream_cache_status;
+    }
+    {% endif %}
 
     # ========================================================================
     # PHP Processing with FastCGI Cache
@@ -192,11 +215,6 @@ server {
     # ========================================================================
     location ~* ^/(ld-focus-mode|learndash-checkout)/ {
         try_files $uri $uri/ /index.php?$args;
-        include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-{{ nginx_wordpress_site_name }}-fpm.sock;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        fastcgi_cache_bypass 1;
-        fastcgi_no_cache 1;
     }
     {% endif %}
 
@@ -225,7 +243,11 @@ server {
     root {{ nginx_wordpress_web_root }};
     index index.php index.html;
 
+    {% if nginx_wordpress_enable_json_logging | default(true) %}
+    access_log /var/log/nginx/{{ nginx_wordpress_site_name }}-access.log json_combined;
+    {% else %}
     access_log /var/log/nginx/{{ nginx_wordpress_site_name }}-access.log;
+    {% endif %}
     error_log /var/log/nginx/{{ nginx_wordpress_site_name }}-error.log;
 
     # Performance settings

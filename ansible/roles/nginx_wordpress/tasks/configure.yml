@@ -78,6 +78,30 @@
   register: nginx_security_headers_deployed
   tags: [nginx-wordpress, nginx, config, security]
 
+- name: Nginx WordPress | Configure | Deploy JSON logging config
+  ansible.builtin.template:
+    src: conf.d/logging.conf.j2
+    dest: /etc/nginx/conf.d/logging.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when: nginx_wordpress_enable_json_logging | default(true)
+  register: nginx_logging_deployed
+  tags: [nginx-wordpress, nginx, config, logging]
+
+- name: Nginx WordPress | Configure | Deploy stub_status config
+  ansible.builtin.template:
+    src: conf.d/stub-status.conf.j2
+    dest: /etc/nginx/conf.d/stub-status.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when:
+    - nginx_wordpress_enable_stub_status | default(true)
+    - nginx_wordpress_site_name == 'main' or nginx_wordpress_site_name == 'wordpress'
+  register: nginx_stub_status_deployed
+  tags: [nginx-wordpress, nginx, config, monitoring]
+
 - name: Nginx WordPress | Configure | Create snippets directory
   ansible.builtin.file:
     path: /etc/nginx/snippets
@@ -137,6 +161,17 @@
   register: nginx_static_assets_deployed
   tags: [nginx-wordpress, nginx, config, performance]
 
+- name: Nginx WordPress | Configure | Deploy wp-admin timeouts snippet
+  ansible.builtin.template:
+    src: snippets/wp-admin-timeouts.conf.j2
+    dest: /etc/nginx/snippets/wp-admin-timeouts.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when: nginx_wordpress_enable_location_timeouts | default(true)
+  register: nginx_wp_admin_timeouts_deployed
+  tags: [nginx-wordpress, nginx, config, performance]
+
 - name: Nginx WordPress | Configure | Deploy modular WordPress site configuration
   ansible.builtin.template:
     src: sites-available/wordpress.conf.j2
@@ -159,6 +194,15 @@
   ansible.builtin.file:
     path: "{{ nginx_wordpress_nginx_sites_enabled }}/default"
     state: absent
+  tags: [nginx-wordpress, nginx, config]
+
+- name: Nginx WordPress | Configure | Remove legacy site configs
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ nginx_wordpress_nginx_sites_enabled }}/wordpress.conf"
+    - "{{ nginx_wordpress_nginx_sites_available }}/wordpress.conf"
   tags: [nginx-wordpress, nginx, config]
 
 - name: Nginx WordPress | Configure | Validate Nginx configuration

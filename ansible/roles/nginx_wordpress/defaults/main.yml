@@ -19,6 +19,16 @@ nginx_wordpress_enable_security_headers: true    # CSP, X-Frame-Options, etc.
 nginx_wordpress_learndash_enabled: true          # LearnDash LMS optimizations
 nginx_wordpress_woocommerce_enabled: false       # WooCommerce cache bypass
 
+# Observability & Advanced Features
+nginx_wordpress_enable_json_logging: true        # Structured JSON logs for Loki
+nginx_wordpress_enable_request_id_header: true   # X-Request-ID response header
+nginx_wordpress_enable_stub_status: true         # nginx stub_status for Prometheus
+nginx_wordpress_enable_location_timeouts: true   # Differentiated timeouts per location
+
+# Timeout values (seconds)
+nginx_wordpress_timeout_wp_admin_read: 600
+nginx_wordpress_timeout_wp_admin_send: 600
+
 # ========================================
 # Nginx Configuration
 # ========================================

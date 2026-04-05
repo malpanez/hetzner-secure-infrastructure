@@ -70,6 +70,9 @@ common_disable_root_password: false
 # Enable cleanup of unnecessary packages
 common_cleanup_enabled: true
 
+# Maximum systemd journal size (journalctl --vacuum-size)
+common_journal_max_size: "500M"
+
 # Packages to remove
 common_packages_to_remove:
   - snapd

@@ -1,9 +1,9 @@
 ---
 phase: 07-unified-deploy-yml-orchestrator
-verified: 2026-04-02T19:00:00Z
-status: passed
-score: 8/8 must-haves verified
-re_verification: false
+verified: 2026-04-05T00:00:00Z
+status: gaps_found
+score: 8/8 must-haves verified (original scope) / 3 gaps found in code review
+re_verification: true
 ---
 
 # Phase 7: Unified deploy.yml Orchestrator — Verification Report
@@ -114,9 +114,35 @@ No stubs, TODOs, FIXMEs, placeholder returns, or hardcoded empty data found in d
 
 ### Gaps Summary
 
-No gaps. All must-haves verified.
+**3 gaps found in post-deployment code review (2026-04-05):**
 
-The only informational note is the DEPLOY-* requirements being defined only in ROADMAP.md and not in REQUIREMENTS.md — this is a documentation inconsistency with no functional impact.
+#### GAP-1 (BLOCKER): Academy SSL cert missing on fresh deploy
+
+- **File:** `ansible/playbooks/dual-wordpress.yml` line 90 — `nginx_wordpress_letsencrypt_enabled: false`
+- **Problem:** `nginx.yml` group_vars sets `nginx_wordpress_ssl_enabled: true` and
+  `nginx_wordpress_ssl_cert_path: "/etc/letsencrypt/live/{{ nginx_wordpress_server_name }}/fullchain.pem"`.
+  Academy inherits `ssl_enabled: true` but `letsencrypt_enabled: false` means certbot never runs for academy.
+  On a fresh server the cert file does not exist → nginx fails to start.
+- **Fix:** Add to academy vars block in `dual-wordpress.yml`:
+  - `nginx_wordpress_letsencrypt_enabled: true`
+  - `nginx_wordpress_letsencrypt_domains: [academy.twomindstrading.com]`
+  - `nginx_wordpress_letsencrypt_cloudflare_api_token: "{{ vault_cloudflare_api_token }}"`
+  - `nginx_wordpress_ssl_cert_path: "/etc/letsencrypt/live/academy.twomindstrading.com/fullchain.pem"`
+  - `nginx_wordpress_ssl_key_path: "/etc/letsencrypt/live/academy.twomindstrading.com/privkey.pem"`
+
+#### GAP-2 (DATA): `secret/wordpress-academy` KV seeding incomplete
+
+- **File:** `ansible/playbooks/tasks/openbao-bootstrap.yml` — "Seed WordPress Academy admin password in OpenBao"
+- **Problem:** Only seeds `admin_password`. Missing `db_name`, `db_user`, `db_password`.
+  Inconsistent with `secret/wordpress` which includes all four fields.
+- **Fix:** Add `db_name`, `db_user`, `db_password` fields to the `kv put` command for `secret/wordpress-academy`.
+
+#### GAP-3 (USABILITY): MOTD shows HTTP instead of HTTPS for VAULT_ADDR
+
+- **File:** `ansible/roles/security_hardening/templates/motd.sh.j2`
+- **Problem:** Line shows `export VAULT_ADDR=http://127.0.0.1:8200` but OpenBao listens on HTTPS.
+  Any `bao kv get` command will fail with "Client sent HTTP to HTTPS server" until corrected.
+- **Fix:** Change to `export VAULT_ADDR=https://127.0.0.1:8200` and add `export VAULT_SKIP_VERIFY=1`.
 
 ---
 

@@ -1,0 +1,13 @@
+# ============================================================================
+# WordPress Admin Extended Timeouts
+# ============================================================================
+# Managed by Ansible - nginx_wordpress role
+#
+# Admin operations (plugin install, bulk actions, LearnDash import) can take
+# several minutes. Standard 300s timeouts cause 504s on legitimate operations.
+# ============================================================================
+
+{% if nginx_wordpress_enable_location_timeouts | default(true) %}
+fastcgi_read_timeout {{ nginx_wordpress_timeout_wp_admin_read | default(600) }};
+fastcgi_send_timeout {{ nginx_wordpress_timeout_wp_admin_send | default(600) }};
+{% endif %}

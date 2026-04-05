@@ -8,3 +8,24 @@
     purge: true
   when: common_cleanup_enabled
   tags: [common, security, cleanup]
+
+- name: Common | Cleanup | Remove unused dependencies
+  ansible.builtin.apt:
+    autoremove: true
+    purge: true
+  when: common_cleanup_enabled
+  tags: [common, cleanup]
+
+- name: Common | Cleanup | Clear APT package cache
+  ansible.builtin.apt:
+    clean: true
+  when: common_cleanup_enabled
+  tags: [common, cleanup]
+
+- name: Common | Cleanup | Vacuum systemd journal
+  ansible.builtin.command:
+    cmd: journalctl --vacuum-size={{ common_journal_max_size }}
+  changed_when: false
+  failed_when: false
+  when: common_cleanup_enabled
+  tags: [common, cleanup]

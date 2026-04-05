@@ -45,7 +45,7 @@ prometheus_scrape_mariadb_exporter: true
 prometheus_mariadb_exporter_port: 9104
 
 # Nginx Exporter (web server metrics)
-prometheus_scrape_nginx_exporter: false  # Optional
+prometheus_scrape_nginx_exporter: true
 prometheus_nginx_exporter_port: 9113
 
 # ========================================
