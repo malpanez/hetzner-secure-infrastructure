@@ -80,11 +80,6 @@ repos:
         args:
           - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
           - --args=--format=compact
-      - id: terraform_trivy
-        name: Terraform Trivy Security Scan
-        args:
-          - --args=--severity=CRITICAL,HIGH
-          - --args=--exit-code=0
 
   # ============================================
   # TFSec security scanner
