@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed Phase 07 Plan 02 — deployment-playbook.md rewritten for deploy.yml 3-step workflow
-last_updated: "2026-04-02T19:00:00.028Z"
-last_activity: 2026-04-02
+stopped_at: "Completed Phase 07 Plan 03 — gap closure: academy SSL, KV seeding, MOTD VAULT_ADDR"
+last_updated: "2026-04-05T09:37:07.669Z"
+last_activity: 2026-04-05
 progress:
   total_phases: 8
   completed_phases: 4
-  total_plans: 13
-  completed_plans: 10
+  total_plans: 14
+  completed_plans: 11
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Un alumno puede descubrir cursos en el main site, comprar en academy, y aprender sin fricciones — con <2s LCP y sin riesgo de perder datos.
-**Current focus:** Phase 07 — unified-deploy-yml-orchestrator
+**Current focus:** Phase 07 — unified-deploy-yml-orchestrator-single-command-fresh-deployment-with-auto-pause-checkpoints-for-openbao-transit-and-primary-initialization
 
 ## Current Position
 
-Phase: 07
-Plan: Not started
+Phase: 07 (unified-deploy-yml-orchestrator-single-command-fresh-deployment-with-auto-pause-checkpoints-for-openbao-transit-and-primary-initialization) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-04-02
+Last activity: 2026-04-05
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -59,6 +59,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02-testing-validation P01 | 55 | 2 tasks | 5 files |
 | Phase 02-testing-validation P02 | 120 | 2 tasks | 18 files |
 | Phase 07-unified-deploy-yml-orchestrator P02 | 2min | 1 tasks | 1 files |
+| Phase 07-unified-deploy-yml-orchestrator P03 | 7min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -82,6 +83,8 @@ Recent decisions affecting current work:
 - [Phase 02-testing-validation]: 02-02: trivy, kics, terraform-docs, tflint-hcloud-plugin in ci.skip — not installed; system ansible-lint (6.17.2) used directly instead of pre-commit hook
 - [Phase 02-testing-validation]: 02-02: ansible-lint full-tree scan times out under system load; scan via playbook entrypoint exits 0 and covers all first-party code
 - [Phase 07-unified-deploy-yml-orchestrator]: 07-02: Old 10-step manual sequence removed — deploy.yml handles full sequence automatically with two credential-saving pauses
+- [Phase 07-unified-deploy-yml-orchestrator]: Academy certbot uses Cloudflare DNS-01 with explicit domains — cannot inherit main site letsencrypt_domains
+- [Phase 07-unified-deploy-yml-orchestrator]: VAULT_SKIP_VERIFY=1 safe for localhost-only HTTPS communication against self-signed cert
 
 ### Pending Todos
 
@@ -101,6 +104,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-02T18:50:56.819Z
-Stopped at: Completed Phase 07 Plan 02 — deployment-playbook.md rewritten for deploy.yml 3-step workflow
+Last session: 2026-04-05T09:37:07.662Z
+Stopped at: Completed Phase 07 Plan 03 — gap closure: academy SSL, KV seeding, MOTD VAULT_ADDR
 Resume file: None
