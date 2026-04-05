@@ -35,8 +35,12 @@ title = "Hetzner Secure Infrastructure - GitLeaks Config"
     '''REDACTED''',
   ]
 
-  # Ignore commits that add .gitleaks.toml itself
-  commits = []
+  # Historical commits with Terraform S3 secret_key vars (keys rotated, no longer in codebase)
+  commits = [
+    "10284e82717b55052995f4e1a6cfdbd3b12e6a36",
+    "a1c30a1b8ef16b12a5d10c452e790290c3fafec8",
+    "b096f9115b76da0d9e5b0360e1658ed0286ccd72",
+  ]
 
 [extend]
   # Use default gitleaks rules
