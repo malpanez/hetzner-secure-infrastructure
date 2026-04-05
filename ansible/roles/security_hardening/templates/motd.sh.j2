@@ -67,5 +67,13 @@ if [ -n "$UPDATES" ] && [ "$UPDATES" -gt "0" ] 2>/dev/null; then
     echo -e "  Run: ${CYAN}sudo apt update && sudo apt upgrade${NC}"
     echo ""
 fi
+echo -e "${BLUE}Credential Retrieval (requires OpenBao unsealed):${NC}"
+echo -e "  ${YELLOW}export VAULT_ADDR=https://127.0.0.1:8200${NC}"
+echo -e "  ${YELLOW}export VAULT_SKIP_VERIFY=1${NC}"
+echo -e "  MariaDB root    : ${CYAN}bao kv get -field=root_password secret/mariadb${NC}"
+echo -e "  WP admin (main) : ${CYAN}bao kv get -field=admin_password secret/wordpress${NC}"
+echo -e "  WP admin (acad) : ${CYAN}bao kv get -field=admin_password secret/wordpress-academy${NC}"
+echo -e "  Grafana admin   : ${CYAN}bao kv get -field=admin_password secret/grafana${NC}"
+echo ""
 echo -e "${CYAN}################################################################################${NC}"
 echo ""
