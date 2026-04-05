@@ -71,12 +71,14 @@ repos:
         exclude: 'examples/'
       - id: terraform_docs
         name: Terraform Docs
+        stages: [manual]
         args:
           - --hook-config=--path-to-file=README.md
           - --hook-config=--add-to-existing-file=true
           - --hook-config=--create-file-if-not-exist=true
       - id: terraform_tflint
         name: Terraform Lint
+        stages: [manual]
         args:
           - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
           - --args=--format=compact
