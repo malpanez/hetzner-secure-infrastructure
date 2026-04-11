@@ -208,6 +208,8 @@ nginx_wordpress_themes_additional: []
 #   - "Online Course"
 #   - "Digital Course"
 
+nginx_wordpress_content_pages: []  # List of {slug: "..."} to deploy from files/pages/tmt-page-<slug>.html
+
 nginx_wordpress_starter_template_import: false  # Disabled by default — enable on academy only
 nginx_wordpress_starter_template_name: "Business Courses"  # LearnDash-optimized template
 nginx_wordpress_starter_template_id: ""  # Leave empty to auto-discover by name
