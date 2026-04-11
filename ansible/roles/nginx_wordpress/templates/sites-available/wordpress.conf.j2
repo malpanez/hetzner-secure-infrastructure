@@ -116,15 +116,21 @@ server {
     # ========================================================================
     # WordPress Admin - Extended Timeouts
     # ========================================================================
+    # ^~ takes priority over regex. try_files serves static assets (CSS/JS)
+    # directly; only .php files are forwarded to PHP-FPM.
     location ^~ /wp-admin/ {
-        include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-{{ nginx_wordpress_site_name }}-fpm.sock;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        fastcgi_param SCRIPT_NAME $fastcgi_script_name;
-        fastcgi_cache_bypass 1;
-        fastcgi_no_cache 1;
-        include snippets/wp-admin-timeouts.conf;
-        add_header X-FastCGI-Cache $upstream_cache_status;
+        try_files $uri $uri/ /wp-admin/index.php?$args;
+
+        location ~ \.php$ {
+            include snippets/fastcgi-php.conf;
+            fastcgi_pass unix:/run/php/php{{ nginx_wordpress_php_version }}-{{ nginx_wordpress_site_name }}-fpm.sock;
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+            fastcgi_param SCRIPT_NAME $fastcgi_script_name;
+            fastcgi_cache_bypass 1;
+            fastcgi_no_cache 1;
+            include snippets/wp-admin-timeouts.conf;
+            add_header X-FastCGI-Cache $upstream_cache_status;
+        }
     }
     {% endif %}
 

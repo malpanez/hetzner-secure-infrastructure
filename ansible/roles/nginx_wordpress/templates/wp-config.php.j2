@@ -26,6 +26,9 @@ define('NONCE_SALT',       '{{ nginx_wordpress_nonce_salt }}');
 // ** WordPress debugging **
 define('WP_DEBUG', false);
 
+// ** Nginx Helper - FastCGI cache purge path **
+define('RT_WP_NGINX_HELPER_CACHE_PATH', '/var/cache/nginx/{{ nginx_wordpress_site_name }}');
+
 // ** Redis/Valkey object cache **
 define('WP_REDIS_HOST', '127.0.0.1');
 define('WP_REDIS_PORT', 6379);
