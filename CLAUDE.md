@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Hetzner VPS infrastructure for WordPress (LearnDash LMS) managed with Terraform + Ansible, hardened with OpenBao secrets management, SSH 2FA, AppArmor, and Cloudflare.
+Hetzner VPS infrastructure for WordPress (LearnDash LMS) managed with Terraform + Ansible,
+hardened with OpenBao secrets management, SSH 2FA, AppArmor, and Cloudflare.
 
 ## Stack
 
@@ -14,7 +15,7 @@ Hetzner VPS infrastructure for WordPress (LearnDash LMS) managed with Terraform 
 
 ## Project structure
 
-```
+```text
 ansible/
   inventory/          # hcloud dynamic + static inventories
   playbooks/          # site.yml (unified orchestrator), dual-wordpress.yml, openbao.yml, monitoring.yml, validate.yml
