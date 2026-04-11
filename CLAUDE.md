@@ -17,7 +17,7 @@ Hetzner VPS infrastructure for WordPress (LearnDash LMS) managed with Terraform 
 ```
 ansible/
   inventory/          # hcloud dynamic + static inventories
-  playbooks/          # site.yml, wordpress.yml, openbao-bootstrap.yml, setup-openbao-rotation.yml
+  playbooks/          # site.yml (unified orchestrator), dual-wordpress.yml, openbao.yml, monitoring.yml, validate.yml
   roles/              # apparmor, common, fail2ban, firewall, geerlingguy.mysql,
                       # monitoring, nginx_wordpress, openbao, security_hardening,
                       # ssh_2fa, valkey, cloudflare_origin_ssl

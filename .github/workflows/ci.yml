@@ -96,17 +96,15 @@ jobs:
             -p /tmp/lint-collections --force
           ansible-galaxy role install geerlingguy.mysql
           # ANSIBLE_COLLECTIONS_PATH (singular) restricts collection discovery to this path.
-          # Excludes monitoring.yml and site.yml — they only call Galaxy roles, no custom code.
           ANSIBLE_COLLECTIONS_PATH=/tmp/lint-collections \
           ansible-lint \
+            playbooks/site.yml \
             playbooks/common.yml \
             playbooks/dual-wordpress.yml \
             playbooks/openbao.yml \
             playbooks/openbao-transit-bootstrap.yml \
             playbooks/openbao-bootstrap.yml \
             playbooks/setup-openbao-rotation.yml \
-            playbooks/wordpress.yml \
-            playbooks/wordpress-only.yml \
             playbooks/validate.yml \
             roles/ \
             --exclude roles/geerlingguy.mysql/ \

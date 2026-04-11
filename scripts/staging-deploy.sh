@@ -136,19 +136,7 @@ ansible_deploy() {
   # Deploy
   log_info "Running Ansible playbook (this takes ~10-15 minutes)..."
 
-  # Ask which playbook
-  echo ""
-  echo "Which playbook to run?"
-  echo "1) wordpress-only.yml (recommended for quick testing)"
-  echo "2) site.yml (full deployment with monitoring)"
-  read -p "Choice [1-2]: " -n 1 -r
-  echo
-
-  if [[ $REPLY == "2" ]]; then
-    PLAYBOOK="playbooks/site.yml"
-  else
-    PLAYBOOK="playbooks/wordpress-only.yml"
-  fi
+  PLAYBOOK="playbooks/site.yml"
 
   ansible-playbook -i inventory/hetzner.yml "${PLAYBOOK}" --ask-vault-pass
 
@@ -208,7 +196,7 @@ main() {
   else
     log_info "Terraform deployed. Run Ansible manually:"
     echo "cd ansible"
-    echo "ansible-playbook -i inventory/hetzner.yml playbooks/wordpress-only.yml --ask-vault-pass"
+    echo "ansible-playbook -i inventory/hetzner.yml playbooks/site.yml --ask-vault-pass"
   fi
 }
 
