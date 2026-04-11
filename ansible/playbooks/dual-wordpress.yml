@@ -64,6 +64,17 @@
         nginx_wordpress_secure_auth_salt: "{{ vault_nginx_wordpress_secure_auth_salt }}"
         nginx_wordpress_logged_in_salt: "{{ vault_nginx_wordpress_logged_in_salt }}"
         nginx_wordpress_nonce_salt: "{{ vault_nginx_wordpress_nonce_salt }}"
+        nginx_wordpress_content_pages:
+          - {slug: homepage-v2-4}
+          - {slug: cursos}
+          - {slug: metodologia}
+          - {slug: instructores}
+          - {slug: contacto}
+          - {slug: sobre-nosotros}
+          - {slug: equipo-2}
+          - {slug: aviso-de-riesgo}
+          - {slug: politica-de-cookies}
+          - {slug: politica-de-privacidad}
       tags: [wordpress, nginx, webserver, main]
 
     - name: Deploy academy site (academy.twomindstrading.com)
