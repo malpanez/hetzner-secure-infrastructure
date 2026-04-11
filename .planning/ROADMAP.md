@@ -234,4 +234,4 @@ Plans:
 
 Plans:
 - [x] 09-01: Rename/consolidate orchestrators — site.yml becomes deploy.yml content; delete wordpress.yml, wordpress-only.yml; update all cross-references (DEPLOY-01, DEPLOY-02)
-- [ ] 09-02: Update deploy-full.sh to call site.yml; add idempotency smoke-test to validate.yml; update docs/deployment-playbook.md (DEPLOY-03)
+- [x] 09-02: Update deploy-full.sh to call site.yml; add idempotency smoke-test to validate.yml; update docs/deployment-playbook.md (DEPLOY-03)
