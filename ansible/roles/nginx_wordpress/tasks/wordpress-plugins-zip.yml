@@ -3,7 +3,7 @@
   ansible.builtin.stat:
     path: "{{ nginx_wordpress_web_root }}/wp-config.php"
   register: wp_zip_check
-  tags: [nginx-wordpress, wordpress, plugins, zip]
+  tags: [nginx-wordpress, wordpress, plugins-zip]
 
 - name: Nginx WordPress | ZIP Plugins | Create temp directory
   ansible.builtin.file:
@@ -13,7 +13,7 @@
     group: "{{ nginx_wordpress_nginx_group }}"
     mode: "0755"
   when: wp_zip_check.stat.exists
-  tags: [nginx-wordpress, wordpress, plugins, zip]
+  tags: [nginx-wordpress, wordpress, plugins-zip]
 
 - name: Nginx WordPress | ZIP Plugins | Copy ZIP files to server
   ansible.builtin.copy:
@@ -24,7 +24,7 @@
     mode: "0644"
   loop: "{{ nginx_wordpress_plugins_zip }}"
   when: wp_zip_check.stat.exists
-  tags: [nginx-wordpress, wordpress, plugins, zip, molecule-notest]
+  tags: [nginx-wordpress, wordpress, plugins-zip, molecule-notest]
 
 - name: Nginx WordPress | ZIP Plugins | Install and activate ZIP plugins
   ansible.builtin.shell: |
@@ -42,11 +42,11 @@
   register: zip_plugin_result
   changed_when: "'SKIP:' not in zip_plugin_result.stdout"
   when: wp_zip_check.stat.exists
-  tags: [nginx-wordpress, wordpress, plugins, zip, molecule-notest]
+  tags: [nginx-wordpress, wordpress, plugins-zip, molecule-notest]
 
 - name: Nginx WordPress | ZIP Plugins | Remove temp directory
   ansible.builtin.file:
     path: /tmp/wp-plugin-zips
     state: absent
   when: wp_zip_check.stat.exists
-  tags: [nginx-wordpress, wordpress, plugins, zip]
+  tags: [nginx-wordpress, wordpress, plugins-zip]
