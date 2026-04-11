@@ -215,7 +215,7 @@ Plans:
 
 Plans:
 - [x] 08-01-PLAN.md — ZIP plugin install automation + LearnDash ZIP for academy (ACAD-01, ACAD-02)
-- [ ] 08-02-PLAN.md — SEO post_title in content deployment + theme cleanup on both sites (MAIN-01, MAIN-04, MAIN-05)
+- [x] 08-02-PLAN.md — SEO post_title in content deployment + theme cleanup on both sites (MAIN-01, MAIN-04, MAIN-05)
 
 ### Phase 9: Playbook Consolidation — site.yml as single idempotent orchestrator
 

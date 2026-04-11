@@ -50,10 +50,10 @@
 
 ### Main site — twomindstrading.com
 
-- [ ] **MAIN-01**: WordPress instalado con Kadence theme (libre) + Kadence Blocks
+- [x] **MAIN-01**: WordPress instalado con Kadence theme (libre) + Kadence Blocks
 - [ ] **MAIN-02**: Contenido importado desde XML export de Fase 0
-- [ ] **MAIN-04**: Páginas reconstruidas en Kadence Blocks: home, metodología, cursos (listing con CTAs → academy), instructores, contacto
-- [ ] **MAIN-05**: Google Fonts configurado como "Local" en Kadence (elimina latencia externa)
+- [x] **MAIN-04**: Páginas reconstruidas en Kadence Blocks: home, metodología, cursos (listing con CTAs → academy), instructores, contacto
+- [x] **MAIN-05**: Google Fonts configurado como "Local" en Kadence (elimina latencia externa)
 - [ ] **MAIN-06**: LCP <2s mobile, PageSpeed >90
 - [ ] **MAIN-07**: Plugin stack: kadence-blocks, redis-cache, nginx-helper, wp-mail-smtp, seo-by-rank-math, cookie-notice, limit-login-attempts-reloaded, wordfence-login-security, updraftplus
 - [ ] **MAIN-08**: UpdraftPlus configurado con backup a Google Drive (DB + files, diario, 14 días retención)
@@ -62,8 +62,8 @@
 
 ### Academy — academy.twomindstrading.com
 
-- [ ] **ACAD-01**: WordPress instalado con Kadence theme + Kadence Blocks
-- [ ] **ACAD-02**: LearnDash Pro instalado manualmente (requiere licencia — subir ZIP vía wp-admin)
+- [x] **ACAD-01**: WordPress instalado con Kadence theme + Kadence Blocks
+- [x] **ACAD-02**: LearnDash Pro instalado manualmente (requiere licencia — subir ZIP vía wp-admin)
 - [ ] **ACAD-03**: WooCommerce instalado y configurado para enrollment (Stripe o PayPal)
 - [ ] **ACAD-04**: Cursos creados desde cero (no hay backup de contenido — Fase 0 confirmó que se perdió)
 - [ ] **ACAD-05**: Plugin stack: kadence-blocks, redis-cache, nginx-helper, wp-mail-smtp, limit-login-attempts-reloaded, wordfence-login-security, updraftplus, woocommerce, LearnDash Pro

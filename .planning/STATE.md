@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed Phase 08 Plan 01 — ZIP plugin install automation for nginx_wordpress role
-last_updated: "2026-04-11T15:03:04.714Z"
+status: verifying
+stopped_at: Completed Phase 08 Plan 02 — SEO titles, theme cleanup, MAIN-05 verification
+last_updated: "2026-04-11T15:06:58.756Z"
 last_activity: 2026-04-11
 progress:
   total_phases: 10
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 21
-  completed_plans: 12
+  completed_plans: 13
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 
 Phase: 08 (wordpress-site-quality-main-site-pages-academy-visual-parity) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-11
 
 Progress: [░░░░░░░░░░] 0%
@@ -61,6 +61,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 07-unified-deploy-yml-orchestrator P02 | 2min | 1 tasks | 1 files |
 | Phase 07-unified-deploy-yml-orchestrator P03 | 7min | 3 tasks | 3 files |
 | Phase 08 P01 | 10 | 2 tasks | 5 files |
+| Phase 08 P02 | 5min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,8 @@ Recent decisions affecting current work:
 - [Phase 07-unified-deploy-yml-orchestrator]: VAULT_SKIP_VERIFY=1 safe for localhost-only HTTPS communication against self-signed cert
 - [Phase 08]: molecule-notest tag applied to ZIP copy and shell tasks — ZIP file not present in CI environment
 - [Phase 08]: Idempotency via wp-cli plugin is-installed check before install — changed_when driven by SKIP: prefix in stdout
+- [Phase 08]: Jinja2 {% if %} tags indented 4 spaces inside block scalar — matches surrounding shell indent, keeps YAML valid
+- [Phase 08]: Theme cleanup uses WP-CLI --status=inactive list + shell loop; molecule-notest tag applied (WP-CLI absent in CI)
 
 ### Pending Todos
 
@@ -107,6 +110,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-11T15:03:04.690Z
-Stopped at: Completed Phase 08 Plan 01 — ZIP plugin install automation for nginx_wordpress role
+Last session: 2026-04-11T15:06:58.742Z
+Stopped at: Completed Phase 08 Plan 02 — SEO titles, theme cleanup, MAIN-05 verification
 Resume file: None
