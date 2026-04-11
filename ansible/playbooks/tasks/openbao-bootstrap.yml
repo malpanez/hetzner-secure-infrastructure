@@ -615,6 +615,42 @@
     openbao_backup_token is defined
   tags: [openbao, bootstrap]
 
+- name: Create OpenBao policy for read-only secret access
+  ansible.builtin.shell: |
+    set -euo pipefail
+    cat <<'POLICY' | {{ openbao_cli }} policy write read-secrets -
+    path "secret/data/*" {
+      capabilities = ["read", "list"]
+    }
+    path "secret/metadata/*" {
+      capabilities = ["list"]
+    }
+    path "auth/token/renew-self" {
+      capabilities = ["update"]
+    }
+    POLICY
+  args:
+    executable: /bin/bash
+  environment: "{{ openbao_env | combine({'VAULT_TOKEN': openbao_bootstrap_token}) }}"
+  changed_when: true
+  when: openbao_bootstrap_token is defined
+  no_log: true
+  tags: [openbao, bootstrap]
+
+- name: Create OpenBao read-only token and write to server
+  ansible.builtin.shell: |
+    set -euo pipefail
+    {{ openbao_cli }} token create -format=json -orphan -period=8760h -policy=read-secrets \
+      | jq -r '.auth.client_token' > /root/.openbao-readonly-token
+    chmod 600 /root/.openbao-readonly-token
+  args:
+    executable: /bin/bash
+  environment: "{{ openbao_env | combine({'VAULT_TOKEN': openbao_bootstrap_token}) }}"
+  changed_when: true
+  when: openbao_bootstrap_token is defined
+  no_log: true
+  tags: [openbao, bootstrap]
+
 - name: Remove persisted bootstrap token (bootstrap complete)
   ansible.builtin.file:
     path: /root/.openbao-bootstrap-token
