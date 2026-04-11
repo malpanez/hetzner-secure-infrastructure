@@ -182,7 +182,7 @@ repos:
         exclude: >-
           (?x)(^docs/|^\.vagrant/|^\.planning/|secrets\.yml\.example|
           ssh_2fa/README|cloudflare_origin_ssl/README|
-          terraform/backend\.tf|package\.lock\.json)
+          terraform/backend\.tf|package\.lock\.json|\.gitleaks\.toml)
 
   # ============================================
   # Security scanning
