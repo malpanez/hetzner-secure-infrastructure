@@ -48,6 +48,9 @@
     {{ nginx_wordpress_wpcli_path }} post update "$POST_ID" \
       --post_content="$(cat /tmp/tmt-pages/tmt-page-{{ item.slug }}.html)" \
       --post_name={{ item.slug }} \
+    {% if item.title is defined %}
+      --post_title="{{ item.title }}" \
+    {% endif %}
       --path={{ nginx_wordpress_web_root }}
   args:
     executable: /bin/bash

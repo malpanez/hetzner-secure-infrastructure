@@ -65,16 +65,28 @@
         nginx_wordpress_logged_in_salt: "{{ vault_nginx_wordpress_logged_in_salt }}"
         nginx_wordpress_nonce_salt: "{{ vault_nginx_wordpress_nonce_salt }}"
         nginx_wordpress_content_pages:
-          - {slug: homepage, wp_current_slug: homepage-v2-4}
-          - {slug: cursos}
-          - {slug: metodologia}
-          - {slug: instructores}
-          - {slug: contacto}
-          - {slug: sobre-nosotros}
-          - {slug: equipo, wp_current_slug: equipo-2}
-          - {slug: aviso-de-riesgo}
-          - {slug: politica-de-cookies}
-          - {slug: politica-de-privacidad}
+          - slug: homepage
+            wp_current_slug: homepage-v2-4
+            title: "Two Minds Trading | Trading de Futuros Institucional"
+          - slug: cursos
+            title: "Cursos de Trading | Two Minds Trading"
+          - slug: metodologia
+            title: "Metodología de Trading | Two Minds Trading"
+          - slug: instructores
+            title: "Instructores | Two Minds Trading"
+          - slug: contacto
+            title: "Contacto | Two Minds Trading"
+          - slug: sobre-nosotros
+            title: "Sobre Nosotros | Two Minds Trading"
+          - slug: equipo
+            wp_current_slug: equipo-2
+            title: "Nuestro Equipo | Two Minds Trading"
+          - slug: aviso-de-riesgo
+            title: "Aviso de Riesgo | Two Minds Trading"
+          - slug: politica-de-cookies
+            title: "Política de Cookies | Two Minds Trading"
+          - slug: politica-de-privacidad
+            title: "Política de Privacidad | Two Minds Trading"
       tags: [wordpress, nginx, webserver, main]
 
     - name: Deploy academy site (academy.twomindstrading.com)
