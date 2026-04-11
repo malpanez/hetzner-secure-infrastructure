@@ -171,7 +171,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 3.5 → 4 → 5 → 6 → 7 �
 | 5. Academy Site | 0/4 | Not started | - |
 | 6. OpenBao Secret Coverage | 2/2 | Complete   | 2026-04-02 |
 | 7. Unified deploy.yml | 3/3 | Complete   | 2026-04-05 |
-| 8. WordPress Site Quality | 0/2 | Not started | - |
+| 8. WordPress Site Quality | 1/2 | In Progress|  |
 | 9. Playbook Consolidation | 0/2 | Not started | - |
 
 ### Phase 6: Complete OpenBao secret coverage and rotation — academy scripts, Grafana/exporter/SMTP/Stripe in KV, static credentials MOTD
@@ -214,7 +214,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 08-01-PLAN.md — ZIP plugin install automation + LearnDash ZIP for academy (ACAD-01, ACAD-02)
+- [x] 08-01-PLAN.md — ZIP plugin install automation + LearnDash ZIP for academy (ACAD-01, ACAD-02)
 - [ ] 08-02-PLAN.md — SEO post_title in content deployment + theme cleanup on both sites (MAIN-01, MAIN-04, MAIN-05)
 
 ### Phase 9: Playbook Consolidation — site.yml as single idempotent orchestrator

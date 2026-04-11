@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "Completed Phase 07 Plan 03 — gap closure: academy SSL, KV seeding, MOTD VAULT_ADDR"
-last_updated: "2026-04-05T09:37:07.669Z"
-last_activity: 2026-04-05
+stopped_at: Completed Phase 08 Plan 01 — ZIP plugin install automation for nginx_wordpress role
+last_updated: "2026-04-11T15:03:04.714Z"
+last_activity: 2026-04-11
 progress:
-  total_phases: 8
+  total_phases: 10
   completed_phases: 4
-  total_plans: 14
-  completed_plans: 11
+  total_plans: 21
+  completed_plans: 12
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Un alumno puede descubrir cursos en el main site, comprar en academy, y aprender sin fricciones — con <2s LCP y sin riesgo de perder datos.
-**Current focus:** Phase 07 — unified-deploy-yml-orchestrator-single-command-fresh-deployment-with-auto-pause-checkpoints-for-openbao-transit-and-primary-initialization
+**Current focus:** Phase 08 — wordpress-site-quality-main-site-pages-academy-visual-parity
 
 ## Current Position
 
-Phase: 07 (unified-deploy-yml-orchestrator-single-command-fresh-deployment-with-auto-pause-checkpoints-for-openbao-transit-and-primary-initialization) — EXECUTING
-Plan: 2 of 3
+Phase: 08 (wordpress-site-quality-main-site-pages-academy-visual-parity) — EXECUTING
+Plan: 2 of 2
 Status: Ready to execute
-Last activity: 2026-04-05
+Last activity: 2026-04-11
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -60,6 +60,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02-testing-validation P02 | 120 | 2 tasks | 18 files |
 | Phase 07-unified-deploy-yml-orchestrator P02 | 2min | 1 tasks | 1 files |
 | Phase 07-unified-deploy-yml-orchestrator P03 | 7min | 3 tasks | 3 files |
+| Phase 08 P01 | 10 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,8 @@ Recent decisions affecting current work:
 - [Phase 07-unified-deploy-yml-orchestrator]: 07-02: Old 10-step manual sequence removed — deploy.yml handles full sequence automatically with two credential-saving pauses
 - [Phase 07-unified-deploy-yml-orchestrator]: Academy certbot uses Cloudflare DNS-01 with explicit domains — cannot inherit main site letsencrypt_domains
 - [Phase 07-unified-deploy-yml-orchestrator]: VAULT_SKIP_VERIFY=1 safe for localhost-only HTTPS communication against self-signed cert
+- [Phase 08]: molecule-notest tag applied to ZIP copy and shell tasks — ZIP file not present in CI environment
+- [Phase 08]: Idempotency via wp-cli plugin is-installed check before install — changed_when driven by SKIP: prefix in stdout
 
 ### Pending Todos
 
@@ -104,6 +107,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-05T09:37:07.662Z
-Stopped at: Completed Phase 07 Plan 03 — gap closure: academy SSL, KV seeding, MOTD VAULT_ADDR
+Last session: 2026-04-11T15:03:04.690Z
+Stopped at: Completed Phase 08 Plan 01 — ZIP plugin install automation for nginx_wordpress role
 Resume file: None
