@@ -81,11 +81,9 @@ echo ""
 echo "🔐 Step 2: Running Ansible hardening..."
 cd "$PROJECT_ROOT/ansible"
 
-# Update inventory
-tofu output -json -state="$PROJECT_ROOT/terraform/environments/production/terraform.tfstate" >inventory/terraform-output.json
-
 # Run playbook
-ansible-playbook -i inventory/hetzner.yml playbooks/site.yml
+ansible-playbook -i inventory/hetzner.yml playbooks/site.yml \
+  -e "openbao_transit_bootstrap_ack=true openbao_bootstrap_ack=true"
 
 echo ""
 echo "=========================================="
@@ -94,11 +92,8 @@ echo "=========================================="
 echo ""
 echo "Server IP: $SERVER_IP"
 echo ""
-echo "📱 Next Steps:"
-echo "1. SSH to server: ssh miguel@${SERVER_IP}"
-echo "2. Run: sudo /usr/local/bin/setup-2fa-yubikey.sh miguel"
-echo "3. In Windows PowerShell:"
-echo "   ykman oath accounts add 'hetzner-miguel' YOUR_SECRET"
-echo ""
-echo "⚠️  IMPORTANT: Test SSH in a NEW terminal before closing current session!"
+echo "Next Steps:"
+echo "1. SSH to server: ssh miguel@\"${SERVER_IP}\""
+echo "2. Verify OpenBao is unsealed: bao status"
+echo "3. Check services: systemctl list-timers | grep rotate"
 echo ""
