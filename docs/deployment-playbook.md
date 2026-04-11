@@ -35,11 +35,11 @@ terraform apply
 
 ```bash
 cd ansible
-ansible-playbook playbooks/deploy.yml \
+ansible-playbook playbooks/site.yml \
   -e "openbao_transit_bootstrap_ack=true openbao_bootstrap_ack=true"
 ```
 
-`deploy.yml` runs the entire sequence automatically: base hardening, OpenBao
+`site.yml` runs the entire sequence automatically: base hardening, OpenBao
 install, transit bootstrap, primary bootstrap, WordPress (dual-site), monitoring,
 rotation timers, and final validation. It pauses twice for credential saving:
 
@@ -61,7 +61,7 @@ ansible-vault edit inventory/group_vars/all/secrets.yml
 ## Re-runs / Idempotency
 
 ```bash
-ansible-playbook playbooks/deploy.yml
+ansible-playbook playbooks/site.yml
 ```
 
 No extra vars needed on re-runs. The bootstraps and pauses are skipped when
