@@ -172,7 +172,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 3.5 → 4 → 5 → 6 → 7 �
 | 6. OpenBao Secret Coverage | 2/2 | Complete   | 2026-04-02 |
 | 7. Unified deploy.yml | 3/3 | Complete   | 2026-04-05 |
 | 8. WordPress Site Quality | 1/2 | In Progress|  |
-| 9. Playbook Consolidation | 0/2 | Not started | - |
+| 9. Playbook Consolidation | 1/2 | In Progress|  |
 
 ### Phase 6: Complete OpenBao secret coverage and rotation — academy scripts, Grafana/exporter/SMTP/Stripe in KV, static credentials MOTD
 
@@ -233,5 +233,5 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 09-01: Rename/consolidate orchestrators — site.yml becomes deploy.yml content; delete wordpress.yml, wordpress-only.yml; update all cross-references (DEPLOY-01, DEPLOY-02)
+- [x] 09-01: Rename/consolidate orchestrators — site.yml becomes deploy.yml content; delete wordpress.yml, wordpress-only.yml; update all cross-references (DEPLOY-01, DEPLOY-02)
 - [ ] 09-02: Update deploy-full.sh to call site.yml; add idempotency smoke-test to validate.yml; update docs/deployment-playbook.md (DEPLOY-03)

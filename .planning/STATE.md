@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Completed Phase 08 Plan 02 — SEO titles, theme cleanup, MAIN-05 verification
-last_updated: "2026-04-11T15:20:10.865Z"
+status: executing
+stopped_at: Completed Phase 09 Plan 01 — site.yml consolidated as unified orchestrator
+last_updated: "2026-04-11T15:33:29.126Z"
 last_activity: 2026-04-11
 progress:
   total_phases: 10
   completed_phases: 5
   total_plans: 21
-  completed_plans: 13
+  completed_plans: 14
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Un alumno puede descubrir cursos en el main site, comprar en academy, y aprender sin fricciones — con <2s LCP y sin riesgo de perder datos.
-**Current focus:** Phase 08 — wordpress-site-quality-main-site-pages-academy-visual-parity
+**Current focus:** Phase 09 — playbook-consolidation-site-yml-as-single-idempotent-orchestrator
 
 ## Current Position
 
-Phase: 09
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 09 (playbook-consolidation-site-yml-as-single-idempotent-orchestrator) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-04-11
 
 Progress: [░░░░░░░░░░] 0%
@@ -62,6 +62,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 07-unified-deploy-yml-orchestrator P03 | 7min | 3 tasks | 3 files |
 | Phase 08 P01 | 10 | 2 tasks | 5 files |
 | Phase 08 P02 | 5min | 3 tasks | 3 files |
+| Phase 09-playbook-consolidation P01 | 10min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -91,6 +92,7 @@ Recent decisions affecting current work:
 - [Phase 08]: Idempotency via wp-cli plugin is-installed check before install — changed_when driven by SKIP: prefix in stdout
 - [Phase 08]: Jinja2 {% if %} tags indented 4 spaces inside block scalar — matches surrounding shell indent, keeps YAML valid
 - [Phase 08]: Theme cleanup uses WP-CLI --status=inactive list + shell loop; molecule-notest tag applied (WP-CLI absent in CI)
+- [Phase 09-playbook-consolidation]: site.yml is now the canonical entrypoint — deploy.yml deleted; openbao.yml and openbao-transit-bootstrap.yml kept as standalone day-2 playbooks
 
 ### Pending Todos
 
@@ -110,6 +112,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-11T15:06:58.742Z
-Stopped at: Completed Phase 08 Plan 02 — SEO titles, theme cleanup, MAIN-05 verification
+Last session: 2026-04-11T15:33:29.095Z
+Stopped at: Completed Phase 09 Plan 01 — site.yml consolidated as unified orchestrator
 Resume file: None
