@@ -181,8 +181,8 @@ nginx_wordpress_plugins_remove:
 # Design: Kadence FREE sufficient — dark navy palette built from scratch via Global Colors
 # Hero: static trading chart image (replaces animated particles — cleaner + faster)
 # Kadence Pro ($129/year): optional post-launch if Header/Footer visual builder needed
-nginx_wordpress_plugins_manual:
-  # - learndash  # LearnDash Pro — academy only (license required, install via ZIP)
+# LearnDash Pro — academy only (license required, install via plugins_zip)
+nginx_wordpress_plugins_manual: []
 
 # ========================================
 # WordPress Theme Configuration
