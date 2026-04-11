@@ -24,6 +24,7 @@ title = "Hetzner Secure Infrastructure - GitLeaks Config"
     '''docs/guides/TERRAFORM_CLOUD_SETUP\.md''',
     '''docs/infrastructure/HETZNER_API_TOKEN\.md''',
     '''terraform/backend\.tf''',
+    '''\.secrets\.baseline''',
   ]
 
   # Ignore specific patterns that are known examples
