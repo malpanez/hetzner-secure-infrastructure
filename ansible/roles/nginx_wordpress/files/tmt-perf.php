@@ -57,11 +57,32 @@ add_action('wp_head', function () {
     }
 }, 1);
 
-/* 5) Preload de la imagen LCP del hero */
+/* 5) Preload de la imagen LCP del hero (actualizar URL al cambiar el hero) */
+define('TMT_HERO_IMAGE', 'https://twomindstrading.com/wp-content/uploads/2026/04/unnamed-22.jpg');
 add_action('wp_head', function () {
     if (!is_front_page()) return;
-    echo '<link rel="preload" as="image" type="image/webp" href="https://twomindstrading.com/wp-content/uploads/2026/04/Gemini_Generated_Image_iyxbb2iyxbb2iyxb-scaled-1-1024x572.webp" imagesrcset="https://twomindstrading.com/wp-content/uploads/2026/04/Gemini_Generated_Image_iyxbb2iyxbb2iyxb-scaled-1-768x429.webp 768w, https://twomindstrading.com/wp-content/uploads/2026/04/Gemini_Generated_Image_iyxbb2iyxbb2iyxb-scaled-1-1024x572.webp 1024w" imagesizes="(max-width: 1023px) 90vw, 1024px" fetchpriority="high">' . "\n";
+    echo '<link rel="preload" as="image" href="' . TMT_HERO_IMAGE . '" fetchpriority="high">' . "\n";
 }, 2);
+
+/* 5b) Google Fonts: preconnect + carga diferida (evita render-blocking) */
+add_action('wp_head', function () {
+    echo '<link rel="preconnect" href="https://fonts.googleapis.com">' . "\n";
+    echo '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' . "\n";
+    echo '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Rethink+Sans:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Lexend:wght@400;600;700&display=swap" media="print" onload="this.media=\'all\'">' . "\n";
+    echo '<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Rethink+Sans:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Lexend:wght@400;600;700&display=swap"></noscript>' . "\n";
+}, 3);
+
+/* 5c) DNS prefetch para terceros (Calendly, Stripe, Cloudflare) */
+add_action('wp_head', function () {
+    $origins = [
+        'https://assets.calendly.com',
+        'https://js.stripe.com',
+        'https://cdnjs.cloudflare.com',
+    ];
+    foreach ($origins as $o) {
+        echo '<link rel="dns-prefetch" href="' . $o . '">' . "\n";
+    }
+}, 4);
 
 /* 6) Arreglar robots.txt (sin Content-Signal que da error en PSI) */
 add_filter('robots_txt', function ($output, $public) {
