@@ -31,12 +31,23 @@
       --field=ID \
       --path={{ nginx_wordpress_web_root }} \
       --format=ids)
+    {% if item.wp_current_slug is defined %}
+    if [ -z "$POST_ID" ]; then
+      POST_ID=$({{ nginx_wordpress_wpcli_path }} post list \
+        --post_type=page \
+        --name={{ item.wp_current_slug }} \
+        --field=ID \
+        --path={{ nginx_wordpress_web_root }} \
+        --format=ids)
+    fi
+    {% endif %}
     if [ -z "$POST_ID" ]; then
       echo "SKIP: page '{{ item.slug }}' not found"
       exit 0
     fi
     {{ nginx_wordpress_wpcli_path }} post update "$POST_ID" \
       --post_content="$(cat /tmp/tmt-pages/tmt-page-{{ item.slug }}.html)" \
+      --post_name={{ item.slug }} \
       --path={{ nginx_wordpress_web_root }}
   args:
     executable: /bin/bash

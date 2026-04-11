@@ -65,13 +65,13 @@
         nginx_wordpress_logged_in_salt: "{{ vault_nginx_wordpress_logged_in_salt }}"
         nginx_wordpress_nonce_salt: "{{ vault_nginx_wordpress_nonce_salt }}"
         nginx_wordpress_content_pages:
-          - {slug: homepage-v2-4}
+          - {slug: homepage, wp_current_slug: homepage-v2-4}
           - {slug: cursos}
           - {slug: metodologia}
           - {slug: instructores}
           - {slug: contacto}
           - {slug: sobre-nosotros}
-          - {slug: equipo-2}
+          - {slug: equipo, wp_current_slug: equipo-2}
           - {slug: aviso-de-riesgo}
           - {slug: politica-de-cookies}
           - {slug: politica-de-privacidad}
