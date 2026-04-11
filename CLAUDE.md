@@ -1,9 +1,11 @@
 # Project: hetzner-secure-infrastructure
 
 ## Purpose
+
 Hetzner VPS infrastructure for WordPress (LearnDash LMS) managed with Terraform + Ansible, hardened with OpenBao secrets management, SSH 2FA, AppArmor, and Cloudflare.
 
 ## Stack
+
 - **IaC**: Terraform (cloud resources) + Ansible (config management)
 - **Target**: Hetzner Cloud (single VPS, production)
 - **OS**: Debian 13
@@ -11,6 +13,7 @@ Hetzner VPS infrastructure for WordPress (LearnDash LMS) managed with Terraform 
 - **Secrets**: OpenBao (Vault fork) on port 8200/8201 (transit auto-unseal)
 
 ## Project structure
+
 ```
 ansible/
   inventory/          # hcloud dynamic + static inventories
@@ -27,6 +30,7 @@ docs/                 # architecture, guides, security, troubleshooting
 ```
 
 ## Key conventions
+
 - All roles must pass `molecule test` (default scenario) before merge
 - Ansible: FQCN for all modules (`ansible.builtin.*`)
 - Terraform: `_` not `-` in resource names; never `apply` without plan review
@@ -35,6 +39,7 @@ docs/                 # architecture, guides, security, troubleshooting
 - No auto-push — always confirm before pushing to remotes
 
 ## Verification commands
+
 ```bash
 # Ansible
 ansible-lint .
@@ -48,6 +53,7 @@ pre-commit run --all-files
 ```
 
 ## Constraints & gotchas
+
 - OpenBao must be manually unsealed after every reboot (transit on 8201 first, then primary on 8200)
 - Molecule uses `geerlingguy/docker-debian13-ansible:latest` — no `cache_valid_time` in converge.yml
 - SSH is locked to a single IP — prefer MOTD for credential delivery
