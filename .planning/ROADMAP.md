@@ -24,6 +24,8 @@ Phase 0 (content backup, XML export, screenshots) is already complete and is not
 - [ ] **Phase 3.5: Backup Infrastructure** (INSERTED) - Hetzner Object Storage bucket + encrypted automated backups for MariaDB and WordPress media
 - [ ] **Phase 4: Main Site** - twomindstrading.com content, plugins, performance, backups
 - [ ] **Phase 5: Academy Site** - academy.twomindstrading.com LMS, WooCommerce, course setup, backups
+- [ ] **Phase 8: WordPress Site Quality** - Mobile nav fix, neurodivergent-friendly animations, LearnDash ZIP install, SEO titles, theme cleanup, tmt-perf.php for both sites
+- [ ] **Phase 9: Playbook Consolidation** - site.yml as single idempotent orchestrator; retire legacy wordpress.yml, wordpress-only.yml, and the old site.yml; deploy-full.sh updated to call site.yml
 
 ## Phase Details
 
@@ -157,7 +159,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 3.5 → 4 → 5 → 6 → 7
+Phases execute in numeric order: 1 → 2 → 3 → 3.5 → 4 → 5 → 6 → 7 → 8 → 9
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -169,6 +171,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 3.5 → 4 → 5 → 6 → 7
 | 5. Academy Site | 0/4 | Not started | - |
 | 6. OpenBao Secret Coverage | 2/2 | Complete   | 2026-04-02 |
 | 7. Unified deploy.yml | 3/3 | Complete   | 2026-04-05 |
+| 8. WordPress Site Quality | 0/2 | Not started | - |
+| 9. Playbook Consolidation | 0/2 | Not started | - |
 
 ### Phase 6: Complete OpenBao secret coverage and rotation — academy scripts, Grafana/exporter/SMTP/Stripe in KV, static credentials MOTD
 
@@ -192,3 +196,42 @@ Plans:
 - [x] 07-01: Create deploy.yml unified orchestrator with inline OpenBao bootstrap plays and conditional pauses + safe default for transit token (DEPLOY-01, DEPLOY-02)
 - [x] 07-02: Rewrite deployment-playbook.md to 3-step workflow with day-2 operations reference (DEPLOY-03)
 - [x] 07-03: Gap closure — academy SSL cert, KV seeding parity, MOTD VAULT_ADDR HTTPS (DEPLOY-01, DEPLOY-02)
+
+### Phase 8: WordPress Site Quality — main site pages + academy visual parity
+
+**Goal:** Both WordPress sites are ready for production use: main site (twomindstrading.com) has all 10 pages deployed with correct SEO titles, mobile hamburger nav, neurodivergent-friendly animations, and tmt-perf.php mu-plugin; academy site (academy.twomindstrading.com) mirrors the same design system and has LearnDash Pro installed via ZIP automation; theme cleanup runs on both.
+**Depends on:** Phase 7
+**Requirements**: MAIN-01, MAIN-04, MAIN-05, ACAD-01, ACAD-02
+**Success Criteria** (what must be TRUE):
+
+  1. `dual-wordpress.yml --tags content` deploys all 10 pages to main site with correct post_title per page
+  2. All pages show hamburger button at <=860px viewport; nav links toggle open/close
+  3. `wp plugin status sfwd-lms --path=/var/www/academy.twomindstrading.com` returns "active"
+  4. Both sites have only the `kadence` theme active — no other themes present
+  5. `prefers-reduced-motion: reduce` disables all JS animations on all pages
+  6. tmt-perf.php is deployed to both site mu-plugins directories
+
+**Plans**: 2 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — ZIP plugin install automation + LearnDash ZIP for academy (ACAD-01, ACAD-02)
+- [ ] 08-02-PLAN.md — SEO post_title in content deployment + theme cleanup on both sites (MAIN-01, MAIN-04, MAIN-05)
+
+### Phase 9: Playbook Consolidation — site.yml as single idempotent orchestrator
+
+**Goal:** `ansible-playbook playbooks/site.yml` is the one command that deploys everything — fresh server or re-run — with legacy playbooks removed, deploy-full.sh updated to call site.yml, and the codebase free of dead code.
+**Depends on:** Phase 8
+**Requirements**: DEPLOY-01, DEPLOY-02, DEPLOY-03
+**Success Criteria** (what must be TRUE):
+
+  1. `site.yml` imports: common → openbao bootstrap plays (inline or via deploy.yml import) → monitoring → dual-wordpress → rotation → validate — in that order
+  2. `wordpress.yml`, `wordpress-only.yml` are deleted from the repo
+  3. Re-running `site.yml` against the existing server completes with 0 failures and `changed=0` on already-configured resources
+  4. `deploy-full.sh` calls `ansible-playbook playbooks/site.yml` (not `site.yml` pointing to old wordpress.yml)
+  5. `ansible-lint playbooks/site.yml` exits 0
+
+**Plans**: 2 plans
+
+Plans:
+- [ ] 09-01: Rename/consolidate orchestrators — site.yml becomes deploy.yml content; delete wordpress.yml, wordpress-only.yml; update all cross-references (DEPLOY-01, DEPLOY-02)
+- [ ] 09-02: Update deploy-full.sh to call site.yml; add idempotency smoke-test to validate.yml; update docs/deployment-playbook.md (DEPLOY-03)
