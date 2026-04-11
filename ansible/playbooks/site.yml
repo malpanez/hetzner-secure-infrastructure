@@ -1,87 +1,300 @@
 ---
-# Main Site Playbook - Orchestrator
+# Site Playbook - Unified Orchestrator
 #
-# Follows Red Hat CoP Automation Good Practices:
-# https://redhat-cop.github.io/automation-good-practices/
+# Single-command deployment for fresh servers and idempotent re-runs.
+# Runs the full sequence: common hardening, OpenBao (transit + primary),
+# monitoring, dual WordPress, rotation timers, and validation.
 #
-# This playbook imports all component playbooks in the correct order:
-# 1. common.yml - Base configuration and security hardening (all servers)
-# 2. openbao.yml - Secrets management (secrets_servers)
-# 3. wordpress.yml - Application stack (wordpress_servers)
-# 4. monitoring.yml - Observability stack (monitoring_servers)
-# 5. validate.yml - Final validation and summary
+# Fresh deployment:
+#   ansible-playbook playbooks/site.yml \
+#     -e "openbao_transit_bootstrap_ack=true openbao_bootstrap_ack=true"
 #
-# Prerequisites:
-#   ansible-galaxy install -r requirements.yml
-#
-# Usage:
-#   # Full deployment
-#   ansible-playbook -i inventory/production.yml playbooks/site.yml
-#
-#   # Individual playbooks (recommended for targeted runs)
-#   ansible-playbook -i inventory/production.yml playbooks/common.yml
-#   ansible-playbook -i inventory/production.yml playbooks/wordpress.yml
-#   ansible-playbook -i inventory/production.yml playbooks/monitoring.yml
-#
-#   # With tags
-#   ansible-playbook -i inventory/production.yml playbooks/site.yml --tags security
-#   ansible-playbook -i inventory/production.yml playbooks/site.yml --tags wordpress
-#
-#   # Limit to specific hosts
-#   ansible-playbook -i inventory/production.yml playbooks/site.yml --limit wordpress-prod
-#
-# Architecture:
-# - Uses official Ansible Galaxy collections (grafana.grafana, prometheus.prometheus)
-# - Uses trusted community roles (geerlingguy.mysql)
-# - Custom roles for project-specific requirements
+# Re-run (idempotent, no extra vars needed):
+#   ansible-playbook playbooks/site.yml
 
-# ========================================
-# Phase 1: Common Configuration (All Servers)
-# ========================================
-# Base system setup, security hardening, firewall, fail2ban, apparmor
-# This MUST run first to establish security baseline
 - name: Import common playbook
   ansible.builtin.import_playbook: common.yml
   tags: [common, security]
 
-# ========================================
-# Phase 2: Secrets Management
-# ========================================
-# OpenBao deployment (requires transit token in vault for auto-unseal)
-#
-# FIRST TIME SETUP (run these manually BEFORE site.yml):
-#   1. ansible-playbook playbooks/openbao.yml
-#   2. ansible-playbook playbooks/openbao-transit-bootstrap.yml -e openbao_transit_bootstrap_ack=true
-#   3. Save transit unseal keys to password manager
-#   4. ansible-vault edit inventory/group_vars/all/secrets.yml
-#      Add: vault_openbao_transit_token: "s.xxxxx"
-#   5. Now run: ansible-playbook playbooks/site.yml
-#
-- name: Import OpenBao playbook
-  ansible.builtin.import_playbook: openbao.yml
-  tags: [openbao, secrets]
+- name: Install OpenBao (first pass — no transit token required)
+  hosts: secrets_servers
+  become: true
+  gather_facts: true
+  vars:
+    openbao_transit_enabled: false
+    openbao_transit_instance_enabled: true
+  pre_tasks:
+    - name: Check if OpenBao binary exists (fresh server detection)
+      ansible.builtin.stat:
+        path: "{{ openbao_install_dir | default('/usr/bin') }}/bao"
+      register: bao_binary_check
+    - name: Skip first pass if OpenBao already installed with transit token (re-run)
+      ansible.builtin.meta: end_play
+      when:
+        - vault_openbao_transit_token | default('') != ''
+        - bao_binary_check.stat.exists
+  roles:
+    - role: openbao
+      tags: [openbao, install]
 
-# ========================================
-# Phase 3: Application Stack
-# ========================================
-# WordPress with MariaDB, Valkey, Nginx
-- name: Import WordPress playbook
-  ansible.builtin.import_playbook: wordpress.yml
-  tags: [wordpress, application]
+- name: Bootstrap OpenBao Transit Instance
+  hosts: secrets_servers
+  become: true
+  gather_facts: false
+  vars:
+    openbao_cli: "{{ openbao_binary_path | default(openbao_install_dir | default('/usr/bin') ~ '/bao') }}"
+    openbao_transit_api_addr: "https://127.0.0.1:{{ openbao_transit_instance_port | default(8201) }}"
+    openbao_env_base:
+      VAULT_ADDR: "{{ openbao_transit_api_addr }}"
+    openbao_env: "{{ openbao_env_base | combine({'VAULT_SKIP_VERIFY': '1'}) }}"
+  pre_tasks:
+    - name: Skip transit bootstrap unless acknowledged
+      ansible.builtin.meta: end_play
+      when: not openbao_transit_bootstrap_ack | default(false) | bool
+      tags: [openbao, transit, bootstrap]
+    - name: Confirm transit bootstrap
+      ansible.builtin.assert:
+        that:
+          - openbao_transit_bootstrap_ack | default(false) | bool
+        fail_msg: "Set -e openbao_transit_bootstrap_ack=true to acknowledge transit init/unseal."
+      tags: [openbao, transit, bootstrap]
+  tasks:
+    - name: Check transit instance status
+      ansible.builtin.command: "{{ openbao_cli }} status -format=json"
+      environment: "{{ openbao_env }}"
+      register: transit_status_cmd
+      changed_when: false
+      failed_when: false
+      tags: [openbao, transit, bootstrap]
+    - name: Parse transit status
+      ansible.builtin.set_fact:
+        transit_status: "{{ (transit_status_cmd.stdout | default('{}')) | from_json }}"
+      when: transit_status_cmd.rc == 0
+      tags: [openbao, transit, bootstrap]
+    - name: Initialize transit instance (first run only)
+      ansible.builtin.command: >-
+        {{ openbao_cli }} operator init
+        -format=json
+        -key-shares={{ openbao_key_shares }}
+        -key-threshold={{ openbao_key_threshold }}
+      environment: "{{ openbao_env }}"
+      register: transit_init_cmd
+      changed_when: true
+      when: not ((transit_status | default({})).initialized | default(false) | bool)
+      no_log: true
+      tags: [openbao, transit, bootstrap]
+    - name: Capture transit init output
+      ansible.builtin.set_fact:
+        transit_init: "{{ (transit_init_cmd.stdout | default('{}')) | from_json }}"
+        transit_root_token: "{{ (transit_init_cmd.stdout | from_json).root_token }}"
+      when:
+        - transit_init_cmd is defined
+        - transit_init_cmd is not skipped
+        - transit_init_cmd.stdout is defined
+      no_log: true
+      tags: [openbao, transit, bootstrap]
+    - name: Unseal transit instance (using first threshold keys)
+      ansible.builtin.command: "{{ openbao_cli }} operator unseal {{ item }}"
+      environment: "{{ openbao_env }}"
+      loop: "{{ transit_init.unseal_keys_b64[0:openbao_key_threshold] }}"
+      when: transit_init is defined
+      changed_when: true
+      no_log: true
+      tags: [openbao, transit, bootstrap]
+    - name: Enable transit secrets engine
+      ansible.builtin.command: "{{ openbao_cli }} secrets enable transit"
+      environment: "{{ openbao_env | combine({'VAULT_TOKEN': transit_root_token}) }}"
+      register: transit_enable
+      changed_when: transit_enable.rc == 0
+      failed_when: false
+      when: transit_root_token is defined
+      tags: [openbao, transit, bootstrap]
+    - name: Create encryption key for auto-unseal
+      ansible.builtin.command: >-
+        {{ openbao_cli }} write -f
+        transit/keys/{{ openbao_transit_key_name | default('autounseal') }}
+      environment: "{{ openbao_env | combine({'VAULT_TOKEN': transit_root_token}) }}"
+      when: transit_root_token is defined
+      changed_when: true
+      tags: [openbao, transit, bootstrap]
+    - name: Create policy for primary OpenBao auto-unseal
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          cat <<'EOF' | {{ openbao_cli }} policy write autounseal -
+          path "transit/encrypt/{{ openbao_transit_key_name | default('autounseal') }}" {
+            capabilities = ["update"]
+          }
+          path "transit/decrypt/{{ openbao_transit_key_name | default('autounseal') }}" {
+            capabilities = ["update"]
+          }
+          EOF
+        executable: /bin/bash
+      environment: "{{ openbao_env | combine({'VAULT_TOKEN': transit_root_token}) }}"
+      when: transit_root_token is defined
+      changed_when: true
+      tags: [openbao, transit, bootstrap]
+    - name: Create token for primary OpenBao auto-unseal
+      ansible.builtin.command: >-
+        {{ openbao_cli }} token create -format=json -orphan
+        -period=87600h -policy=autounseal
+      environment: "{{ openbao_env | combine({'VAULT_TOKEN': transit_root_token}) }}"
+      register: transit_token_cmd
+      when: transit_root_token is defined
+      changed_when: transit_token_cmd.rc == 0
+      no_log: true
+      tags: [openbao, transit, bootstrap]
+    - name: Capture transit auto-unseal token
+      ansible.builtin.set_fact:
+        transit_autounseal_token: "{{ (transit_token_cmd.stdout | from_json).auth.client_token }}"
+      when: transit_token_cmd is defined and transit_token_cmd.stdout is defined
+      no_log: true
+      tags: [openbao, transit, bootstrap]
+    - name: Display transit init keys and tokens
+      ansible.builtin.debug:
+        msg: "{{ transit_init_message.split('\n') }}"
+      vars:
+        transit_init_message: |
+          ========================================
+          TRANSIT INSTANCE INITIALIZED
+          ========================================
 
-# ========================================
-# Phase 4: Monitoring Stack
-# ========================================
-# Node Exporter, Prometheus, Loki, Promtail, Grafana
-# Runs AFTER applications are deployed so metrics are available
+          Transit Unseal Keys (SAVE SECURELY!):
+          {% for key in transit_init.unseal_keys_b64 %}
+          - {{ key }}
+          {% endfor %}
+
+          Transit Root Token:
+          - {{ transit_init.root_token }}
+
+          Auto-Unseal Token (for primary OpenBao):
+          - {{ transit_autounseal_token }}
+
+          ========================================
+          CRITICAL - SAVE THESE CREDENTIALS!
+          ========================================
+      when: transit_init is defined and transit_autounseal_token is defined
+      tags: [openbao, transit, bootstrap]
+    - name: Wait for operator to save transit credentials
+      ansible.builtin.pause:
+        prompt: |-
+          SAVE the transit unseal keys, root token, and auto-unseal token shown above to your password manager.
+          Update vault_openbao_transit_token in secrets.yml with the auto-unseal token AFTER this deployment completes.
+          Press ENTER to continue the deployment.
+      when:
+        - transit_init is defined
+        - transit_autounseal_token is defined
+      tags: [openbao, transit, bootstrap]
+    - name: Export transit token for subsequent plays
+      ansible.builtin.set_fact:
+        deploy_transit_token: "{{ transit_autounseal_token }}"
+      when: transit_autounseal_token is defined
+      tags: [openbao, transit, bootstrap]
+    - name: Display next steps if already initialized
+      ansible.builtin.debug:
+        msg:
+          - "Transit instance is already initialized."
+          - "If you need to regenerate the auto-unseal token:"
+          - "1. SSH to server and set VAULT_ADDR=https://127.0.0.1:{{ openbao_transit_instance_port | default(8201) }}"
+          - "2. Login: bao login -method=token"
+          - "3. Create token: bao token create -orphan -period=87600h -policy=autounseal"
+      when: (transit_status | default({})).initialized | default(false) | bool
+      tags: [openbao, transit, bootstrap]
+
+- name: Re-deploy OpenBao with transit token (second pass)
+  hosts: secrets_servers
+  become: true
+  gather_facts: true
+  vars:
+    openbao_transit_enabled: true
+    openbao_skip_initialized_assert: true
+    openbao_transit_token: >-
+      {{ hostvars[inventory_hostname]['deploy_transit_token']
+         | default(vault_openbao_transit_token | default('')) }}
+  pre_tasks:
+    - name: Skip OpenBao redeploy if no transit token available
+      ansible.builtin.meta: end_play
+      when: >-
+        (hostvars[inventory_hostname]['deploy_transit_token'] | default('')) == ''
+        and (vault_openbao_transit_token | default('')) == ''
+  roles:
+    - role: openbao
+      tags: [openbao, secrets]
+
+- name: Bootstrap primary OpenBao (init + seed secrets)
+  hosts: secrets_servers
+  become: true
+  gather_facts: false
+  vars:
+    openbao_bootstrap_enabled: true
+    openbao_cli: "{{ openbao_binary_path | default('bao') }}"
+    openbao_env_base:
+      VAULT_ADDR: "{{ openbao_api_addr }}"
+    openbao_env: "{{ openbao_env_base | combine(openbao_tls_self_signed | default(true) | bool | ternary({'VAULT_SKIP_VERIFY': '1'}, {})) }}"
+  pre_tasks:
+    - name: Confirm OpenBao bootstrap
+      ansible.builtin.assert:
+        that:
+          - openbao_bootstrap_ack | default(false) | bool
+        fail_msg: "Set -e openbao_bootstrap_ack=true to acknowledge init/unseal operations."
+      tags: [openbao, bootstrap]
+  tasks:
+    - name: Include OpenBao bootstrap tasks
+      ansible.builtin.include_tasks: tasks/openbao-bootstrap.yml
+      tags: [openbao, bootstrap]
+    - name: Wait for operator to save primary OpenBao credentials
+      ansible.builtin.pause:
+        prompt: |-
+          SAVE the recovery keys and root token shown above to your password manager.
+          Press ENTER to continue the deployment.
+      when: openbao_init is defined
+      tags: [openbao, bootstrap]
+
 - name: Import monitoring playbook
   ansible.builtin.import_playbook: monitoring.yml
   tags: [monitoring, observability]
 
-# ========================================
-# Phase 5: Validation
-# ========================================
-# Final checks and deployment summary
+- name: Import dual WordPress playbook
+  ansible.builtin.import_playbook: dual-wordpress.yml
+  tags: [wordpress, application]
+
+- name: Finalize OpenBao MariaDB integration (post-WordPress)
+  hosts: secrets_servers
+  become: true
+  gather_facts: false
+  vars:
+    openbao_cli: "{{ openbao_binary_path | default('bao') }}"
+    openbao_env_base:
+      VAULT_ADDR: "{{ openbao_api_addr }}"
+    openbao_env: "{{ openbao_env_base | combine(openbao_tls_self_signed | default(true) | bool | ternary({'VAULT_SKIP_VERIFY': '1'}, {})) }}"
+  tasks:
+    - name: Include OpenBao MariaDB integration tasks
+      ansible.builtin.include_tasks: tasks/openbao-mariadb-integration.yml
+      tags: [openbao, mariadb, integration]
+
+- name: Wait for operator to place rotation token files
+  hosts: secrets_servers
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Pause for rotation token placement
+      ansible.builtin.pause:
+        prompt: |-
+          openbao-bootstrap.yml created rotation tokens in OpenBao.
+          Verify the following token files exist on the server before continuing:
+            /root/.openbao-token           (wordpress rotation)
+            /root/.openbao-mariadb-token   (mariadb rotation)
+            /root/.openbao-academy-token   (academy rotation)
+            /root/.openbao-backup-token    (backup rotation)
+          They are written automatically by the bootstrap tasks. If any are missing,
+          place the token manually now, then press ENTER to continue.
+      when: openbao_wordpress_token is defined
+      tags: [openbao, rotation]
+
+- name: Import OpenBao rotation setup playbook
+  ansible.builtin.import_playbook: setup-openbao-rotation.yml
+  tags: [openbao, rotation]
+
 - name: Import validation playbook
   ansible.builtin.import_playbook: validate.yml
   tags: [validate, summary]
