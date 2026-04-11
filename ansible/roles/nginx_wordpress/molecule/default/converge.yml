@@ -24,4 +24,4 @@
   roles:
     - role: nginx_wordpress
       vars:
-        nginx_wordpress_site_name: "wordpress"
+        nginx_wordpress_site_name: "test-site"

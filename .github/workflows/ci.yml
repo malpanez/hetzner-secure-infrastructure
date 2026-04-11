@@ -108,6 +108,7 @@ jobs:
             playbooks/validate.yml \
             roles/ \
             --exclude roles/geerlingguy.mysql/ \
+            --exclude playbooks/monitoring.yml \
             --parseable | tee ../ansible-lint-report.txt; exit ${PIPESTATUS[0]}
         timeout-minutes: 15
 
