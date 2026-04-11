@@ -119,6 +119,8 @@
         nginx_wordpress_secure_auth_salt: "{{ vault_wp_academy_secure_auth_salt }}"
         nginx_wordpress_logged_in_salt: "{{ vault_wp_academy_logged_in_salt }}"
         nginx_wordpress_nonce_salt: "{{ vault_wp_academy_nonce_salt }}"
+        nginx_wordpress_plugins_zip:
+          - {name: sfwd-lms, file: sfwd-lms.4.25.7.1.zip}
       tags: [wordpress, nginx, webserver, academy]
 
   post_tasks:
