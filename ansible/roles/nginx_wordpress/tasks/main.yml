@@ -48,6 +48,14 @@
     - nginx_wordpress_install_wordpress
   tags: [nginx-wordpress, wordpress, plugins]
 
+- name: Nginx WordPress | Main | Include WordPress ZIP plugin installation
+  ansible.builtin.include_tasks: wordpress-plugins-zip.yml
+  when:
+    - nginx_wordpress_enabled
+    - nginx_wordpress_install_wordpress
+    - nginx_wordpress_plugins_zip | default([]) | length > 0
+  tags: [nginx-wordpress, wordpress, plugins, zip]
+
 - name: Nginx WordPress | Main | Include WordPress mu-plugins deployment
   ansible.builtin.include_tasks: wordpress-mu-plugins.yml
   when:

@@ -209,6 +209,9 @@ nginx_wordpress_themes_additional: []
 #   - "Digital Course"
 
 nginx_wordpress_content_pages: []  # List of {slug: "..."} to deploy from files/pages/tmt-page-<slug>.html
+nginx_wordpress_plugins_zip: []  # List of {name: plugin-slug, file: filename.zip} for commercial ZIP installs
+nginx_wordpress_themes_keep:
+  - kadence
 
 nginx_wordpress_starter_template_import: false  # Disabled by default — enable on academy only
 nginx_wordpress_starter_template_name: "Business Courses"  # LearnDash-optimized template
