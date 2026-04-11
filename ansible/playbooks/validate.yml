@@ -8,8 +8,76 @@
 #
 # Tags:
 #   - validate: All validation tasks
+#   - health: Service health checks
 #   - summary: Deployment summary
 #   - checklist: Post-deployment checklist
+
+# ========================================
+# Service Health Checks
+# ========================================
+- name: Validate critical service health
+  hosts: wordpress_servers
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Gather service facts
+      ansible.builtin.service_facts:
+      tags: [validate, health]
+
+    - name: Assert nginx is running
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.services['nginx.service'].state == 'running'
+        fail_msg: "nginx is not running"
+        success_msg: "nginx is running"
+      tags: [validate, health]
+
+    - name: Assert MariaDB is running
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.services['mariadb.service'].state == 'running'
+        fail_msg: "MariaDB is not running"
+        success_msg: "MariaDB is running"
+      tags: [validate, health]
+
+    - name: Assert PHP-FPM main pool is running
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.services['php-fpm-main.service'] is defined
+          - ansible_facts.services['php-fpm-main.service'].state == 'running'
+        fail_msg: "PHP-FPM main pool is not running"
+        success_msg: "PHP-FPM main pool is running"
+      tags: [validate, health]
+      failed_when: false
+
+    - name: Assert Valkey is running
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.services['valkey.service'].state == 'running'
+            or ansible_facts.services['valkey-server.service'].state == 'running'
+        fail_msg: "Valkey is not running"
+        success_msg: "Valkey is running"
+      tags: [validate, health]
+      failed_when: false
+
+- name: Validate OpenBao service health
+  hosts: secrets_servers
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Gather service facts
+      ansible.builtin.service_facts:
+      tags: [validate, health]
+
+    - name: Assert OpenBao primary is running
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.services['openbao.service'].state == 'running'
+        fail_msg: "OpenBao primary is not running"
+        success_msg: "OpenBao primary is running"
+      tags: [validate, health]
 
 # ========================================
 # Final Validation & Summary
