@@ -138,34 +138,28 @@
   post_tasks:
     - name: Display dual WordPress deployment information
       ansible.builtin.debug:
-        msg: |-
-          ========================================
-          Dual WordPress Stack Deployed
-          ========================================
-
-          Server: {{ inventory_hostname }}
-          IP: {{ ansible_host }}
-
-          Main site:    https://twomindstrading.com
-          Academy site: https://academy.twomindstrading.com
-
-          Databases:
-            wordpress_main    → user: wp_main
-            wordpress_academy → user: wp_academy
-
-          PHP-FPM pools:
-            main:    max_children=20, socket=fpm-main.sock
-            academy: max_children=30, socket=fpm-academy.sock
-
-          Valkey:
-            main:    db=0, prefix=wp_main_
-            academy: db=1, prefix=wp_academy_
-
-          Next steps:
-          1. Configure Cloudflare DNS for academy subdomain
-          2. Install WordPress on each site via wp-admin
-          3. Install LearnDash Pro manually on academy (license required)
-          4. Configure UpdraftPlus on both sites
-
-          ========================================
+        msg:
+          - "========================================"
+          - "Dual WordPress Stack Deployed"
+          - "========================================"
+          - ""
+          - "Server: {{ inventory_hostname }}"
+          - "IP:     {{ ansible_host }}"
+          - ""
+          - "Main site:    https://twomindstrading.com"
+          - "Academy site: https://academy.twomindstrading.com"
+          - ""
+          - "Databases:"
+          - "  wordpress_main    → user: wp_main"
+          - "  wordpress_academy → user: wp_academy"
+          - ""
+          - "PHP-FPM pools:"
+          - "  main:    max_children=20, socket=fpm-main.sock"
+          - "  academy: max_children=30, socket=fpm-academy.sock"
+          - ""
+          - "Valkey:"
+          - "  main:    db=0, prefix=wp_main_"
+          - "  academy: db=1, prefix=wp_academy_"
+          - ""
+          - "========================================"
       tags: [wordpress, info]
