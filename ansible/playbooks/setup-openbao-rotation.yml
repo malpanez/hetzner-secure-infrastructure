@@ -364,8 +364,10 @@
           log "Storing new password in OpenBao"
           bao kv patch secret/mariadb root_password="${NEW_PASS}" || error_exit "Failed to store new password in OpenBao"
 
-          # MOTD delivery
-          printf '=================================================================\n  SECRET ROTATION - %s\n=================================================================\n  MariaDB root : bao kv get -field=root_password secret/mariadb\n  WP admin     : bao kv get -field=admin_password secret/wordpress\n=================================================================\n' "$(date +'%Y-%m-%d %H:%M:%S')" > /etc/motd
+          # MOTD delivery — write executable script picked up by pam_motd on next login
+          printf '#!/bin/sh\necho "  Last secret rotation : %s"\n' \
+            "$(date +'%Y-%m-%d %H:%M:%S')" > /etc/update-motd.d/98-rotation-notice
+          chmod +x /etc/update-motd.d/98-rotation-notice
 
           log "MariaDB root rotation completed successfully"
           exit 0
@@ -429,8 +431,10 @@
           log "Storing new password in OpenBao"
           bao kv patch secret/wordpress admin_password="${NEW_PASS}" || error_exit "Failed to store new password in OpenBao"
 
-          # MOTD delivery
-          printf '=================================================================\n  SECRET ROTATION - %s\n=================================================================\n  MariaDB root : bao kv get -field=root_password secret/mariadb\n  WP admin     : bao kv get -field=admin_password secret/wordpress\n=================================================================\n' "$(date +'%Y-%m-%d %H:%M:%S')" > /etc/motd
+          # MOTD delivery — write executable script picked up by pam_motd on next login
+          printf '#!/bin/sh\necho "  Last secret rotation : %s"\n' \
+            "$(date +'%Y-%m-%d %H:%M:%S')" > /etc/update-motd.d/98-rotation-notice
+          chmod +x /etc/update-motd.d/98-rotation-notice
 
           log "WordPress admin rotation completed successfully"
           exit 0
