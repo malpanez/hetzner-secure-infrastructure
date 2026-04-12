@@ -30,7 +30,7 @@
           set -euo pipefail
 
           # Configuration
-          OPENBAO_ADDR="http://127.0.0.1:8200"
+          OPENBAO_ADDR="https://127.0.0.1:8200"
           LOG_FILE="/var/log/wordpress-secret-rotation.log"
           WP_PATH="/var/www/twomindstrading.com"
 
@@ -183,7 +183,7 @@
           #!/bin/bash
           set -euo pipefail
 
-          OPENBAO_ADDR="http://127.0.0.1:8200"
+          OPENBAO_ADDR="https://127.0.0.1:8200"
           LOG_FILE="/var/log/wordpress-academy-secret-rotation.log"
           WP_PATH="/var/www/academy.twomindstrading.com"
           TOKEN_FILE="/root/.openbao-academy-token"
@@ -316,7 +316,7 @@
 
           set -euo pipefail
 
-          OPENBAO_ADDR="http://127.0.0.1:8200"
+          OPENBAO_ADDR="https://127.0.0.1:8200"
           LOG_FILE="/var/log/mariadb-root-rotation.log"
           TOKEN_FILE="/root/.openbao-mariadb-token"
 
@@ -392,7 +392,7 @@
 
           set -euo pipefail
 
-          OPENBAO_ADDR="http://127.0.0.1:8200"
+          OPENBAO_ADDR="https://127.0.0.1:8200"
           LOG_FILE="/var/log/wp-admin-rotation.log"
           TOKEN_FILE="/root/.openbao-token"
           WP_PATH="/var/www/twomindstrading.com"
@@ -465,7 +465,7 @@
           #!/bin/bash
           set -euo pipefail
 
-          OPENBAO_ADDR="http://127.0.0.1:8200"
+          OPENBAO_ADDR="https://127.0.0.1:8200"
           LOG_FILE="/var/log/wp-admin-academy-rotation.log"
           TOKEN_FILE="/root/.openbao-academy-token"
           WP_PATH="/var/www/academy.twomindstrading.com"
@@ -584,7 +584,7 @@
           - ""
           - "--- MARIADB ROOT + WP ADMIN ROTATION (new) ---"
           - "2. Login to OpenBao with admin credentials:"
-          - "   export VAULT_ADDR=http://127.0.0.1:8200"
+          - "   export VAULT_ADDR=https://127.0.0.1:8200"
           - "   bao login -method=userpass username=admin"
           - ""
           - "3. Update wordpress-rotator policy (add KV write):"
