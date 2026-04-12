@@ -1,0 +1,11 @@
+---
+# Grype Role - Debian/Ubuntu Variables
+
+grype_arch: "{{ 'arm64' if ansible_architecture in ['aarch64', 'arm64'] else 'amd64' }}"
+grype_tarball: "grype_{{ grype_version }}_linux_{{ grype_arch }}.tar.gz"
+grype_checksum_file: "grype_{{ grype_version }}_checksums.txt"
+grype_download_base_url: "https://github.com/anchore/grype/releases/download/v{{ grype_version }}"
+
+grype_apt_dependencies:
+  - ca-certificates
+  - curl

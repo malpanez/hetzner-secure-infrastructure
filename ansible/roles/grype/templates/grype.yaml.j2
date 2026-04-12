@@ -1,0 +1,12 @@
+# Grype configuration — managed by Ansible
+# https://github.com/anchore/grype#configuration
+
+db:
+  cache-dir: {{ grype_db_dir }}
+  auto-update: false
+
+fail-on-severity: {{ grype_severity_fail }}
+output: {{ grype_output_format }}
+
+# Suppress noisy informational output
+quiet: false

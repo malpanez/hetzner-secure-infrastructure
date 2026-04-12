@@ -1,0 +1,93 @@
+---
+# Grype Role - Install Tasks
+
+- name: Grype | Install | Install apt dependencies
+  ansible.builtin.apt:
+    name: "{{ grype_apt_dependencies }}"
+    state: present
+  tags: [grype, install, packages]
+
+- name: Grype | Install | Check if grype is installed at correct version
+  ansible.builtin.command: "{{ grype_binary }} version --output json"
+  register: grype_version_check
+  failed_when: false
+  changed_when: false
+  tags: [grype, install, binary]
+
+- name: Grype | Install | Set grype_installed fact
+  ansible.builtin.set_fact:
+    grype_installed: "{{ grype_version_check.rc == 0 and grype_version in grype_version_check.stdout }}"
+  tags: [grype, install, binary]
+
+- name: Grype | Install | Download checksums file
+  ansible.builtin.get_url:
+    url: "{{ grype_download_base_url }}/{{ grype_checksum_file }}"
+    dest: "/tmp/{{ grype_checksum_file }}"
+    mode: "0644"
+  when: not grype_installed
+  tags: [grype, install, binary]
+
+- name: Grype | Install | Extract expected checksum for this arch
+  ansible.builtin.shell:
+    cmd: |
+      set -euo pipefail
+      grep '{{ grype_tarball }}' /tmp/{{ grype_checksum_file }} | cut -d' ' -f1
+    executable: /bin/bash
+  register: grype_expected_checksum
+  changed_when: false
+  when: not grype_installed
+  tags: [grype, install, binary]
+
+- name: Grype | Install | Download grype tarball
+  ansible.builtin.get_url:
+    url: "{{ grype_download_base_url }}/{{ grype_tarball }}"
+    dest: "/tmp/{{ grype_tarball }}"
+    checksum: "sha256:{{ grype_expected_checksum.stdout }}"
+    mode: "0644"
+  when: not grype_installed
+  tags: [grype, install, binary]
+
+- name: Grype | Install | Extract grype binary
+  ansible.builtin.unarchive:
+    src: "/tmp/{{ grype_tarball }}"
+    dest: "{{ grype_install_dir }}"
+    include:
+      - grype
+    remote_src: true
+    mode: "0755"
+    owner: root
+    group: root
+  when: not grype_installed
+  tags: [grype, install, binary]
+
+- name: Grype | Install | Clean up downloaded files
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "/tmp/{{ grype_tarball }}"
+    - "/tmp/{{ grype_checksum_file }}"
+  when: not grype_installed
+  tags: [grype, install, binary]
+
+- name: Grype | Install | Verify grype binary works
+  ansible.builtin.command: "{{ grype_binary }} version"
+  register: grype_verify
+  changed_when: false
+  tags: [grype, install, binary]
+
+- name: Grype | Install | Create grype DB directory
+  ansible.builtin.file:
+    path: "{{ grype_db_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  tags: [grype, install, db]
+
+- name: Grype | Install | Update grype vulnerability database
+  ansible.builtin.command: "{{ grype_binary }} db update"
+  environment:
+    GRYPE_DB_CACHE_DIR: "{{ grype_db_dir }}"
+  changed_when: true
+  tags: [grype, install, db]
