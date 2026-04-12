@@ -89,5 +89,5 @@
   ansible.builtin.command: "{{ grype_binary }} db update"
   environment:
     GRYPE_DB_CACHE_DIR: "{{ grype_db_dir }}"
-  changed_when: true
+  changed_when: false
   tags: [grype, install, db]
