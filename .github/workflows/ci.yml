@@ -331,7 +331,7 @@ jobs:
           pre-commit run --all-files --show-diff-on-failure
         env:
           # Skip hooks covered by dedicated CI jobs or requiring unavailable tools
-          SKIP: terraform_fmt,terraform_validate,terraform_tflint,tfsec,kics,ansible-lint,markdown-link-check
+          SKIP: terraform_fmt,terraform_validate,terraform_tflint,tfsec,kics,ansible-lint,markdown-link-check,gitleaks
 
   # ========================================
   # CodeQL Analysis

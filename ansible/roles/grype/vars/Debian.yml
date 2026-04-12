@@ -9,3 +9,4 @@ grype_download_base_url: "https://github.com/anchore/grype/releases/download/v{{
 grype_apt_dependencies:
   - ca-certificates
   - curl
+  - cron
