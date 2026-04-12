@@ -351,12 +351,14 @@
           log "Reading current MariaDB root password from OpenBao"
           OLD_PASS=$(bao kv get -field=root_password secret/mariadb) || error_exit "Failed to read current password from OpenBao"
 
-          # Generate new password (alphanum only - safe for mysqladmin)
+          # Generate new password
           NEW_PASS=$(openssl rand -base64 48 | tr -d '/+=\n' | head -c 32)
 
           # Update MariaDB root password
+          # root uses unix_socket plugin on Debian — ALTER USER preserves socket auth
+          # and adds password as fallback for non-socket connections
           log "Updating MariaDB root password"
-          mysqladmin -uroot -p"${OLD_PASS}" password "${NEW_PASS}" || error_exit "Failed to update MariaDB root password"
+          sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED VIA unix_socket OR mysql_native_password USING PASSWORD('${NEW_PASS}');" || error_exit "Failed to update MariaDB root password"
 
           # Store new password in OpenBao
           log "Storing new password in OpenBao"
