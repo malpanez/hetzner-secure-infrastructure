@@ -146,3 +146,9 @@ wordpress_root: "/var/www/wordpress"
 # OpenBao Bootstrap (opt-in)
 # ========================================
 openbao_bootstrap_enabled: false
+
+# DB names used in OpenBao database role GRANT statements.
+# Must match the actual MariaDB database names on the server.
+# Override in group_vars/wordpress_servers/ if different.
+openbao_wordpress_db_name: wordpress_main
+openbao_wordpress_academy_db_name: wordpress_academy

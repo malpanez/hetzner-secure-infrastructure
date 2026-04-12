@@ -257,7 +257,7 @@
   ansible.builtin.command: >-
     {{ openbao_cli }} write database/roles/wordpress
     db_name=wordpress
-    creation_statements="CREATE USER '{{ '{{' }}name{{ '}}' }}'@'%' IDENTIFIED BY '{{ '{{' }}password{{ '}}' }}'; GRANT ALL PRIVILEGES ON {{ wordpress_db_name | default('wordpress') }}.* TO '{{ '{{' }}name{{ '}}' }}'@'%';"
+    creation_statements="CREATE USER '{{ '{{' }}name{{ '}}' }}'@'%' IDENTIFIED BY '{{ '{{' }}password{{ '}}' }}'; GRANT ALL PRIVILEGES ON {{ openbao_wordpress_db_name | default('wordpress_main') }}.* TO '{{ '{{' }}name{{ '}}' }}'@'%';"
     default_ttl=2160h
     max_ttl=2160h
   environment: "{{ openbao_env | combine({'VAULT_TOKEN': openbao_bootstrap_token}) }}"
@@ -270,7 +270,7 @@
   ansible.builtin.command: >-
     {{ openbao_cli }} write database/roles/wordpress-academy
     db_name=wordpress-academy
-    creation_statements="CREATE USER '{{ '{{' }}name{{ '}}' }}'@'%' IDENTIFIED BY '{{ '{{' }}password{{ '}}' }}'; GRANT ALL PRIVILEGES ON wordpress_academy.* TO '{{ '{{' }}name{{ '}}' }}'@'%';"
+    creation_statements="CREATE USER '{{ '{{' }}name{{ '}}' }}'@'%' IDENTIFIED BY '{{ '{{' }}password{{ '}}' }}'; GRANT ALL PRIVILEGES ON {{ openbao_wordpress_academy_db_name | default('wordpress_academy') }}.* TO '{{ '{{' }}name{{ '}}' }}'@'%';"
     default_ttl=2160h
     max_ttl=2160h
   environment: "{{ openbao_env | combine({'VAULT_TOKEN': openbao_bootstrap_token}) }}"

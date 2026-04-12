@@ -342,6 +342,7 @@
           export VAULT_TOKEN
           VAULT_TOKEN=$(cat "$TOKEN_FILE")
           export VAULT_ADDR="$OPENBAO_ADDR"
+          export VAULT_SKIP_VERIFY=1
 
           # Renew token to avoid expiry during rotation
           bao token renew-self > /dev/null 2>&1 || log "WARN: Token renewal failed, continuing"
@@ -419,6 +420,7 @@
           export VAULT_TOKEN
           VAULT_TOKEN=$(cat "$TOKEN_FILE")
           export VAULT_ADDR="$OPENBAO_ADDR"
+          export VAULT_SKIP_VERIFY=1
 
           # Renew token to avoid expiry during rotation
           bao token renew-self > /dev/null 2>&1 || log "WARN: Token renewal failed, continuing"
@@ -492,6 +494,7 @@
           export VAULT_TOKEN
           VAULT_TOKEN=$(cat "$TOKEN_FILE")
           export VAULT_ADDR="$OPENBAO_ADDR"
+          export VAULT_SKIP_VERIFY=1
 
           bao token renew-self > /dev/null 2>&1 || log "WARN: Token renewal failed, continuing"
 
