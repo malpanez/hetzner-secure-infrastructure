@@ -287,7 +287,10 @@
       capabilities = ["read"]
     }
     path "secret/data/wordpress" {
-      capabilities = ["create", "update"]
+      capabilities = ["read", "create", "update", "patch"]
+    }
+    path "secret/metadata/wordpress" {
+      capabilities = ["read"]
     }
     path "auth/token/renew-self" {
       capabilities = ["update"]
@@ -309,7 +312,10 @@
       capabilities = ["read"]
     }
     path "secret/data/wordpress-academy" {
-      capabilities = ["create", "update", "patch"]
+      capabilities = ["read", "create", "update", "patch"]
+    }
+    path "secret/metadata/wordpress-academy" {
+      capabilities = ["read"]
     }
     path "auth/token/renew-self" {
       capabilities = ["update"]
