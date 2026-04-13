@@ -23,8 +23,8 @@
 │  STEP 2: OpenBao Transit Bootstrap (ONE TIME ONLY)              │
 │  ─────────────────────────────────────────────────              │
 │  cd ansible                                                     │
-│  ansible-playbook playbooks/openbao.yml                         │
-│  ansible-playbook playbooks/openbao-transit-bootstrap.yml \     │
+│  ansible-playbook playbooks/site.yml  # includes OpenBao bootstrap                         │
+│  # openbao-transit-bootstrap.yml is now part of site.yml \     │
 │    -e openbao_transit_bootstrap_ack=true                        │
 │                                                                 │
 │  ⚠️  MANUAL STEP: Save credentials and update vault             │
@@ -55,8 +55,8 @@ cd terraform && terraform apply && cd ..
 
 # 3. Bootstrap OpenBao Transit (generates unseal keys)
 cd ansible
-ansible-playbook playbooks/openbao.yml
-ansible-playbook playbooks/openbao-transit-bootstrap.yml \
+ansible-playbook playbooks/site.yml  # includes OpenBao bootstrap
+# openbao-transit-bootstrap.yml is now part of site.yml \
   -e openbao_transit_bootstrap_ack=true
 
 # 4. STOP HERE - Save the credentials shown:

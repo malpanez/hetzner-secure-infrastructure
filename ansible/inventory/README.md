@@ -31,7 +31,7 @@ inventory/
 │   │   └── node_exporter.yml  # System metrics exporter
 │   │
 │   └── secrets_servers/       # Variables for secrets management
-│       └── openbao.yml        # OpenBao (Vault alternative)
+│       └── openbao-bootstrap.yml # OpenBao post-init bootstrap
 │
 └── host_vars/                 # Host-specific variables (optional)
     └── wordpress-prod.yml     # Variables specific to wordpress-prod host
@@ -195,7 +195,7 @@ Each service's variables are in dedicated files:
 
 ### Secrets Stack (`secrets_servers/`)
 
-- **openbao.yml**: Vault alternative, policies, auth methods
+- **openbao-bootstrap.yml**: Post-init bootstrap (run once after bao operator init)
 
 ### Security (`hetzner/`)
 

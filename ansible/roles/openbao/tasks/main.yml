@@ -22,7 +22,7 @@
       - openbao_transit_token | length > 0
     fail_msg: >-
       openbao_transit_enabled is true but openbao_transit_token is empty.
-      Run playbooks/openbao-transit-bootstrap.yml (-e openbao_transit_bootstrap_ack=true),
+      Run playbooks/site.yml -e openbao_transit_bootstrap_ack=true,
       then store the token in Ansible Vault (vault_openbao_transit_token).
   when: openbao_transit_enabled | default(false) | bool
   tags: [openbao, transit]

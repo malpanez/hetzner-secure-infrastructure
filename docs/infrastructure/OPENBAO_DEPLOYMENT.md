@@ -684,7 +684,7 @@ OPENBAO_IP=$(tofu output -raw openbao_server_ip)
 
 ```bash
 cd ../../ansible
-ansible-playbook playbooks/openbao.yml
+ansible-playbook playbooks/site.yml  # includes OpenBao bootstrap
 ```
 
 #### 3. Initialize OpenBao
@@ -933,7 +933,7 @@ tofu apply -target=module.openbao_server
 
 # 2. Configure OpenBao
 cd ../../ansible
-ansible-playbook playbooks/openbao.yml
+ansible-playbook playbooks/site.yml  # includes OpenBao bootstrap
 
 # 3. Initialize and unseal
 ssh malpanez@$(tofu output -raw openbao_server_ip)

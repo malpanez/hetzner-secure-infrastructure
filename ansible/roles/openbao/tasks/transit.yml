@@ -102,7 +102,7 @@
       - ""
       - "Transit instance is running at: https://127.0.0.1:{{ openbao_transit_instance_port }}"
       - ""
-      - "NEXT STEPS (Run via openbao-transit-bootstrap.yml playbook):"
+      - "NEXT STEPS (Run via site.yml -e openbao_transit_bootstrap_ack=true):"
       - ""
       - "1. Initialize transit instance (one-time only)"
       - "2. Unseal transit instance (requires 3 of 5 keys)"

@@ -949,7 +949,7 @@ terraform apply -var-file=production.tfvars
 
 # 4. Bootstrap Transit (auto-unseal)
 cd ../ansible
-ansible-playbook playbooks/openbao-transit-bootstrap.yml \
+# openbao-transit-bootstrap.yml is now part of site.yml \
   -e openbao_transit_bootstrap_ack=true --ask-vault-pass
 
 # 5. Guardar auto-unseal token
