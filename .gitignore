@@ -523,3 +523,4 @@ terraform/tfplan
 
 # Archive (local reference docs, not for version control)
 .archive/
+ansible/playbooks/openbao.txt
