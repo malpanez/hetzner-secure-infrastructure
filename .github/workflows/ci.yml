@@ -101,8 +101,6 @@ jobs:
             playbooks/site.yml \
             playbooks/common.yml \
             playbooks/dual-wordpress.yml \
-            playbooks/openbao.yml \
-            playbooks/openbao-transit-bootstrap.yml \
             playbooks/openbao-bootstrap.yml \
             playbooks/setup-openbao-rotation.yml \
             playbooks/validate.yml \
