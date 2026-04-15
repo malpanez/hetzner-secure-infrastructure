@@ -5,10 +5,10 @@
 common_package_manager: apt
 
 # NTP package
-common_ntp_package: systemd-timesyncd
+common_ntp_package: chrony
 
 # NTP service name
-common_ntp_service: systemd-timesyncd
+common_ntp_service: chrony
 
 # Timezone data package
 common_timezone_package: tzdata

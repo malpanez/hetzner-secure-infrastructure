@@ -85,12 +85,36 @@ common_packages_to_remove:
 # Enable NTP time synchronization
 common_ntp_enabled: true
 
-# NTP servers
+# Primary NTP servers (Hetzner internal — low latency from Hetzner VMs)
 common_ntp_servers:
+  - ntp1.hetzner.de
+  - ntp2.hetzner.de
+  - ntp3.hetzner.de
+
+# Fallback NTP servers if primary are unreachable
+common_ntp_fallback_servers:
   - 0.debian.pool.ntp.org
   - 1.debian.pool.ntp.org
-  - 2.debian.pool.ntp.org
-  - 3.debian.pool.ntp.org
+
+# Enable NTS (Network Time Security, RFC 8915) — requires chrony >= 4.0
+# Adds cryptographic authentication to NTP. Uses Cloudflare time.cloudflare.com.
+# Disable if outbound TLS/443 is blocked or chrony < 4.0.
+common_ntp_nts_enabled: true
+
+# makestep <threshold_seconds> <max_updates>
+# -1 = always step (correct for VMs — handles live migration / resume offsets)
+# Use 3 on bare metal to avoid stepping after initial sync
+common_ntp_makestep_threshold: 1.0
+common_ntp_makestep_limit: -1
+
+# Minimum number of sources that must agree before updating the clock
+# 1 required when only Hetzner internal servers are used (3 sources, same pool)
+common_ntp_minsources: 1
+
+# Sync hardware clock (RTC) every 11 minutes.
+# true  = bare metal (RTC is meaningful, preserves time across reboots without NTP)
+# false = VMs (hypervisor manages RTC, enabling this causes unnecessary writes)
+common_ntp_rtcsync: false
 
 # ========================================
 # GRUB Console Configuration

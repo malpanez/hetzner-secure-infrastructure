@@ -1,7 +1,7 @@
 ---
-- name: restart timesyncd
+- name: restart chrony
   ansible.builtin.systemd:
-    name: systemd-timesyncd
+    name: chrony
     state: restarted
 
 # ========================================

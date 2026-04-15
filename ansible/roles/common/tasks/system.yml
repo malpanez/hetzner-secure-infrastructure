@@ -28,23 +28,31 @@
 
 - name: Common | System | Configure NTP
   block:
-    - name: Common | System | Install NTP package
+    - name: Common | System | Stop and mask systemd-timesyncd
+      ansible.builtin.systemd:
+        name: systemd-timesyncd
+        enabled: false
+        masked: true
+        state: stopped
+      failed_when: false
+      tags: [molecule-notest]
+
+    - name: Common | System | Install chrony
       ansible.builtin.apt:
         name: "{{ common_ntp_package }}"
         state: present
         update_cache: true
-        cache_valid_time: 3600
 
-    - name: Common | System | Configure NTP servers
+    - name: Common | System | Deploy chrony configuration
       ansible.builtin.template:
-        src: timesyncd.conf.j2
-        dest: /etc/systemd/timesyncd.conf
+        src: chrony.conf.j2
+        dest: /etc/chrony/chrony.conf
         owner: root
         group: root
         mode: '0644'
-      notify: restart timesyncd
+      notify: restart chrony
 
-    - name: Common | System | Enable and start NTP service
+    - name: Common | System | Enable and start chrony
       ansible.builtin.systemd:
         name: "{{ common_ntp_service }}"
         enabled: true

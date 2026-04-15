@@ -29,6 +29,41 @@
       changed_when: false
       failed_when: locale_check.rc != 0
 
+    - name: Check chrony package is installed
+      ansible.builtin.package:
+        name: chrony
+        state: present
+      check_mode: true
+      register: chrony_installed
+      failed_when: chrony_installed.changed
+
+    - name: Check chrony configuration exists
+      ansible.builtin.stat:
+        path: /etc/chrony/chrony.conf
+      register: chrony_conf
+      failed_when: not chrony_conf.stat.exists
+
+    - name: Check chrony configuration has expected content
+      ansible.builtin.command: grep -q "makestep" /etc/chrony/chrony.conf
+      changed_when: false
+      failed_when: false
+      register: chrony_makestep
+
+    - name: Assert chrony makestep directive is present
+      ansible.builtin.assert:
+        that: chrony_makestep.rc == 0
+        fail_msg: "chrony.conf missing makestep directive"
+
+    - name: Gather systemd-timesyncd service facts
+      ansible.builtin.service_facts:
+
+    - name: Assert systemd-timesyncd is masked or disabled
+      ansible.builtin.assert:
+        that: >
+          ansible_facts.services['systemd-timesyncd.service'] is not defined or
+          ansible_facts.services['systemd-timesyncd.service'].status in ['masked', 'disabled', 'not-found']
+        fail_msg: "systemd-timesyncd is still enabled — conflicts with chrony"
+
     - name: Display test results
       ansible.builtin.debug:
         msg: "All common role tests passed!"
