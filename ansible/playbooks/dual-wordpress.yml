@@ -87,7 +87,7 @@
             title: "Política de Cookies | Two Minds Trading"
           - slug: politica-de-privacidad
             title: "Política de Privacidad | Two Minds Trading"
-      tags: [wordpress, nginx, webserver, main]
+      tags: [wordpress, nginx, webserver, main, mu-plugins]
 
     - name: Deploy academy site (academy.twomindstrading.com)
       ansible.builtin.include_role:
@@ -133,7 +133,7 @@
         nginx_wordpress_nonce_salt: "{{ vault_wp_academy_nonce_salt }}"
         nginx_wordpress_plugins_zip:
           - {name: sfwd-lms, file: sfwd-lms.4.25.7.1.zip}
-      tags: [wordpress, nginx, webserver, academy]
+      tags: [wordpress, nginx, webserver, academy, mu-plugins]
 
   post_tasks:
     - name: Display dual WordPress deployment information
