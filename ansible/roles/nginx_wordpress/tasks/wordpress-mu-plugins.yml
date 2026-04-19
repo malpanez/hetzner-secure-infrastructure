@@ -50,3 +50,4 @@
     - wp_config_check.stat.exists
     - nginx_wordpress_site_name | default('') == 'academy'
   tags: [nginx-wordpress, wordpress, mu-plugins, seed]
+
