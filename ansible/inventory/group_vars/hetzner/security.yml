@@ -102,11 +102,29 @@ fail2ban_services:
     bantime: "{{ fail2ban_bantime }}"
     findtime: "{{ fail2ban_findtime }}"
 
+  - name: nginx-limit-req
+    enabled: true
+    port: http,https
+    filter: nginx-limit-req
+    logpath: /var/log/nginx/*-access.log
+    maxretry: 10
+    findtime: 600
+    bantime: 3600
+
+  - name: wordpress-auth
+    enabled: true
+    port: http,https
+    filter: wordpress-auth
+    logpath: /var/log/nginx/*-access.log
+    maxretry: 5
+    findtime: 300
+    bantime: 86400
+
 # ========================================
 # AppArmor
 # ========================================
 apparmor_enabled: true
-apparmor_enforce_mode: false  # false = complain mode
+apparmor_enforce_mode: true
 
 apparmor_profiles:
   - /usr/sbin/sshd

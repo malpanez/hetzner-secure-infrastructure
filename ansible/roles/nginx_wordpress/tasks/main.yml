@@ -85,3 +85,10 @@
     - nginx_wordpress_enabled
     - nginx_wordpress_install_wordpress
   tags: [nginx-wordpress, wordpress, optimization]
+
+- name: Nginx WordPress | Main | Include WordPress file permissions hardening
+  ansible.builtin.include_tasks: wordpress-permissions.yml
+  when:
+    - nginx_wordpress_enabled
+    - nginx_wordpress_install_wordpress
+  tags: [nginx-wordpress, wordpress, permissions]

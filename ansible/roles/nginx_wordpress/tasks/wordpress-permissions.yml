@@ -1,0 +1,20 @@
+---
+- name: Nginx WordPress | Permissions | Set directory permissions to 755
+  ansible.builtin.command:
+    cmd: find {{ nginx_wordpress_web_root }} -type d -exec chmod 755 {} \;
+  changed_when: true
+  tags: [nginx-wordpress, wordpress, permissions]
+
+- name: Nginx WordPress | Permissions | Set file permissions to 644
+  ansible.builtin.command:
+    cmd: find {{ nginx_wordpress_web_root }} -type f -exec chmod 644 {} \;
+  changed_when: true
+  tags: [nginx-wordpress, wordpress, permissions]
+
+- name: Nginx WordPress | Permissions | Secure wp-config.php
+  ansible.builtin.file:
+    path: "{{ nginx_wordpress_web_root }}/wp-config.php"
+    owner: root
+    group: "{{ nginx_wordpress_nginx_group }}"
+    mode: '0640'
+  tags: [nginx-wordpress, wordpress, permissions]

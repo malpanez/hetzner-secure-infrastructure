@@ -10,3 +10,23 @@
     mode: "0644"
   notify: restart fail2ban
   tags: [fail2ban, config]
+
+- name: Fail2Ban | Configure | Deploy nginx-limit-req filter
+  ansible.builtin.copy:
+    src: filter-nginx-limit-req.conf
+    dest: /etc/fail2ban/filter.d/nginx-limit-req.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart fail2ban
+  tags: [fail2ban, config]
+
+- name: Fail2Ban | Configure | Deploy wordpress-auth filter
+  ansible.builtin.copy:
+    src: filter-wordpress-auth.conf
+    dest: /etc/fail2ban/filter.d/wordpress-auth.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart fail2ban
+  tags: [fail2ban, config]
