@@ -10,7 +10,7 @@ prometheus_version: "3.11.0"
 # ========================================
 # Prometheus Connection
 # ========================================
-prometheus_listen_address: "0.0.0.0"
+prometheus_listen_address: "127.0.0.1"
 prometheus_port: 9090
 prometheus_external_url: "http://{{ ansible_host }}:{{ prometheus_port }}"
 

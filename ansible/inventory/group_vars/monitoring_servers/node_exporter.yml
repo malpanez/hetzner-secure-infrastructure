@@ -11,7 +11,7 @@ node_exporter_version: "1.10.2"
 # ========================================
 # Node Exporter Connection
 # ========================================
-node_exporter_listen_address: "0.0.0.0"
+node_exporter_listen_address: "127.0.0.1"
 node_exporter_port: 9100
 
 # ========================================

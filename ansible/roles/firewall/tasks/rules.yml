@@ -75,6 +75,17 @@
   when: not firewall_relax_idempotence | default(false)
   tags: [firewall, rules]
 
+- name: Firewall | Rules | Deny external access to monitoring ports (C3)
+  community.general.ufw:
+    rule: deny
+    port: "{{ item }}"
+    proto: tcp
+  loop:
+    - "9090"
+    - "9096"
+    - "9100"
+  tags: [firewall, rules, monitoring]
+
 - name: Firewall | Rules | Verify SSH rule exists before enabling
   ansible.builtin.command: ufw status
   register: ufw_pre_enable_check
