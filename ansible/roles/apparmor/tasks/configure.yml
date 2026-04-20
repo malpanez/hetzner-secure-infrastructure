@@ -48,6 +48,27 @@
   loop: "{{ apparmor_local_stubs | default(['usr.sbin.sshd', 'usr.bin.fail2ban-server']) }}"
   tags: [apparmor, profiles, config]
 
+- name: AppArmor | Configure | Deploy php-fpm local override (allow /var/www access)
+  ansible.builtin.copy:
+    dest: "{{ apparmor_local_dir }}/php-fpm"
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      # Managed by Ansible - allow PHP-FPM to serve WordPress files
+      /var/www/** r,
+      /var/www/**/wp-content/uploads/** rw,
+      /var/www/**/wp-content/cache/** rw,
+      /var/www/**/wp-content/upgrade/** rw,
+      /var/www/**/wp-content/upgrade-temp-backup/** rw,
+      /var/www/**/wp-content/plugins/** rw,
+      /var/www/**/wp-content/themes/** r,
+      /var/www/**/wp-content/mu-plugins/** r,
+      /tmp/ rw,
+      /tmp/** rw,
+  notify: reload apparmor profiles
+  tags: [apparmor, profiles, php-fpm, config]
+
 - name: AppArmor | Configure | Load AppArmor profiles
   ansible.builtin.command: "{{ apparmor_parser_command }} -r {{ apparmor_profiles_dir }}/{{ item }}"
   loop:
