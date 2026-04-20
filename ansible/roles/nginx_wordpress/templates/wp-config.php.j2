@@ -26,6 +26,11 @@ define('NONCE_SALT',       '{{ nginx_wordpress_nonce_salt }}');
 // ** WordPress debugging **
 define('WP_DEBUG', false);
 
+// ** Performance tweaks **
+defined('WP_POST_REVISIONS') || define('WP_POST_REVISIONS', {{ nginx_wordpress_revision_limit | default(5) }});
+defined('AUTOSAVE_INTERVAL') || define('AUTOSAVE_INTERVAL', 300);
+defined('EMPTY_TRASH_DAYS')  || define('EMPTY_TRASH_DAYS', 7);
+
 // ** Nginx Helper - FastCGI cache purge path **
 define('RT_WP_NGINX_HELPER_CACHE_PATH', '/var/cache/nginx/{{ nginx_wordpress_site_name }}');
 
