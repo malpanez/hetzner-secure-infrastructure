@@ -27,6 +27,7 @@ Phase 0 (content backup, XML export, screenshots) is already complete and is not
 - [ ] **Phase 5: Academy Site** - academy.twomindstrading.com LMS, WooCommerce, course setup, backups
 - [ ] **Phase 8: WordPress Site Quality** - Mobile nav fix, neurodivergent-friendly animations, LearnDash ZIP install, SEO titles, theme cleanup, tmt-perf.php for both sites
 - [ ] **Phase 9: Playbook Consolidation** - site.yml as single idempotent orchestrator; retire legacy wordpress.yml, wordpress-only.yml, and the old site.yml; deploy-full.sh updated to call site.yml
+- [ ] **Phase 9.1: Ansible Roles Optimization** (INSERTED) - Comprehensive DRY pass across all roles: module_defaults for any repeated module params (owner/group/mode, auth tokens, headers, timeouts); block/rescue/always for error handling and recovery; merge duplicate conditional tasks; replace shell find-chmod with ansible.builtin.file recurse; ansible-lint clean after
 
 ## Phase Details
 
@@ -156,6 +157,28 @@ Plans:
 - [ ] 05-03: Configure WooCommerce — Stripe or PayPal gateway, enrollment flow; create one complete test course; verify purchase → enrollment works end-to-end (ACAD-03, ACAD-04)
 - [ ] 05-04: Configure UpdraftPlus backup to Google Drive; verify Valkey object cache with LearnDash (test for user meta staleness; configure cache group exclusions if needed) (ACAD-06)
 **UI hint**: yes
+
+### Phase 9.1: Ansible Roles Optimization — module_defaults, block consolidation, idiomatic file management
+
+**Goal:** All role task files receive a comprehensive DRY pass: `module_defaults` eliminates any repeated module parameters (owner/group/mode, auth headers, tokens, timeouts, validate_certs, etc.); `block/rescue/always` adds error handling and recovery where operations can fail; duplicate conditional task pairs are merged; `ansible.builtin.file` with `recurse` replaces shell find-chmod commands; `ansible-lint` exits 0 after all changes.
+**Depends on:** Phase 9
+**Requirements**: OPT-01, OPT-02, OPT-03, OPT-04, OPT-05, OPT-06, OPT-07
+**Success Criteria** (what must be TRUE):
+
+  1. `ansible-lint` exits 0 with production profile on all modified roles
+  2. No task in any modified file has module params silently changed by a `module_defaults` block — every task whose effective params differ from the block defaults has an explicit override
+  3. `firewall/tasks/rules.yml` — SSH allow and UFW ports tasks appear once each (not split into two tasks for `firewall_relax_idempotence` true/false)
+  4. `nginx_wordpress/tasks/wordpress-permissions.yml` contains no `ansible.builtin.shell`/`ansible.builtin.command` with `find ... chmod`
+  5. At least one role uses `block/rescue` for a recoverable failure scenario (not just `ignore_errors`)
+  6. `molecule test` (default scenario) passes in `nginx_wordpress` role after changes to that role
+
+**Plans**: 3 plans
+
+Plans:
+
+- [ ] 09.1-01: module_defaults + merged conditionals for apparmor, fail2ban, firewall, security_hardening (OPT-01, OPT-03, OPT-05)
+- [ ] 09.1-02: module_defaults + block/rescue for cloudflare_origin_ssl, valkey, openbao, ssh_2fa + OPT-06 audit (OPT-01, OPT-02, OPT-05, OPT-06)
+- [ ] 09.1-03: module_defaults for nginx_wordpress + replace find-chmod + full lint/molecule validation (OPT-01, OPT-04, OPT-07)
 
 ## Progress
 
