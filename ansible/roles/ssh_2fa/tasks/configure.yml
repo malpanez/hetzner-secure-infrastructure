@@ -10,6 +10,16 @@
     mode: '0755'
   tags: [ssh, config]
 
+- name: SSH 2FA | Configure | Overwrite cloud-init SSH override to enforce PermitRootLogin no
+  ansible.builtin.copy:
+    content: "# Managed by Ansible - overrides cloud-init default\nPermitRootLogin no\n"
+    dest: /etc/ssh/sshd_config.d/00-cloud-init-hardening.conf
+    owner: root
+    group: root
+    mode: '0600'
+  notify: restart sshd
+  tags: [ssh, config]
+
 - name: SSH 2FA | Configure | Check break-glass users exist
   ansible.builtin.getent:
     database: passwd

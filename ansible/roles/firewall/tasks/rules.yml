@@ -26,11 +26,38 @@
   when: not firewall_relax_idempotence | default(false)
   tags: [firewall, rules, ssh]
 
+- name: Firewall | Rules | Remove SSH allow-from-anywhere rule (IPv4) (C4)
+  community.general.ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+    from_ip: "0.0.0.0/0"
+    delete: true
+  tags: [firewall, rules, ssh]
+
+- name: Firewall | Rules | Remove SSH allow-from-anywhere rule (IPv6) (C4)
+  community.general.ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+    from_ip: "::/0"
+    delete: true
+  tags: [firewall, rules, ssh]
+
+- name: Firewall | Rules | Remove SSH port-only allow rule (any source, no from_ip) (C4)
+  community.general.ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+    delete: true
+  tags: [firewall, rules, ssh]
+
 - name: Firewall | Rules | Configure UFW allowed ports [relaxed idempotence]
   community.general.ufw:
     rule: "{{ item.rule }}"
     port: "{{ item.port }}"
     proto: "{{ item.proto }}"
+    from_ip: "{{ item.from_ip | default(omit) }}"
     comment: "{{ item.comment | default(omit) }}"
   loop: "{{ firewall_allowed_ports }}"
   changed_when: false
@@ -42,6 +69,7 @@
     rule: "{{ item.rule }}"
     port: "{{ item.port }}"
     proto: "{{ item.proto }}"
+    from_ip: "{{ item.from_ip | default(omit) }}"
     comment: "{{ item.comment | default(omit) }}"
   loop: "{{ firewall_allowed_ports }}"
   when: not firewall_relax_idempotence | default(false)
