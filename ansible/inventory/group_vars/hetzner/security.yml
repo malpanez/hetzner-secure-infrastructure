@@ -127,8 +127,9 @@ apparmor_enabled: true
 apparmor_enforce_mode: true
 
 apparmor_profiles:
-  - /usr/sbin/sshd
-  - /usr/bin/fail2ban-server
+  - usr.sbin.sshd
+  - usr.bin.fail2ban-server
+  - php-fpm
 
 # ========================================
 # Automatic Updates
