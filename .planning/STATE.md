@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed Phase 09 Plan 02 — shell, docs, validation aligned to site.yml
-last_updated: "2026-04-11T15:48:49.797Z"
+stopped_at: Completed 03.6-02 — monitoring ports binding (C3)
+last_updated: "2026-04-20T12:45:10.312Z"
 last_activity: 2026-04-11
 progress:
   total_phases: 10
@@ -64,6 +64,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 08 P02 | 5min | 3 tasks | 3 files |
 | Phase 09-playbook-consolidation P01 | 10min | 3 tasks | 7 files |
 | Phase 09-playbook-consolidation P02 | 10min | 3 tasks | 3 files |
+| Phase 03.6 P02 | 10 | 5 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -96,6 +97,7 @@ Recent decisions affecting current work:
 - [Phase 09-playbook-consolidation]: site.yml is now the canonical entrypoint — deploy.yml deleted; openbao.yml and openbao-transit-bootstrap.yml kept as standalone day-2 playbooks
 - [Phase 09-playbook-consolidation]: terraform-output.json workaround removed from deploy-full.sh — hcloud dynamic inventory reads directly from Hetzner API
 - [Phase 09-playbook-consolidation]: validate.yml service health plays use failed_when: false for PHP-FPM and Valkey — service names vary by install method
+- [Phase 03.6]: Monitoring ports bound to 127.0.0.1; UFW deny rules added for 9090/9096/9100 (C3)
 
 ### Pending Todos
 
@@ -115,6 +117,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-11T15:36:51.431Z
-Stopped at: Completed Phase 09 Plan 02 — shell, docs, validation aligned to site.yml
+Last session: 2026-04-20T12:45:10.302Z
+Stopped at: Completed 03.6-02 — monitoring ports binding (C3)
 Resume file: None

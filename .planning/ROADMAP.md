@@ -22,6 +22,7 @@ Phase 0 (content backup, XML export, screenshots) is already complete and is not
 - [x] **Phase 2: Testing & Validation** - Molecule tests + lint clean on feature/dual-wordpress branch
 - [ ] **Phase 3: Server Rebuild** - terraform destroy + apply, full Ansible deploy, OpenBao + OPS hardening
 - [ ] **Phase 3.5: Backup Infrastructure** (INSERTED) - Hetzner Object Storage bucket + encrypted automated backups for MariaDB and WordPress media
+- [ ] **Phase 3.6: Security Hardening** (INSERTED) - Resolve all audit findings C1-C4, H1-H4, M1-M3: SSH config, UFW, monitoring ports, AppArmor, PHP hardening, fail2ban, file permissions, repo/server gaps
 - [ ] **Phase 4: Main Site** - twomindstrading.com content, plugins, performance, backups
 - [ ] **Phase 5: Academy Site** - academy.twomindstrading.com LMS, WooCommerce, course setup, backups
 - [ ] **Phase 8: WordPress Site Quality** - Mobile nav fix, neurodivergent-friendly animations, LearnDash ZIP install, SEO titles, theme cleanup, tmt-perf.php for both sites
