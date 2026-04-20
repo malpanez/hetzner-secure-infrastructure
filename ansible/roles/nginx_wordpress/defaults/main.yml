@@ -93,6 +93,7 @@ nginx_wordpress_php_fpm_min_spare_servers: 4
 nginx_wordpress_php_fpm_max_spare_servers: 12
 nginx_wordpress_php_fpm_max_requests: 500
 nginx_wordpress_php_fpm_process_idle_timeout: 10s
+nginx_wordpress_php_fpm_request_terminate_timeout: "300s"
 
 nginx_wordpress_redis_database: 0
 nginx_wordpress_redis_prefix: "wp_"
@@ -255,3 +256,13 @@ nginx_wordpress_disable_pingbacks: true
 
 # Limit post revisions (database optimization)
 nginx_wordpress_revision_limit: 5
+
+# ========================================
+# SMTP Configuration (WP Mail SMTP plugin)
+# ========================================
+nginx_wordpress_smtp_host: ""
+nginx_wordpress_smtp_port: 587
+nginx_wordpress_smtp_from_email: ""
+nginx_wordpress_smtp_from_name: ""
+nginx_wordpress_smtp_user: ""
+nginx_wordpress_smtp_password: ""
