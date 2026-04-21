@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Completed Phase 03.6 Plan 03 — PHP hardening + AppArmor enforce
-last_updated: "2026-04-20T13:26:00.305Z"
-last_activity: 2026-04-11
+status: executing
+stopped_at: Completed Phase 09.1 Plan 01 — module_defaults + firewall task consolidation
+last_updated: "2026-04-21T07:06:37.324Z"
+last_activity: 2026-04-21
 progress:
-  total_phases: 10
+  total_phases: 11
   completed_phases: 6
-  total_plans: 21
-  completed_plans: 15
+  total_plans: 24
+  completed_plans: 17
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Un alumno puede descubrir cursos en el main site, comprar en academy, y aprender sin fricciones — con <2s LCP y sin riesgo de perder datos.
-**Current focus:** Phase 09 — playbook-consolidation-site-yml-as-single-idempotent-orchestrator
+**Current focus:** Phase 09.1 — ansible-roles-optimization-module-defaults-block-consolidation-idiomatic-file-management
 
 ## Current Position
 
-Phase: 09
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-04-11
+Phase: 09.1 (ansible-roles-optimization-module-defaults-block-consolidation-idiomatic-file-management) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
+Last activity: 2026-04-21
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -66,6 +66,8 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 09-playbook-consolidation P02 | 10min | 3 tasks | 3 files |
 | Phase 03.6 P02 | 10 | 5 tasks | 4 files |
 | Phase 03.6 P03 | 45 | 4 tasks | 5 files |
+| Phase 09.1 P02 | 20min | 2 tasks | 4 files |
+| Phase 09.1 P01 | 20 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -100,6 +102,12 @@ Recent decisions affecting current work:
 - [Phase 09-playbook-consolidation]: validate.yml service health plays use failed_when: false for PHP-FPM and Valkey — service names vary by install method
 - [Phase 03.6]: Monitoring ports bound to 127.0.0.1; UFW deny rules added for 9090/9096/9100 (C3)
 - [Phase 03.6]: php_admin_flag for allow_url_fopen (boolean flag type); apparmor_profiles uses filenames not binary paths
+- [Phase 09.1]: 09.1-02: valkey module_defaults keeps state: directory on individual tasks for readability; only owner/group/mode in defaults
+- [Phase 09.1]: 09.1-02: openbao block/rescue wraps TLS cert generation; backup script keeps explicit root owner override
+- [Phase 09.1]: 09.1-02: OPT-06 audit complete — all uri/get_url calls are single-use with no shared params, no consolidation needed
+- [Phase 09.1-01]: module_defaults at block level does not satisfy ansible-lint risky-file-permissions — noqa inline required per task relying on defaults
+- [Phase 09.1-01]: AppArmor enforce/complain merged via ternary — removes when condition entirely, command selected at runtime
+- [Phase 09.1-01]: Firewall relaxed-idempotence pairs merged via changed_when: not (firewall_relax_idempotence | default(false))
 
 ### Pending Todos
 
@@ -119,6 +127,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-20T13:26:00.297Z
-Stopped at: Completed Phase 03.6 Plan 03 — PHP hardening + AppArmor enforce
+Last session: 2026-04-21T07:06:37.314Z
+Stopped at: Completed Phase 09.1 Plan 01 — module_defaults + firewall task consolidation
 Resume file: None
