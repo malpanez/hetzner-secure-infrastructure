@@ -1,32 +1,34 @@
 ---
 # Fail2ban Role - Configuration Tasks
 
-- name: Fail2Ban | Configure | Deploy Fail2ban configuration
-  ansible.builtin.template:
-    src: jail.local.j2
-    dest: /etc/fail2ban/jail.local
-    owner: root
-    group: root
-    mode: "0644"
-  notify: restart fail2ban
-  tags: [fail2ban, config]
+- name: Fail2Ban | Configure | Deploy configuration files
+  module_defaults:
+    ansible.builtin.template:
+      owner: root
+      group: root
+      mode: "0644"
+    ansible.builtin.copy:
+      owner: root
+      group: root
+      mode: "0644"
+  block:
+    - name: Fail2Ban | Configure | Deploy Fail2ban configuration
+      ansible.builtin.template:  # noqa: risky-file-permissions
+        src: jail.local.j2
+        dest: /etc/fail2ban/jail.local
+      notify: restart fail2ban
+      tags: [fail2ban, config]
 
-- name: Fail2Ban | Configure | Deploy nginx-limit-req filter
-  ansible.builtin.copy:
-    src: filter-nginx-limit-req.conf
-    dest: /etc/fail2ban/filter.d/nginx-limit-req.conf
-    owner: root
-    group: root
-    mode: "0644"
-  notify: restart fail2ban
-  tags: [fail2ban, config]
+    - name: Fail2Ban | Configure | Deploy nginx-limit-req filter
+      ansible.builtin.copy:  # noqa: risky-file-permissions
+        src: filter-nginx-limit-req.conf
+        dest: /etc/fail2ban/filter.d/nginx-limit-req.conf
+      notify: restart fail2ban
+      tags: [fail2ban, config]
 
-- name: Fail2Ban | Configure | Deploy wordpress-auth filter
-  ansible.builtin.copy:
-    src: filter-wordpress-auth.conf
-    dest: /etc/fail2ban/filter.d/wordpress-auth.conf
-    owner: root
-    group: root
-    mode: "0644"
-  notify: restart fail2ban
-  tags: [fail2ban, config]
+    - name: Fail2Ban | Configure | Deploy wordpress-auth filter
+      ansible.builtin.copy:  # noqa: risky-file-permissions
+        src: filter-wordpress-auth.conf
+        dest: /etc/fail2ban/filter.d/wordpress-auth.conf
+      notify: restart fail2ban
+      tags: [fail2ban, config]
