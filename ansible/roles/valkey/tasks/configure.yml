@@ -1,27 +1,38 @@
 ---
-# Valkey Role - Configuration Tasks
+- name: Valkey | Configure | Create and deploy configuration
+  module_defaults:
+    ansible.builtin.file:
+      owner: "{{ valkey_user }}"
+      group: "{{ valkey_group }}"
+      mode: '0750'
+    ansible.builtin.template:
+      owner: "{{ valkey_user }}"
+      group: "{{ valkey_group }}"
+  block:
+    - name: Valkey | Configure | Create Valkey config/data/log directories
+      ansible.builtin.file:  # noqa: risky-file-permissions
+        path: "{{ item }}"
+        state: directory
+      loop:
+        - "{{ valkey_config_dir }}"
+        - "{{ valkey_data_dir }}"
+        - "{{ valkey_log_dir }}"
+      tags: [valkey, config, directories]
 
-- name: Valkey | Configure | Create Valkey config/data/log directories
-  ansible.builtin.file:
-    path: "{{ item }}"
-    state: directory
-    owner: "{{ valkey_user }}"
-    group: "{{ valkey_group }}"
-    mode: '0750'
-  loop:
-    - "{{ valkey_config_dir }}"
-    - "{{ valkey_data_dir }}"
-    - "{{ valkey_log_dir }}"
-  tags: [valkey, config, directories]
+    - name: Valkey | Configure | Create Valkey runtime directory
+      ansible.builtin.file:  # noqa: risky-file-permissions
+        path: "{{ valkey_run_dir }}"
+        state: directory
+      tags: [valkey, config, directories, molecule-notest]
 
-- name: Valkey | Configure | Create Valkey runtime directory
-  ansible.builtin.file:
-    path: "{{ valkey_run_dir }}"
-    state: directory
-    owner: "{{ valkey_user }}"
-    group: "{{ valkey_group }}"
-    mode: '0750'
-  tags: [valkey, config, directories, molecule-notest]
+    - name: Valkey | Configure | Deploy Valkey configuration
+      ansible.builtin.template:  # noqa: risky-file-permissions
+        src: valkey.conf.j2
+        dest: "{{ valkey_config_file }}"
+        mode: '0640'
+      notify: restart valkey
+      register: valkey_config_deployed
+      tags: [valkey, config]
 
 # System tuning MUST happen BEFORE Valkey starts
 - name: Valkey | Configure | Configure system parameters (sysctl)
@@ -94,17 +105,6 @@
         fail_msg: "THP still enabled: {{ thp_status.content | b64decode | trim }}. Valkey performance may be impacted."
   when: valkey_disable_thp
   tags: [valkey, config, thp]
-
-- name: Valkey | Configure | Deploy Valkey configuration
-  ansible.builtin.template:
-    src: valkey.conf.j2
-    dest: "{{ valkey_config_file }}"
-    owner: "{{ valkey_user }}"
-    group: "{{ valkey_group }}"
-    mode: '0640'
-  notify: restart valkey
-  register: valkey_config_deployed
-  tags: [valkey, config]
 
 - name: Valkey | Configure | Assert configuration deployed
   ansible.builtin.assert:
