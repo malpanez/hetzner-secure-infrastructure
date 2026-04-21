@@ -3,18 +3,6 @@
 
 # CRITICAL: Always allow SSH FIRST before enabling UFW
 # This prevents lockouts during deployment and after reboots
-- name: Firewall | Rules | Allow SSH from management IP (CRITICAL - prevents lockout) [relaxed idempotence]
-  community.general.ufw:
-    rule: allow
-    port: "22"
-    proto: tcp
-    from_ip: "{{ item }}"
-    comment: "SSH from management"
-  loop: "{{ ssh_allowed_ips | default(['0.0.0.0/0']) }}"
-  changed_when: false
-  when: firewall_relax_idempotence | default(false)
-  tags: [firewall, rules, ssh]
-
 - name: Firewall | Rules | Allow SSH from management IP (CRITICAL - prevents lockout)
   community.general.ufw:
     rule: allow
@@ -23,7 +11,7 @@
     from_ip: "{{ item }}"
     comment: "SSH from management"
   loop: "{{ ssh_allowed_ips | default(['0.0.0.0/0']) }}"
-  when: not firewall_relax_idempotence | default(false)
+  changed_when: not (firewall_relax_idempotence | default(false))
   tags: [firewall, rules, ssh]
 
 - name: Firewall | Rules | Remove SSH allow-from-anywhere rule (IPv4) (C4)
@@ -52,18 +40,6 @@
     delete: true
   tags: [firewall, rules, ssh]
 
-- name: Firewall | Rules | Configure UFW allowed ports [relaxed idempotence]
-  community.general.ufw:
-    rule: "{{ item.rule }}"
-    port: "{{ item.port }}"
-    proto: "{{ item.proto }}"
-    from_ip: "{{ item.from_ip | default(omit) }}"
-    comment: "{{ item.comment | default(omit) }}"
-  loop: "{{ firewall_allowed_ports }}"
-  changed_when: false
-  when: firewall_relax_idempotence | default(false)
-  tags: [firewall, rules]
-
 - name: Firewall | Rules | Configure UFW allowed ports
   community.general.ufw:
     rule: "{{ item.rule }}"
@@ -72,7 +48,7 @@
     from_ip: "{{ item.from_ip | default(omit) }}"
     comment: "{{ item.comment | default(omit) }}"
   loop: "{{ firewall_allowed_ports }}"
-  when: not firewall_relax_idempotence | default(false)
+  changed_when: not (firewall_relax_idempotence | default(false))
   tags: [firewall, rules]
 
 - name: Firewall | Rules | Deny external access to monitoring ports (C3)
