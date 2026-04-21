@@ -1,6 +1,4 @@
 ---
-# SSH 2FA Role - Configuration Tasks
-
 - name: SSH 2FA | Configure | Ensure sshd_config.d directory exists
   ansible.builtin.file:
     path: /etc/ssh/sshd_config.d
@@ -72,43 +70,39 @@
   notify: restart sshd
   tags: [ssh, config]
 
-- name: SSH 2FA | Configure | Deploy hardened SSH configuration drop-in
-  ansible.builtin.template:
-    src: sshd_hardening.conf.j2
-    dest: /etc/ssh/sshd_config.d/99-hardening.conf
-    owner: root
-    group: root
-    mode: '0600'
-    backup: yes
-  notify: restart sshd
-  tags: [ssh, config, molecule-idempotence-notest]
+- name: SSH 2FA | Configure | Deploy SSH configuration drop-ins
+  module_defaults:
+    ansible.builtin.template:
+      owner: root
+      group: root
+      mode: '0600'
+      backup: yes
+  block:
+    - name: SSH 2FA | Configure | Deploy hardened SSH configuration drop-in
+      ansible.builtin.template:  # noqa: risky-file-permissions
+        src: sshd_hardening.conf.j2
+        dest: /etc/ssh/sshd_config.d/99-hardening.conf
+      notify: restart sshd
+      tags: [ssh, config, molecule-idempotence-notest]
 
-- name: SSH 2FA | Configure | Deploy FIDO2 SSH configuration drop-in
-  ansible.builtin.template:
-    src: sshd_fido2.conf.j2
-    dest: /etc/ssh/sshd_config.d/20-fido2.conf
-    owner: root
-    group: root
-    mode: '0600'
-    validate: /usr/sbin/sshd -t -f %s
-    backup: yes
-  when: ssh_2fa_fido2_only | default(false)
-  notify: restart sshd
-  tags: [ssh, fido2, config]
+    - name: SSH 2FA | Configure | Deploy FIDO2 SSH configuration drop-in
+      ansible.builtin.template:  # noqa: risky-file-permissions
+        src: sshd_fido2.conf.j2
+        dest: /etc/ssh/sshd_config.d/20-fido2.conf
+        validate: /usr/sbin/sshd -t -f %s
+      when: ssh_2fa_fido2_only | default(false)
+      notify: restart sshd
+      tags: [ssh, fido2, config]
 
-- name: SSH 2FA | Configure | Deploy 2FA SSH configuration drop-in
-  ansible.builtin.template:
-    src: sshd_2fa.conf.j2
-    dest: /etc/ssh/sshd_config.d/50-2fa.conf
-    owner: root
-    group: root
-    mode: '0600'
-    validate: /usr/sbin/sshd -t -f %s
-    backup: yes
-  when: ssh_2fa_enable_ssh | default(true)
-    and (not ssh_2fa_require_break_glass_ready | default(false) or ssh_2fa_break_glass_ready | default(false))
-  notify: restart sshd
-  tags: [ssh, 2fa, config]
+    - name: SSH 2FA | Configure | Deploy 2FA SSH configuration drop-in
+      ansible.builtin.template:  # noqa: risky-file-permissions
+        src: sshd_2fa.conf.j2
+        dest: /etc/ssh/sshd_config.d/50-2fa.conf
+        validate: /usr/sbin/sshd -t -f %s
+      when: ssh_2fa_enable_ssh | default(true)
+        and (not ssh_2fa_require_break_glass_ready | default(false) or ssh_2fa_break_glass_ready | default(false))
+      notify: restart sshd
+      tags: [ssh, 2fa, config]
 
 # ========================================
 # PAM Configuration - Modular Approach
@@ -116,63 +110,61 @@
 # Deploy separate PAM config files that are @include'd by main PAM files
 # This prevents package updates from overwriting our customizations
 
-- name: SSH 2FA | Configure | Deploy modular PAM config for SSH 2FA
-  ansible.builtin.template:
-    src: pam-ssh-2fa.j2
-    dest: /etc/pam.d/sshd-2fa
-    owner: root
-    group: root
-    mode: '0644'
-    backup: yes
+- name: SSH 2FA | Configure | SSH PAM 2FA configuration
   when:
     - ssh_2fa_enable_ssh | default(true)
     - not ssh_2fa_require_break_glass_ready | default(false) or ssh_2fa_break_glass_ready | default(false)
-  tags: [pam, 2fa, config]
+  block:
+    - name: SSH 2FA | Configure | Deploy modular PAM config for SSH 2FA
+      ansible.builtin.template:
+        src: pam-ssh-2fa.j2
+        dest: /etc/pam.d/sshd-2fa
+        owner: root
+        group: root
+        mode: '0644'
+        backup: yes
+      tags: [pam, 2fa, config]
 
-- name: SSH 2FA | Configure | Add substack directive to /etc/pam.d/sshd (using pamd module)
-  community.general.pamd:
-    name: sshd
-    type: auth
-    control: substack
-    module_path: sshd-2fa
-    state: after
-    new_type: auth
-    new_control: include
-    new_module_path: common-auth
-    backup: yes
-  when:
-    - ssh_2fa_enable_ssh | default(true)
-    - not ssh_2fa_require_break_glass_ready | default(false) or ssh_2fa_break_glass_ready | default(false)
-  tags: [pam, 2fa]
+    - name: SSH 2FA | Configure | Add substack directive to /etc/pam.d/sshd (using pamd module)
+      community.general.pamd:
+        name: sshd
+        type: auth
+        control: substack
+        module_path: sshd-2fa
+        state: after
+        new_type: auth
+        new_control: include
+        new_module_path: common-auth
+        backup: yes
+      tags: [pam, 2fa]
 
-- name: SSH 2FA | Configure | Deploy modular PAM config for sudo 2FA
-  ansible.builtin.template:
-    src: pam-sudo-2fa.j2
-    dest: /etc/pam.d/sudo-2fa
-    owner: root
-    group: root
-    mode: '0644'
-    backup: yes
-  when:
-    - ssh_2fa_enable_sudo | default(true)
-    - not ssh_2fa_require_break_glass_ready | default(false) or ssh_2fa_break_glass_ready | default(false)
-  tags: [pam, 2fa, sudo, config]
-
-- name: SSH 2FA | Configure | Add substack directive to /etc/pam.d/sudo (using pamd module)
-  community.general.pamd:
-    name: sudo
-    type: auth
-    control: substack
-    module_path: sudo-2fa
-    state: before
-    new_type: auth
-    new_control: include
-    new_module_path: system-auth
-    backup: yes
+- name: SSH 2FA | Configure | Sudo PAM 2FA configuration
   when:
     - ssh_2fa_enable_sudo | default(true)
     - not ssh_2fa_require_break_glass_ready | default(false) or ssh_2fa_break_glass_ready | default(false)
-  tags: [pam, 2fa, sudo]
+  block:
+    - name: SSH 2FA | Configure | Deploy modular PAM config for sudo 2FA
+      ansible.builtin.template:
+        src: pam-sudo-2fa.j2
+        dest: /etc/pam.d/sudo-2fa
+        owner: root
+        group: root
+        mode: '0644'
+        backup: yes
+      tags: [pam, 2fa, sudo, config]
+
+    - name: SSH 2FA | Configure | Add substack directive to /etc/pam.d/sudo (using pamd module)
+      community.general.pamd:
+        name: sudo
+        type: auth
+        control: substack
+        module_path: sudo-2fa
+        state: before
+        new_type: auth
+        new_control: include
+        new_module_path: system-auth
+        backup: yes
+      tags: [pam, 2fa, sudo]
 
 - name: SSH 2FA | Configure | Create SSH banner
   ansible.builtin.template:
