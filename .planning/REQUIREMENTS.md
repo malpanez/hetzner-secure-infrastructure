@@ -114,10 +114,10 @@
 - [x] **OPT-01**: Audit all role task files for repeated module parameters and apply `block` + `module_defaults` where 2+ tasks share the same param values. **Constraint**: `module_defaults` applies to ALL tasks in the block for that module — tasks needing different values must either (a) sit in a separate block, or (b) explicitly override the default at task level. Do not create overly broad blocks that silently change task behavior.
 - [x] **OPT-02**: Apply `block/rescue/always` for error handling and cleanup where operations can fail (e.g. service restarts after config deploy, cert generation, bootstrap sequences). `rescue` must be meaningful — not just `ignore_errors`.
 - [x] **OPT-03**: Merge duplicate conditional task pairs where two near-identical tasks differ only by `when: condition` vs `when: not condition` and `changed_when: false` — collapse to a single task with conditional `changed_when`.
-- [ ] **OPT-04**: Replace `ansible.builtin.shell`/`ansible.builtin.command` `find ... -exec chmod` patterns with `ansible.builtin.file recurse: true` for idempotency.
+- [x] **OPT-04**: Replace `ansible.builtin.shell`/`ansible.builtin.command` `find ... -exec chmod` patterns with `ansible.builtin.file recurse: true` for idempotency.
 - [x] **OPT-05**: Consolidate repeated `when` conditions on consecutive tasks into a `block` — makes conditions a single source of truth. Does not affect module_defaults scope.
 - [x] **OPT-06**: Identify `uri`/`get_url`/`maven_artifact` and similar network module calls with shared auth/header/timeout params that can be centralized via `module_defaults`.
-- [ ] **OPT-07**: `ansible-lint` exits 0 with production profile on all modified roles after all changes.
+- [x] **OPT-07**: `ansible-lint` exits 0 with production profile on all modified roles after all changes.
 
 ---
 

@@ -178,7 +178,7 @@ Plans:
 
 - [x] 09.1-01: module_defaults + merged conditionals for apparmor, fail2ban, firewall, security_hardening (OPT-01, OPT-03, OPT-05)
 - [x] 09.1-02: module_defaults + block/rescue for cloudflare_origin_ssl, valkey, openbao, ssh_2fa + OPT-06 audit (OPT-01, OPT-02, OPT-05, OPT-06)
-- [ ] 09.1-03: module_defaults for nginx_wordpress + replace find-chmod + full lint/molecule validation (OPT-01, OPT-04, OPT-07)
+- [x] 09.1-03: module_defaults for nginx_wordpress + replace find-chmod + full lint/molecule validation (OPT-01, OPT-04, OPT-07)
 
 ## Progress
 
