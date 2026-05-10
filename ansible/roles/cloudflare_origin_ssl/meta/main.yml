@@ -1,6 +1,6 @@
 ---
 galaxy_info:
-  author: Infrastructure Team
+  author: malpanez
   description: Deploy Cloudflare Origin Certificates for secure origin-to-edge communication
   license: MIT
   min_ansible_version: "2.14"
