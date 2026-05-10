@@ -11,4 +11,4 @@
     name: fail2ban
     enabled: true
     state: started
-  tags: [fail2ban, service]
+  tags: [fail2ban, service, molecule-notest]

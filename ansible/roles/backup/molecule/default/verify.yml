@@ -2,6 +2,8 @@
 - name: Verify
   hosts: all
   become: true
+  vars:
+    backup_service_name: wordpress-backup
 
   tasks:
     - name: Verify | Check backup script exists and is executable
