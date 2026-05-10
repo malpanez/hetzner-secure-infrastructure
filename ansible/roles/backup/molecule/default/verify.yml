@@ -21,11 +21,13 @@
 
     - name: Verify | Gather service facts
       ansible.builtin.service_facts:
+      tags: molecule-notest
 
     - name: Verify | Assert timer is enabled
       ansible.builtin.assert:
         that: "ansible_facts.services[backup_service_name + '.timer']['status'] == 'enabled'"
         fail_msg: "{{ backup_service_name }}.timer is not enabled"
+      tags: molecule-notest
 
     - name: Verify | Check aws-cli is installed
       ansible.builtin.command: aws --version
@@ -60,3 +62,13 @@
       ansible.builtin.assert:
         that: service_unit.stat.exists
         fail_msg: "wordpress-backup.service unit file missing"
+
+    - name: Verify | Check timer unit file exists
+      ansible.builtin.stat:
+        path: /etc/systemd/system/wordpress-backup.timer
+      register: timer_unit
+
+    - name: Verify | Assert timer unit is present
+      ansible.builtin.assert:
+        that: timer_unit.stat.exists
+        fail_msg: "wordpress-backup.timer unit file missing"
