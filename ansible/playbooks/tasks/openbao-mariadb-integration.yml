@@ -18,7 +18,7 @@
   tags: [openbao, mariadb, integration]
 
 - name: Create OpenBao database user in MariaDB
-  community.mysql.mysql_user:
+  ansible.mysql.mysql_user:
     name: openbao
     password: "{{ openbao_mariadb_password | default(mariadb_root_password) }}"
     priv: "*.*:ALL,GRANT"

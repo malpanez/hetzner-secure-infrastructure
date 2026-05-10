@@ -92,7 +92,7 @@ jobs:
           # are NOT installed here — they make ansible-lint take >25min to run.
           mkdir -p /tmp/lint-collections
           ansible-galaxy collection install \
-            community.general ansible.posix community.mysql \
+            community.general ansible.posix community.mysql ansible.mysql \
             -p /tmp/lint-collections --force
           ansible-galaxy role install geerlingguy.mysql
           # ANSIBLE_COLLECTIONS_PATH (singular) restricts collection discovery to this path.
