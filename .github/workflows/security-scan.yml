@@ -149,7 +149,7 @@ jobs:
   summary:
     name: Security Summary
     runs-on: ubuntu-slim
-    needs: [checkov, grype, shellcheck, secret-scan]
+    needs: [checkov, grype, shellcheck, secret-scan, dependency-check, markdown-lint]
     if: always()
 
     steps:
@@ -163,3 +163,5 @@ jobs:
           echo "| Grype | ${{ needs.grype.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| ShellCheck | ${{ needs.shellcheck.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| GitLeaks | ${{ needs.secret-scan.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Safety (deps) | ${{ needs.dependency-check.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Markdown Lint | ${{ needs.markdown-lint.result }} |" >> $GITHUB_STEP_SUMMARY

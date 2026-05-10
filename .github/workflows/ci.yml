@@ -149,6 +149,8 @@ jobs:
       matrix:
         role:
           - apparmor
+          - backup
+          - cloudflare_origin_ssl
           - common
           - fail2ban
           - firewall
@@ -172,7 +174,6 @@ jobs:
           uv venv
           source .venv/bin/activate
           uv pip install \
-            'ansible-core>=2.15,<2.18' \
             'ansible>=8.0,<10.0' \
             molecule 'molecule-plugins[docker]' \
             ansible-lint pytest testinfra
