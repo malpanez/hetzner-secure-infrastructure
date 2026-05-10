@@ -13,13 +13,18 @@
   failed_when: false
   tags: [backup, install]
 
-- name: Backup | Install | Install aws-cli v2 ARM64
+- name: Backup | Install | Set aws-cli architecture
+  ansible.builtin.set_fact:
+    backup_awscli_arch: "{{ 'aarch64' if ansible_architecture == 'aarch64' else 'x86_64' }}"
+  tags: [backup, install]
+
+- name: Backup | Install | Install aws-cli v2
   when: aws_cli_check.rc != 0
   tags: [backup, install]
   block:
-    - name: Backup | Install | Download aws-cli v2 ARM64 bundled installer
+    - name: Backup | Install | Download aws-cli v2 bundled installer
       ansible.builtin.get_url:
-        url: "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip"
+        url: "https://awscli.amazonaws.com/awscli-exe-linux-{{ backup_awscli_arch }}.zip"
         dest: /tmp/awscliv2.zip
         mode: "0644"
 

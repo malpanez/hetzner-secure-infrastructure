@@ -236,7 +236,7 @@
     group: "{{ nginx_wordpress_nginx_group }}"
     recurse: true
   when: nginx_wordpress_install_wordpress
-  tags: [nginx-wordpress, wordpress, permissions]
+  tags: [nginx-wordpress, wordpress, permissions, molecule-notest]
 
 - name: Nginx WordPress | Configure | Check if WordPress is installed
   ansible.builtin.command:

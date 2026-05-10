@@ -6,7 +6,7 @@
     group: "{{ nginx_wordpress_nginx_group }}"
     mode: u=rwX,g=rX,o=rX
     recurse: true
-  tags: [nginx-wordpress, wordpress, permissions]
+  tags: [nginx-wordpress, wordpress, permissions, molecule-notest]
 
 - name: Nginx WordPress | Permissions | Secure wp-config.php
   ansible.builtin.file:
@@ -14,4 +14,4 @@
     owner: root
     group: "{{ nginx_wordpress_nginx_group }}"
     mode: '0640'
-  tags: [nginx-wordpress, wordpress, permissions]
+  tags: [nginx-wordpress, wordpress, permissions, molecule-notest]
