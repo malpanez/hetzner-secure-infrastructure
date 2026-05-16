@@ -34,23 +34,29 @@
 
   # Fail2ban data
   /var/lib/fail2ban/ rw,
-  /var/lib/fail2ban/** rw,
+  /var/lib/fail2ban/** rwmk,
   /var/run/fail2ban/ rw,
   /var/run/fail2ban/** rw,
+  /run/fail2ban/ rw,
+  /run/fail2ban/** rw,
 
   # Logs - read access to monitor
   /var/log/auth.log r,
   /var/log/syslog r,
   /var/log/*.log r,
+  /var/log/nginx/ r,
+  /var/log/nginx/*.log r,
 
   # Fail2ban own logs - write access
   /var/log/fail2ban.log w,
 
   # Socket
   /var/run/fail2ban/fail2ban.sock rw,
+  /run/fail2ban/fail2ban.sock rw,
 
   # PID file
   /var/run/fail2ban/fail2ban.pid rw,
+  /run/fail2ban/fail2ban.pid rw,
 
   # Proc
   @{PROC}/sys/net/ipv4/conf/*/rp_filter r,
@@ -58,6 +64,7 @@
   owner @{PROC}/@{pid}/fd/ r,
 
   # System commands for actions
+  /usr/sbin/nft Ux,
   /usr/sbin/iptables Cx -> iptables,
   /usr/sbin/ip6tables Cx -> iptables,
   /usr/sbin/iptables-save Cx -> iptables,

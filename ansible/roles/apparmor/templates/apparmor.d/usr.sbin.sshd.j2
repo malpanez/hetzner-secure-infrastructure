@@ -35,6 +35,7 @@
   /etc/ssh/ssh_config r,
   /etc/ssh/ssh_host_*_key r,
   /etc/ssh/ssh_host_*_key.pub r,
+  /etc/ssh/banner r,
 
   # PAM and authentication
   /etc/pam.d/* r,
@@ -75,6 +76,12 @@
   /run/sshd/** rw,
   owner /run/user/@{uid}/ w,
 
+  # Faillock (pam_faillock.so - brute force protection)
+  /var/run/faillock/ rw,
+  /var/run/faillock/** rw,
+  /var/log/faillock/ rw,
+  /var/log/faillock/** rw,
+
   # Logs
   /var/log/auth.log w,
   /var/log/btmp rw,
@@ -91,7 +98,11 @@
   /usr/bin/ssh-keysign Cx -> ssh-keysign,
   /usr/lib/openssh/sftp-server Cx -> sftp-server,
 
+  # sshd-session (OpenSSH 9.x+ re-exec per connection - needs unconfined)
+  /usr/lib/openssh/sshd-session Ux,
+
   # Privilege separation
+  /run/sshd.pid w,
   /var/run/sshd.pid w,
   /run/systemd/notify w,
 
