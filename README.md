@@ -1,5 +1,10 @@
 # Hetzner Secure Infrastructure
 
+[![CI](https://github.com/malpanez/hetzner-secure-infrastructure/actions/workflows/ci.yml/badge.svg)](https://github.com/malpanez/hetzner-secure-infrastructure/actions/workflows/ci.yml)
+[![Terraform Validation](https://github.com/malpanez/hetzner-secure-infrastructure/actions/workflows/terraform-validate.yml/badge.svg)](https://github.com/malpanez/hetzner-secure-infrastructure/actions/workflows/terraform-validate.yml)
+[![Release](https://img.shields.io/github/v/release/malpanez/hetzner-secure-infrastructure)](https://github.com/malpanez/hetzner-secure-infrastructure/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 Reusable, production-tested **Terraform/OpenTofu modules** and **Ansible roles** for running
 hardened workloads on [Hetzner Cloud](https://www.hetzner.com/cloud) behind
 [Cloudflare](https://www.cloudflare.com/) — built and maintained by
