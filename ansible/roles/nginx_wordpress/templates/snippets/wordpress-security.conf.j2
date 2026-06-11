@@ -1,0 +1,49 @@
+# ============================================================================
+# WordPress Security Rules
+# ============================================================================
+# Include this in server{} blocks running WordPress
+#
+# Blocks access to sensitive files and common attack vectors.
+# These rules protect WordPress installations from common exploits.
+# ============================================================================
+
+# Block access to hidden files (.git, .env, .htaccess, .user.ini)
+# These files often contain sensitive credentials and configuration
+location ~ /\. {
+    deny all;
+    access_log off;
+}
+
+# Block direct access to wp-config.php
+# Contains database credentials, authentication salts, API keys
+# Even if PHP crashes, this file is always blocked
+location = /wp-config.php {
+    deny all;
+}
+
+# Block access to readme and license files
+# readme.html reveals WordPress version (helps attackers target vulnerabilities)
+location ~* ^/(readme|license)\.(html|txt)$ {
+    deny all;
+}
+
+# XML-RPC protection (DDoS vector)
+# XML-RPC is legacy WordPress API (before REST API)
+# Common DDoS vector via pingback amplification attacks
+# Disable unless you specifically need it (Jetpack, old mobile apps)
+location = /xmlrpc.php {
+    deny all;
+    access_log off;
+}
+
+# Standard WordPress files (no logging needed)
+location = /favicon.ico {
+    log_not_found off;
+    access_log off;
+    expires 1y;
+}
+
+location = /robots.txt {
+    log_not_found off;
+    access_log off;
+}

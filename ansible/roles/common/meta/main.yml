@@ -1,0 +1,21 @@
+---
+galaxy_info:
+  role_name: common
+  author: hetzner-secure-infrastructure
+  description: Common base configuration for all servers
+  license: MIT
+  min_ansible_version: "2.12"
+
+  platforms:
+    - name: Debian
+      versions:
+        - all
+
+  galaxy_tags:
+    - common
+    - base
+    - system
+    - baseline
+    - configuration
+
+dependencies: []

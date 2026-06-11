@@ -1,0 +1,136 @@
+---
+# Common Role - Default Variables
+
+# ========================================
+# System Configuration
+# ========================================
+
+# System timezone
+common_system_timezone: UTC
+
+# System locale
+common_system_locale: en_US.UTF-8
+
+# ========================================
+# Package Management
+# ========================================
+
+# Perform dist upgrade on first run
+common_perform_dist_upgrade: true
+
+# Essential packages list
+common_required_packages:
+  - apt-transport-https
+  - build-essential
+  - ca-certificates
+  - curl
+  - git
+  - gnupg
+  - htop
+  - net-tools
+  - software-properties-common
+  - sudo
+  - unzip
+  - vim
+  - wget
+
+# Security tools
+common_security_packages:
+  - cron
+  - logrotate
+  - rsyslog
+
+# ========================================
+# User Management
+# ========================================
+
+# Admin user configuration
+common_admin_user_create: true
+common_admin_user_name: admin
+common_admin_user_shell: /bin/bash
+common_admin_user_groups:
+  - sudo
+
+# SSH authorized keys for admin user
+common_admin_user_ssh_keys: []
+
+# Allow passwordless sudo for admin user (use with care)
+common_admin_user_passwordless_sudo: false
+
+# Disable root password (locks root account for console access)
+# DISABLED: Need root console access for Hetzner Cloud Console (VNC/recovery)
+# Root SSH is already blocked via sshd_config PermitRootLogin=no
+# See: docs/troubleshooting/ANSIBLE_POST_REBOOT_LOCKOUT.md
+common_disable_root_password: false
+
+# ========================================
+# Cleanup
+# ========================================
+
+# Enable cleanup of unnecessary packages
+common_cleanup_enabled: true
+
+# Maximum systemd journal size (journalctl --vacuum-size)
+common_journal_max_size: "500M"
+
+# Packages to remove
+common_packages_to_remove:
+  - snapd
+  - cloud-init
+
+# ========================================
+# NTP Configuration
+# ========================================
+
+# Enable NTP time synchronization
+common_ntp_enabled: true
+
+# Primary NTP servers (Hetzner internal — low latency from Hetzner VMs)
+common_ntp_servers:
+  - ntp1.hetzner.de
+  - ntp2.hetzner.de
+  - ntp3.hetzner.de
+
+# Fallback NTP servers if primary are unreachable
+common_ntp_fallback_servers:
+  - 0.debian.pool.ntp.org
+  - 1.debian.pool.ntp.org
+
+# Enable NTS (Network Time Security, RFC 8915) — requires chrony >= 4.0
+# Adds cryptographic authentication to NTP. Uses Cloudflare time.cloudflare.com.
+# Disable if outbound TLS/443 is blocked or chrony < 4.0.
+common_ntp_nts_enabled: true
+
+# makestep <threshold_seconds> <max_updates>
+# -1 = always step (correct for VMs — handles live migration / resume offsets)
+# Use 3 on bare metal to avoid stepping after initial sync
+common_ntp_makestep_threshold: 1.0
+common_ntp_makestep_limit: -1
+
+# Minimum number of sources that must agree before updating the clock
+# 1 required when only Hetzner internal servers are used (3 sources, same pool)
+common_ntp_minsources: 1
+
+# Sync hardware clock (RTC) every 11 minutes.
+# true  = bare metal (RTC is meaningful, preserves time across reboots without NTP)
+# false = VMs (hypervisor manages RTC, enabling this causes unnecessary writes)
+common_ntp_rtcsync: false
+
+# ========================================
+# GRUB Console Configuration
+# ========================================
+
+# GRUB timeout in seconds (0 = no menu, -1 = wait forever)
+# Set to 5 for production, higher for debugging
+grub_console_timeout: 5
+
+# Enable verbose boot output for debugging
+# Set to true to see detailed boot messages (removes 'quiet', increases loglevel)
+grub_console_debug: true
+
+# ========================================
+# Logging Configuration
+# ========================================
+
+# Log retention in days
+log_retention_days: 30

@@ -1,0 +1,17 @@
+---
+- name: Security Hardening | Core Dumps | Disable core dumps
+  block:
+    - name: Security Hardening | Core Dumps | Disable via limits
+      community.general.pam_limits:
+        domain: "*"
+        limit_type: hard
+        limit_item: core
+        value: "0"
+
+    - name: Security Hardening | Core Dumps | Disable via sysctl
+      ansible.posix.sysctl:
+        name: fs.suid_dumpable
+        value: "0"
+        state: present
+        reload: true
+  tags: security

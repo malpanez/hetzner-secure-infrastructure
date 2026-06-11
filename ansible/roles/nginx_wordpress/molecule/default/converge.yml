@@ -1,0 +1,28 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  vars:
+    # Dependencies needed for nginx_wordpress
+    mariadb_root_password: test_root_password  # pragma: allowlist secret
+    valkey_bind: 127.0.0.1
+
+  pre_tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+      changed_when: false
+
+    - name: Install basic dependencies
+      ansible.builtin.apt:
+        name:
+          - curl
+          - wget
+          - ca-certificates
+        state: present
+
+  roles:
+    - role: nginx_wordpress
+      vars:
+        nginx_wordpress_site_name: "test-site"
+        nginx_wordpress_server_name: "example.com"

@@ -1,0 +1,165 @@
+---
+# AIDE File Integrity Monitoring
+# Provides baseline integrity checking for critical system files
+
+- name: Security Hardening | AIDE | Configure file integrity monitoring
+  block:
+    - name: Security Hardening | AIDE | Create configuration directory
+      ansible.builtin.file:
+        path: /etc/aide
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+      register: aide_config_dir
+
+    - name: Security Hardening | AIDE | Create database directory
+      ansible.builtin.file:
+        path: /var/lib/aide
+        state: directory
+        owner: root
+        group: root
+        mode: "0700"
+      register: aide_db_dir
+
+    - name: Security Hardening | AIDE | Create log directory
+      ansible.builtin.file:
+        path: /var/log/aide
+        state: directory
+        owner: root
+        group: root
+        mode: "0750"
+      register: aide_log_dir
+
+    - name: Security Hardening | AIDE | Verify directories created
+      ansible.builtin.assert:
+        that:
+          - aide_config_dir is succeeded
+          - aide_db_dir is succeeded
+          - aide_log_dir is succeeded
+        success_msg: "AIDE directories created successfully"
+        fail_msg: "Failed to create AIDE directories"
+
+    - name: Security Hardening | AIDE | Deploy configuration
+      ansible.builtin.template:
+        src: aide.conf.j2
+        dest: /etc/aide/aide.conf
+        owner: root
+        group: root
+        mode: "0600"
+      register: aide_config
+
+    - name: Security Hardening | AIDE | Verify configuration deployed
+      ansible.builtin.assert:
+        that:
+          - aide_config is succeeded
+        success_msg: "AIDE configuration deployed to /etc/aide/aide.conf"
+        fail_msg: "Failed to deploy AIDE configuration"
+
+    - name: Security Hardening | AIDE | Check database status
+      ansible.builtin.stat:
+        path: /var/lib/aide/aide.db
+      register: aide_db_status
+
+    - name: Security Hardening | AIDE | Initialize database in background (async)
+      ansible.builtin.shell: aide --config=/etc/aide/aide.conf --init && mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db
+      args:
+        creates: /var/lib/aide/aide.db
+      async: 1800  # 30 minutes timeout
+      poll: 0      # Don't wait, run in background
+      register: aide_init_job
+      when:
+        - security_hardening_aide_async | default(true)
+        - not aide_db_status.stat.exists
+
+    - name: Security Hardening | AIDE | Initialize database (synchronous)
+      ansible.builtin.shell: aide --config=/etc/aide/aide.conf --init && mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db
+      args:
+        creates: /var/lib/aide/aide.db
+      register: aide_init_sync
+      when:
+        - not security_hardening_aide_async | default(true)
+        - not aide_db_status.stat.exists
+  when: security_hardening_aide_enabled | default(false)
+  tags: [security, aide]
+
+- name: Security Hardening | AIDE | Wait for initialization to complete
+  ansible.builtin.async_status:
+    jid: "{{ aide_init_job.ansible_job_id }}"
+  register: aide_result
+  until: aide_result.finished
+  retries: 60     # Wait up to 10 minutes (60 * 10s)
+  delay: 10       # Check every 10 seconds
+  when:
+    - security_hardening_aide_enabled | default(false)
+    - aide_init_job is defined
+    - aide_init_job.ansible_job_id is defined
+  tags: [security, aide]
+
+- name: Security Hardening | AIDE | Verify database was created
+  ansible.builtin.stat:
+    path: /var/lib/aide/aide.db
+  register: aide_db_final
+  when: security_hardening_aide_enabled | default(false)
+  tags: [security, aide]
+
+- name: Security Hardening | AIDE | Assert database initialization successful
+  ansible.builtin.assert:
+    that:
+      - aide_db_final.stat.exists
+      - aide_db_final.stat.size > 0
+    success_msg: "AIDE database initialized successfully ({{ (aide_db_final.stat.size / 1024 / 1024) | round(2) }} MB)"
+    fail_msg: "AIDE database initialization failed - /var/lib/aide/aide.db not found or empty"
+  when:
+    - security_hardening_aide_enabled | default(false)
+    - aide_db_final is defined
+  tags: [security, aide]
+
+- name: Security Hardening | AIDE | Extract entries count
+  ansible.builtin.set_fact:
+    aide_entries_match: "{{ aide_result.stdout | default('') | regex_search('Number of entries:\\s*(\\d+)', '\\1') }}"
+  when:
+    - security_hardening_aide_enabled | default(false)
+    - aide_db_final is defined
+    - aide_db_final.stat.exists
+  tags: [security, aide]
+
+- name: Security Hardening | AIDE | Extract runtime
+  ansible.builtin.set_fact:
+    aide_runtime_match: "{{ aide_result.stdout | default('') | regex_search('run time: (.+?)\\)', '\\1') }}"
+  when:
+    - security_hardening_aide_enabled | default(false)
+    - aide_db_final is defined
+    - aide_db_final.stat.exists
+  tags: [security, aide]
+
+- name: Security Hardening | AIDE | Build initialization summary
+  ansible.builtin.set_fact:
+    aide_summary:
+      status: "{{ 'Success' if aide_db_final.stat.exists else 'Failed' }}"
+      entries: "{{ aide_entries_match[0] if aide_entries_match else 'N/A' }}"
+      runtime: "{{ aide_runtime_match[0] if aide_runtime_match else 'N/A' }}"
+      database: "/var/lib/aide/aide.db"
+      size_mb: "{{ (aide_db_final.stat.size / 1024 / 1024) | round(2) }}"
+  when:
+    - security_hardening_aide_enabled | default(false)
+    - aide_db_final is defined
+    - aide_db_final.stat.exists
+  tags: [security, aide]
+
+- name: Security Hardening | AIDE | Display initialization summary
+  ansible.builtin.debug:
+    msg:
+      - "=========================================="
+      - "AIDE File Integrity Monitoring"
+      - "=========================================="
+      - "Status:      {{ aide_summary.status }}"
+      - "Entries:     {{ aide_summary.entries }} files indexed"
+      - "Runtime:     {{ aide_summary.runtime }}"
+      - "Database:    {{ aide_summary.database }}"
+      - "Size:        {{ aide_summary.size_mb }} MB"
+      - "=========================================="
+  when:
+    - security_hardening_aide_enabled | default(false)
+    - aide_summary is defined
+  tags: [security, aide]

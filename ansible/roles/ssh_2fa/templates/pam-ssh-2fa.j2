@@ -1,0 +1,18 @@
+# PAM Configuration for SSH 2FA
+# Managed by Ansible - ssh_2fa role
+# This file is included by /etc/pam.d/sshd via @include directive
+#
+# Purpose: Add Google Authenticator 2FA for SSH authentication
+# Location: /etc/pam.d/sshd-2fa
+
+{% if ssh_2fa_break_glass_enabled | default(true) %}
+# Break-glass: Skip 2FA for ansible-automation group
+# If user is in ansible-automation group, skip the rest of this file
+auth [success=done default=ignore] pam_succeed_if.so quiet user ingroup ansible-automation
+
+{% endif %}
+# Require Google Authenticator for all other users
+# Options:
+#   nullok: Allow users without ~/.google_authenticator to login (initial setup)
+#   forward_pass: Forward password to next PAM module
+auth required pam_google_authenticator.so {{ ssh_2fa_pam_google_authenticator_ssh_options }}

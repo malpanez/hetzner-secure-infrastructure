@@ -1,0 +1,71 @@
+---
+# Common Role - User Management Tasks
+
+- name: Common | Users | Create ansible-automation group
+  ansible.builtin.group:
+    name: ansible-automation
+    state: present
+    system: yes
+  tags: [common, user, groups]
+
+- name: Common | Users | Ensure admin user exists
+  ansible.builtin.user:
+    name: "{{ common_admin_user_name }}"
+    groups: "{{ common_admin_user_groups }}"
+    shell: "{{ common_admin_user_shell }}"
+    create_home: true
+    append: true
+  when: common_admin_user_create
+  tags: [common, user]
+
+- name: Common | Users | Add admin user to ansible-automation group (SSH key-only access)
+  ansible.builtin.user:
+    name: "{{ common_admin_user_name }}"
+    groups: ansible-automation
+    append: yes
+  when: common_admin_user_create
+  tags: [common, user, ssh]
+
+- name: Common | Users | Create .ssh directory for admin user
+  ansible.builtin.file:
+    path: "/home/{{ common_admin_user_name }}/.ssh"
+    state: directory
+    owner: "{{ common_admin_user_name }}"
+    group: "{{ common_admin_user_name }}"
+    mode: '0700'
+  when: common_admin_user_create
+  tags: [common, user]
+
+- name: Common | Users | Set up authorized keys for admin user
+  ansible.posix.authorized_key:
+    user: "{{ common_admin_user_name }}"
+    key: "{{ item }}"
+    state: present
+  loop: "{{ common_admin_user_ssh_keys }}"
+  when:
+    - common_admin_user_create
+    - common_admin_user_ssh_keys | length > 0
+  tags: [common, user, ssh]
+
+- name: Common | Users | Set up sudoers for admin user
+  ansible.builtin.template:
+    src: sudoers.j2
+    dest: "/etc/sudoers.d/{{ common_admin_user_name }}"
+    owner: root
+    group: root
+    mode: '0440'
+    validate: visudo -cf %s
+  when: common_admin_user_create
+  tags: [common, sudo]
+
+- name: Common | Users | Ensure root account is unlocked for console access
+  ansible.builtin.command: passwd -u root
+  register: root_unlock_result
+  changed_when: "'password expiry information changed' in root_unlock_result.stdout"
+  failed_when: false
+  when: not common_disable_root_password | default(false)
+  tags: [common, security]
+
+# Root console access - Hetzner Cloud images already have root configured
+# Root SSH is blocked via sshd_config PermitRootLogin=no
+# See: docs/troubleshooting/ANSIBLE_POST_REBOOT_LOCKOUT.md

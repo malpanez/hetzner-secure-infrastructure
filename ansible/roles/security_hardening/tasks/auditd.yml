@@ -1,0 +1,35 @@
+---
+- name: Security Hardening | Auditd | Configure auditd
+  ansible.builtin.template:
+    src: auditd.conf.j2
+    dest: /etc/audit/auditd.conf
+    owner: root
+    group: root
+    mode: "0640"
+  when: security_hardening_auditd_enabled | default(true)
+  notify: restart auditd
+  tags: [security, auditd]
+
+- name: Security Hardening | Auditd | Deploy audit rules
+  ansible.builtin.template:
+    src: audit.rules.j2
+    dest: /etc/audit/rules.d/hardening.rules
+    owner: root
+    group: root
+    mode: "0640"
+  when: security_hardening_auditd_enabled | default(true)
+  notify: restart auditd
+  tags: [security, auditd]
+
+# NOTE: Kernel audit= parameter NOT required on Debian 13
+# Source: https://www.server-world.info/en/note?os=Debian_13&p=audit&f=1
+# Auditd works without GRUB changes - just install package and start service
+
+- name: Security Hardening | Auditd | Enable and start service
+  ansible.builtin.systemd:
+    name: auditd
+    enabled: true
+    state: started
+  when: security_hardening_auditd_enabled | default(true)
+  failed_when: false
+  tags: [security, auditd, molecule-notest]

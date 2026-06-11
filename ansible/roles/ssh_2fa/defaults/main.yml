@@ -1,0 +1,245 @@
+---
+# SSH 2FA Role - Default Variables
+
+# ========================================
+# Feature Toggles
+# ========================================
+
+# Enable 2FA for SSH
+ssh_2fa_enable_ssh: false
+
+# Enable 2FA for sudo
+ssh_2fa_enable_sudo: true
+
+# Enable custom SSH banner
+ssh_2fa_banner_enabled: true
+
+# Enable faillock (account lockout protection)
+ssh_2fa_faillock_enabled: true
+
+# ========================================
+# SSH Configuration
+# ========================================
+
+# SSH port (default: 22)
+ssh_2fa_port: 22
+
+# SSH address family (inet, inet6, any)
+ssh_2fa_address_family: inet
+
+# Allow root login (yes, no, prohibit-password, forced-commands-only)
+ssh_2fa_permit_root_login: "prohibit-password"
+
+# Allow password authentication
+ssh_2fa_password_authentication: "no"  # pragma: allowlist secret
+
+# Challenge response authentication (required for 2FA)
+ssh_2fa_challenge_response_authentication: "yes"
+
+# PubkeyAuthentication
+ssh_2fa_pubkey_authentication: "yes"
+
+# Authentication methods
+ssh_2fa_auth_methods: "publickey,keyboard-interactive"
+
+# Maximum authentication attempts
+ssh_2fa_max_auth_tries: 3
+
+# Maximum sessions per connection
+ssh_2fa_max_sessions: 10
+
+# Client alive interval (seconds)
+ssh_2fa_client_alive_interval: 300
+
+# Client alive count max
+ssh_2fa_client_alive_count_max: 2
+
+# Login grace time (seconds)
+ssh_2fa_login_grace_time: 60
+
+# ========================================
+# Cryptographic Configuration
+# ========================================
+
+# SSH Ciphers (only strong algorithms)
+ssh_2fa_ciphers:
+  - chacha20-poly1305@openssh.com
+  - aes256-gcm@openssh.com
+  - aes128-gcm@openssh.com
+  - aes256-ctr
+  - aes192-ctr
+  - aes128-ctr
+
+# MAC algorithms
+ssh_2fa_macs:
+  - hmac-sha2-512-etm@openssh.com
+  - hmac-sha2-256-etm@openssh.com
+  - hmac-sha2-512
+  - hmac-sha2-256
+
+# Key exchange algorithms
+ssh_2fa_kex_algorithms:
+  - curve25519-sha256
+  - curve25519-sha256@libssh.org
+  - diffie-hellman-group16-sha512
+  - diffie-hellman-group18-sha512
+  - diffie-hellman-group-exchange-sha256
+
+# Host key algorithms
+ssh_2fa_host_key_algorithms:
+  - ssh-ed25519
+  - rsa-sha2-512
+  - rsa-sha2-256
+
+# ========================================
+# PAM Configuration
+# ========================================
+
+# Google Authenticator options for SSH
+ssh_2fa_pam_google_authenticator_ssh_options: "nullok forward_pass"
+
+# Google Authenticator options for sudo
+ssh_2fa_pam_google_authenticator_sudo_options: "nullok"
+
+# ========================================
+# Break-glass Configuration
+# ========================================
+
+# Enable break-glass access (bypass 2FA for specific users/groups)
+ssh_2fa_break_glass_enabled: true
+
+# Break-glass users (can login with SSH key only, no 2FA required)
+# IMPORTANT: Include admin user to prevent lockout during initial setup
+ssh_2fa_break_glass_users:
+  - deploy
+
+# Require break-glass users to exist and have SSH keys before enabling 2FA
+ssh_2fa_require_break_glass_ready: false
+
+# Break-glass groups (members can login with SSH key only)
+# ansible-automation group is always included in template
+
+# Create dedicated ansible service user (optional)
+# Recommended for production: separate deployment user from admin users
+ssh_2fa_create_ansible_user: false
+
+# Ansible service user configuration
+ssh_2fa_ansible_user_name: ansible
+ssh_2fa_ansible_user_shell: /bin/bash
+ssh_2fa_ansible_user_groups:
+  - ansible-automation  # Break-glass group for SSH (no 2FA), includes sudo via group policy
+
+# Ansible user sudo configuration
+# The ansible-automation group gets NOPASSWD sudo via /etc/sudoers.d/
+# This separates service account sudo access from regular admin 'sudo' group
+# deploy: Has BOTH 'sudo' group (standard admin) AND 'ansible-automation' (break-glass)
+# ansible: Only 'ansible-automation' group (dedicated service account)
+ssh_2fa_ansible_user_sudoers_file: /etc/sudoers.d/ansible-automation
+
+# ========================================
+# Banner Configuration
+# ========================================
+
+# SSH Pre-Authentication Banner
+ssh_2fa_banner_text: |
+  ################################################################################
+  #                                                                              #
+  #                   SSH ACCESS - AUTHENTICATION REQUIRED                       #
+  #                                                                              #
+  ################################################################################
+  #                                                                              #
+  #  System:     Secure Infrastructure                                            #
+  #  Access:     Authorized Personnel Only                                       #
+  #  Security:   Multi-Factor Authentication Enforced                            #
+  #                                                                              #
+  #  WARNING:                                                                    #
+  #  • Unauthorized access attempts are logged and will be prosecuted            #
+  #  • All SSH sessions are monitored and recorded                               #
+  #  • Failed authentication attempts trigger security alerts                    #
+  #                                                                              #
+  #  Disconnect now if you are not an authorized user.                           #
+  #                                                                              #
+  ################################################################################
+
+# ========================================
+# Faillock Configuration (Anti-Brute Force)
+# ========================================
+# Protects against brute force attacks on 2FA tokens, SSH keys, and local console
+
+# Enable audit logging for faillock events
+ssh_2fa_faillock_audit_enabled: true
+
+# Number of failed attempts before account lockout
+ssh_2fa_faillock_deny: 5
+
+# Time window for counting failed attempts (seconds)
+# 900s = 15 minutes: if 5 failures occur within 15 min, account locks
+ssh_2fa_faillock_interval: 900
+
+# Account unlock time (seconds)
+# 600s = 10 minutes: account auto-unlocks after 10 min
+# Set to 0 for manual unlock only (requires admin intervention)
+ssh_2fa_faillock_unlock_time: 600
+
+# Apply to root account
+# If true, root can also be locked (but with shorter unlock time)
+ssh_2fa_faillock_even_deny_root: false
+
+# Root unlock time (seconds) - only if even_deny_root is true
+ssh_2fa_faillock_root_unlock_time: 60
+
+# Faillock tally directory (default: /var/run/faillock - tmpfs, cleared on reboot)
+# Set to /var/log/faillock for persistent tracking across reboots
+ssh_2fa_faillock_dir: /var/run/faillock
+
+# ========================================
+# Package Requirements
+# ========================================
+
+# Required packages for SSH hardening, 2FA, and faillock
+ssh_2fa_packages:
+  - openssh-server
+  - libpam-google-authenticator
+  - libpam-modules
+  - libpam-modules-bin
+  - libqrencode4
+  - qrencode
+
+# ========================================
+# FIDO2 Security Key Configuration
+# ========================================
+
+# Enable FIDO2-only SSH authentication (ed25519-sk/ecdsa-sk)
+# When enabled, restricts SSH to hardware security keys only
+ssh_2fa_fido2_only: false
+
+# Allowed public key algorithms for FIDO2
+# Only strong algorithms with security key support
+ssh_2fa_fido2_pubkey_algorithms:
+  - sk-ssh-ed25519@openssh.com
+  - sk-ecdsa-sha2-nistp256@openssh.com
+  - ssh-ed25519
+  - rsa-sha2-512
+  - rsa-sha2-256
+
+# ========================================
+# Root-Owned TOTP Configuration (sudo MFA)
+# ========================================
+
+# Enable root-owned TOTP secrets for sudo MFA
+# When enabled, TOTP secrets are stored in root-owned directory
+# instead of user home directories
+ssh_2fa_totp_root_owned: false
+
+# Base directory for root-owned TOTP secrets
+# Secrets will be in: ${base}/${username}/.google_authenticator
+ssh_2fa_totp_secret_base: /var/lib/pam-google-authenticator
+
+# Group whose members require TOTP for sudo
+# Users in this group must provide TOTP code in addition to password
+ssh_2fa_mfa_required_group: mfa-required
+
+# PAM Google Authenticator options for root-owned TOTP
+# secret: path to secret file (uses ${USER} variable expansion)
+# user=root: read secrets as root user
+ssh_2fa_pam_google_authenticator_root_owned_options: "secret=/var/lib/pam-google-authenticator/${USER}/.google_authenticator user=root"

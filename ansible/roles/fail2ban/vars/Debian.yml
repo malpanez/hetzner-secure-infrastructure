@@ -1,0 +1,17 @@
+---
+# Fail2ban Role - Debian/Ubuntu Specific Variables
+
+# Package name
+fail2ban_package: fail2ban
+
+# Service name
+fail2ban_service: fail2ban
+
+# Configuration directory
+fail2ban_config_dir: /etc/fail2ban
+
+# Jail configuration directory
+fail2ban_jail_dir: /etc/fail2ban/jail.d
+
+# Log path
+fail2ban_log_path: /var/log/fail2ban.log

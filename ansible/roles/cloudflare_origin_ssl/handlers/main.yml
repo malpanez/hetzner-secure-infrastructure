@@ -1,0 +1,8 @@
+---
+# Cloudflare Origin SSL Role - Handlers
+
+- name: reload nginx
+  ansible.builtin.systemd:
+    name: nginx
+    state: reloaded
+  when: cloudflare_origin_ssl_nginx_reload | default(true)

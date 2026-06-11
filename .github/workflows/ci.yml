@@ -1,0 +1,38 @@
+---
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  pre-commit:
+    name: Pre-commit (lint suite)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install ansible-core for ansible-lint
+        run: pip install 'ansible-core>=2.15,<2.18' ansible-lint pre-commit
+      - name: Run pre-commit
+        env:
+          SKIP: kics,terraform_validate,tfsec,terratest
+        run: pre-commit run --all-files
+
+  ansible-lint:
+    name: Ansible Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install
+        run: pip install 'ansible-core>=2.15,<2.18' ansible-lint
+      - name: Lint roles
+        env:
+          ANSIBLE_ROLES_PATH: ansible/roles
+        run: ansible-lint --offline ansible/roles/

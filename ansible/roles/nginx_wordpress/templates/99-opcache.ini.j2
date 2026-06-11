@@ -1,0 +1,15 @@
+; TMT OPcache tuning (managed by Ansible - nginx_wordpress role)
+; opcache.memory_consumption / jit are PHP_INI_SYSTEM, so they must live in a
+; SAPI conf.d drop-in (not the FPM pool). This file is loaded by PHP-FPM.
+opcache.enable = 1
+opcache.enable_cli = 0
+opcache.memory_consumption = {{ nginx_wordpress_opcache_memory_mb | default(256) }}
+opcache.interned_strings_buffer = 16
+opcache.max_accelerated_files = 20000
+opcache.revalidate_freq = 60
+opcache.fast_shutdown = 1
+opcache.save_comments = 1
+opcache.validate_timestamps = 1
+; JIT (PHP 8): tracing mode for CPU-bound PHP; buffer carved from memory_consumption
+opcache.jit = {{ nginx_wordpress_opcache_jit | default('tracing') }}
+opcache.jit_buffer_size = {{ nginx_wordpress_opcache_jit_buffer | default('64M') }}

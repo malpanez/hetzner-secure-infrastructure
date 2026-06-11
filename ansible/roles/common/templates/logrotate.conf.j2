@@ -1,0 +1,26 @@
+# Custom log rotation configuration
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+/var/log/auth.log {
+    daily
+    rotate {{ log_retention_days }}
+    missingok
+    notifempty
+    compress
+    delaycompress
+    postrotate
+        /usr/lib/rsyslog/rsyslog-rotate
+    endscript
+}
+
+/var/log/syslog {
+    daily
+    rotate {{ log_retention_days }}
+    missingok
+    notifempty
+    compress
+    delaycompress
+    postrotate
+        /usr/lib/rsyslog/rsyslog-rotate
+    endscript
+}

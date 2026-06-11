@@ -1,0 +1,76 @@
+---
+# Fail2ban Role - Default Variables
+
+# ========================================
+# Feature Toggles
+# ========================================
+
+# Enable Fail2ban
+fail2ban_enabled: true
+
+# ========================================
+# Fail2ban Configuration
+# ========================================
+
+# Ban time in seconds (default: 10 minutes)
+fail2ban_bantime: 600
+
+# Find time window in seconds (default: 10 minutes)
+fail2ban_findtime: 600
+
+# Max retry attempts before ban
+fail2ban_maxretry: 5
+
+# Destination email for alerts
+fail2ban_destemail: root@localhost
+
+# Sender email
+fail2ban_sender: fail2ban@localhost
+
+# Action on ban (action_mw = mail with whois, action_mwl = mail with whois and logs)
+fail2ban_action: action_mw
+
+# IP addresses to ignore (whitelist)
+fail2ban_ignoreip: "127.0.0.1/8 ::1"
+
+# ========================================
+# Jails Configuration
+# ========================================
+
+# Enable SSH jail
+fail2ban_ssh_enabled: true
+fail2ban_ssh_port: 22
+fail2ban_ssh_maxretry: 3
+fail2ban_ssh_bantime: 3600
+
+# Enable HTTP auth jail
+fail2ban_http_auth_enabled: false
+
+# Service configurations
+fail2ban_services:
+  - name: sshd
+    enabled: "{{ fail2ban_ssh_enabled }}"
+    port: "{{ fail2ban_ssh_port }}"
+    filter: sshd
+    logpath: /var/log/auth.log
+    maxretry: "{{ fail2ban_ssh_maxretry }}"
+    bantime: "{{ fail2ban_ssh_bantime }}"
+    findtime: "{{ fail2ban_findtime }}"
+
+  - name: nginx-limit-req
+    enabled: true
+    port: http,https
+    filter: nginx-limit-req
+    logpath: /var/log/nginx/*-access.log
+    maxretry: 10
+    findtime: 600
+    bantime: 3600
+
+  - name: wordpress-auth
+    enabled: true
+    port: http,https
+    filter: wordpress-auth
+    logpath: /var/log/nginx/*-access.log
+    maxretry: 5
+    findtime: 300
+    bantime: 86400

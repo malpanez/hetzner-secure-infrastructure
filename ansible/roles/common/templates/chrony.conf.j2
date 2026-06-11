@@ -1,0 +1,80 @@
+# {{ ansible_managed }}
+# chrony.conf
+
+# ---------------------------------------------------------------------------
+# PRIMARY NTP SOURCES
+# iburst: send burst of packets at startup for faster initial sync.
+# ---------------------------------------------------------------------------
+{% for server in common_ntp_servers %}
+server {{ server }} iburst
+{% endfor %}
+
+# ---------------------------------------------------------------------------
+# FALLBACK SOURCES
+# Used only if all primary servers are unreachable.
+# ---------------------------------------------------------------------------
+{% for server in common_ntp_fallback_servers %}
+pool {{ server }} iburst
+{% endfor %}
+
+# ---------------------------------------------------------------------------
+# NTS — Network Time Security (RFC 8915)
+# Cryptographic authentication of NTP responses. Prevents MITM/spoofing.
+# Requires chrony >= 4.0 and outbound access to TCP/UDP 4460.
+# ---------------------------------------------------------------------------
+{% if common_ntp_nts_enabled %}
+server time.cloudflare.com iburst nts
+ntsdumpdir /var/lib/chrony
+{% endif %}
+
+# ---------------------------------------------------------------------------
+# DRIFT FILE
+# Stores measured frequency error of the local clock across restarts.
+# ---------------------------------------------------------------------------
+driftfile /var/lib/chrony/drift
+
+# ---------------------------------------------------------------------------
+# INITIAL STEP
+# VM: limit = -1 (always step) — handles large offsets after live migration,
+# suspend/resume, or snapshot restore without waiting for slew.
+# Bare metal: limit = 3 (step only during initial 3 updates, then slew only).
+# ---------------------------------------------------------------------------
+makestep {{ common_ntp_makestep_threshold }} {{ common_ntp_makestep_limit }}
+
+# ---------------------------------------------------------------------------
+# RTC SYNC
+# Bare metal: sync hardware clock every 11 minutes (preserves time on reboot).
+# VMs: disabled — hypervisor manages RTC, enabling this causes unnecessary writes.
+# Controlled by common_ntp_rtcsync variable.
+# ---------------------------------------------------------------------------
+{% if common_ntp_rtcsync %}
+rtcsync
+{% endif %}
+
+# ---------------------------------------------------------------------------
+# SOURCE SELECTION
+# Require at least N sources to agree before updating the clock.
+# ---------------------------------------------------------------------------
+minsources {{ common_ntp_minsources }}
+maxdistance 1.5
+
+# ---------------------------------------------------------------------------
+# LEAP SECOND HANDLING
+# Use system timezone database for correct leap second application.
+# ---------------------------------------------------------------------------
+leapsectz right/UTC
+
+# ---------------------------------------------------------------------------
+# ACCESS CONTROL
+# This host is a client only — deny all remote queries and modifications.
+# ---------------------------------------------------------------------------
+bindcmdaddress 127.0.0.1
+bindcmdaddress ::1
+deny all
+
+# ---------------------------------------------------------------------------
+# LOGGING
+# ---------------------------------------------------------------------------
+log tracking statistics
+logdir /var/log/chrony
+logchange 0.5

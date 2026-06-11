@@ -1,0 +1,11 @@
+# PAM configuration for su wheel restriction
+# Managed by Ansible - security_hardening role
+# Location: /etc/pam.d/su-wheel
+#
+# Purpose: Restrict su command to users in the wheel group
+#
+# This file is included from /etc/pam.d/su
+# Only users in the 'wheel' group (typically admin/sudo users) can use 'su' to switch users
+
+# Require wheel group membership for su
+auth required pam_wheel.so use_uid

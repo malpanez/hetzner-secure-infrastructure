@@ -1,0 +1,20 @@
+---
+galaxy_info:
+  role_name: nginx_wordpress
+  author: hetzner-secure-infrastructure
+  description: Nginx web server with WordPress optimization
+  license: MIT
+  min_ansible_version: "2.12"
+
+  platforms:
+    - name: Debian
+      versions:
+        - all
+
+  galaxy_tags:
+    - nginx
+    - wordpress
+    - web
+    - http
+
+dependencies: []

@@ -1,0 +1,68 @@
+---
+# OpenBao Role - Installation Tasks (Multi-platform orchestrator)
+
+- name: OpenBao | Install | Include OS-specific dependency installation
+  ansible.builtin.include_tasks: "install-{{ ansible_os_family }}.yml"
+  tags: [openbao, install, packages]
+
+- name: OpenBao | Install | Create OpenBao system group
+  ansible.builtin.group:
+    name: "{{ openbao_group }}"
+    system: true
+    state: present
+  tags: [openbao, users]
+
+- name: OpenBao | Install | Create OpenBao system user
+  ansible.builtin.user:
+    name: "{{ openbao_user }}"
+    group: "{{ openbao_group }}"
+    system: true
+    shell: /bin/false
+    home: "{{ openbao_data_dir }}"
+    createhome: false
+    state: present
+  tags: [openbao, users]
+
+- name: OpenBao | Install | Create OpenBao directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ openbao_user }}"
+    group: "{{ openbao_group }}"
+    mode: '0750'
+  loop:
+    - "{{ openbao_config_dir }}"
+    - "{{ openbao_data_dir }}"
+    - "{{ openbao_tls_dir }}"
+    - "{{ openbao_log_dir }}"
+    - "{{ openbao_backup_dir }}"
+  tags: [openbao, directories]
+
+- name: OpenBao | Install | Check if OpenBao is installed
+  ansible.builtin.command: dpkg-query -W bao
+  register: openbao_check
+  failed_when: false
+  changed_when: false
+  tags: [openbao, binary]
+
+- name: OpenBao | Install | Download OpenBao package
+  ansible.builtin.get_url:
+    url: "{{ openbao_download_base_url }}/{{ openbao_package_name }}"
+    dest: "/tmp/{{ openbao_package_name }}"
+    mode: '0644'
+  when: openbao_check.rc != 0
+  tags: [openbao, binary]
+
+- name: OpenBao | Install | Install OpenBao from .deb package
+  ansible.builtin.apt:
+    deb: "/tmp/{{ openbao_package_name }}"
+    state: present
+  when: openbao_check.rc != 0
+  tags: [openbao, binary]
+
+- name: OpenBao | Install | Clean up downloaded package
+  ansible.builtin.file:
+    path: "/tmp/{{ openbao_package_name }}"
+    state: absent
+  when: openbao_check.rc != 0
+  tags: [openbao, binary]

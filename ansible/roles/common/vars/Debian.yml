@@ -1,0 +1,29 @@
+---
+# Common Role - Debian/Ubuntu Specific Variables
+
+# Package manager
+common_package_manager: apt
+
+# NTP package
+common_ntp_package: chrony
+
+# NTP service name
+common_ntp_service: chrony
+
+# Timezone data package
+common_timezone_package: tzdata
+
+# Essential packages for Debian (software-properties-common not needed)
+common_required_packages:
+  - apt-transport-https
+  - build-essential
+  - ca-certificates
+  - curl
+  - git
+  - gnupg
+  - htop
+  - net-tools
+  - sudo
+  - unzip
+  - vim
+  - wget

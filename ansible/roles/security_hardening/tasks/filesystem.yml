@@ -1,0 +1,4 @@
+---
+- name: Security Hardening | Filesystem | Include fstab hardening tasks
+  ansible.builtin.include_tasks: filesystem_hardening.yml
+  tags: [security, filesystem]

@@ -1,0 +1,17 @@
+---
+# Nginx WordPress Role - Handlers
+
+- name: reload nginx
+  ansible.builtin.systemd:
+    name: "{{ nginx_wordpress_nginx_service }}"
+    state: reloaded
+
+- name: restart nginx
+  ansible.builtin.systemd:
+    name: "{{ nginx_wordpress_nginx_service }}"
+    state: restarted
+
+- name: restart php-fpm
+  ansible.builtin.systemd:
+    name: "{{ nginx_wordpress_php_fpm_service }}"
+    state: restarted

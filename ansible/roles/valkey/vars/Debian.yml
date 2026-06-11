@@ -1,0 +1,19 @@
+---
+# Valkey Role - Debian/Ubuntu Specific Variables
+
+# Valkey APT repository
+valkey_gpg_key_url: https://download.valkey.io/valkey-archive-keyring.gpg
+valkey_apt_repository_url: https://download.valkey.io/deb
+valkey_apt_repository_suite: "{{ ansible_distribution_release }}"
+
+# Package name
+valkey_package: valkey
+
+# Service name
+valkey_service_name: valkey
+
+# Systemd directory
+valkey_systemd_dir: /etc/systemd/system
+
+# Sysctl configuration
+valkey_sysctl_config_file: /etc/sysctl.d/99-valkey.conf

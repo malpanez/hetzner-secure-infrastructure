@@ -1,0 +1,10 @@
+---
+# AppArmor Role - Service Tasks
+
+- name: AppArmor | Service | Enable and start AppArmor service
+  ansible.builtin.systemd:
+    name: "{{ apparmor_service_name }}"
+    enabled: true
+    state: started
+  failed_when: false
+  tags: [apparmor, service, molecule-notest]

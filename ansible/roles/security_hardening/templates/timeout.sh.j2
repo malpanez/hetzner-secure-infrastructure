@@ -1,0 +1,17 @@
+#!/bin/bash
+# Session timeout configuration
+# Managed by Ansible - security_hardening role
+# Location: /etc/profile.d/timeout.sh
+#
+# This script sets an automatic logout timer for interactive shell sessions.
+# After {{ security_hardening_session_timeout | default(900) }} seconds ({{ (security_hardening_session_timeout | default(900) / 60) | int }} minutes) of inactivity,
+# the user will be automatically logged out.
+
+# Set timeout value (in seconds)
+TMOUT={{ security_hardening_session_timeout | default(900) }}
+
+# Make it readonly so users cannot override it
+readonly TMOUT
+
+# Export for child processes
+export TMOUT

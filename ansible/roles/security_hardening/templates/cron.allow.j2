@@ -1,0 +1,12 @@
+# /etc/cron.allow - Users allowed to use cron
+# Managed by Ansible - security_hardening role
+#
+# Only users listed in this file can use cron jobs.
+# If a user is not listed, they cannot create cron jobs.
+# This is a whitelist approach for security.
+
+# Admin user
+{{ security_hardening_admin_username }}
+
+# Root always has access
+root

@@ -1,0 +1,12 @@
+*.tfstate*
+.terraform/
+.terraform.lock.hcl
+*.tfvars
+!*.tfvars.example
+.env
+.envrc
+__pycache__/
+*.retry
+.vagrant/
+.molecule/
+.ansible/

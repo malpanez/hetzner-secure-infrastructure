@@ -1,0 +1,52 @@
+# SSH Hardening Configuration
+# Managed by Ansible - ssh_2fa role
+# Security hardening following CIS benchmarks
+
+# Network Configuration
+Port {{ ssh_2fa_port }}
+AddressFamily {{ ssh_2fa_address_family }}
+
+# Host Keys - Only strong algorithms
+HostKey /etc/ssh/ssh_host_ed25519_key
+HostKey /etc/ssh/ssh_host_rsa_key
+
+# Cryptographic Hardening - Modern algorithms only
+Ciphers {{ ssh_2fa_ciphers | join(',') }}
+MACs {{ ssh_2fa_macs | join(',') }}
+KexAlgorithms {{ ssh_2fa_kex_algorithms | join(',') }}
+HostKeyAlgorithms {{ ssh_2fa_host_key_algorithms | join(',') }}
+
+# Authentication Security
+PasswordAuthentication {{ ssh_2fa_password_authentication }}
+PermitEmptyPasswords no
+PermitRootLogin {{ ssh_2fa_permit_root_login }}
+HostbasedAuthentication no
+IgnoreRhosts yes
+
+# Session Configuration
+ClientAliveInterval {{ ssh_2fa_client_alive_interval }}
+ClientAliveCountMax {{ ssh_2fa_client_alive_count_max }}
+LoginGraceTime {{ ssh_2fa_login_grace_time }}
+MaxAuthTries {{ ssh_2fa_max_auth_tries }}
+MaxSessions {{ ssh_2fa_max_sessions }}
+
+# Logging
+SyslogFacility AUTH
+LogLevel VERBOSE
+
+# Banner
+{% if ssh_2fa_banner_enabled %}
+Banner /etc/ssh/banner
+{% endif %}
+
+# Privilege Separation
+StrictModes yes
+
+# Forwarding - server has no GUI; disable unused forwarding (reduce attack surface).
+# TCP forwarding stays enabled for admin SSH tunnels (e.g. to localhost Prometheus).
+X11Forwarding no
+AllowAgentForwarding no
+
+# Display
+PrintMotd no
+PrintLastLog yes

@@ -1,0 +1,290 @@
+---
+# Nginx WordPress Role - Default Variables
+# NOTE: This role assumes MariaDB is already installed via the mariadb role
+
+# ========================================
+# Feature Toggles
+# ========================================
+
+nginx_wordpress_enabled: true
+nginx_wordpress_install_nginx: true
+nginx_wordpress_install_php: true
+nginx_wordpress_install_wordpress: true
+
+# Modular Nginx Configuration Features
+nginx_wordpress_enable_fastcgi_cache: true       # FastCGI page caching (30x performance)
+nginx_wordpress_enable_rate_limiting: true       # Brute force & DDoS protection
+nginx_wordpress_cloudflare_enabled: true         # Cloudflare real IP detection
+nginx_wordpress_enable_security_headers: true    # CSP, X-Frame-Options, etc.
+nginx_wordpress_learndash_enabled: true          # LearnDash LMS optimizations
+nginx_wordpress_woocommerce_enabled: false       # WooCommerce cache bypass
+
+# Observability & Advanced Features
+nginx_wordpress_enable_json_logging: true        # Structured JSON logs for Loki
+nginx_wordpress_enable_request_id_header: true   # X-Request-ID response header
+nginx_wordpress_enable_stub_status: true         # nginx stub_status for Prometheus
+nginx_wordpress_enable_location_timeouts: true   # Differentiated timeouts per location
+
+# Timeout values (seconds)
+nginx_wordpress_timeout_wp_admin_read: 600
+nginx_wordpress_timeout_wp_admin_send: 600
+
+# ========================================
+# Nginx Configuration
+# ========================================
+
+nginx_wordpress_site_name: "wordpress"
+
+# Nginx Repository Configuration
+nginx_wordpress_use_official_nginx_repo: true   # Use nginx.org official repo (recommended)
+nginx_wordpress_nginx_version: "1.28.1"         # Stable version with security fixes
+nginx_wordpress_nginx_repo_key_url: "https://nginx.org/keys/nginx_signing.key"
+nginx_wordpress_nginx_repo_keyring_path: "/etc/apt/keyrings/nginx-archive-keyring.gpg"
+nginx_wordpress_nginx_repo_filename: "nginx-official"
+nginx_wordpress_nginx_repo_arch: "amd64"
+nginx_wordpress_nginx_repo_pin_priority: 900
+
+nginx_wordpress_server_name: example.com
+nginx_wordpress_server_aliases:
+  - www.example.com
+
+nginx_wordpress_web_root: /var/www/wordpress
+nginx_wordpress_nginx_user: www-data
+nginx_wordpress_nginx_group: www-data
+
+# SSL/TLS
+nginx_wordpress_ssl_enabled: false  # Set to true when certs are configured
+nginx_wordpress_ssl_cert_path: /etc/ssl/certs/nginx-wordpress.crt
+nginx_wordpress_ssl_key_path: /etc/ssl/private/nginx-wordpress.key
+
+# Let's Encrypt (DNS-01 via Cloudflare)
+nginx_wordpress_letsencrypt_enabled: false
+nginx_wordpress_letsencrypt_email: ""
+nginx_wordpress_letsencrypt_primary_domain: "{{ nginx_wordpress_server_name }}"
+nginx_wordpress_letsencrypt_domains:
+  - "{{ nginx_wordpress_server_name }}"
+  - "www.{{ nginx_wordpress_server_name }}"
+  - "grafana.{{ nginx_wordpress_server_name }}"
+  - "prometheus.{{ nginx_wordpress_server_name }}"
+nginx_wordpress_letsencrypt_dns_provider: cloudflare
+nginx_wordpress_letsencrypt_cloudflare_credentials_path: /etc/letsencrypt/cloudflare.ini
+nginx_wordpress_letsencrypt_cloudflare_api_token: "{{ vault_cloudflare_api_token | default('') }}"
+nginx_wordpress_letsencrypt_propagation_seconds: 60
+
+# ========================================
+# PHP Configuration
+# ========================================
+
+nginx_wordpress_php_version: "8.4"  # Debian 13 production PHP version (8.4 causes 502 errors on socket paths)
+nginx_wordpress_php_max_execution_time: 300
+
+# OPcache tuning (FPM conf.d drop-in)
+nginx_wordpress_opcache_memory_mb: 256
+nginx_wordpress_opcache_jit: tracing
+nginx_wordpress_opcache_jit_buffer: "64M"
+
+# Deploy Grafana/Prometheus reverse proxies (monitoring co-located on this box).
+# Set false on web-only nodes that don't run Grafana/Prometheus locally.
+nginx_wordpress_monitoring_proxy_enabled: true
+nginx_wordpress_php_memory_limit: 256M
+nginx_wordpress_php_upload_max_filesize: 64M
+nginx_wordpress_php_post_max_size: 64M
+
+# PHP-FPM Performance Tuning (for 2 vCPU, 4GB RAM - CX23)
+# Each PHP-FPM process uses ~50-80MB RAM on average
+# Formula: (Total RAM - System - MySQL - Nginx - Redis) / PHP process size
+# (4096MB - 300MB - 512MB - 50MB - 50MB) / 75MB ≈ 41 max children
+# Conservative: 30 max_children to leave headroom for traffic spikes
+nginx_wordpress_php_fpm_pm: dynamic
+nginx_wordpress_php_fpm_max_children: 30
+nginx_wordpress_php_fpm_start_servers: 8
+nginx_wordpress_php_fpm_min_spare_servers: 4
+nginx_wordpress_php_fpm_max_spare_servers: 12
+nginx_wordpress_php_fpm_max_requests: 500
+nginx_wordpress_php_fpm_process_idle_timeout: 10s
+nginx_wordpress_php_fpm_request_terminate_timeout: "300s"
+
+nginx_wordpress_redis_database: 0
+nginx_wordpress_redis_prefix: "wp_"
+
+# ========================================
+# WordPress Configuration
+# ========================================
+# Assumes MariaDB is installed and configured via mariadb role
+
+nginx_wordpress_version: latest
+
+# Database connection (assumes mariadb role created these)
+nginx_wordpress_db_name: wordpress
+nginx_wordpress_db_user: wordpress
+nginx_wordpress_db_password: ""  # MUST be set - should match mariadb role
+nginx_wordpress_db_host: localhost
+
+# WordPress security keys (generate with: https://api.wordpress.org/secret-key/1.1/salt/)
+nginx_wordpress_auth_key: ""
+nginx_wordpress_secure_auth_key: ""
+nginx_wordpress_logged_in_key: ""
+nginx_wordpress_nonce_key: ""
+nginx_wordpress_auth_salt: ""
+nginx_wordpress_secure_auth_salt: ""
+nginx_wordpress_logged_in_salt: ""
+nginx_wordpress_nonce_salt: ""
+
+# ========================================
+# WordPress Plugins
+# ========================================
+#
+# The surrounding infrastructure already covers (no plugins needed):
+# - Caching: Nginx FastCGI cache + Valkey object cache (no WP Rocket etc.)
+# - CDN / brute-force protection: handled at the edge (e.g. Cloudflare) + Fail2ban
+# - Backups: handled at the host level (no UpdraftPlus)
+
+# Infrastructure plugins (all sites)
+nginx_wordpress_plugins_mandatory:
+  - redis-cache                      # Valkey/Redis object cache
+  - nginx-helper                     # FastCGI cache purging
+  - wordfence                        # Malware scanner + 2FA
+
+# Operations plugins (all sites)
+nginx_wordpress_plugins_operations:
+  - wp-mail-smtp                     # SMTP email delivery
+  - seo-by-rank-math                 # SEO
+  - cookie-notice                    # GDPR/CCPA consent banner
+
+# Design — Kadence stack (Gutenberg-native)
+nginx_wordpress_plugins_design:
+  - kadence-blocks                   # Advanced Gutenberg blocks
+  - kadence-starter-templates        # Starter Templates importer
+
+# Forms & lead capture
+nginx_wordpress_plugins_forms:
+  - fluentform                       # Contact forms, conditional logic
+
+# Accessibility & UX
+nginx_wordpress_plugins_accessibility:
+  - accessibility-assistant          # Reading mask, dyslexia fonts
+
+# Bloat plugins to REMOVE (installed by default in WP)
+nginx_wordpress_plugins_remove:
+  - hello                            # Hello Dolly
+  - akismet                          # Spam protection - not needed when comments are disabled
+
+# Plugins requiring manual upload (commercial licenses):
+# install via nginx_wordpress_plugins_zip below, or
+# wp-admin -> Plugins -> Add New -> Upload Plugin.
+nginx_wordpress_plugins_manual: []
+
+# ========================================
+# Must-Use Plugins (mu-plugins)
+# ========================================
+# File paths resolvable by the copy `src` lookup (role files/, playbook
+# files/, or absolute paths). Consuming projects ship their own mu-plugins.
+nginx_wordpress_mu_plugins_shared:
+  - force-gd.php  # Prefer GD over Imagick for image editing
+nginx_wordpress_mu_plugins: []  # Per-site plugins, e.g. files/my-site/sso.php
+
+# Directory outside the docroot for protected materials, served only through
+# an authenticated endpoint (an mu-plugin reads from disk and streams to
+# authorized users). Empty = not created.
+# Example: "{{ nginx_wordpress_web_root | dirname }}/protected-materials"
+nginx_wordpress_protected_dir: ""
+
+# ========================================
+# Nginx Extras (per-site, optional)
+# ========================================
+# Regex of upload paths to deny direct access to (served via an
+# authenticated WordPress endpoint instead). Empty = disabled.
+# Example: '/wp-content/uploads/.*protected[^/]*\.(webp|png|jpe?g|gif|avif)$'
+nginx_wordpress_protected_uploads_regex: ""
+
+# Stream a remote object-storage bucket through this origin (put a CDN edge
+# in front). All three must be set to enable the proxy location.
+# Example:
+#   nginx_wordpress_media_proxy_path: "/media/"
+#   nginx_wordpress_media_proxy_upstream: "https://s3.example-objectstorage.com/my-bucket/"
+#   nginx_wordpress_media_proxy_host_header: "s3.example-objectstorage.com"
+nginx_wordpress_media_proxy_path: ""
+nginx_wordpress_media_proxy_upstream: ""
+nginx_wordpress_media_proxy_host_header: ""
+
+# ========================================
+# WordPress Theme Configuration
+# ========================================
+# Theme is auto-installed and activated via WP-CLI
+
+# Theme selection - Kadence recommended for easy self-design + LearnDash
+# Kadence advantages: Gutenberg-native, intuitive customizer, less plugins needed
+nginx_wordpress_theme: kadence  # Best for DIY design, LearnDash compatible
+nginx_wordpress_theme_activate: true  # Auto-activate after install
+
+# Additional themes to install (not activated)
+nginx_wordpress_themes_additional: []
+
+# ========================================
+# Starter Templates Configuration (Kadence)
+# ========================================
+# Import a complete site design via Kadence Starter Templates
+# Available FREE templates for LMS:
+#   - "Business Courses" (recommended - LearnDash optimized)
+#   - "Online Course"
+#   - "Digital Course"
+
+nginx_wordpress_content_pages: []  # List of {slug: "..."} to deploy from files/pages/<slug>.html
+nginx_wordpress_plugins_zip: []  # List of {name: plugin-slug, file: filename.zip} for commercial ZIP installs
+nginx_wordpress_themes_keep:
+  - kadence
+
+nginx_wordpress_starter_template_import: false  # Disabled by default — enable per site as needed
+nginx_wordpress_starter_template_name: "Business Courses"  # LearnDash-optimized template
+nginx_wordpress_starter_template_id: ""  # Leave empty to auto-discover by name
+nginx_wordpress_starter_template_builder: "gutenberg"  # Kadence uses Gutenberg natively
+nginx_wordpress_starter_template_reset: false  # Reset existing content before import
+nginx_wordpress_starter_template_force: false  # Force re-import even if already imported
+
+# ========================================
+# WordPress Site Configuration
+# ========================================
+
+# WordPress site info
+nginx_wordpress_site_title: "My WordPress Site"
+nginx_wordpress_admin_user: admin
+nginx_wordpress_admin_password: ""  # MUST be set
+nginx_wordpress_admin_email: admin@example.com
+
+# WordPress URL management
+nginx_wordpress_site_url: ""
+nginx_wordpress_force_url_replace: true
+
+# ========================================
+# WordPress Optimization Settings
+# ========================================
+# Applied via WP-CLI after installation
+
+# Disable comments site-wide (not needed for LMS)
+nginx_wordpress_disable_comments: true
+
+# Set timezone (for course schedules, drip content)
+nginx_wordpress_timezone: "Europe/Madrid"
+
+# Set date/time format
+nginx_wordpress_date_format: "j F Y"  # 18 January 2025
+nginx_wordpress_time_format: "H:i"    # 24-hour format
+
+# Permalink structure (SEO-friendly)
+nginx_wordpress_permalink_structure: "/%postname%/"
+
+# Disable pingbacks/trackbacks (security + performance)
+nginx_wordpress_disable_pingbacks: true
+
+# Limit post revisions (database optimization)
+nginx_wordpress_revision_limit: 5
+
+# ========================================
+# SMTP Configuration (WP Mail SMTP plugin)
+# ========================================
+nginx_wordpress_smtp_host: ""
+nginx_wordpress_smtp_port: 587
+nginx_wordpress_smtp_from_email: ""
+nginx_wordpress_smtp_from_name: ""
+nginx_wordpress_smtp_user: ""
+nginx_wordpress_smtp_password: ""

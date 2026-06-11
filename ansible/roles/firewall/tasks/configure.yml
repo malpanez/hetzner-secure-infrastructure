@@ -1,0 +1,31 @@
+---
+# Firewall Role - Configuration Tasks
+
+- name: Firewall | Configure | Check current UFW status
+  ansible.builtin.command: ufw status
+  register: ufw_status_check
+  changed_when: false
+  failed_when: false
+  tags: [firewall, policy]
+
+- name: Firewall | Configure | Disable UFW for batch configuration
+  community.general.ufw:
+    state: disabled
+  when:
+    - firewall_disable_for_batch | default(false)
+    - "'Status: active' in ufw_status_check.stdout"
+  tags: [firewall, policy]
+
+- name: Firewall | Configure | Set UFW default policies
+  community.general.ufw:
+    direction: "{{ item.direction }}"
+    policy: "{{ item.policy }}"  # noqa: args[module]
+  loop:
+    - { direction: incoming, policy: "{{ firewall_default_incoming_policy }}" }
+    - { direction: outgoing, policy: "{{ firewall_default_outgoing_policy }}" }
+  tags: [firewall, policy]
+
+- name: Firewall | Configure | Enable UFW logging
+  community.general.ufw:
+    logging: "{{ firewall_logging }}"
+  tags: [firewall, logging]

@@ -1,0 +1,393 @@
+---
+# Nginx WordPress Role - Configuration Tasks
+
+- name: Nginx WordPress | Configure | Create web root directory
+  ansible.builtin.file:
+    path: "{{ nginx_wordpress_web_root }}"
+    state: directory
+    owner: "{{ nginx_wordpress_nginx_user }}"
+    group: "{{ nginx_wordpress_nginx_group }}"
+    mode: '0755'
+  tags: [nginx-wordpress, config, directories]
+
+- name: Nginx WordPress | Configure | Create Ansible tmp directory for www-data
+  ansible.builtin.file:
+    path: /var/www/.ansible/tmp
+    state: directory
+    owner: "{{ nginx_wordpress_nginx_user }}"
+    group: "{{ nginx_wordpress_nginx_group }}"
+    mode: '0700'
+  tags: [nginx-wordpress, config, directories]
+
+- name: Nginx WordPress | Configure | Create FastCGI cache directory
+  ansible.builtin.file:
+    path: /var/cache/nginx/{{ nginx_wordpress_site_name }}
+    state: directory
+    owner: "{{ nginx_wordpress_nginx_user }}"
+    group: "{{ nginx_wordpress_nginx_group }}"
+    mode: '0755'
+  tags: [nginx-wordpress, config, directories, cache]
+
+# ========================================
+# Deploy Modular Nginx Configuration
+# ========================================
+
+- name: Nginx WordPress | Configure | Deploy modular Nginx configuration files
+  module_defaults:
+    ansible.builtin.template:
+      owner: root
+      group: root
+      mode: '0644'
+  block:
+    - name: Nginx WordPress | Configure | Deploy FastCGI cache config
+      ansible.builtin.template:  # noqa: risky-file-permissions
+        src: conf.d/fastcgi-cache.conf.j2
+        dest: /etc/nginx/conf.d/fastcgi-cache.conf
+      when:
+        - nginx_wordpress_enable_fastcgi_cache | default(true)
+        - nginx_wordpress_site_name == 'main' or nginx_wordpress_site_name == 'wordpress'
+      register: nginx_wordpress_nginx_fastcgi_cache_deployed
+      tags: [nginx-wordpress, nginx, config, cache]
+
+    - name: Nginx WordPress | Configure | Deploy rate limiting config
+      ansible.builtin.template:  # noqa: risky-file-permissions
+        src: conf.d/rate-limits.conf.j2
+        dest: /etc/nginx/conf.d/rate-limits.conf
+      when: nginx_wordpress_enable_rate_limiting | default(true)
+      register: nginx_wordpress_nginx_rate_limits_deployed
+      tags: [nginx-wordpress, nginx, config, security]
+
+    - name: Nginx WordPress | Configure | Deploy Cloudflare real IP config
+      ansible.builtin.template:  # noqa: risky-file-permissions
+        src: conf.d/cloudflare-real-ip.conf.j2
+        dest: /etc/nginx/conf.d/cloudflare-real-ip.conf
+      when: nginx_wordpress_cloudflare_enabled | default(true)
+      register: nginx_wordpress_nginx_cloudflare_deployed
+      tags: [nginx-wordpress, nginx, config, cloudflare]
+
+    - name: Nginx WordPress | Configure | Deploy security headers config
+      ansible.builtin.template:  # noqa: risky-file-permissions
+        src: conf.d/security-headers.conf.j2
+        dest: /etc/nginx/conf.d/security-headers.conf
+      when: nginx_wordpress_enable_security_headers | default(true)
+      register: nginx_wordpress_nginx_security_headers_deployed
+      tags: [nginx-wordpress, nginx, config, security]
+
+    - name: Nginx WordPress | Configure | Deploy JSON logging config
+      ansible.builtin.template:  # noqa: risky-file-permissions
+        src: conf.d/logging.conf.j2
+        dest: /etc/nginx/conf.d/logging.conf
+      when: nginx_wordpress_enable_json_logging | default(true)
+      register: nginx_wordpress_nginx_logging_deployed
+      tags: [nginx-wordpress, nginx, config, logging]
+
+    - name: Nginx WordPress | Configure | Deploy stub_status config
+      ansible.builtin.template:  # noqa: risky-file-permissions
+        src: conf.d/stub-status.conf.j2
+        dest: /etc/nginx/conf.d/stub-status.conf
+      when:
+        - nginx_wordpress_enable_stub_status | default(true)
+        - nginx_wordpress_site_name == 'main' or nginx_wordpress_site_name == 'wordpress'
+      register: nginx_wordpress_nginx_stub_status_deployed
+      tags: [nginx-wordpress, nginx, config, monitoring]
+
+    - name: Nginx WordPress | Configure | Deploy WordPress cache bypass snippet
+      ansible.builtin.template:  # noqa: risky-file-permissions
+        src: snippets/wordpress-cache-bypass.conf.j2
+        dest: /etc/nginx/snippets/wordpress-cache-bypass.conf
+      register: nginx_wordpress_nginx_cache_bypass_deployed
+      tags: [nginx-wordpress, nginx, config, cache]
+
+    - name: Nginx WordPress | Configure | Deploy WordPress security snippet
+      ansible.builtin.template:  # noqa: risky-file-permissions
+        src: snippets/wordpress-security.conf.j2
+        dest: /etc/nginx/snippets/wordpress-security.conf
+      register: nginx_wordpress_nginx_wp_security_deployed
+      tags: [nginx-wordpress, nginx, config, security]
+
+    - name: Nginx WordPress | Configure | Deploy SSL parameters snippet
+      ansible.builtin.template:  # noqa: risky-file-permissions
+        src: snippets/ssl-params.conf.j2
+        dest: /etc/nginx/snippets/ssl-params.conf
+      register: nginx_wordpress_nginx_ssl_params_deployed
+      tags: [nginx-wordpress, nginx, config, ssl]
+
+    - name: Nginx WordPress | Configure | Deploy gzip parameters snippet
+      ansible.builtin.template:  # noqa: risky-file-permissions
+        src: snippets/gzip-params.conf.j2
+        dest: /etc/nginx/snippets/gzip-params.conf
+      register: nginx_wordpress_nginx_gzip_params_deployed
+      tags: [nginx-wordpress, nginx, config, performance]
+
+    - name: Nginx WordPress | Configure | Deploy static assets snippet
+      ansible.builtin.template:  # noqa: risky-file-permissions
+        src: snippets/static-assets.conf.j2
+        dest: /etc/nginx/snippets/static-assets.conf
+      register: nginx_wordpress_nginx_static_assets_deployed
+      tags: [nginx-wordpress, nginx, config, performance]
+
+    - name: Nginx WordPress | Configure | Deploy wp-admin timeouts snippet
+      ansible.builtin.template:  # noqa: risky-file-permissions
+        src: snippets/wp-admin-timeouts.conf.j2
+        dest: /etc/nginx/snippets/wp-admin-timeouts.conf
+      when: nginx_wordpress_enable_location_timeouts | default(true)
+      register: nginx_wordpress_nginx_wp_admin_timeouts_deployed
+      tags: [nginx-wordpress, nginx, config, performance]
+
+    - name: Nginx WordPress | Configure | Deploy modular WordPress site configuration
+      ansible.builtin.template:  # noqa: risky-file-permissions
+        src: sites-available/wordpress.conf.j2
+        dest: "{{ nginx_wordpress_nginx_sites_available }}/{{ nginx_wordpress_site_name }}.conf"
+      register: nginx_wordpress_nginx_config_deployed
+      notify: reload nginx
+      tags: [nginx-wordpress, nginx, config]
+
+    - name: Nginx WordPress | Configure | Deploy PHP-FPM pool configuration
+      ansible.builtin.template:  # noqa: risky-file-permissions
+        src: php-fpm-wordpress.conf.j2
+        dest: "{{ nginx_wordpress_php_fpm_pool_dir }}/{{ nginx_wordpress_site_name }}.conf"
+      notify: restart php-fpm
+      tags: [nginx-wordpress, php, config]
+
+    - name: Nginx WordPress | Configure | Deploy OPcache tuning (FPM conf.d drop-in)
+      ansible.builtin.template:
+        src: 99-opcache.ini.j2
+        dest: "/etc/php/{{ nginx_wordpress_php_version }}/fpm/conf.d/99-opcache.ini"
+        owner: root
+        group: root
+        mode: "0644"
+      notify: restart php-fpm
+      tags: [nginx-wordpress, php, config]
+
+- name: Nginx WordPress | Configure | Create snippets directory
+  ansible.builtin.file:
+    path: /etc/nginx/snippets
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags: [nginx-wordpress, nginx, config]
+
+- name: Nginx WordPress | Configure | Enable Nginx site
+  ansible.builtin.file:
+    src: "{{ nginx_wordpress_nginx_sites_available }}/{{ nginx_wordpress_site_name }}.conf"
+    dest: "{{ nginx_wordpress_nginx_sites_enabled }}/{{ nginx_wordpress_site_name }}.conf"
+    state: link
+  tags: [nginx-wordpress, nginx, config]
+
+- name: Nginx WordPress | Configure | Remove default Nginx site
+  ansible.builtin.file:
+    path: "{{ nginx_wordpress_nginx_sites_enabled }}/default"
+    state: absent
+  tags: [nginx-wordpress, nginx, config]
+
+- name: Nginx WordPress | Configure | Remove legacy site configs
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ nginx_wordpress_nginx_sites_enabled }}/wordpress.conf"
+    - "{{ nginx_wordpress_nginx_sites_available }}/wordpress.conf"
+  tags: [nginx-wordpress, nginx, config]
+
+- name: Nginx WordPress | Configure | Validate Nginx configuration
+  ansible.builtin.command:
+    cmd: nginx -t
+  changed_when: false
+  register: nginx_wordpress_nginx_config_test
+  tags: [nginx-wordpress, nginx, config, validate]
+
+- name: Nginx WordPress | Configure | Assert Nginx configuration is valid
+  ansible.builtin.assert:
+    that:
+      - nginx_wordpress_nginx_config_test.rc == 0
+    success_msg: "Nginx configuration syntax is valid"
+    fail_msg: "Nginx configuration validation failed: {{ nginx_wordpress_nginx_config_test.stderr | default('unknown error') }}"
+  tags: [nginx-wordpress, nginx, config, validate]
+
+- name: Nginx WordPress | Configure | Disable default PHP-FPM www pool
+  ansible.builtin.file:
+    path: "{{ nginx_wordpress_php_fpm_pool_dir }}/www.conf"
+    state: absent
+  register: nginx_wordpress_www_pool_removed
+  tags: [nginx-wordpress, php, config]
+
+- name: Nginx WordPress | Configure | Download WordPress
+  ansible.builtin.command:
+    cmd: "{{ nginx_wordpress_wpcli_path }} core download --path={{ nginx_wordpress_web_root }}"
+    creates: "{{ nginx_wordpress_web_root }}/wp-config-sample.php"
+  become_user: "{{ nginx_wordpress_nginx_user }}"
+  when: nginx_wordpress_install_wordpress
+  tags: [nginx-wordpress, wordpress]
+
+- name: Nginx WordPress | Configure | Check if wp-config.php already exists
+  ansible.builtin.stat:
+    path: "{{ nginx_wordpress_web_root }}/wp-config.php"
+  register: nginx_wordpress_wp_config_file
+  when: nginx_wordpress_install_wordpress
+  tags: [nginx-wordpress, wordpress, config]
+
+- name: Nginx WordPress | Configure | Create wp-config.php
+  ansible.builtin.template:
+    src: wp-config.php.j2
+    dest: "{{ nginx_wordpress_web_root }}/wp-config.php"
+    owner: "{{ nginx_wordpress_nginx_user }}"
+    group: "{{ nginx_wordpress_nginx_group }}"
+    mode: '0640'
+  when:
+    - nginx_wordpress_install_wordpress
+    - not (nginx_wordpress_wp_config_file.stat.exists | default(false))
+  tags: [nginx-wordpress, wordpress, config]
+
+- name: Nginx WordPress | Configure | Set WordPress permissions
+  ansible.builtin.file:
+    path: "{{ nginx_wordpress_web_root }}"
+    owner: "{{ nginx_wordpress_nginx_user }}"
+    group: "{{ nginx_wordpress_nginx_group }}"
+    recurse: true
+  when: nginx_wordpress_install_wordpress
+  tags: [nginx-wordpress, wordpress, permissions, molecule-notest]
+
+- name: Nginx WordPress | Configure | Check if WordPress is installed
+  ansible.builtin.command:
+    cmd: "{{ nginx_wordpress_wpcli_path }} core is-installed --path={{ nginx_wordpress_web_root }}"
+  become_user: "{{ nginx_wordpress_nginx_user }}"
+  register: nginx_wordpress_wp_is_installed
+  changed_when: false
+  failed_when: false
+  when: nginx_wordpress_install_wordpress
+  tags: [nginx-wordpress, wordpress, molecule-notest]
+
+- name: Nginx WordPress | Configure | Install WordPress core
+  ansible.builtin.command:
+    cmd: >
+      {{ nginx_wordpress_wpcli_path }} core install
+      --path={{ nginx_wordpress_web_root }}
+      --url={{ nginx_wordpress_site_url | default('http://' + ansible_host) }}
+      --title="{{ nginx_wordpress_site_title }}"
+      --admin_user={{ nginx_wordpress_admin_user }}
+      --admin_password={{ nginx_wordpress_admin_password }}
+      --admin_email={{ nginx_wordpress_admin_email }}
+      --skip-email
+  become_user: "{{ nginx_wordpress_nginx_user }}"
+  when:
+    - nginx_wordpress_install_wordpress
+    - nginx_wordpress_wp_is_installed.rc != 0
+  register: nginx_wordpress_wp_core_install
+  tags: [nginx-wordpress, wordpress, molecule-notest]
+
+- name: Nginx WordPress | Configure | Assert WordPress core installed
+  ansible.builtin.assert:
+    that:
+      - nginx_wordpress_wp_core_install is succeeded
+    success_msg: "WordPress core installed successfully at {{ nginx_wordpress_web_root }}"
+    fail_msg: "WordPress core installation failed"
+  when:
+    - nginx_wordpress_install_wordpress
+    - nginx_wordpress_wp_is_installed.rc != 0
+    - nginx_wordpress_wp_core_install is defined
+  tags: [nginx-wordpress, wordpress, molecule-notest]
+
+# Keep site URL aligned with the configured domain (avoids mixed content on HTTPS).
+- name: Nginx WordPress | Configure | Ensure siteurl/home match configured URL
+  ansible.builtin.command:
+    cmd: >
+      {{ nginx_wordpress_wpcli_path }} option update {{ item }}
+      {{ nginx_wordpress_site_url | default('http://' + ansible_host) }}
+      --path={{ nginx_wordpress_web_root }}
+  become_user: "{{ nginx_wordpress_nginx_user }}"
+  loop:
+    - siteurl
+    - home
+  when:
+    - nginx_wordpress_install_wordpress
+    - nginx_wordpress_wp_is_installed is defined
+    - nginx_wordpress_wp_is_installed.rc == 0 or (nginx_wordpress_wp_core_install is defined and nginx_wordpress_wp_core_install is changed)
+  tags: [nginx-wordpress, wordpress, molecule-notest]
+
+- name: Nginx WordPress | Configure | Replace IP URLs with domain
+  ansible.builtin.command:
+    cmd: >
+      {{ nginx_wordpress_wpcli_path }} search-replace
+      "{{ item.old }}"
+      "{{ nginx_wordpress_site_url | default('http://' + ansible_host) }}"
+      --skip-columns=guid
+      --path={{ nginx_wordpress_web_root }}
+  become_user: "{{ nginx_wordpress_nginx_user }}"
+  loop:
+    - { old: "http://{{ ansible_host }}" }
+    - { old: "https://{{ ansible_host }}" }
+  when:
+    - nginx_wordpress_install_wordpress
+    - nginx_wordpress_force_url_replace | default(true) | bool
+    - ansible_host is defined
+    - (nginx_wordpress_site_url | default('')) != ''
+    - not (nginx_wordpress_site_url is search(ansible_host))
+  tags: [nginx-wordpress, wordpress, config]
+
+# ========================================
+# Nginx Reverse Proxy for Monitoring
+# ========================================
+
+- name: Nginx WordPress | Configure | Deploy monitoring reverse proxies
+  # Deploy the Grafana/Prometheus reverse proxies whenever monitoring is
+  # co-located (default) OR a dedicated monitoring host is set. Prometheus has
+  # no auth, so its vhost is locked to localhost in the template.
+  when: nginx_wordpress_monitoring_proxy_enabled | default(deploy_monitoring | default(true)) | bool
+  module_defaults:
+    ansible.builtin.template:
+      owner: root
+      group: root
+      mode: '0644'
+  block:
+    - name: Nginx WordPress | Configure | Deploy Prometheus reverse proxy
+      ansible.builtin.template:  # noqa: risky-file-permissions
+        src: nginx-prometheus.conf.j2
+        dest: "{{ nginx_wordpress_nginx_sites_available }}/prometheus.conf"
+      notify: reload nginx
+      tags: [nginx-wordpress, nginx, monitoring, reverse-proxy]
+
+    - name: Nginx WordPress | Configure | Enable Prometheus reverse proxy
+      ansible.builtin.file:
+        src: "{{ nginx_wordpress_nginx_sites_available }}/prometheus.conf"
+        dest: "{{ nginx_wordpress_nginx_sites_enabled }}/prometheus.conf"
+        state: link
+      notify: reload nginx
+      tags: [nginx-wordpress, nginx, monitoring, reverse-proxy]
+
+    - name: Nginx WordPress | Configure | Deploy Grafana reverse proxy
+      ansible.builtin.template:  # noqa: risky-file-permissions
+        src: nginx-grafana.conf.j2
+        dest: "{{ nginx_wordpress_nginx_sites_available }}/grafana.conf"
+      notify: reload nginx
+      tags: [nginx-wordpress, nginx, monitoring, reverse-proxy]
+
+    - name: Nginx WordPress | Configure | Enable Grafana reverse proxy
+      ansible.builtin.file:
+        src: "{{ nginx_wordpress_nginx_sites_available }}/grafana.conf"
+        dest: "{{ nginx_wordpress_nginx_sites_enabled }}/grafana.conf"
+        state: link
+      notify: reload nginx
+      tags: [nginx-wordpress, nginx, monitoring, reverse-proxy]
+
+- name: Nginx WordPress | Configure | Create mu-plugins directory
+  ansible.builtin.file:
+    path: "{{ nginx_wordpress_web_root }}/wp-content/mu-plugins"
+    state: directory
+    owner: "{{ nginx_wordpress_nginx_user }}"
+    group: "{{ nginx_wordpress_nginx_group }}"
+    mode: '0755'
+  tags: [nginx-wordpress, config, wordpress]
+
+- name: Nginx WordPress | Configure | Deploy force-GD mu-plugin
+  ansible.builtin.copy:
+    content: |
+      <?php
+      add_filter('wp_image_editors', function($editors) {
+          return array('WP_Image_Editor_GD', 'WP_Image_Editor_Imagick');
+      });
+    dest: "{{ nginx_wordpress_web_root }}/wp-content/mu-plugins/force-gd.php"
+    owner: "{{ nginx_wordpress_nginx_user }}"
+    group: "{{ nginx_wordpress_nginx_group }}"
+    mode: '0644'
+  tags: [nginx-wordpress, config, wordpress]

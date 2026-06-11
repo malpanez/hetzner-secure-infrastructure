@@ -1,0 +1,5 @@
+# False positive: documentation placeholder PEM block in the role README
+# ("paste full private key here" example), verified 2026-06-11.
+ansible/roles/cloudflare_origin_ssl/README.md:private-key:42
+# detect-secrets baseline stores SHA hashes of audited findings, not secrets.
+.secrets.baseline:generic-api-key:136

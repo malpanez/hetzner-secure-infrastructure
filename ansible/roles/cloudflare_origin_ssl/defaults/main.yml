@@ -1,0 +1,33 @@
+---
+# Cloudflare Origin SSL Role - Default Variables
+
+# Enable/disable this role
+cloudflare_origin_ssl_enabled: true
+
+# Certificate paths on the server
+cloudflare_origin_ssl_cert_dir: /etc/ssl/cloudflare
+cloudflare_origin_ssl_cert_path: "{{ cloudflare_origin_ssl_cert_dir }}/origin.pem"
+cloudflare_origin_ssl_key_path: "{{ cloudflare_origin_ssl_cert_dir }}/origin.key"
+
+# Certificate validity (Cloudflare Origin Certificates can be 7, 30, 90, 365, 730, 1095, or 5475 days)
+# Default: 15 years (maximum)
+cloudflare_origin_ssl_validity_days: 5475
+
+# Hostnames to include in the certificate
+# Should include your domain and www subdomain
+cloudflare_origin_ssl_hostnames:
+  - "{{ domain_name }}"
+  - "*.{{ domain_name }}"
+
+# Request type: origin-rsa or origin-ecc
+cloudflare_origin_ssl_request_type: origin-rsa
+
+# File permissions
+cloudflare_origin_ssl_cert_mode: "0644"
+cloudflare_origin_ssl_key_mode: "0600"
+cloudflare_origin_ssl_dir_mode: "0755"
+cloudflare_origin_ssl_owner: root
+cloudflare_origin_ssl_group: root
+
+# Nginx integration
+cloudflare_origin_ssl_nginx_reload: true

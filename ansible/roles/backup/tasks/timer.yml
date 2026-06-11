@@ -1,0 +1,30 @@
+---
+- name: Backup | Timer | Deploy systemd service unit
+  ansible.builtin.template:
+    src: backup.service.j2
+    dest: "{{ backup_service_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  tags: [backup, timer]
+
+- name: Backup | Timer | Deploy systemd timer unit
+  ansible.builtin.template:
+    src: backup.timer.j2
+    dest: "{{ backup_timer_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  tags: [backup, timer]
+
+- name: Backup | Timer | Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+  tags: [backup, timer]
+
+- name: Backup | Timer | Enable and start timer
+  ansible.builtin.systemd:
+    name: "{{ backup_service_name }}.timer"
+    enabled: true
+    state: started
+  tags: [backup, timer]

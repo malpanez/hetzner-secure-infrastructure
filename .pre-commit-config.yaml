@@ -1,0 +1,239 @@
+---
+# Pre-commit hooks for code quality
+# See https://pre-commit.com for more information
+# Updated: 2025-12-26
+
+default_install_hook_types: [pre-commit, commit-msg]
+default_stages: [pre-commit]
+fail_fast: false
+minimum_pre_commit_version: '3.0.0'
+
+repos:
+  # ============================================
+  # General file checks
+  # ============================================
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        name: Trim trailing whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+        name: Fix end of files
+      - id: check-yaml
+        name: Check YAML syntax
+        args: [--allow-multiple-documents]
+      - id: check-json
+        name: Check JSON syntax
+      - id: check-toml
+        name: Check TOML syntax
+      - id: check-added-large-files
+        name: Check for large files
+        args: [--maxkb=2000]
+      - id: check-case-conflict
+        name: Check for case conflicts
+      - id: check-merge-conflict
+        name: Check for merge conflicts
+      - id: check-executables-have-shebangs
+        name: Check executables have shebangs
+      - id: check-shebang-scripts-are-executable
+        name: Check shebangs are executable
+        exclude: '\.j2$'
+      - id: detect-private-key
+        name: Detect private keys
+        exclude: >-
+          (?x)^(
+            ansible/roles/cloudflare_origin_ssl/README\.md|
+            ansible/inventory/group_vars/all/secrets\.yml\.example|
+            ansible/roles/cloudflare_origin_ssl/tasks/main\.yml|
+            docs/guides/TERRAFORM_CLOUD_MIGRATION\.md
+          )$
+      - id: mixed-line-ending
+        name: Check mixed line endings
+        args: [--fix=lf]
+
+  # ============================================
+  # Terraform/OpenTofu
+  # ============================================
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.96.2
+    hooks:
+      - id: terraform_fmt
+        name: Terraform Format
+        args:
+          - --args=-recursive
+          - --args=-diff
+      - id: terraform_validate
+        name: Terraform Validate
+        args:
+          - --hook-config=--retry-once-with-cleanup=true
+          - --tf-init-args=-backend=false
+        exclude: 'examples/'
+      - id: terraform_docs
+        name: Terraform Docs
+        stages: [manual]
+        args:
+          - --hook-config=--path-to-file=README.md
+          - --hook-config=--add-to-existing-file=true
+          - --hook-config=--create-file-if-not-exist=true
+      - id: terraform_tflint
+        name: Terraform Lint
+        stages: [manual]
+        args:
+          - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
+          - --args=--format=compact
+
+  # ============================================
+  # TFSec security scanner
+  # ============================================
+  - repo: https://github.com/aquasecurity/tfsec
+    rev: v1.28.11
+    hooks:
+      - id: tfsec
+        name: TFSec Security Scanner
+        args:
+          - --minimum-severity=MEDIUM
+          - --format=default
+          - --soft-fail
+          - terraform/
+
+  # ============================================
+  # Ansible
+  # ============================================
+  - repo: https://github.com/ansible/ansible-lint
+    rev: v6.22.2
+    hooks:
+      - id: ansible-lint
+        name: Ansible Lint
+        files: ^ansible/
+        # The hook runs from the repo root, outside ansible/ansible.cfg's scope:
+        # without roles_path the syntax-check cannot resolve local roles
+        # (local roles) and fails with bogus fatals.
+        entry: env ANSIBLE_ROLES_PATH=ansible/roles ansible-lint
+        args:
+          - --force-color
+          - --offline
+          - --profile=production
+        additional_dependencies:
+          - ansible-core>=2.13.3,<2.17
+
+  # ============================================
+  # YAML
+  # ============================================
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        name: YAML Lint
+        args: [-c=.yamllint.yml, --strict]
+        types: [yaml]
+
+  # ============================================
+  # Shell scripts
+  # ============================================
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        name: ShellCheck
+        args: [-x, -e, SC1091, --severity=warning]
+
+  - repo: https://github.com/scop/pre-commit-shfmt
+    rev: v3.10.0-1
+    hooks:
+      - id: shfmt
+        name: Shell Format
+        args: [-w, -i, '2', -ci, -bn]
+
+  # ============================================
+  # Markdown
+  # ============================================
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.43.0
+    hooks:
+      - id: markdownlint
+        name: Markdown Lint
+        args: [--config=.markdownlint.json, --fix]
+        exclude: >-
+          (?x)(^\.planning/|^docs/|^\.woodpecker/|^\.github/|^examples/|
+          CHANGES_SUMMARY\.md|CONTRIBUTING\.md|SECURITY\.md|README\.md|
+          ARCHITECTURE_SELECTION\.md|CLOUDFLARE_TOKEN_SETUP\.md|
+          IMPORT_DNS_RECORDS\.md|MIGRATION\.md|README_INVENTORIES\.md)
+
+  - repo: https://github.com/tcort/markdown-link-check
+    rev: v3.12.2
+    hooks:
+      - id: markdown-link-check
+        name: Check Markdown Links
+        args: [--config=.markdown-link-check.json]
+
+  # ============================================
+  # Secret detection
+  # ============================================
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.22.1
+    hooks:
+      - id: gitleaks
+        name: GitLeaks Secret Detection
+        args: [--verbose, --no-banner]
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        name: Detect Secrets
+        args: [--baseline, .secrets.baseline]
+        exclude: >-
+          (?x)(^docs/|^\.vagrant/|^\.planning/|secrets\.yml\.example|
+          ssh_2fa/README|cloudflare_origin_ssl/README|
+          terraform/backend\.tf|package\.lock\.json|\.gitleaks\.toml)
+
+  # ============================================
+  # Security scanning
+  # ============================================
+  - repo: https://github.com/Checkmarx/kics
+    rev: v2.1.3
+    hooks:
+      - id: kics
+        name: KICS Security Scan
+        args: [--exclude-severities, info, low]
+
+  # ============================================
+  # Commit message validation
+  # ============================================
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.6.0
+    hooks:
+      - id: conventional-pre-commit
+        name: Conventional Commit
+        stages: [commit-msg]
+        args: [--force-scope, --strict]
+
+  # ============================================
+  # File size and content checks
+  # ============================================
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.10.0
+    hooks:
+      - id: python-check-blanket-noqa
+        name: Check blanket noqa
+      - id: python-check-blanket-type-ignore
+        name: Check blanket type ignore
+      - id: python-no-log-warn
+        name: Check for log.warn
+      - id: python-use-type-annotations
+        name: Enforce type annotations
+      - id: text-unicode-replacement-char
+        name: Check for unicode replacement chars
+
+# ============================================
+# CI Configuration
+# ============================================
+ci:
+  autofix_commit_msg: 'ci: auto fixes from pre-commit.ci hooks'
+  autofix_prs: true
+  autoupdate_branch: ''
+  autoupdate_commit_msg: 'ci: pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  skip: [terraform_validate, terraform_tflint, terraform_docs, ansible-lint, kics, markdown-link-check]
+  submodules: false

@@ -1,0 +1,26 @@
+---
+# Common Role - Main Tasks (Orchestrator)
+
+- name: Common | Main | Load OS-specific variables
+  ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
+  tags: [common, always]
+
+- name: Common | Main | Include system configuration tasks
+  ansible.builtin.include_tasks: system.yml
+  tags: [common, system]
+
+- name: Common | Main | Include package management tasks
+  ansible.builtin.include_tasks: packages.yml
+  tags: [common, packages]
+
+- name: Common | Main | Include user management tasks
+  ansible.builtin.include_tasks: users.yml
+  tags: [common, users]
+
+- name: Common | Main | Include GRUB console configuration tasks
+  ansible.builtin.include_tasks: grub.yml
+  tags: [common, grub, boot]
+
+- name: Common | Main | Include cleanup tasks
+  ansible.builtin.include_tasks: cleanup.yml
+  tags: [common, cleanup]

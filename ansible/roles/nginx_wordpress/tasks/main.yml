@@ -1,0 +1,94 @@
+---
+# Nginx WordPress Role - Main Tasks (Orchestrator)
+
+- name: Nginx WordPress | Main | Load OS-specific variables
+  ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
+  tags: [nginx-wordpress, always]
+
+- name: Nginx WordPress | Main | Setup nginx.org official repository
+  ansible.builtin.include_tasks: nginx-repo.yml
+  when:
+    - nginx_wordpress_enabled
+    - nginx_wordpress_use_official_nginx_repo
+  tags: [nginx-wordpress, nginx, repo]
+
+- name: Nginx WordPress | Main | Include installation tasks
+  ansible.builtin.include_tasks: install.yml
+  when: nginx_wordpress_enabled
+  tags: [nginx-wordpress, install]
+
+- name: Nginx WordPress | Main | Include Let's Encrypt tasks
+  ansible.builtin.include_tasks: letsencrypt.yml
+  when:
+    - nginx_wordpress_enabled
+    - nginx_wordpress_letsencrypt_enabled | default(false) | bool
+  tags: [nginx-wordpress, ssl, letsencrypt]
+
+- name: Nginx WordPress | Main | Include configuration tasks
+  ansible.builtin.include_tasks: configure.yml
+  when: nginx_wordpress_enabled
+  tags: [nginx-wordpress, config]
+
+- name: Nginx WordPress | Main | Include service tasks
+  ansible.builtin.include_tasks: service.yml
+  when: nginx_wordpress_enabled
+  tags: [nginx-wordpress, service]
+
+- name: Nginx WordPress | Main | Include WordPress themes installation
+  ansible.builtin.include_tasks: wordpress-themes.yml
+  when:
+    - nginx_wordpress_enabled
+    - nginx_wordpress_install_wordpress
+  tags: [nginx-wordpress, wordpress, themes]
+
+- name: Nginx WordPress | Main | Include WordPress plugins installation
+  ansible.builtin.include_tasks: wordpress-plugins.yml
+  when:
+    - nginx_wordpress_enabled
+    - nginx_wordpress_install_wordpress
+  tags: [nginx-wordpress, wordpress, plugins]
+
+- name: Nginx WordPress | Main | Include WordPress ZIP plugin installation
+  ansible.builtin.include_tasks: wordpress-plugins-zip.yml
+  when:
+    - nginx_wordpress_enabled
+    - nginx_wordpress_install_wordpress
+    - nginx_wordpress_plugins_zip | default([]) | length > 0
+  tags: [nginx-wordpress, wordpress, plugins-zip]
+
+- name: Nginx WordPress | Main | Include WordPress mu-plugins deployment
+  ansible.builtin.include_tasks: wordpress-mu-plugins.yml
+  when:
+    - nginx_wordpress_enabled
+    - nginx_wordpress_install_wordpress
+  tags: [nginx-wordpress, wordpress, mu-plugins]
+
+- name: Nginx WordPress | Main | Include WordPress content deployment
+  ansible.builtin.include_tasks: wordpress-content.yml
+  when:
+    - nginx_wordpress_enabled
+    - nginx_wordpress_install_wordpress
+    - nginx_wordpress_content_pages | default([]) | length > 0
+  tags: [nginx-wordpress, wordpress, content]
+
+- name: Nginx WordPress | Main | Include Starter Templates import
+  ansible.builtin.include_tasks: starter-templates.yml
+  when:
+    - nginx_wordpress_enabled
+    - nginx_wordpress_install_wordpress
+    - nginx_wordpress_starter_template_import | default(false) | bool
+  tags: [nginx-wordpress, wordpress, starter-templates]
+
+- name: Nginx WordPress | Main | Include WordPress optimization settings
+  ansible.builtin.include_tasks: wordpress-optimization.yml
+  when:
+    - nginx_wordpress_enabled
+    - nginx_wordpress_install_wordpress
+  tags: [nginx-wordpress, wordpress, optimization]
+
+- name: Nginx WordPress | Main | Include WordPress file permissions hardening
+  ansible.builtin.include_tasks: wordpress-permissions.yml
+  when:
+    - nginx_wordpress_enabled
+    - nginx_wordpress_install_wordpress
+  tags: [nginx-wordpress, wordpress, permissions]

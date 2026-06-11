@@ -1,0 +1,30 @@
+# ============================================================================
+# Nginx Stub Status - Prometheus Metrics Endpoint
+# ============================================================================
+# Managed by Ansible - nginx_wordpress role
+#
+# Exposes nginx connection metrics for prometheus-nginx-exporter.
+# Bound strictly to 127.0.0.1:8080 — never reachable externally.
+# prometheus-nginx-exporter scrapes http://127.0.0.1:8080/nginx_status
+# and exposes Prometheus metrics on port 9113.
+# ============================================================================
+
+{% if nginx_wordpress_enable_stub_status | default(true) %}
+server {
+    listen 127.0.0.1:8080;
+    server_name localhost;
+
+    access_log off;
+    error_log /var/log/nginx/stub-status-error.log crit;
+
+    location /nginx_status {
+        stub_status;
+        allow 127.0.0.1;
+        deny all;
+    }
+
+    location / {
+        deny all;
+    }
+}
+{% endif %}

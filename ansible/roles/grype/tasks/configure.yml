@@ -1,0 +1,30 @@
+---
+# Grype Role - Configure Tasks
+
+- name: Grype | Configure | Create grype config directory
+  ansible.builtin.file:
+    path: /etc/grype
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  tags: [grype, configure]
+
+- name: Grype | Configure | Deploy grype config file
+  ansible.builtin.template:
+    src: grype.yaml.j2
+    dest: /etc/grype/config.yaml
+    owner: root
+    group: root
+    mode: "0644"
+  tags: [grype, configure]
+
+- name: Grype | Configure | Schedule daily DB update via cron
+  ansible.builtin.cron:
+    name: "grype db update"
+    hour: "{{ grype_db_update_hour }}"
+    minute: "{{ grype_db_update_minute }}"
+    user: root
+    job: "GRYPE_DB_CACHE_DIR={{ grype_db_dir }} {{ grype_binary }} db update >> /var/log/grype-db-update.log 2>&1"
+    state: "{{ 'present' if grype_db_update_enabled else 'absent' }}"
+  tags: [grype, configure, cron]
