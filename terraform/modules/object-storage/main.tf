@@ -31,6 +31,9 @@ resource "aws_s3_bucket_lifecycle_configuration" "backups" {
     ignore_changes = [transition_default_minimum_object_size]
   }
 
+  # Rules are declared in alphabetical id order on purpose: Ceph-based
+  # endpoints return lifecycle rules sorted by id, and the provider diffs
+  # `rule` as an ordered list — any other order is a permanent phantom diff.
   rule {
     id     = "expire-daily"
     status = "Enabled"
@@ -45,19 +48,6 @@ resource "aws_s3_bucket_lifecycle_configuration" "backups" {
   }
 
   rule {
-    id     = "expire-weekly"
-    status = "Enabled"
-
-    filter {
-      prefix = "weekly/"
-    }
-
-    expiration {
-      days = 28
-    }
-  }
-
-  rule {
     id     = "expire-monthly"
     status = "Enabled"
 
@@ -67,6 +57,19 @@ resource "aws_s3_bucket_lifecycle_configuration" "backups" {
 
     expiration {
       days = 90
+    }
+  }
+
+  rule {
+    id     = "expire-weekly"
+    status = "Enabled"
+
+    filter {
+      prefix = "weekly/"
+    }
+
+    expiration {
+      days = 28
     }
   }
 }
