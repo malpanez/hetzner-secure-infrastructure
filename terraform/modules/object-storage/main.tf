@@ -23,6 +23,14 @@ resource "aws_s3_bucket_acl" "backups" {
 resource "aws_s3_bucket_lifecycle_configuration" "backups" {
   bucket = aws_s3_bucket.backups.id
 
+  # S3-compatible endpoints (Hetzner Object Storage) never echo this
+  # provider-side default back, so the AWS provider's consistency wait times
+  # out on create and every refresh shows a phantom in-place update. The
+  # module defines no transition rules, so the attribute is inert.
+  lifecycle {
+    ignore_changes = [transition_default_minimum_object_size]
+  }
+
   rule {
     id     = "expire-daily"
     status = "Enabled"
