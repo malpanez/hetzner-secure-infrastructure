@@ -217,6 +217,12 @@ variable "custom_error_page_url" {
   default     = ""
 }
 
+variable "extra_cache_path_prefixes" {
+  description = "Extra URL path prefixes to edge-cache aggressively (30-day edge TTL). For reverse-proxied assets served outside /wp-content/, e.g. a /media/ proxy in front of object storage. Each prefix becomes one cache rule in the cache_rules ruleset. Files must be within the Cloudflare plan's max cacheable object size."
+  type        = list(string)
+  default     = []
+}
+
 # ========================================
 # Tags/Labels
 # ========================================

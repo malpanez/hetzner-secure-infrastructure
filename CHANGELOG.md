@@ -3,6 +3,19 @@
 All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/) · Versioning: [SemVer](https://semver.org/).
 
+## [1.0.3] - 2026-06-14
+
+### Added
+
+- **`cloudflare-config`: new `extra_cache_path_prefixes` variable.** A list of
+  URL path prefixes that each get an aggressive 30-day edge-cache rule in the
+  `cache_rules` ruleset. Intended for reverse-proxied assets served outside
+  `/wp-content/` (e.g. a `/media/` proxy in front of object storage), where the
+  default rules don't apply. Cloudflare serves Range requests from the cached
+  object, so large media seek/streaming works from the edge. Defaults to `[]`
+  (no behavior change for existing consumers). Objects must be within the
+  Cloudflare plan's max cacheable size (512 MB on Free/Pro).
+
 ## [1.0.2] - 2026-06-12
 
 ### Fixed

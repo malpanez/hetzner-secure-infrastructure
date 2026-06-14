@@ -247,6 +247,35 @@ resource "cloudflare_ruleset" "cache_rules" {
       }
     }
   }
+
+  # Consumer-defined cache path prefixes. Each prefix gets an aggressive 30-day
+  # edge-cache rule. Useful for reverse-proxied assets served outside
+  # /wp-content/ (e.g. a /media/ proxy in front of object storage). Files must
+  # be within the Cloudflare plan's max cacheable object size. Range requests
+  # are served from the cached object, so media seek/streaming works at the edge.
+  dynamic "rules" {
+    for_each = var.extra_cache_path_prefixes
+    content {
+      description = "Cache ${rules.value} for 30 days"
+      expression  = "(starts_with(http.request.uri.path, \"${rules.value}\"))"
+      action      = "set_cache_settings"
+      enabled     = true
+      action_parameters {
+        cache = true
+        edge_ttl {
+          mode    = "override_origin"
+          default = 2592000 # 30 days
+        }
+        browser_ttl {
+          mode    = "override_origin"
+          default = 86400 # 1 day
+        }
+        cache_key {
+          ignore_query_strings_order = false
+        }
+      }
+    }
+  }
 }
 
 # --------------------------------------------------------
