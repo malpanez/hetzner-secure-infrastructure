@@ -1,0 +1,57 @@
+---
+# OpenBao Role - Main Tasks (Orchestrator)
+
+- name: OpenBao | Main | Check if deployment is enabled
+  ansible.builtin.debug:
+    msg: "OpenBao deployment: {{ deploy_openbao | default(true) }}"
+  tags: [openbao]
+
+- name: OpenBao | Main | Skip OpenBao deployment if not enabled
+  ansible.builtin.meta: end_play
+  when: deploy_openbao is defined and not deploy_openbao
+  tags: [openbao]
+
+- name: OpenBao | Main | Include OS-specific variables
+  ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
+  tags: [openbao]
+
+- name: OpenBao | Main | Require transit token when auto-unseal is enabled
+  ansible.builtin.assert:
+    that:
+      - openbao_transit_token is defined
+      - openbao_transit_token | length > 0
+    fail_msg: >-
+      openbao_transit_enabled is true but openbao_transit_token is empty.
+      Run playbooks/site.yml -e openbao_transit_bootstrap_ack=true,
+      then store the token in Ansible Vault (vault_openbao_transit_token).
+  when: openbao_transit_enabled | default(false) | bool
+  tags: [openbao, transit]
+
+- name: OpenBao | Main | Include installation tasks
+  ansible.builtin.include_tasks: install.yml
+  tags: [openbao, install]
+
+- name: OpenBao | Main | Include configuration tasks
+  ansible.builtin.include_tasks: configure.yml
+  tags: [openbao, config]
+
+- name: OpenBao | Main | Include transit auto-unseal instance tasks
+  ansible.builtin.include_tasks: transit.yml
+  when: openbao_transit_instance_enabled | default(false) | bool
+  tags: [openbao, transit]
+
+- name: OpenBao | Main | Include service tasks
+  ansible.builtin.include_tasks: service.yml
+  tags: [openbao, service]
+
+- name: OpenBao | Main | Include firewall tasks
+  ansible.builtin.include_tasks: firewall.yml
+  tags: [openbao, firewall]
+
+- name: OpenBao | Main | Include validation tasks
+  ansible.builtin.include_tasks: validate.yml
+  tags: [openbao, validate]
+
+- name: OpenBao | Main | Include monitoring tasks
+  ansible.builtin.include_tasks: monitoring.yml
+  tags: [openbao, monitoring]

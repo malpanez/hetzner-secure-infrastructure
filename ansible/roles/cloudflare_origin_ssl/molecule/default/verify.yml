@@ -1,0 +1,59 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Verify | Certificate directory exists with correct mode
+      ansible.builtin.stat:
+        path: /etc/ssl/cloudflare
+      register: cert_dir
+
+    - name: Verify | Assert cert directory present with mode 0755
+      ansible.builtin.assert:
+        that:
+          - cert_dir.stat.exists
+          - cert_dir.stat.isdir
+          - cert_dir.stat.mode == '0755'
+        fail_msg: "Certificate directory missing or wrong mode"
+
+    - name: Verify | Origin certificate exists
+      ansible.builtin.stat:
+        path: /etc/ssl/cloudflare/origin.pem
+      register: origin_cert
+
+    - name: Verify | Assert origin cert present with mode 0644
+      ansible.builtin.assert:
+        that:
+          - origin_cert.stat.exists
+          - origin_cert.stat.mode == '0644'
+        fail_msg: "Origin certificate missing or wrong mode"
+
+    - name: Verify | Origin private key exists
+      ansible.builtin.stat:
+        path: /etc/ssl/cloudflare/origin.key
+      register: origin_key
+
+    - name: Verify | Assert origin key present with mode 0600
+      ansible.builtin.assert:
+        that:
+          - origin_key.stat.exists
+          - origin_key.stat.mode == '0600'
+        fail_msg: "Origin private key missing or wrong mode"
+
+    - name: Verify | Cloudflare CA certificate exists
+      ansible.builtin.stat:
+        path: /etc/ssl/cloudflare/cloudflare-origin-ca.pem
+      register: cf_ca_cert
+
+    - name: Verify | Assert CA cert present
+      ansible.builtin.assert:
+        that: cf_ca_cert.stat.exists
+        fail_msg: "Cloudflare CA certificate missing"
+
+    - name: Verify | Certificate is valid PEM (openssl can parse it)
+      ansible.builtin.command:
+        cmd: openssl x509 -in /etc/ssl/cloudflare/origin.pem -noout -subject
+      register: cert_check
+      changed_when: false
+      failed_when: cert_check.rc != 0

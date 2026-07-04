@@ -1,0 +1,43 @@
+# SSH 2FA Configuration
+# Managed by Ansible - ssh_2fa role
+# This file enables two-factor authentication for SSH
+
+# Enable keyboard-interactive for 2FA
+KbdInteractiveAuthentication yes
+ChallengeResponseAuthentication {{ ssh_2fa_challenge_response_authentication }}
+
+# Enable PAM for 2FA integration
+UsePAM yes
+
+# Allow publickey authentication
+PubkeyAuthentication {{ ssh_2fa_pubkey_authentication }}
+
+# ========================================
+# Match Blocks - Order Matters!
+# ========================================
+# SSH processes Match blocks in order and uses the FIRST match
+# More specific matches must come BEFORE general ones
+
+{% if ssh_2fa_break_glass_enabled | default(true) %}
+# Break-glass users - SSH key only (NO 2FA required)
+# Use this for: admin users, automation accounts during setup
+{% if ssh_2fa_break_glass_users | default([]) | length > 0 %}
+Match User {{ ssh_2fa_break_glass_users | join(',') }}
+    AuthenticationMethods publickey
+    # Admin users still get full TTY access
+    PermitTTY yes
+    AllowTcpForwarding yes
+
+{% endif %}
+# Automation/service accounts group - SSH key only (NO 2FA required)
+# Use this for: Ansible, CI/CD, backup systems
+Match Group ansible-automation
+    AuthenticationMethods publickey
+    # Service accounts also get TTY for interactive debugging if needed
+    PermitTTY yes
+    AllowTcpForwarding yes
+
+{% endif %}
+# Default for all other users - Require 2FA (publickey + keyboard-interactive)
+Match All
+    AuthenticationMethods {{ ssh_2fa_auth_methods }}

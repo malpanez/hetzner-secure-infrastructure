@@ -1,0 +1,21 @@
+---
+# Monitoring Role - Main Tasks (Orchestrator)
+
+- name: Monitoring | Main | Load OS-specific variables
+  ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
+  tags: [monitoring, always]
+
+- name: Monitoring | Main | Include installation tasks
+  ansible.builtin.include_tasks: install.yml
+  when: monitoring_enabled
+  tags: [monitoring, install]
+
+- name: Monitoring | Main | Include configuration tasks
+  ansible.builtin.include_tasks: configure.yml
+  when: monitoring_enabled
+  tags: [monitoring, config]
+
+- name: Monitoring | Main | Include service tasks
+  ansible.builtin.include_tasks: service.yml
+  when: monitoring_enabled
+  tags: [monitoring, service]

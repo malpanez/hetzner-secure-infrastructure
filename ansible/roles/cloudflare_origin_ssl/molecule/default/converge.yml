@@ -1,0 +1,47 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+
+  pre_tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+      changed_when: false
+
+    - name: Install openssl for cert generation
+      ansible.builtin.apt:
+        name: openssl
+        state: present
+
+    - name: Generate self-signed test certificate
+      ansible.builtin.command:
+        cmd: >
+          openssl req -x509 -newkey rsa:2048
+          -keyout /tmp/test-origin.key
+          -out /tmp/test-origin.pem
+          -days 365 -nodes
+          -subj "/CN=test.example.com"
+      args:
+        creates: /tmp/test-origin.pem
+      changed_when: false
+
+    - name: Read test certificate
+      ansible.builtin.slurp:
+        src: /tmp/test-origin.pem
+      register: test_cert
+
+    - name: Read test private key
+      ansible.builtin.slurp:
+        src: /tmp/test-origin.key
+      register: test_key
+
+    - name: Set vault variables for role
+      ansible.builtin.set_fact:
+        vault_cloudflare_origin_cert: "{{ test_cert.content | ansible.builtin.b64decode }}"
+        vault_cloudflare_origin_key: "{{ test_key.content | ansible.builtin.b64decode }}"
+
+  roles:
+    - role: cloudflare_origin_ssl
+      vars:
+        cloudflare_origin_ssl_nginx_reload: false

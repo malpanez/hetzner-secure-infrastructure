@@ -1,0 +1,45 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits",
+    ":semanticCommitTypeAll(chore)"
+  ],
+  "schedule": ["before 8am on monday"],
+  "timezone": "Europe/Dublin",
+  "prHourlyLimit": 0,
+  "prConcurrentLimit": 5,
+  "labels": ["dependencies"],
+  "terraform": {
+    "enabled": true
+  },
+  "packageRules": [
+    {
+      "description": "Group every Terraform provider/module bump into one weekly PR",
+      "matchManagers": ["terraform"],
+      "groupName": "terraform providers"
+    },
+    {
+      "description": "Group pinned GitHub Actions digest/tag bumps into one weekly PR",
+      "matchManagers": ["github-actions"],
+      "groupName": "github actions",
+      "pinDigests": true
+    },
+    {
+      "description": "Group Ansible collections/roles (galaxy) into one weekly PR",
+      "matchManagers": ["ansible-galaxy"],
+      "groupName": "ansible collections"
+    },
+    {
+      "description": "Group pre-commit hook bumps with the rest of Python tooling",
+      "matchManagers": ["pre-commit", "pip_requirements", "pep621"],
+      "groupName": "python tooling"
+    },
+    {
+      "description": "Majors get their own PR so they are reviewed deliberately",
+      "matchUpdateTypes": ["major"],
+      "groupName": null,
+      "addLabels": ["major"]
+    }
+  ]
+}

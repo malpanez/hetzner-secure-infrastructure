@@ -1,0 +1,16 @@
+---
+- name: Security Hardening | Accounting | Enable process accounting
+  block:
+    - name: Security Hardening | Accounting | Install acct package
+      ansible.builtin.apt:
+        name: acct
+        state: present
+
+    - name: Security Hardening | Accounting | Enable and start acct service
+      ansible.builtin.systemd:
+        name: acct
+        enabled: true
+        state: started
+      failed_when: false
+  when: security_hardening_process_accounting_enabled
+  tags: [security, accounting, molecule-notest]

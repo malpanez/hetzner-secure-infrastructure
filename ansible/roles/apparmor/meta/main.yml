@@ -1,0 +1,22 @@
+---
+galaxy_info:
+  role_name: apparmor
+  author: hetzner-secure-infrastructure
+  description: AppArmor Mandatory Access Control configuration
+  license: MIT
+  min_ansible_version: "2.12"
+
+  platforms:
+    - name: Debian
+      versions:
+        - all
+
+  galaxy_tags:
+    - apparmor
+    - security
+    - mac
+    - selinux
+    - kernel
+    - hardening
+
+dependencies: []

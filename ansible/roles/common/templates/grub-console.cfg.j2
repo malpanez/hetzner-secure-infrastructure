@@ -1,0 +1,44 @@
+# GRUB Drop-in Configuration - Console Output for Hetzner Cloud
+# Managed by Ansible - common role
+#
+# This file is sourced by update-grub when generating /boot/grub/grub.cfg
+# Location: /etc/default/grub.d/00-console.cfg
+#
+# Purpose: Ensure kernel output is visible on Hetzner Cloud Console (VGA/tty0)
+# - console=tty0: Send output to VGA console (Hetzner Cloud Console viewer)
+# - console=ttyS0,115200n8: Also send to serial (for rescue/debugging)
+# - loglevel=7: Show all kernel messages (DEBUG level)
+# - systemd.show_status=true: Show systemd boot progress
+# - rd.systemd.show_status=yes: Show systemd status in initramfs
+#
+# NOTE: This file is named 00-console.cfg to load BEFORE other drop-ins,
+#       ensuring console parameters are processed first.
+
+# Console output configuration
+# - console=tty0: Primary VGA console (Hetzner Cloud Console viewer)
+# - console=ttyS0,115200n8: Secondary serial console (for rescue/debugging)
+# The last console= becomes /dev/console, but all receive output
+#
+# NOTE: This is the FIRST drop-in (00-*) so we can safely initialize the variable
+# Later drop-ins (99-*) will append to this base configuration
+GRUB_CMDLINE_LINUX="console=tty0 console=ttyS0,115200n8"
+
+{% if grub_console_debug | default(true) %}
+# Debug mode: verbose boot output
+# - loglevel=7: DEBUG level (shows all kernel messages)
+# - systemd.show_status=true: Show systemd unit status during boot
+# - rd.systemd.show_status=yes: Show systemd status in initramfs
+GRUB_CMDLINE_LINUX_DEFAULT="loglevel=7 systemd.show_status=true rd.systemd.show_status=yes"
+{% else %}
+# Production mode: quiet boot
+GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=3"
+{% endif %}
+
+# GRUB menu timeout
+GRUB_TIMEOUT={{ grub_console_timeout | default(5) }}
+
+# Ensure GRUB uses console terminal (for Hetzner Cloud Console)
+GRUB_TERMINAL=console
+
+# Optional: Serial console configuration (uncomment if needed for serial access)
+# GRUB_SERIAL_COMMAND="serial --unit=0 --speed=115200 --word=8 --parity=no --stop=1"

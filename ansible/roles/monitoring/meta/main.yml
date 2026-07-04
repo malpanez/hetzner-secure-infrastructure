@@ -1,0 +1,21 @@
+---
+galaxy_info:
+  role_name: monitoring
+  author: hetzner-secure-infrastructure
+  description: System monitoring and logging configuration with rsyslog
+  license: MIT
+  min_ansible_version: "2.12"
+
+  platforms:
+    - name: Debian
+      versions:
+        - all
+
+  galaxy_tags:
+    - monitoring
+    - logging
+    - rsyslog
+    - syslog
+    - logrotate
+
+dependencies: []

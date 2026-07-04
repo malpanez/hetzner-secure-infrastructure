@@ -1,0 +1,14 @@
+---
+# Firewall Role - Debian/Ubuntu Specific Variables
+
+# UFW package
+firewall_package: ufw
+
+# UFW service name
+firewall_service: ufw
+
+# UFW configuration directory
+firewall_config_dir: /etc/ufw
+
+# UFW command
+firewall_command: ufw

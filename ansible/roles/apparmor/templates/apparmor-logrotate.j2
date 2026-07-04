@@ -1,0 +1,12 @@
+# AppArmor log rotation
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+/var/log/apparmor/* {
+    daily
+    rotate {{ log_retention_days | default(30) }}
+    missingok
+    notifempty
+    compress
+    delaycompress
+    create 0640 root adm
+}

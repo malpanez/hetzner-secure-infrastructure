@@ -1,0 +1,31 @@
+---
+# Monitoring Role - Configuration Tasks
+
+- name: Monitoring | Configure | Configure log rotation
+  ansible.builtin.template:
+    src: logrotate-security.j2
+    dest: /etc/logrotate.d/security
+    owner: root
+    group: root
+    mode: '0644'
+  when: monitoring_logrotate_enabled
+  tags: [monitoring, logrotate, config]
+
+- name: Monitoring | Configure | Create monitoring scripts directory
+  ansible.builtin.file:
+    path: /usr/local/bin/monitoring
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags: [monitoring, scripts, config]
+
+- name: Monitoring | Configure | Deploy security monitoring script
+  ansible.builtin.template:
+    src: security-check.sh.j2
+    dest: /usr/local/bin/security-check
+    owner: root
+    group: root
+    mode: '0755'
+  when: monitoring_security_check_enabled
+  tags: [monitoring, scripts, config]

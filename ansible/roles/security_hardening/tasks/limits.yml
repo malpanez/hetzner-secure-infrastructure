@@ -1,0 +1,11 @@
+---
+- name: Security Hardening | Limits | Set additional security limits
+  community.general.pam_limits:
+    domain: "{{ item.domain }}"
+    limit_type: "{{ item.limit_type }}"
+    limit_item: "{{ item.limit_item }}"
+    value: "{{ item.value }}"
+  loop:
+    - { domain: "*", limit_type: hard, limit_item: maxlogins, value: "10" }
+    - { domain: "*", limit_type: hard, limit_item: nproc, value: "1000" }
+  tags: [security, limits]

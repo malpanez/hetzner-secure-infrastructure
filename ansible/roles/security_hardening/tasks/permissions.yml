@@ -1,0 +1,32 @@
+---
+- name: Security Hardening | Permissions | Set file and directory permissions
+  module_defaults:
+    ansible.builtin.file:
+      owner: root
+      group: root
+  block:
+    - name: Security Hardening | Permissions | Set permissions on sensitive files
+      ansible.builtin.file:  # noqa: risky-file-permissions
+        path: "{{ item }}"
+        mode: "0600"
+      loop:
+        - /etc/crontab
+        - /etc/ssh/sshd_config
+      failed_when: false
+      tags: permissions
+
+    - name: Security Hardening | Permissions | Set strict permissions on critical directories
+      ansible.builtin.file:  # noqa: risky-file-permissions
+        path: "{{ item.path }}"
+        mode: "{{ item.mode }}"
+        state: directory
+      loop:
+        - { path: /boot, mode: "0700" }
+        - { path: /etc/cron.d, mode: "0700" }
+        - { path: /etc/cron.daily, mode: "0700" }
+        - { path: /etc/cron.hourly, mode: "0700" }
+        - { path: /etc/cron.weekly, mode: "0700" }
+        - { path: /etc/cron.monthly, mode: "0700" }
+        - { path: /var/log/audit, mode: "0700" }
+      failed_when: false
+      tags: [security, permissions]

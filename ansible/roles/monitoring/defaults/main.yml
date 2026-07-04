@@ -1,0 +1,15 @@
+---
+# Monitoring Role - Default Variables
+
+# Enable monitoring
+monitoring_enabled: true
+
+# Rsyslog configuration
+monitoring_rsyslog_enabled: true
+
+# Log rotation
+monitoring_logrotate_enabled: true
+monitoring_log_retention_days: 30
+
+# Security monitoring script
+monitoring_security_check_enabled: true

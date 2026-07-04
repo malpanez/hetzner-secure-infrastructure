@@ -1,0 +1,6 @@
+---
+- name: Valkey | Test | Basic role test
+  hosts: localhost
+  remote_user: root
+  roles:
+    - role: ../../../roles/valkey

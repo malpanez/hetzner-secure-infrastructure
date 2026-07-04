@@ -1,0 +1,63 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Grype | Verify | Check grype binary exists
+      ansible.builtin.stat:
+        path: /usr/local/bin/grype
+      register: grype_binary_stat
+
+    - name: Grype | Verify | Assert grype binary is present and executable
+      ansible.builtin.assert:
+        that:
+          - grype_binary_stat.stat.exists
+          - grype_binary_stat.stat.executable
+        fail_msg: "grype binary not found or not executable at /usr/local/bin/grype"
+
+    - name: Grype | Verify | Run grype version
+      ansible.builtin.command: /usr/local/bin/grype version
+      register: grype_version_output
+      changed_when: false
+
+    - name: Grype | Verify | Assert version command succeeded
+      ansible.builtin.assert:
+        that:
+          - grype_version_output.rc == 0
+        fail_msg: "grype version check failed: {{ grype_version_output.stdout }}"
+
+    - name: Grype | Verify | Check grype config file exists
+      ansible.builtin.stat:
+        path: /etc/grype/config.yaml
+      register: grype_config_stat
+
+    - name: Grype | Verify | Assert grype config is present
+      ansible.builtin.assert:
+        that:
+          - grype_config_stat.stat.exists
+        fail_msg: "grype config not found at /etc/grype/config.yaml"
+
+    - name: Grype | Verify | Check grype DB directory exists
+      ansible.builtin.stat:
+        path: /var/lib/grype
+      register: grype_db_stat
+
+    - name: Grype | Verify | Assert DB directory is present
+      ansible.builtin.assert:
+        that:
+          - grype_db_stat.stat.exists
+          - grype_db_stat.stat.isdir
+        fail_msg: "grype DB directory not found at /var/lib/grype"
+
+    - name: Grype | Verify | Check cron job exists
+      ansible.builtin.command: crontab -l -u root
+      register: crontab_output
+      changed_when: false
+      failed_when: false
+
+    - name: Grype | Verify | Assert DB update cron is scheduled
+      ansible.builtin.assert:
+        that:
+          - "'grype db update' in crontab_output.stdout"
+        fail_msg: "grype DB update cron job not found in root crontab"

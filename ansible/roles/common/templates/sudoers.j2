@@ -1,0 +1,8 @@
+# Sudoers configuration for {{ common_admin_user_name }}
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+# User privilege specification
+{{ common_admin_user_name }} ALL=(ALL:ALL) NOPASSWD: ALL
+{% if common_admin_user_passwordless_sudo | default(false) %}
+{{ common_admin_user_name }} ALL=(ALL) NOPASSWD: ALL
+{% endif %}

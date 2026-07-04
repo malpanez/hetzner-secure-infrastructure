@@ -1,0 +1,33 @@
+{
+  "ignorePatterns": [
+    {
+      "pattern": "^http://localhost"
+    },
+    {
+      "pattern": "^http://127.0.0.1"
+    },
+    {
+      "pattern": "^https://example.com"
+    },
+    {
+      "pattern": "^https://github.com/malpanez/hetzner-secure-infrastructure"
+    },
+    {
+      "pattern": "^https://dash.cloudflare.com"
+    },
+    {
+      "pattern": "^https://support.cloudflare.com"
+    }
+  ],
+  "replacementPatterns": [],
+  "httpHeaders": [],
+  "timeout": "5s",
+  "retryOn429": true,
+  "retryCount": 3,
+  "fallbackRetryDelay": "30s",
+  "aliveStatusCodes": [
+    200,
+    206,
+    999
+  ]
+}

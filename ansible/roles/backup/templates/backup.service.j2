@@ -1,0 +1,12 @@
+[Unit]
+Description=WordPress Encrypted Backup to Hetzner Object Storage
+After=network-online.target mariadb.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart={{ backup_script_path }}
+User=root
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=wordpress-backup

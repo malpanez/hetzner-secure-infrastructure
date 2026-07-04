@@ -1,0 +1,26 @@
+---
+# AppArmor Role - Main Tasks (Orchestrator)
+
+- name: AppArmor | Main | Load OS-specific variables
+  ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
+  tags: [apparmor, always]
+
+- name: AppArmor | Main | Include installation tasks
+  ansible.builtin.include_tasks: install.yml
+  when: apparmor_enabled
+  tags: [apparmor, install]
+
+- name: AppArmor | Main | Include service tasks
+  ansible.builtin.include_tasks: service.yml
+  when: apparmor_enabled
+  tags: [apparmor, service]
+
+- name: AppArmor | Main | Include configuration tasks
+  ansible.builtin.include_tasks: configure.yml
+  when: apparmor_enabled
+  tags: [apparmor, config]
+
+- name: AppArmor | Main | Include validation tasks
+  ansible.builtin.include_tasks: validate.yml
+  when: apparmor_enabled
+  tags: [apparmor, validate]

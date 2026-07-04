@@ -1,0 +1,9 @@
+---
+- name: Security Hardening | Session | Deploy session timeout configuration
+  ansible.builtin.template:
+    src: timeout.sh.j2
+    dest: /etc/profile.d/timeout.sh
+    owner: root
+    group: root
+    mode: '0644'
+  tags: [security, session]

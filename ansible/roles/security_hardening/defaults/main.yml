@@ -1,0 +1,242 @@
+---
+# Security Hardening Role - Default Variables
+
+# ========================================
+# Feature Toggles
+# ========================================
+
+# Kernel hardening
+security_hardening_kernel_enabled: true
+
+# Swap (OOM safety cushion; not for regular paging)
+security_hardening_swap_enabled: true
+security_hardening_swap_file: /swapfile
+security_hardening_swap_size: 2G
+security_hardening_swappiness: 10
+
+# Unattended upgrades
+security_hardening_unattended_upgrades_enabled: true
+
+# AIDE File Integrity Monitoring
+security_hardening_aide_enabled: false
+security_hardening_aide_async: true
+
+# Auditd Configuration
+# NOTE: Auditd does NOT require kernel parameters on Debian 13
+# Source: https://www.server-world.info/en/note?os=Debian_13&p=audit&f=1
+# Just install auditd package, configure rules, and start service - NO GRUB changes needed
+# audit=1 kernel param is optional; on kernels >= 6.1.0-39 it is safe to enable
+# if you need early-boot auditing for compliance.
+security_hardening_auditd_enabled: false
+
+# NOTE: GRUB management removed - audit=1 is optional and should be enabled only when required
+# Source: https://www.server-world.info/en/note?os=Debian_13&p=audit&f=1
+
+# USB storage disable
+security_hardening_disable_usb_storage: true
+
+# ========================================
+# Auditd Configuration
+# ========================================
+
+security_hardening_auditd_max_log_file: 8
+security_hardening_auditd_max_log_file_action: rotate
+security_hardening_auditd_num_logs: 5
+security_hardening_auditd_space_left: 75
+security_hardening_auditd_space_left_action: email
+security_hardening_auditd_admin_space_left: 50
+security_hardening_auditd_admin_space_left_action: suspend
+security_hardening_auditd_disk_full_action: suspend
+security_hardening_auditd_disk_error_action: suspend
+security_hardening_auditd_action_mail_acct: root
+
+# ========================================
+# Admin Configuration
+# ========================================
+
+security_hardening_admin_username: deploy
+
+# ========================================
+# Login Configuration (/etc/login.defs)
+# ========================================
+
+# Password aging controls
+# NOTE: For single-admin systems, use 99999 to avoid lockout
+# For multi-admin environments, 90 days may be acceptable
+security_hardening_pass_max_days: 99999
+security_hardening_pass_min_days: 1
+security_hardening_pass_warn_age: 14
+
+# Password hashing rounds (SHA512)
+security_hardening_sha_rounds: 10000
+
+# User/group file permissions mask
+# CRITICAL FOR WORDPRESS: Use 022 (Debian default)
+# - 022: Web-compatible (rw-r--r-- for files)
+# - 027: More secure but BREAKS WordPress (www-data can't read files)
+# In Debian 13, pam_umask RESPECTS this value (unlike Debian 12)
+security_hardening_umask: '022'
+
+# Password quality defaults
+security_hardening_minclass: 3
+security_hardening_dictcheck: 1
+
+# ========================================
+# Session Timeout Configuration
+# ========================================
+
+# Automatic logout after N seconds of inactivity
+# Default: 900 seconds (15 minutes)
+security_hardening_session_timeout: 900
+
+# ========================================
+# Login Banner Configuration
+# ========================================
+
+security_hardening_login_banner_enabled: true
+security_hardening_login_banner_text: |
+  ################################################################################
+  #                                                                              #
+  #                        AUTHORIZED ACCESS ONLY                                #
+  #                                                                              #
+  ################################################################################
+  #                                                                              #
+  #  This system is private property. Access is restricted to authorized users.  #
+  #                                                                              #
+  #  NOTICE TO USERS:                                                            #
+  #                                                                              #
+  #  • Unauthorized access to this system is strictly prohibited and may be      #
+  #    prosecuted under applicable computer fraud and abuse laws.                #
+  #                                                                              #
+  #  • All activities on this system are monitored and logged. By accessing      #
+  #    this system, you consent to such monitoring and logging.                  #
+  #                                                                              #
+  #  • Any unauthorized use, access attempts, or suspicious activities will      #
+  #    be reported to the appropriate authorities.                               #
+  #                                                                              #
+  #  • Users must comply with all applicable security policies and procedures.   #
+  #                                                                              #
+  #  If you are not an authorized user, disconnect immediately.                  #
+  #                                                                              #
+  ################################################################################
+
+# ========================================
+# Process Accounting
+# ========================================
+
+security_hardening_process_accounting_enabled: true
+
+# ========================================
+# Additional Hardening Features
+# ========================================
+
+# Restrict access to compilers
+security_hardening_restrict_compilers: true
+
+# Harden /tmp with separate mount options
+security_hardening_harden_tmp: true
+
+# /tmp tmpfs size limit (prevents DoS)
+security_hardening_tmp_size: '4G'
+
+# ========================================
+# Sysctl Hardening Configuration
+# ========================================
+# Based on DevSec hardening framework + CIS benchmarks
+
+security_hardening_sysctl_config:
+  # Network security - IPv4
+  net.ipv4.conf.all.rp_filter: 1
+  net.ipv4.conf.default.rp_filter: 1
+  net.ipv4.conf.all.accept_redirects: 0
+  net.ipv4.conf.default.accept_redirects: 0
+  net.ipv4.conf.all.secure_redirects: 0
+  net.ipv4.conf.default.secure_redirects: 0
+  net.ipv4.conf.all.send_redirects: 0
+  net.ipv4.conf.default.send_redirects: 0
+  net.ipv4.conf.all.accept_source_route: 0
+  net.ipv4.conf.default.accept_source_route: 0
+  net.ipv4.conf.all.log_martians: 1
+  net.ipv4.conf.default.log_martians: 1
+  net.ipv4.icmp_echo_ignore_broadcasts: 1
+  net.ipv4.icmp_ignore_bogus_error_responses: 1
+  net.ipv4.tcp_syncookies: 1
+
+  # Network security - IPv6
+  net.ipv6.conf.all.accept_redirects: 0
+  net.ipv6.conf.default.accept_redirects: 0
+  net.ipv6.conf.all.accept_source_route: 0
+  net.ipv6.conf.default.accept_source_route: 0
+  # Hetzner Cloud uses SLAAC with RA (fe80::1 gateway). Keep RA enabled unless IPv6 is static.
+  net.ipv6.conf.all.accept_ra: 1
+  net.ipv6.conf.default.accept_ra: 1
+
+  # Kernel hardening
+  kernel.dmesg_restrict: 1
+  kernel.kptr_restrict: 2
+  kernel.yama.ptrace_scope: 1
+  kernel.kexec_load_disabled: 1
+  kernel.sysrq: 0
+  kernel.core_uses_pid: 1
+
+  # File system hardening
+  fs.protected_hardlinks: 1
+  fs.protected_symlinks: 1
+  fs.protected_fifos: 1
+  fs.protected_regular: 2
+  fs.suid_dumpable: 0
+
+# ========================================
+# Filesystem Module Blocking
+# ========================================
+# Disable unused/insecure filesystems
+
+security_hardening_disabled_filesystems:
+  - cramfs
+  - freevxfs
+  - jffs2
+  - hfs
+  - hfsplus
+  - squashfs
+  - udf
+  # vfat intentionally omitted: required for UEFI /boot/efi
+
+# ========================================
+# Network Protocol Blocking
+# ========================================
+# Disable insecure network protocols
+
+security_hardening_disabled_network_protocols:
+  - dccp
+  - sctp
+  - rds
+  - tipc
+
+# ========================================
+# Package Configuration
+# ========================================
+
+security_hardening_packages:
+  - acct
+  - aide
+  - apt-listchanges
+  - audispd-plugins
+  - auditd
+  - debsums
+  - libpam-pwquality
+  - needrestart
+  - unattended-upgrades
+
+# Unattended upgrades configuration
+unattended_upgrades_origins:
+  - '${distro_id}:${distro_codename}-security'
+  - '${distro_id}ESMApps:${distro_codename}-apps-security'
+  - '${distro_id}ESM:${distro_codename}-infra-security'
+
+unattended_upgrades_auto_fix_interrupted_dpkg: true
+unattended_upgrades_minimal_steps: true
+unattended_upgrades_install_on_shutdown: false
+unattended_upgrades_automatic_reboot: false
+unattended_upgrades_automatic_reboot_time: "02:00"
+unattended_upgrades_remove_unused_kernel_packages: true
+unattended_upgrades_remove_unused_dependencies: true

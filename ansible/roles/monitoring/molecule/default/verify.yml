@@ -1,0 +1,36 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Check if logrotate security config exists
+      ansible.builtin.stat:
+        path: /etc/logrotate.d/security
+      register: logrotate_config
+      failed_when: not logrotate_config.stat.exists
+
+    - name: Check if monitoring scripts directory exists
+      ansible.builtin.stat:
+        path: /usr/local/bin/monitoring
+      register: monitoring_dir
+      failed_when: not monitoring_dir.stat.exists or not monitoring_dir.stat.isdir
+
+    - name: Check if security-check script exists
+      ansible.builtin.stat:
+        path: /usr/local/bin/security-check
+      register: security_check_script
+      failed_when: not security_check_script.stat.exists or not security_check_script.stat.executable
+
+    - name: Verify rsyslog package is installed
+      ansible.builtin.package:
+        name: rsyslog
+        state: present
+      check_mode: true
+      register: rsyslog_check
+      failed_when: rsyslog_check.changed
+
+    - name: Display test results
+      ansible.builtin.debug:
+        msg: "All monitoring role tests passed!"

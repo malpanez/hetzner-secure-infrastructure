@@ -1,0 +1,24 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Check if unattended-upgrades is installed
+      ansible.builtin.package:
+        name: unattended-upgrades
+        state: present
+      check_mode: true
+      register: unattended_upgrades_check
+      failed_when: unattended_upgrades_check.changed
+
+    - name: Check if sysctl security parameters are set
+      ansible.builtin.command: sysctl kernel.dmesg_restrict
+      register: sysctl_check
+      changed_when: false
+      failed_when: "'kernel.dmesg_restrict = 1' not in sysctl_check.stdout"
+
+    - name: Display test results
+      ansible.builtin.debug:
+        msg: "All security_hardening role tests passed!"

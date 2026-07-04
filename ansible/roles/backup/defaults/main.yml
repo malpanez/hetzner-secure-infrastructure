@@ -1,0 +1,41 @@
+---
+backup_bucket: "my-backups"
+backup_endpoint: "https://nbg1.your-objectstorage.com"
+backup_openbao_addr: "https://127.0.0.1:8200"
+# OpenBao uses a self-signed cert on localhost; the script curls it with -k
+backup_openbao_cacert: "/etc/openbao.d/tls/openbao.crt"
+backup_openbao_token_file: "/root/.openbao-backup-token"
+
+# DR: full OpenBao state snapshot (raft). OFF by default because it requires
+# the backup token policy to include:
+#   path "sys/storage/raft/snapshot" { capabilities = ["read"] }
+# and the storage backend to be raft. If enabled without that, the backup does
+# NOT fail: it only logs a WARN and continues (see backup.sh.j2).
+backup_openbao_snapshot_enabled: false
+
+backup_sites:
+  - name: main
+    db_name: wordpress_main
+    db_user: wp_main
+    web_root: /var/www/example.com
+  - name: blog
+    db_name: wordpress_blog
+    db_user: wp_blog
+    web_root: /var/www/blog.example.com
+
+backup_mariadb_host: "127.0.0.1"
+backup_mariadb_port: 3306
+backup_mariadb_backup_user: "backup"
+backup_staging_dir: "/var/backups/wordpress"
+backup_log_file: "/var/log/wordpress-backup.log"
+backup_script_path: "/usr/local/bin/wordpress-backup.sh"
+backup_service_name: "wordpress-backup"
+backup_service_path: "/etc/systemd/system/wordpress-backup.service"
+backup_timer_path: "/etc/systemd/system/wordpress-backup.timer"
+
+backup_packages:
+  - mariadb-client
+  - jq
+  - openssl
+  - curl
+  - unzip

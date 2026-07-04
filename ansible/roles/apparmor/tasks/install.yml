@@ -1,0 +1,6 @@
+---
+# AppArmor Role - Installation Tasks (Multi-platform orchestrator)
+
+- name: AppArmor | Install | Include OS-specific installation tasks
+  ansible.builtin.include_tasks: "install-{{ ansible_os_family }}.yml"
+  tags: [apparmor, install, packages]

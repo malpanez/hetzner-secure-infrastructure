@@ -1,0 +1,14 @@
+---
+# Grype Role - Main Tasks
+
+- name: Grype | Main | Load OS-specific variables
+  ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
+  tags: [grype, always]
+
+- name: Grype | Main | Include install tasks
+  ansible.builtin.include_tasks: install.yml
+  tags: [grype, install]
+
+- name: Grype | Main | Include configure tasks
+  ansible.builtin.include_tasks: configure.yml
+  tags: [grype, configure]
