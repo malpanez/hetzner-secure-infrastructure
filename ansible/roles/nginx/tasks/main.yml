@@ -1,0 +1,43 @@
+---
+# Nginx Role - Main Tasks (Orchestrator)
+
+- name: Nginx | Main | Load OS-specific variables
+  ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
+  tags: [nginx, always]
+
+- name: Nginx | Main | Setup nginx.org official repository
+  ansible.builtin.include_tasks: nginx-repo.yml
+  when:
+    - nginx_enabled
+    - nginx_use_official_repo
+  tags: [nginx, repo]
+
+- name: Nginx | Main | Include installation tasks
+  ansible.builtin.include_tasks: install.yml
+  when: nginx_enabled
+  tags: [nginx, install]
+
+- name: Nginx | Main | Include Let's Encrypt tasks
+  ansible.builtin.include_tasks: letsencrypt.yml
+  when:
+    - nginx_enabled
+    - nginx_letsencrypt_enabled | default(false) | bool
+  tags: [nginx, ssl, letsencrypt]
+
+- name: Nginx | Main | Include configuration tasks
+  ansible.builtin.include_tasks: configure.yml
+  when: nginx_enabled
+  tags: [nginx, config]
+
+- name: Nginx | Main | Include service tasks
+  ansible.builtin.include_tasks: service.yml
+  when: nginx_enabled
+  tags: [nginx, service]
+
+- name: Nginx | Main | Include systemd startup self-heal drop-in
+  ansible.builtin.include_tasks: systemd-selfheal.yml
+  when:
+    - nginx_enabled
+    - nginx_install_nginx
+    - nginx_systemd_selfheal_enabled | default(true) | bool
+  tags: [nginx, service, systemd, selfheal]

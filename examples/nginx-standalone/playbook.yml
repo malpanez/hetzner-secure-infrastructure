@@ -1,0 +1,15 @@
+---
+- name: Deploy hardened nginx standalone
+  hosts: web
+  become: true
+
+  # Extension-point overrides — uncomment and adjust to fit a consumer role's
+  # needs. See ../../ansible/roles/nginx/README.md#variable-surface for the
+  # full table; every extension point defaults to empty/disabled.
+  # vars:
+  #   nginx_enable_rate_limiting: true
+  #   nginx_security_headers_csp_script_src_extra:
+  #     - https://cdn.example.com
+
+  roles:
+    - role: nginx

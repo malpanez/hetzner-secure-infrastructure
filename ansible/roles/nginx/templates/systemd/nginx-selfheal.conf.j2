@@ -1,0 +1,32 @@
+# {{ ansible_managed }}
+# nginx.service drop-in: self-heal a transient startup failure.
+#
+# WHY: the /media/ location proxies a LITERAL upstream host that nginx resolves
+# at start/reload. A transient bucket-DNS failure makes the unit's
+# ExecStartPre=`nginx -t` abort with "[emerg] host not found in upstream", the
+# start fails, and the stock nginx.org unit leaves nginx dead (no Restart=) ->
+# both sites 521 until a human intervenes (2026-06-19 incident, down for hours).
+#
+# An ExecStartPre= failure is a start-phase failure and IS covered by
+# Restart=on-failure (systemd.service(5): the restarted process "may also be one
+# of the processes specified with ExecStartPre="). So a failed `nginx -t` ->
+# unit restart -> retry until DNS recovers.
+#
+# StartLimit math (systemd.unit(5): units started more than <burst> times within
+# <interval> are not restarted any more): {{ nginx_systemd_start_limit_burst }} attempts x
+# {{ nginx_systemd_restart_sec }}s RestartSec ~= {{ nginx_systemd_start_limit_burst * nginx_systemd_restart_sec }}s of retries, inside a
+# {{ nginx_systemd_start_limit_interval_sec }}s window so the blip cannot exhaust the counter early.
+
+[Unit]
+{% for target in nginx_systemd_after_targets %}
+After={{ target }}
+{% endfor %}
+{% for target in nginx_systemd_wants_targets %}
+Wants={{ target }}
+{% endfor %}
+StartLimitIntervalSec={{ nginx_systemd_start_limit_interval_sec }}
+StartLimitBurst={{ nginx_systemd_start_limit_burst }}
+
+[Service]
+Restart=on-failure
+RestartSec={{ nginx_systemd_restart_sec }}

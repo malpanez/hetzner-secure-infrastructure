@@ -1,0 +1,101 @@
+---
+# Nginx Role - Official nginx.org Repository Setup
+# Opt-in path (nginx_use_official_repo: true). RECON.md confirms the production
+# host (arm64) runs Debian's own nginx, not this path — every task below keeps its
+# failed_when: false guard + the Debian-repo fallback so an operator can safely
+# opt in on a host where nginx.org actually works, without risking a hard
+# converge failure if it does not.
+
+- name: Nginx Repo | Ensure APT keyrings directory exists
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  when:
+    - nginx_use_official_repo
+    - ansible_os_family == 'Debian'
+  tags: [nginx, repo]
+
+- name: Nginx Repo | Download nginx.org signing key
+  ansible.builtin.get_url:
+    url: "{{ nginx_repo_key_url }}"
+    dest: "{{ nginx_repo_keyring_path }}"
+    mode: "0644"
+  when:
+    - nginx_use_official_repo
+    - ansible_os_family == 'Debian'
+  failed_when: false
+  tags: [nginx, repo]
+
+- name: Nginx Repo | Add official nginx.org repository (stable)
+  ansible.builtin.apt_repository:
+    repo: "deb [arch={{ nginx_repo_arch }} signed-by={{ nginx_repo_keyring_path }}] https://nginx.org/packages/{{ ansible_distribution | lower }}/ {{ ansible_distribution_release }} nginx"
+    state: present
+    filename: "{{ nginx_repo_filename }}"
+    update_cache: true
+  when:
+    - nginx_use_official_repo
+    - ansible_os_family == 'Debian'
+  failed_when: false
+  tags: [nginx, repo]
+
+- name: Nginx Repo | Pin nginx version from official repository
+  ansible.builtin.copy:
+    content: |
+      Package: nginx
+      Pin: release o=nginx
+      Pin-Priority: {{ nginx_repo_pin_priority }}
+    dest: /etc/apt/preferences.d/nginx-official
+    owner: root
+    group: root
+    mode: '0644'
+  when:
+    - nginx_use_official_repo
+    - ansible_os_family == 'Debian'
+  failed_when: false
+  tags: [nginx, repo]
+
+- name: Nginx Repo | Install nginx from official repository
+  ansible.builtin.apt:
+    name: "nginx={{ nginx_version }}-*"
+    state: present
+    update_cache: true
+  when:
+    - nginx_use_official_repo
+    - nginx_version is defined
+    - ansible_os_family == 'Debian'
+  register: nginx_official_install
+  failed_when: false
+  tags: [nginx, packages]
+
+- name: Nginx Repo | Check if nginx is installed
+  ansible.builtin.command: nginx -v
+  register: nginx_repo_check
+  changed_when: false
+  failed_when: false
+  tags: [nginx]
+
+- name: Nginx Repo | Fallback to Debian repository if nginx not installed
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+    update_cache: true
+  when:
+    - nginx_repo_check.rc != 0
+    - ansible_os_family == 'Debian'
+  tags: [nginx, packages]
+
+- name: Nginx Repo | Display installed nginx version
+  ansible.builtin.command: nginx -v
+  register: nginx_version_output
+  changed_when: false
+  failed_when: false
+  tags: [nginx]
+
+- name: Nginx Repo | Show nginx version
+  ansible.builtin.debug:
+    msg: "Installed nginx version: {{ nginx_version_output.stderr }}"
+  when: nginx_version_output.rc == 0
+  tags: [nginx]

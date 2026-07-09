@@ -1,0 +1,6 @@
+---
+# Nginx Role - Installation Tasks (Multi-platform orchestrator)
+
+- name: Nginx | Install | Include OS-specific installation tasks
+  ansible.builtin.include_tasks: "install-{{ ansible_os_family }}.yml"
+  tags: [nginx, install, packages]

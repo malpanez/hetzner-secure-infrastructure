@@ -1,0 +1,103 @@
+---
+# Nginx Role - Default Variables
+# Generic, application-agnostic nginx web server role (install, config,
+# hardening drop-ins, TLS, self-heal). Zero application awareness — consumer
+# hosting roles inject their own domains/paths via the extension points
+# below, they never require editing this role.
+
+# ========================================
+# Feature Toggles
+# ========================================
+
+nginx_enabled: true
+nginx_install_nginx: true
+
+nginx_cloudflare_enabled: true          # Cloudflare real IP detection
+nginx_enable_rate_limiting: true        # Brute force & DDoS protection zone definitions
+nginx_enable_security_headers: true     # CSP, X-Frame-Options, etc.
+nginx_enable_json_logging: true         # Structured JSON logs for Loki
+nginx_enable_stub_status: true          # nginx stub_status for Prometheus
+
+# ========================================
+# Security Headers - CSP extension points
+# ========================================
+# Consumer hosting roles append their own domains here (e.g. an LMS-hosting
+# role adds its CDN/analytics domains) so this role never needs to know about
+# any specific application.
+
+nginx_security_headers_csp_script_src_extra: []
+nginx_security_headers_csp_style_src_extra: []
+nginx_security_headers_csp_font_src_extra: []
+nginx_security_headers_csp_connect_src_extra: []
+
+# ========================================
+# Static Assets - hotlink protection extension point
+# ========================================
+# Off by default (base image/css/js/font caching rules only). Consumer roles
+# turn this on and supply extensions/referers to add course-material/media
+# hotlink protection without this role ever referencing the app that needs it.
+
+nginx_static_assets_hotlink_protection_enabled: false
+nginx_static_assets_hotlink_extensions: []
+nginx_static_assets_hotlink_referers: []
+
+# ========================================
+# systemd Startup Self-Heal (DNS-blip recovery)
+# ========================================
+# Values below are byte-preserved from the prior monolithic role
+# (GATE-01 requirement) — do not change without re-verifying against prod.
+# A transient DNS failure at start (e.g. a literal-hostname upstream) makes
+# `nginx -t` (run as ExecStartPre) abort with "[emerg] host not found in
+# upstream"; the start fails and the stock unit leaves nginx dead. This
+# drop-in makes a failed start self-heal across the blip instead of staying
+# down. ExecStartPre failures count as start failures and are covered by
+# Restart=on-failure (systemd.service(5)).
+nginx_systemd_selfheal_enabled: true
+# Sleep between restart attempts. 5s spaces retries across a multi-second
+# blip without busy-looping; RestartSec default is 100ms (far too aggressive).
+nginx_systemd_restart_sec: 5
+# Start-limit window + burst. Units started more than <burst> times within
+# <interval> are not restarted any more (systemd.unit(5)). With 5s RestartSec
+# we need burst*RestartSec >= worst-case outage. 30 attempts x 5s ~= 150s of
+# retries, inside a 900s window so the counter does not reset mid-outage and
+# prematurely re-arm the limit.
+nginx_systemd_start_limit_interval_sec: 900
+nginx_systemd_start_limit_burst: 30
+# Order start after the network and DNS resolver are actually up, so the
+# very first boot attempt is less likely to hit the blip in the first place.
+nginx_systemd_after_targets:
+  - network-online.target
+  - nss-lookup.target
+nginx_systemd_wants_targets:
+  - network-online.target
+
+# ========================================
+# Repo / Install
+# ========================================
+# RECON-INFORMED (.planning/phases/10-extract-generic-nginx-role/RECON.md):
+# The production host (Hetzner CAX11, arm64) runs Debian's own nginx package
+# (1.26.3-3+deb13u7), NOT the nginx.org official repo — the templated
+# amd64-hardcoded repo path silently failed on this arm64 host and the
+# Debian-fallback install path is what is actually running. Default to the
+# Debian-repo path (matches reality); the nginx.org path remains available
+# as an explicit opt-in for hosts where it is confirmed to work.
+nginx_use_official_repo: false   # opt-in only — prod runs Debian's own nginx, not nginx.org
+nginx_version: "1.28.1"          # only consumed when nginx_use_official_repo: true
+
+# ========================================
+# Let's Encrypt (DNS-01 via Cloudflare)
+# ========================================
+# Disabled by default. `vault_cloudflare_api_token` is a global vault secret
+# name (not role-prefixed) — leave that name alone, consumer inventories
+# define it.
+
+nginx_letsencrypt_enabled: false
+nginx_letsencrypt_email: ""
+nginx_letsencrypt_primary_domain: "example.com"
+nginx_letsencrypt_domains:
+  - "{{ nginx_letsencrypt_primary_domain }}"
+  - "www.{{ nginx_letsencrypt_primary_domain }}"
+nginx_letsencrypt_dns_provider: cloudflare
+nginx_letsencrypt_cloudflare_credentials_path: /etc/letsencrypt/cloudflare.ini
+nginx_letsencrypt_cloudflare_api_token: "{{ vault_cloudflare_api_token | default('') }}"
+nginx_letsencrypt_propagation_seconds: 60

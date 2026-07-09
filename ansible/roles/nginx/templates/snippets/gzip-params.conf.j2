@@ -1,0 +1,53 @@
+# ============================================================================
+# Gzip Compression Parameters
+# ============================================================================
+# Include this in server{} or http{} blocks
+#
+# Compresses text-based responses before sending to client.
+# Reduces bandwidth usage and improves page load times.
+#
+# Typical compression savings:
+# - HTML: 80KB → 20KB (75% reduction)
+# - CSS: 100KB → 25KB (75% reduction)
+# - JavaScript: 200KB → 60KB (70% reduction)
+# ============================================================================
+
+# Enable gzip compression
+gzip on;
+
+# Add "Vary: Accept-Encoding" header
+# Tells CDNs/proxies to cache compressed and uncompressed versions separately
+# Prevents old browsers from receiving compressed files they can't decompress
+gzip_vary on;
+
+# Compress responses even for proxied requests (important for Cloudflare)
+gzip_proxied any;
+
+# Compression level: 1-9
+# Level 6 is optimal balance (70% compression, minimal CPU overhead)
+# Level 1: Fast, low compression (50% reduction, 5ms CPU)
+# Level 6: Balanced (70% reduction, 20ms CPU) ← BEST
+# Level 9: Slow, high compression (75% reduction, 100ms CPU) ← NOT WORTH IT
+gzip_comp_level 6;
+
+# MIME types to compress (text-based files only)
+# Images (JPEG, PNG) and videos are already compressed
+gzip_types
+    text/plain
+    text/css
+    text/xml
+    text/javascript
+    application/json
+    application/javascript
+    application/xml+rss
+    application/atom+xml
+    image/svg+xml;
+
+# Don't compress for Internet Explorer 6 (has gzip bugs)
+# IE6 usage: ~0.001% (legacy enterprise systems)
+gzip_disable "msie6";
+
+# Don't compress files smaller than 256 bytes
+# Compression overhead > savings for tiny files
+# Example: 100-byte file → 120 bytes compressed (larger!)
+gzip_min_length 256;

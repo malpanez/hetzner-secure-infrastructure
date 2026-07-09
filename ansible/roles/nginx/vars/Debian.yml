@@ -1,0 +1,43 @@
+---
+# Nginx Role - Debian/Ubuntu Specific Variables
+# Repo vars (nginx_repo_*) are defined ONLY here, never in defaults/main.yml —
+# see .planning/phases/10-extract-generic-nginx-role/10-RESEARCH.md Pitfall #4
+# (the prior monolithic role shadowed these across two files with
+# conflicting values; this role defines each exactly once).
+
+# Nginx packages (Debian repository path)
+nginx_packages:
+  - nginx
+  - nginx-common
+
+# Additional tools
+nginx_tools_packages:
+  - curl
+  - unzip
+  - wget
+
+# Certbot (DNS-01 via Cloudflare)
+nginx_certbot_packages:
+  - certbot
+  - python3-certbot-dns-cloudflare
+
+# Service name
+nginx_service: nginx
+
+# Paths
+nginx_config_dir: /etc/nginx
+nginx_sites_available: /etc/nginx/sites-available
+nginx_sites_enabled: /etc/nginx/sites-enabled
+nginx_snippets_dir: /etc/nginx/snippets
+
+# nginx.org official repository (opt-in — see defaults/main.yml
+# nginx_use_official_repo; RECON.md confirms prod runs Debian's own nginx)
+nginx_repo_key_url: "https://nginx.org/keys/nginx_signing.key"
+nginx_repo_keyring_path: "/etc/apt/keyrings/nginx.asc"
+# RECON-INFORMED: the production host is arm64 (Hetzner CAX11) — the prior
+# monolithic role hardcoded "amd64" here (and in its defaults/main.yml,
+# duplicated), which is why the official-repo path always silently failed
+# on this host.
+nginx_repo_arch: "arm64"
+nginx_repo_filename: "nginx-official"
+nginx_repo_pin_priority: 900

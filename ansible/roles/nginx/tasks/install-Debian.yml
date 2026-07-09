@@ -1,0 +1,33 @@
+---
+# Nginx Role - Debian/Ubuntu Installation Tasks
+# nginx + tools + certbot ONLY. Zero application-runtime or CLI-tooling
+# packages — those belong to a consumer hosting role, never to this generic
+# role.
+
+- name: Nginx | Install | Install Nginx packages (Debian repository)
+  ansible.builtin.apt:
+    name: "{{ nginx_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  when:
+    - nginx_install_nginx
+    - not nginx_use_official_repo
+  tags: [nginx, packages]
+
+- name: Nginx | Install | Install tools packages
+  ansible.builtin.apt:
+    name: "{{ nginx_tools_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  tags: [nginx, packages]
+
+- name: Nginx | Install | Install Certbot packages
+  ansible.builtin.apt:
+    name: "{{ nginx_certbot_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  when: nginx_letsencrypt_enabled | default(false) | bool
+  tags: [nginx, packages, ssl, letsencrypt]

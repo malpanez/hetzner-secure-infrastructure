@@ -37,6 +37,7 @@ confinement and off-site backups.
 | `valkey` | Valkey (Redis-compatible) object cache |
 | `openbao` | OpenBao (Vault fork) with transit auto-unseal dual-instance pattern |
 | `monitoring` | Prometheus + Grafana + exporters behind nginx reverse proxies |
+| `nginx` | Application-agnostic nginx install, TLS/Let's Encrypt, hardening drop-ins (rate limiting, security headers, Cloudflare real-IP, JSON logging) |
 | `backup` | Encrypted off-site backups to S3-compatible storage |
 | `grype` | Container/filesystem vulnerability scanning |
 | `cloudflare_origin_ssl` | Deploy a Cloudflare Origin CA certificate for Full (strict) TLS |

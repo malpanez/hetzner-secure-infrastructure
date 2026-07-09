@@ -1,0 +1,55 @@
+---
+# Nginx Role - systemd startup self-heal drop-in
+#
+# Makes nginx.service auto-recover from a transient startup failure (e.g. the
+# /media/ literal-upstream DNS blip that took both sites down on 2026-06-19)
+# instead of staying dead. Pure systemd policy: deploying/updating the drop-in
+# needs `daemon-reload`, NOT an nginx restart, so this is safe to apply to a
+# live, healthy nginx without bouncing the service.
+
+- name: Nginx | Self-heal | Ensure nginx.service drop-in directory exists
+  ansible.builtin.file:
+    path: "/etc/systemd/system/{{ nginx_service }}.service.d"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  tags: [nginx, service, systemd, selfheal]
+
+- name: Nginx | Self-heal | Deploy startup self-heal drop-in
+  ansible.builtin.template:
+    src: systemd/nginx-selfheal.conf.j2
+    dest: "/etc/systemd/system/{{ nginx_service }}.service.d/99-selfheal.conf"
+    owner: root
+    group: root
+    mode: "0644"
+  register: nginx_selfheal_dropin
+  tags: [nginx, service, systemd, selfheal]
+
+# Reload inline (not via a handler) so the drop-in is effective BEFORE the assert
+# below reads `systemctl show` — a deferred handler flushes too late and the
+# assert would read the stale (stock) policy. No nginx restart, just a re-read.
+- name: Nginx | Self-heal | Reload systemd so the drop-in takes effect now  # noqa: no-handler
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+  when: nginx_selfheal_dropin is changed
+  tags: [nginx, service, systemd, selfheal]
+
+- name: Nginx | Self-heal | Read effective restart policy from systemd
+  ansible.builtin.command:  # noqa: command-instead-of-module
+    cmd: >-
+      systemctl show {{ nginx_service }}
+      --property=Restart,RestartUSec,StartLimitIntervalUSec,StartLimitBurst
+  register: nginx_selfheal_show
+  changed_when: false
+  check_mode: false
+  tags: [nginx, service, systemd, selfheal, validate, molecule-notest]
+
+- name: Nginx | Self-heal | Assert restart policy is effective
+  ansible.builtin.assert:
+    that:
+      - "'Restart=on-failure' in nginx_selfheal_show.stdout"
+      - "'StartLimitBurst=' + (nginx_systemd_start_limit_burst | string) in nginx_selfheal_show.stdout"
+    success_msg: "nginx self-heal policy active: {{ nginx_selfheal_show.stdout_lines | join(', ') }}"
+    fail_msg: "nginx self-heal drop-in not effective; check daemon-reload / drop-in path"
+  tags: [nginx, service, systemd, selfheal, validate, molecule-notest]

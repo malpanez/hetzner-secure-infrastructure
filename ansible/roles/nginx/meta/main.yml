@@ -1,0 +1,19 @@
+---
+galaxy_info:
+  role_name: nginx
+  author: hetzner-secure-infrastructure
+  description: Nginx web server (install, TLS, hardening drop-ins) — application-agnostic
+  license: MIT
+  min_ansible_version: "2.12"
+
+  platforms:
+    - name: Debian
+      versions:
+        - all
+
+  galaxy_tags:
+    - nginx
+    - web
+    - http
+
+dependencies: []

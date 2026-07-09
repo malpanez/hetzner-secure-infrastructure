@@ -1,0 +1,52 @@
+# ============================================================================
+# Security Headers Map
+# ============================================================================
+# Managed by Ansible - nginx role
+#
+# Security headers tell browsers how to handle your pages securely.
+# These headers are defined as variables here and can be included in
+# server blocks that need them.
+#
+# Note: Using 'map' allows us to define headers once and include them
+# in multiple locations without duplication.
+# ============================================================================
+
+{% if nginx_enable_security_headers | default(true) %}
+# This file defines header variables that can be added in server blocks
+# Use: add_header X-Frame-Options $x_frame_options always;
+
+# Prevent clickjacking: only allow iframing from same domain
+map $request_uri $x_frame_options {
+    default "SAMEORIGIN";
+}
+
+# Prevent MIME type sniffing attacks
+map $request_uri $x_content_type_options {
+    default "nosniff";
+}
+
+# Browser XSS protection (legacy, but defense-in-depth)
+map $request_uri $x_xss_protection {
+    default "1; mode=block";
+}
+
+# Control referer header sent to external sites
+# Sends only origin (not full URL with query params) to external sites
+map $request_uri $referrer_policy {
+    default "strict-origin-when-cross-origin";
+}
+
+# Disable browser features not needed by the application
+# Prevents malicious plugins from accessing geolocation, camera, microphone
+map $request_uri $permissions_policy {
+    default "geolocation=(), microphone=(), camera=()";
+}
+
+# Content Security Policy (CSP) - Most important security header
+# Controls what resources can load on your page
+# Note: some apps need 'unsafe-inline' and 'unsafe-eval' for themes/plugins
+# Adjust allowed domains based on your plugins (Google Fonts, CDNs, etc.)
+map $request_uri $content_security_policy {
+    default "default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval'{% for src in nginx_security_headers_csp_script_src_extra | default([]) %} {{ src }}{% endfor %}; style-src 'self' 'unsafe-inline'{% for src in nginx_security_headers_csp_style_src_extra | default([]) %} {{ src }}{% endfor %}; font-src 'self'{% for src in nginx_security_headers_csp_font_src_extra | default([]) %} {{ src }}{% endfor %} data:; img-src 'self' data: https:; connect-src 'self'{% for src in nginx_security_headers_csp_connect_src_extra | default([]) %} {{ src }}{% endfor %};";
+}
+{% endif %}

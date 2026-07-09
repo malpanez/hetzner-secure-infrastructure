@@ -1,0 +1,11 @@
+---
+# Placeholder single-host inventory. Replace with your own host(s) before
+# running the playbook — example.com / RFC 5737 test addresses only, never a
+# real host.
+all:
+  children:
+    web:
+      hosts:
+        web1.example.com:
+          ansible_host: 203.0.113.10
+          ansible_user: admin

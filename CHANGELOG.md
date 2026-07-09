@@ -3,6 +3,20 @@
 All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/) · Versioning: [SemVer](https://semver.org/).
 
+## [1.1.0] - 2026-07-09
+
+### Added
+
+- **New `nginx` role: application-agnostic nginx install + hardening.** Installs and configures
+  nginx (official nginx.org repo with distro-package fallback), TLS via Let's Encrypt/Cloudflare
+  DNS-01 (disabled by default — most deployments terminate with a Cloudflare Origin CA cert
+  instead), and global hardening drop-ins (Cloudflare real-IP trust, rate limiting zones,
+  security headers, JSON access logging, a local-only stub_status endpoint) plus reusable
+  snippets (SSL params, gzip, static-asset caching) and a systemd startup self-heal drop-in. Zero
+  application awareness — vhosts, backend pools, and app-specific cache paths are a consumer
+  role's concern. Ships a standalone Molecule scenario and a runnable example
+  (`examples/nginx-standalone/`).
+
 ## [1.0.4] - 2026-07-04
 
 ### Added

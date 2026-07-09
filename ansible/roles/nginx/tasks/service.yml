@@ -1,0 +1,55 @@
+---
+# Nginx Role - Service Tasks
+
+- name: Nginx | Service | Enable and start Nginx service
+  ansible.builtin.systemd:
+    name: "{{ nginx_service }}"
+    enabled: true
+    state: started
+  when: nginx_install_nginx
+  register: nginx_service_started
+  tags: [nginx, service]
+
+- name: Nginx | Service | Assert Nginx service started
+  ansible.builtin.assert:
+    that:
+      - nginx_service_started is succeeded
+    success_msg: "Nginx service is running"
+    fail_msg: "Failed to start Nginx service"
+  when: nginx_install_nginx
+  tags: [nginx, service]
+
+- name: Nginx | Service | Verify Nginx is responding
+  ansible.builtin.uri:  # checkov:skip=CKV2_ANSIBLE_1:local-only health probe, no TLS vhost exists in this generic role by design
+    url: "http://127.0.0.1/"
+    method: GET
+    status_code: [200, 301, 302, 403]
+    timeout: 10
+  register: nginx_http_check
+  failed_when: false
+  when: nginx_install_nginx
+  tags: [nginx, service, validate]
+
+- name: Nginx | Service | Assert Nginx is responding to HTTP
+  ansible.builtin.assert:
+    that:
+      - nginx_http_check.status is defined
+      - nginx_http_check.status in [200, 301, 302, 403]
+    success_msg: "Nginx is responding to HTTP requests (status: {{ nginx_http_check.status }})"
+    fail_msg: "Nginx is not responding to HTTP requests"
+  when:
+    - nginx_install_nginx
+    - nginx_http_check is defined
+  tags: [nginx, service, validate, molecule-notest]
+
+- name: Nginx | Service | Display service summary
+  ansible.builtin.debug:
+    msg:
+      - "=========================================="
+      - "    Nginx Service Summary                 "
+      - "=========================================="
+      - "Nginx:       {{ 'running' if nginx_service_started is succeeded else 'not running' }}"
+      - "HTTP Check:  {{ nginx_http_check.status | default('N/A') }}"
+      - "=========================================="
+  when: nginx_install_nginx
+  tags: [nginx, service, validate]
