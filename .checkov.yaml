@@ -1,3 +1,4 @@
+---
 # Checkov configuration — https://www.checkov.io/2.Basics/Configuring%20Checkov.html
 # Runs from repo root; Checkov is multi-framework, so this covers Terraform,
 # Ansible, GitHub Actions and Dockerfiles in one pass. Consumed by the pre-commit
