@@ -13,28 +13,29 @@ permissions:
 jobs:
   # One job that runs the EXACT same pre-commit hooks a developer runs locally —
   # both the commit stage (fast: fmt, lint, secrets) and the pre-push stage
-  # (heavier: tofu validate per-module, tflint, checkov). This installs the real
+  # (heavier: tofu validate per-module, tflint, checkov). Installs the real
   # toolchain (OpenTofu + TFLint; Checkov/ansible-lint come from the hooks) so the
-  # tf/security hooks actually execute — no SKIP, no local<->CI drift.
+  # tf/security hooks actually execute — no SKIP, no local<->CI drift. All actions
+  # are SHA-pinned (supply chain); the trailing comment records the version.
   pre-commit:
     name: Pre-commit (lint + IaC validate + security)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5
         with:
           python-version: '3.12'
 
       # Pinned to the versions in .tool-versions so CI == a developer's local tools.
       - name: Setup OpenTofu
-        uses: opentofu/setup-opentofu@v1
+        uses: opentofu/setup-opentofu@9d84900f3238fab8cd84ce47d658d25dd008be2f  # v1
         with:
           tofu_version: 1.12.3
           tofu_wrapper: false
 
       - name: Setup TFLint
-        uses: terraform-linters/setup-tflint@v6
+        uses: terraform-linters/setup-tflint@6e1e0642c0289bd619021bf6b34e3c08ed1e005a  # v6
         with:
           tflint_version: v0.63.1
 
@@ -42,7 +43,8 @@ jobs:
         run: pip install 'ansible-core>=2.15,<2.18' ansible-lint pre-commit
 
       # PCT_TFPATH forces the terraform_fmt/validate hooks onto OpenTofu (the engine
-      # we deploy with), not HashiCorp Terraform.
+      # we deploy with), not HashiCorp Terraform. Docker is present on the runner for
+      # the gitleaks-docker hook.
       - name: Pre-commit — commit stage
         env:
           PCT_TFPATH: tofu

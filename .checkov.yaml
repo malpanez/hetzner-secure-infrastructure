@@ -8,15 +8,17 @@ directory:
 skip-path:
   # Vendored provider/module downloads — not our code.
   - .terraform
+  # Molecule test scaffolding (test Dockerfiles + verify tasks) is ephemeral CI test
+  # infrastructure, not production IaC — the Docker/uri hardening checks don't apply.
+  - molecule
 skip-check:
   # CKV2_ANSIBLE_3 "Ensure block is handling task errors properly" requires every
   # Ansible `block:` to carry a `rescue:`. Opinionated and not this project's style
   # (blocks group related tasks; failure handling is at play/handler level). Waived
   # globally — the alternative would be 38 no-op `rescue:` stanzas.
   - CKV2_ANSIBLE_3
-# NOTE: the baseline (.checkov.baseline) is passed as a hook/CLI flag, not here — a
-# `baseline:` key in this config would break `--create-baseline` (it tries to READ the
-# file before it exists). Pre-existing findings live in .checkov.baseline so the gate
-# fails only on NEW issues; burn it down over time (regenerate: `checkov --create-baseline`).
+# No baseline: every finding is either fixed or waived inline with rationale (the S3
+# waivers live at the resource in terraform/modules/object-storage/main.tf), so the
+# gate is honest — there is no hidden "accepted debt" file. A NEW real finding fails CI.
 compact: true
 quiet: true

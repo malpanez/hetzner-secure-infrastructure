@@ -105,7 +105,7 @@ repos:
         name: Checkov (IaC misconfig)
         stages: [pre-push]
         pass_filenames: false
-        args: [--config-file, .checkov.yaml, --baseline, .checkov.baseline]
+        args: [--config-file, .checkov.yaml]
 
   # ============================================
   # Ansible
@@ -183,8 +183,15 @@ repos:
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.22.1
     hooks:
-      - id: gitleaks
+      # Use the DOCKER variant, not the default `gitleaks` hook: the default is
+      # language:golang and pre-commit BUILDS gitleaks from source, which on the CI
+      # runner intermittently panicked ("wasm error: invalid table access"). The
+      # docker_image variant runs a prebuilt gitleaks image — no build, no flake.
+      - id: gitleaks-docker
         name: GitLeaks Secret Detection
+        # the docker variant (unlike the golang one) doesn't default this, so without
+        # it pre-commit passes every changed filename and `gitleaks git` errors.
+        pass_filenames: false
         args: [--verbose, --no-banner]
 
   - repo: https://github.com/Yelp/detect-secrets
