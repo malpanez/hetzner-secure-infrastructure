@@ -223,6 +223,12 @@ variable "extra_cache_path_prefixes" {
   default     = []
 }
 
+variable "cache_bypass_user_agents" {
+  description = "User-Agent substrings that force a cache bypass (origin fetch). Each becomes an OR'd `http.user_agent contains \"<value>\"` match in the LAST rule of the cache ruleset, with cache disabled. Placed last on purpose: cache settings are non-terminating, so the last matching rule wins — a probe of \"/\" also matches the cache-everything HTML rule, and only a last-placed bypass overrides it. Use for monitoring/uptime probes (e.g. [\"Blackbox-Exporter/\"]) that must reach the origin so they land in the access log. Empty list (default) emits no rule and does not affect real-user caching."
+  type        = list(string)
+  default     = []
+}
+
 # ========================================
 # Tags/Labels
 # ========================================

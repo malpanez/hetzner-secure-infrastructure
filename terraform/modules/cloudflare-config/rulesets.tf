@@ -276,6 +276,32 @@ resource "cloudflare_ruleset" "cache_rules" {
       }
     }
   }
+
+  # FINAL rule: bypass cache for monitoring/probe User-Agents. This MUST be the
+  # LAST rule in the ruleset. In the http_request_cache_settings phase, cache
+  # settings are a NON-TERMINATING action, so when several rules match a request
+  # the LAST matching rule wins per setting. A probe of "/" also matches the
+  # cache-everything HTML rule above (cache = true); placing this bypass last is
+  # what makes cache = false win, so the probe reaches the origin and lands in the
+  # access log (e.g. a blackbox uptime probe → fixes a "traffic dropped to zero"
+  # false positive on a CF-cached homepage). Real-user traffic is unaffected:
+  # only the listed User-Agent substrings match. No rule is emitted when empty.
+  # Do NOT move this above the cache rules — that would let them override it.
+  dynamic "rules" {
+    for_each = length(var.cache_bypass_user_agents) > 0 ? [1] : []
+    content {
+      description = "No cache for monitoring/probe user agents"
+      expression  = join(" or ", [for ua in var.cache_bypass_user_agents : "(http.user_agent contains \"${ua}\")"])
+      action      = "set_cache_settings"
+      enabled     = true
+      action_parameters {
+        cache = false
+        browser_ttl {
+          mode = "bypass"
+        }
+      }
+    }
+  }
 }
 
 # --------------------------------------------------------
