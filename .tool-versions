@@ -1,0 +1,5 @@
+# Pinned toolchain (asdf / mise) — CI installs these exact versions so a developer's
+# local checks match CI byte-for-byte. Checkov and ansible-lint are pinned by the
+# pre-commit hook `rev`, not here (they are Python tools managed by pre-commit).
+opentofu 1.12.3
+tflint 0.63.1

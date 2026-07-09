@@ -6,33 +6,49 @@ on:
     branches: [main]
   pull_request:
 
-jobs:
-  pre-commit:
-    name: Pre-commit (lint suite)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Install ansible-core for ansible-lint
-        run: pip install 'ansible-core>=2.15,<2.18' ansible-lint pre-commit
-      - name: Run pre-commit
-        env:
-          SKIP: kics,terraform_validate,tfsec,terratest
-        run: pre-commit run --all-files
+# Least-privilege default (CKV2_GHA_1): jobs only read the repo.
+permissions:
+  contents: read
 
-  ansible-lint:
-    name: Ansible Lint
+jobs:
+  # One job that runs the EXACT same pre-commit hooks a developer runs locally —
+  # both the commit stage (fast: fmt, lint, secrets) and the pre-push stage
+  # (heavier: tofu validate per-module, tflint, checkov). This installs the real
+  # toolchain (OpenTofu + TFLint; Checkov/ansible-lint come from the hooks) so the
+  # tf/security hooks actually execute — no SKIP, no local<->CI drift.
+  pre-commit:
+    name: Pre-commit (lint + IaC validate + security)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install
-        run: pip install 'ansible-core>=2.15,<2.18' ansible-lint
-      - name: Lint roles
+
+      # Pinned to the versions in .tool-versions so CI == a developer's local tools.
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.12.3
+          tofu_wrapper: false
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v6
+        with:
+          tflint_version: v0.63.1
+
+      - name: Install pre-commit + ansible-lint
+        run: pip install 'ansible-core>=2.15,<2.18' ansible-lint pre-commit
+
+      # PCT_TFPATH forces the terraform_fmt/validate hooks onto OpenTofu (the engine
+      # we deploy with), not HashiCorp Terraform.
+      - name: Pre-commit — commit stage
         env:
-          ANSIBLE_ROLES_PATH: ansible/roles
-        run: ansible-lint --offline ansible/roles/
+          PCT_TFPATH: tofu
+        run: pre-commit run --all-files --show-diff-on-failure --color always
+
+      - name: Pre-commit — pre-push stage (validate + tflint + checkov)
+        env:
+          PCT_TFPATH: tofu
+        run: pre-commit run --all-files --hook-stage pre-push --show-diff-on-failure --color always

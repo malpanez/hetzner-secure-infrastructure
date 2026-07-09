@@ -65,6 +65,9 @@ repos:
           - --args=-diff
       - id: terraform_validate
         name: Terraform Validate
+        # pre-push (not every commit): per-module `tofu init` is slow. Still runs
+        # LOCALLY before a push, and CI mirrors it — full local<->CI parity.
+        stages: [pre-push]
         args:
           - --hook-config=--retry-once-with-cleanup=true
           - --tf-init-args=-backend=false
@@ -78,24 +81,31 @@ repos:
           - --hook-config=--create-file-if-not-exist=true
       - id: terraform_tflint
         name: Terraform Lint
-        stages: [manual]
+        # was manual (never gated); now a real pre-push gate, mirrored in CI.
+        # Gate on ERRORS; warnings (unused vars, module-structure style) stay advisory
+        # — reported but non-blocking. NOT soft-fail: real errors still fail the build.
+        stages: [pre-push]
         args:
           - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
           - --args=--format=compact
+          - --args=--minimum-failure-severity=error
 
   # ============================================
-  # TFSec security scanner
+  # IaC security (misconfiguration) — Checkov, WHOLE repo. Checkov is multi-framework:
+  # it scans Terraform + Ansible + GitHub Actions + Dockerfiles. GATES at pre-push,
+  # mirrored in CI. Skips + config in .checkov.yaml; pre-existing findings are captured
+  # in .checkov.baseline so the gate fails only on NEW ones (brownfield burn-down).
+  # Replaces tfsec (deprecated + --soft-fail = never failed); kics dropped (Checkov
+  # already covers Ansible, so a second scanner would be redundant).
   # ============================================
-  - repo: https://github.com/aquasecurity/tfsec
-    rev: v1.28.11
+  - repo: https://github.com/bridgecrewio/checkov
+    rev: 3.3.7
     hooks:
-      - id: tfsec
-        name: TFSec Security Scanner
-        args:
-          - --minimum-severity=MEDIUM
-          - --format=default
-          - --soft-fail
-          - terraform/
+      - id: checkov
+        name: Checkov (IaC misconfig)
+        stages: [pre-push]
+        pass_filenames: false
+        args: [--config-file, .checkov.yaml, --baseline, .checkov.baseline]
 
   # ============================================
   # Ansible
@@ -189,16 +199,6 @@ repos:
           terraform/backend\.tf|package\.lock\.json|\.gitleaks\.toml)
 
   # ============================================
-  # Security scanning
-  # ============================================
-  - repo: https://github.com/Checkmarx/kics
-    rev: v2.1.3
-    hooks:
-      - id: kics
-        name: KICS Security Scan
-        args: [--exclude-severities, info, low]
-
-  # ============================================
   # Commit message validation
   # ============================================
   - repo: https://github.com/compilerla/conventional-pre-commit
@@ -235,5 +235,9 @@ ci:
   autoupdate_branch: ''
   autoupdate_commit_msg: 'ci: pre-commit autoupdate'
   autoupdate_schedule: weekly
-  skip: [terraform_validate, terraform_tflint, terraform_docs, ansible-lint, kics, markdown-link-check]
+  # pre-commit.ci (hosted) has no OpenTofu/Docker/network. The pre-push gates
+  # (terraform_validate/tflint/checkov/kics) don't run there anyway (wrong stage),
+  # and terraform_fmt needs tofu — so this hosted lane is lint-only. The GitHub
+  # Actions CI installs tofu + runs the full set (commit + pre-push stages).
+  skip: [terraform_fmt, ansible-lint, markdown-link-check]
   submodules: false

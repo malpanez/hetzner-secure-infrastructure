@@ -11,6 +11,10 @@ on:
     paths:
       - '**.md'
 
+# Least-privilege default (CKV2_GHA_1): these jobs only read the repo.
+permissions:
+  contents: read
+
 jobs:
   markdownlint:
     name: Markdown Lint
