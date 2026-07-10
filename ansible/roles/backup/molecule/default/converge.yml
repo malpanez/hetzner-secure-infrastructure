@@ -18,11 +18,11 @@
     backup_sites:
       - name: main
         db_name: wordpress_main
-        db_user: wp_main
+        db_user: wpuser_main
         web_root: /var/www/example.com
       - name: blog
         db_name: wordpress_blog
-        db_user: wp_blog
+        db_user: wpuser_blog
         web_root: /var/www/blog.example.com
 
   pre_tasks:
