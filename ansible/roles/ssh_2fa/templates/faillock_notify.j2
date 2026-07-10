@@ -1,0 +1,23 @@
+# Faillock preauth profile (check-and-lock BEFORE the primary auth module).
+# Managed by Ansible - ssh_2fa role.
+#
+# WHY TWO PROFILES: pam_faillock(8) requires `preauth` to run BEFORE pam_unix and
+# `authfail`/`authsucc` AFTER it. pam-auth-update orders Primary profiles by
+# Priority (higher = earlier). The unix (pam_unix) profile is Priority 256, so
+# this preauth profile at 1024 renders ahead of it and the companion `faillock`
+# profile at Priority 0 renders after it -> preauth / pam_unix / authfail/authsucc.
+# The previous single Priority-900 profile put ALL faillock lines before pam_unix,
+# which degrades the failure tally (the audit's flagged common-auth anomaly).
+#
+# CHANGE CONTROL: this edits the LIVE common-auth stack. Do NOT converge blind —
+# render + verify in molecule/default first, and on prod hold a root session +
+# Hetzner console open and confirm `pamtester login <user> authenticate` passes.
+Name: Faillock preauth (account lockout check)
+Default: yes
+Priority: 1024
+Auth-Type: Primary
+Auth:
+	requisite			pam_faillock.so preauth
+Account-Type: Primary
+Account:
+	required			pam_faillock.so

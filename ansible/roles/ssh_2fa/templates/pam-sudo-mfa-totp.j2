@@ -1,18 +1,22 @@
 # PAM configuration for sudo MFA TOTP
 # Managed by Ansible - ssh_2fa role
-# Location: /etc/pam.d/sudo-mfa-totp
+# Location: /etc/pam.d/sudo-mfa-totp  (pulled in via "auth substack sudo-mfa-totp")
 #
-# Purpose: Enforce TOTP multi-factor authentication for sudo users in mfa-required group
+# Gate TOTP to members of {{ ssh_2fa_mfa_required_group }} WITHOUT breaking sudo
+# for everyone else.
 #
-# This file is included from /etc/pam.d/sudo via substack directive
-# Execution flow:
-#   1. Check if user is in {{ ssh_2fa_mfa_required_group }} group
-#   2. If yes, call mfa-totp substack (requires TOTP)
-#   3. If no, skip MFA check
+# CORRECTNESS (validated against pam_succeed_if(8) + pam.d(5) control values):
+#   pam_succeed_if returns PAM_SUCCESS when the condition holds and PAM_AUTH_ERR
+#   (a FAILURE, never PAM_IGNORE) when it does not. Therefore we test the NEGATIVE
+#   condition and skip on success — never "ingroup ... default=die", which would
+#   return PAM_AUTH_ERR for every NON-member and hit default=die = sudo DENIED for
+#   the whole machine the instant this substack is wired.
+#
+#   Non-member -> notingroup TRUE  -> PAM_SUCCESS -> success=1 skips the substack
+#                 -> sudo proceeds on the password factor only.
+#   Member     -> notingroup FALSE -> PAM_AUTH_ERR -> default=ignore -> falls
+#                 through to the mfa-totp substack -> TOTP enforced.
+# No "die" anywhere: a non-member can never be locked out by this gate.
 
-# Check if user is in MFA required group
-auth [success=ok ignore=ignore default=die] pam_succeed_if.so quiet user ingroup {{ ssh_2fa_mfa_required_group }}
 auth [success=1 default=ignore] pam_succeed_if.so quiet user notingroup {{ ssh_2fa_mfa_required_group }}
-
-# Load MFA TOTP substack
 auth substack mfa-totp

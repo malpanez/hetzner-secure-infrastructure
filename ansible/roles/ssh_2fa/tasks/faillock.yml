@@ -29,14 +29,17 @@
   failed_when: false
   tags: [faillock, pam]
 
-- name: SSH 2FA | Faillock | Deploy faillock profile for pam-auth-update
+- name: SSH 2FA | Faillock | Deploy faillock pam-config profiles (preauth + tally)
   ansible.builtin.template:
-    src: faillock.j2
-    dest: /usr/share/pam-configs/faillock
+    src: "{{ item }}.j2"
+    dest: "/usr/share/pam-configs/{{ item }}"
     owner: root
     group: root
     mode: '0644'
     backup: yes
+  loop:
+    - faillock_notify   # Priority 1024: preauth (before pam_unix)
+    - faillock          # Priority 0: authfail/authsucc (after pam_unix)
   notify: restart sshd
   tags: [faillock, pam]
 
@@ -51,8 +54,8 @@
   notify: restart sshd
   tags: [faillock, config]
 
-- name: SSH 2FA | Faillock | Enable faillock via pam-auth-update
-  ansible.builtin.command: pam-auth-update --enable faillock --package
+- name: SSH 2FA | Faillock | Enable faillock (both profiles) via pam-auth-update
+  ansible.builtin.command: pam-auth-update --package --enable faillock_notify faillock
   register: pam_auth_update_result
   changed_when: false
   failed_when: false

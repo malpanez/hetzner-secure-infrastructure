@@ -1,13 +1,12 @@
-# PAM Faillock Configuration
-# Managed by Ansible - ssh_2fa role
-Name: Faillock (account lockout after failed attempts)
+# Faillock tally profile (record failure / clear on success, AFTER primary auth).
+# Managed by Ansible - ssh_2fa role. Companion to faillock_notify (preauth).
+# Priority 0 + Auth-Type Additional so pam-auth-update places authfail/authsucc
+# AFTER pam_unix. See faillock_notify.j2 for the ordering rationale + change
+# control (this touches the live common-auth stack; molecule-render first).
+Name: Faillock tally (after primary auth)
 Default: yes
-Priority: 900
-Auth-Type: Primary
+Priority: 0
+Auth-Type: Additional
 Auth:
-        requisite pam_faillock.so preauth
-        [default=die] pam_faillock.so authfail
-        sufficient pam_faillock.so authsucc
-Account-Type: Primary
-Account:
-        required pam_faillock.so
+	[default=die]			pam_faillock.so authfail
+	sufficient			pam_faillock.so authsucc

@@ -1,0 +1,53 @@
+---
+# SSH 2FA Role - Rollback / teardown
+# Run with -e ssh_2fa_teardown=true (ALWAYS from a HELD root session with the
+# Hetzner console open) to remove the 2FA PAM wiring + drop-ins and restore
+# plain key-only SSH and password sudo. Does NOT disable faillock — revert that
+# separately with `pam-auth-update --package --disable faillock faillock_notify`
+# if required (pam-auth-update writes its own .pam-old backups).
+
+- name: SSH 2FA | Teardown | Remove sshd-2fa substack from /etc/pam.d/sshd
+  ansible.builtin.lineinfile:
+    path: /etc/pam.d/sshd
+    line: 'auth substack sshd-2fa'
+    state: absent
+    backup: true
+  tags: [ssh-2fa, teardown, pam]
+
+- name: SSH 2FA | Teardown | Remove sudo-mfa-totp substack from /etc/pam.d/sudo
+  ansible.builtin.lineinfile:
+    path: /etc/pam.d/sudo
+    line: 'auth substack sudo-mfa-totp'
+    state: absent
+    backup: true
+  tags: [ssh-2fa, teardown, pam]
+
+- name: SSH 2FA | Teardown | Remove SSH 2FA config drop-ins
+  ansible.builtin.file:
+    path: "/etc/ssh/sshd_config.d/{{ item }}"
+    state: absent
+  loop:
+    - 20-fido2.conf
+    - 50-2fa.conf
+  notify: restart sshd
+  tags: [ssh-2fa, teardown, ssh]
+
+- name: SSH 2FA | Teardown | Remove modular PAM files (incl. the inert sudo-2fa)
+  ansible.builtin.file:
+    path: "/etc/pam.d/{{ item }}"
+    state: absent
+  loop:
+    - sshd-2fa
+    - sudo-2fa
+    - sudo-mfa-totp
+    - mfa-totp
+  tags: [ssh-2fa, teardown, pam]
+
+- name: SSH 2FA | Teardown | Assert no 2FA substack lines remain
+  ansible.builtin.shell: |
+    set -o pipefail
+    ! grep -qE 'substack (sshd-2fa|sudo-mfa-totp)' /etc/pam.d/sshd /etc/pam.d/sudo
+  args:
+    executable: /bin/bash
+  changed_when: false
+  tags: [ssh-2fa, teardown, pam]

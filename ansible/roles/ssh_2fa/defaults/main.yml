@@ -108,13 +108,40 @@ ssh_2fa_pam_google_authenticator_sudo_options: "nullok"
 # Enable break-glass access (bypass 2FA for specific users/groups)
 ssh_2fa_break_glass_enabled: true
 
-# Break-glass users (can login with SSH key only, no 2FA required)
-# IMPORTANT: Include admin user to prevent lockout during initial setup
-ssh_2fa_break_glass_users:
-  - deploy
+# Break-glass users (can login with SSH key only, no 2FA required).
+# Empty by default (generic role) — set per-host in inventory to your admin /
+# break-glass account(s) BEFORE enabling 2FA. Prefer a DEDICATED break-glass
+# account in ssh_2fa_breakglass_group over listing your daily admin here.
+ssh_2fa_break_glass_users: []
+
+# OATH issuer label programmed into the YubiKey OATH credential + shown in
+# authenticator apps. Set per-host; keep it free of secrets.
+ssh_2fa_totp_issuer: sudo-mfa
 
 # Require break-glass users to exist and have SSH keys before enabling 2FA
 ssh_2fa_require_break_glass_ready: false
+
+# Break-glass + automation GROUP names. These drive the sshd Match exemptions
+# (AuthenticationMethods publickey + PubkeyAuthOptions none) and the PAM substack
+# skips. Design: a dedicated 'breakglass' account, in the breakglass group, holds
+# ONLY the offline recovery ed25519 key and is kept OUT of mfa-required; the daily
+# admin is FIDO2-enforced and must NOT be in these groups if enforcement is wanted.
+ssh_2fa_breakglass_group: breakglass
+ssh_2fa_automation_group: ansible-automation
+
+# TOTP rollout safety valve. Keep nullok while enrolling — a member added to
+# mfa-required before their secret file exists is otherwise denied sudo (fail
+# closed). Flip to false ONLY after every member is enrolled AND pamtester-verified.
+ssh_2fa_totp_nullok: true
+
+# Gate the pamtester pre-flight probes (they need the pamtester binary + a real
+# credential, so off in CI/molecule). Enable for the guarded prod activation,
+# always from a HELD root session with the Hetzner console open.
+ssh_2fa_pamtester_gate: false
+
+# Rollback: set true to run the paired state=absent teardown (removes the sshd-2fa
+# / sudo-mfa-totp substack lines + the inert sudo-2fa file) — see teardown.yml.
+ssh_2fa_teardown: false
 
 # Break-glass groups (members can login with SSH key only)
 # ansible-automation group is always included in template
@@ -132,8 +159,8 @@ ssh_2fa_ansible_user_groups:
 # Ansible user sudo configuration
 # The ansible-automation group gets NOPASSWD sudo via /etc/sudoers.d/
 # This separates service account sudo access from regular admin 'sudo' group
-# deploy: Has BOTH 'sudo' group (standard admin) AND 'ansible-automation' (break-glass)
-# ansible: Only 'ansible-automation' group (dedicated service account)
+# A human admin may be in BOTH 'sudo' (standard admin) AND 'ansible-automation'
+# (break-glass); a dedicated service account is in 'ansible-automation' only.
 ssh_2fa_ansible_user_sudoers_file: /etc/sudoers.d/ansible-automation
 
 # ========================================
@@ -148,7 +175,7 @@ ssh_2fa_banner_text: |
   #                                                                              #
   ################################################################################
   #                                                                              #
-  #  System:     Secure Infrastructure                                            #
+  #  System:     Restricted access (authorized)                                  #
   #  Access:     Authorized Personnel Only                                       #
   #  Security:   Multi-Factor Authentication Enforced                            #
   #                                                                              #
@@ -204,6 +231,7 @@ ssh_2fa_packages:
   - libpam-modules-bin
   - libqrencode4
   - qrencode
+  - pamtester   # runtime PAM-stack validation (sshd -t / sudo cannot see PAM)
 
 # ========================================
 # FIDO2 Security Key Configuration

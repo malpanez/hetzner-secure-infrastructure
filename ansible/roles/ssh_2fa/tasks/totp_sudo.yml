@@ -92,14 +92,51 @@
     backup: yes
   tags: [totp, sudo, mfa, pam]
 
-- name: SSH 2FA | TOTP Sudo | Add MFA TOTP substack to /etc/pam.d/sudo
-  community.general.pamd:
-    name: sudo
-    type: auth
-    control: substack
-    module_path: sudo-mfa-totp
-    state: updated
+- name: SSH 2FA | TOTP Sudo | Back up /etc/pam.d/sudo once before editing
+  ansible.builtin.copy:
+    src: /etc/pam.d/sudo
+    dest: /etc/pam.d/sudo.orig-pre2fa
+    remote_src: true
+    force: false
+    owner: root
+    group: root
+    mode: '0644'
   tags: [totp, sudo, mfa, pam]
+
+# BUG FIX #1: `pamd ... state=updated` only MODIFIES an existing rule; with no
+# prior line it silently no-op'd so the group-gated TOTP was never wired.
+# BUG FIX #2 (adversarial review): insert BEFORE `@include common-auth`, not after.
+# With faillock enabled, common-auth ENDS in `auth sufficient pam_faillock authsucc`;
+# on a correct password that `sufficient` returns PAM_SUCCESS and short-circuits the
+# stack, so a substack appended AFTER it is NEVER evaluated = sudo with password
+# only, TOTP silently skipped (fail-OPEN). As a LEADING factor the substack's inner
+# `required pam_google_authenticator` sets a required-failure that a later
+# `sufficient` cannot override, so a bad TOTP still denies (fail-closed).
+- name: SSH 2FA | TOTP Sudo | Insert sudo-mfa-totp substack before @include common-auth
+  ansible.builtin.lineinfile:
+    path: /etc/pam.d/sudo
+    insertbefore: '^@include common-auth'
+    line: 'auth substack sudo-mfa-totp'
+    state: present
+    backup: true
+  tags: [totp, sudo, mfa, pam]
+
+- name: SSH 2FA | TOTP Sudo | Assert exactly one sudo-mfa-totp substack line
+  ansible.builtin.command: grep -c '^auth substack sudo-mfa-totp$' /etc/pam.d/sudo
+  register: ssh_2fa_sudo_substack_count
+  changed_when: false
+  failed_when: (ssh_2fa_sudo_substack_count.stdout | trim) != '1'
+  tags: [totp, sudo, mfa, pam]
+
+# sudo -t does not exist; sshd -t cannot see PAM. pamtester is the only pre-flight
+# that proves sudo auth still works — run from a HELD root session before trust.
+- name: SSH 2FA | TOTP Sudo | Pre-flight sudo PAM check with pamtester (non-fatal probe)
+  ansible.builtin.command: pamtester -v sudo {{ ansible_user | default('root') }} authenticate
+  register: ssh_2fa_pamtester_sudo
+  changed_when: false
+  failed_when: false
+  when: ssh_2fa_pamtester_gate | default(false)
+  tags: [totp, sudo, mfa, pam, molecule-notest]
 
 # ========================================
 # TOTP Secret Provisioning Helper Script
@@ -216,7 +253,7 @@
 
       SECRET_DIR="{{ ssh_2fa_totp_secret_base }}/${USERNAME}"
       SECRET_FILE="${SECRET_DIR}/.google_authenticator"
-      ISSUER="example-org"
+      ISSUER="{{ ssh_2fa_totp_issuer | default('sudo-mfa') }}"
       ACCOUNT="${USERNAME}@$(hostname)"
 
       # Create directory

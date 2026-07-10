@@ -1,4 +1,18 @@
 ---
+# ssh_2fa_fido2_only (hardware-key SSH) and ssh_2fa_enable_ssh (TOTP-over-SSH) are
+# MUTUALLY EXCLUSIVE: both write a global/Match AuthenticationMethods and, because
+# sshd_config.d/*.conf load lexically with first-value-wins, running both silently
+# corrupts the effective policy. Fail fast rather than deploy an ambiguous stack.
+- name: SSH 2FA | Configure | Assert FIDO2 and TOTP-SSH modes are not both enabled
+  ansible.builtin.assert:
+    that:
+      - not (ssh_2fa_fido2_only | default(false) and ssh_2fa_enable_ssh | default(false))
+    fail_msg: >-
+      ssh_2fa_fido2_only and ssh_2fa_enable_ssh are mutually exclusive — pick one
+      SSH second-factor mode (FIDO2 hardware key OR TOTP-over-SSH).
+    quiet: true
+  tags: [ssh, 2fa, config]
+
 - name: SSH 2FA | Configure | Ensure sshd_config.d directory exists
   ansible.builtin.file:
     path: /etc/ssh/sshd_config.d
@@ -104,6 +118,24 @@
       notify: restart sshd
       tags: [ssh, 2fa, config]
 
+    # The XOR assert guarantees only ONE mode is selected this run, but not that
+    # the OTHER mode's stale drop-in is gone. Switching modes without this leaves
+    # e.g. a stale 50-2fa.conf (KbdInteractive required) colliding with 20-fido2's
+    # KbdInteractiveAuthentication no -> global SSH lockout. Remove the inactive
+    # mode's file explicitly.
+    - name: SSH 2FA | Configure | Remove the inactive SSH-mode drop-in
+      ansible.builtin.file:
+        path: "/etc/ssh/sshd_config.d/{{ item.file }}"
+        state: absent
+      loop:
+        - { file: '50-2fa.conf', stale_when: "{{ ssh_2fa_fido2_only | default(false) }}" }
+        - { file: '20-fido2.conf', stale_when: "{{ ssh_2fa_enable_ssh | default(false) and not (ssh_2fa_fido2_only | default(false)) }}" }
+      loop_control:
+        label: "{{ item.file }}"
+      when: item.stale_when | bool
+      notify: restart sshd
+      tags: [ssh, 2fa, config]
+
 # ========================================
 # PAM Configuration - Modular Approach
 # ========================================
@@ -125,46 +157,63 @@
         backup: yes
       tags: [pam, 2fa, config]
 
-    - name: SSH 2FA | Configure | Add substack directive to /etc/pam.d/sshd (using pamd module)
-      community.general.pamd:
-        name: sshd
-        type: auth
-        control: substack
-        module_path: sshd-2fa
-        state: after
-        new_type: auth
-        new_control: include
-        new_module_path: common-auth
-        backup: yes
-      tags: [pam, 2fa]
-
-- name: SSH 2FA | Configure | Sudo PAM 2FA configuration
-  when:
-    - ssh_2fa_enable_sudo | default(true)
-    - not ssh_2fa_require_break_glass_ready | default(false) or ssh_2fa_break_glass_ready | default(false)
-  block:
-    - name: SSH 2FA | Configure | Deploy modular PAM config for sudo 2FA
-      ansible.builtin.template:
-        src: pam-sudo-2fa.j2
-        dest: /etc/pam.d/sudo-2fa
+    - name: SSH 2FA | Configure | Back up /etc/pam.d/sshd once before editing
+      ansible.builtin.copy:
+        src: /etc/pam.d/sshd
+        dest: /etc/pam.d/sshd.orig-pre2fa
+        remote_src: true
+        force: false
         owner: root
         group: root
         mode: '0644'
-        backup: yes
-      tags: [pam, 2fa, sudo, config]
+      tags: [pam, 2fa]
 
-    - name: SSH 2FA | Configure | Add substack directive to /etc/pam.d/sudo (using pamd module)
-      community.general.pamd:
-        name: sudo
-        type: auth
-        control: substack
-        module_path: sudo-2fa
-        state: before
-        new_type: auth
-        new_control: include
-        new_module_path: system-auth
-        backup: yes
-      tags: [pam, 2fa, sudo]
+    # Use lineinfile against the real `@include common-auth` (community.general.pamd
+    # cannot anchor on an @include). Control is the plain `substack` keyword —
+    # `substack` IS the control field, so `auth requisite substack sshd-2fa` is
+    # MALFORMED (libpam reads control=requisite, module=`substack`, dlopen fails ->
+    # SSH lockout). Plain `auth substack sshd-2fa` is already fail-closed: the inner
+    # `required pam_google_authenticator` failure propagates as the substack result;
+    # NOT `[success=done default=ignore]`, which would map a failed TOTP to ignore
+    # (silent bypass). Insert BEFORE common-auth — with faillock, common-auth ends in
+    # `sufficient authsucc` which short-circuits after a good password and would skip
+    # a substack appended AFTER it (fail-open). Break-glass/automation are also
+    # exempted at the sshd Match layer (publickey only).
+    - name: SSH 2FA | Configure | Insert sshd-2fa substack before @include common-auth
+      ansible.builtin.lineinfile:
+        path: /etc/pam.d/sshd
+        insertbefore: '^@include common-auth'
+        line: 'auth substack sshd-2fa'
+        state: present
+        backup: true
+      tags: [pam, 2fa]
+
+    - name: SSH 2FA | Configure | Assert exactly one sshd-2fa substack line
+      ansible.builtin.command: grep -c '^auth substack sshd-2fa$' /etc/pam.d/sshd
+      register: ssh_2fa_sshd_substack_count
+      changed_when: false
+      failed_when: (ssh_2fa_sshd_substack_count.stdout | trim) != '1'
+      tags: [pam, 2fa]
+
+    # sshd -t validates config syntax but CANNOT validate the PAM stack (PAM is
+    # resolved at runtime). pamtester is the only pre-flight that proves auth still
+    # works — run it from a HELD root session before trusting the change.
+    - name: SSH 2FA | Configure | Pre-flight PAM check with pamtester (non-fatal probe)
+      ansible.builtin.command: pamtester -v sshd {{ ansible_user | default('root') }} authenticate
+      register: ssh_2fa_pamtester_sshd
+      changed_when: false
+      failed_when: false
+      when: ssh_2fa_pamtester_gate | default(false)
+      tags: [pam, 2fa, molecule-notest]
+
+# Sudo 2FA is intentionally handled by ONE mechanism only — the group-gated
+# root-owned TOTP in totp_sudo.yml (sudo-mfa-totp substack). The old sudo-2fa
+# wiring here anchored on `auth include system-auth`, a RHEL-ism that does NOT
+# exist on Debian (sudo pulls `@include common-auth`), so community.general.pamd
+# found no anchor, silently no-op'd (changed=false, false green) and enforced
+# nothing — while a second, competing wiring risked stacking two TOTP prompts.
+# Removed to avoid the two-broken-mechanisms trap. The inert /etc/pam.d/sudo-2fa
+# file left on hosts by earlier runs is cleaned up by the teardown in totp_sudo.yml.
 
 - name: SSH 2FA | Configure | Create SSH banner
   ansible.builtin.template:

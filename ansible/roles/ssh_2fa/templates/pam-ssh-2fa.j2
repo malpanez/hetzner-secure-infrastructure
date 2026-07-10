@@ -1,18 +1,15 @@
-# PAM Configuration for SSH 2FA
+# PAM SSH 2FA substack - /etc/pam.d/sshd-2fa
 # Managed by Ansible - ssh_2fa role
-# This file is included by /etc/pam.d/sshd via @include directive
+# Included via "auth [success=done default=ignore] substack sshd-2fa".
 #
-# Purpose: Add Google Authenticator 2FA for SSH authentication
-# Location: /etc/pam.d/sshd-2fa
-
-{% if ssh_2fa_break_glass_enabled | default(true) %}
-# Break-glass: Skip 2FA for ansible-automation group
-# If user is in ansible-automation group, skip the rest of this file
-auth [success=done default=ignore] pam_succeed_if.so quiet user ingroup ansible-automation
-
-{% endif %}
-# Require Google Authenticator for all other users
-# Options:
-#   nullok: Allow users without ~/.google_authenticator to login (initial setup)
-#   forward_pass: Forward password to next PAM module
-auth required pam_google_authenticator.so {{ ssh_2fa_pam_google_authenticator_ssh_options }}
+# NOTE: in the FIDO2 design (recommended) SSH uses hardware-key verify-required
+# and this TOTP-over-SSH substack is NOT wired — it exists for the optional
+# ssh_2fa_enable_ssh (TOTP) mode. Break-glass and automation are exempted at the
+# sshd Match layer (AuthenticationMethods publickey, no keyboard-interactive), so
+# they never reach this substack; the pam_succeed_if skips below are defence in
+# depth. forward_pass was REMOVED: there is no prior password factor to forward
+# on the SSH keyboard-interactive path, so it was meaningless.
+{% for grp in [ssh_2fa_breakglass_group | default('breakglass'), ssh_2fa_automation_group | default('ansible-automation')] %}
+auth [success=done default=ignore] pam_succeed_if.so quiet user ingroup {{ grp }}
+{% endfor %}
+auth required pam_google_authenticator.so {% if ssh_2fa_totp_nullok | default(true) %}nullok{% endif %}
