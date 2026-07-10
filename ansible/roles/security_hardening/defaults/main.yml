@@ -20,6 +20,13 @@ security_hardening_unattended_upgrades_enabled: true
 # AIDE File Integrity Monitoring
 security_hardening_aide_enabled: false
 security_hardening_aide_async: true
+# Daily `aide --check` -> node_exporter textfile metrics + Prometheus alerts.
+# (Without this the role only builds the baseline and never checks it.)
+security_hardening_aide_check_enabled: true
+security_hardening_aide_textfile_dir: /var/lib/node_exporter/textfile_collector
+security_hardening_aide_check_calendar: "*-*-* 05:30:00"
+# Set true ONCE (via -e) to force-refresh the baseline after legitimate changes.
+security_hardening_aide_reinit: false
 
 # Auditd Configuration
 # NOTE: Auditd does NOT require kernel parameters on Debian 13

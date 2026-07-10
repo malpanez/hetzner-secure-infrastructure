@@ -59,6 +59,7 @@
 
 - name: Security Hardening | Main | AIDE
   ansible.builtin.include_tasks: aide.yml
+  tags: [security, aide]
 
 - name: Security Hardening | Main | Banners
   ansible.builtin.include_tasks: banners.yml

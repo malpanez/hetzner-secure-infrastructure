@@ -163,3 +163,76 @@
     - security_hardening_aide_enabled | default(false)
     - aide_summary is defined
   tags: [security, aide]
+
+# ============================================================================
+# Periodic integrity CHECK — the piece the original role was missing. A daily
+# systemd timer runs `aide --check` and publishes aide_check_* textfile metrics
+# so Prometheus/Alertmanager surface real integrity changes or a stalled
+# checker. Without this, the role only builds a baseline it never verifies.
+# ============================================================================
+- name: Security Hardening | AIDE | Ensure textfile collector directory exists
+  ansible.builtin.file:
+    path: "{{ security_hardening_aide_textfile_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  when:
+    - security_hardening_aide_enabled | default(false)
+    - security_hardening_aide_check_enabled | default(true)
+  tags: [security, aide]
+
+- name: Security Hardening | AIDE | Deploy the check script
+  ansible.builtin.template:
+    src: aide-check.sh.j2
+    dest: /usr/local/bin/aide-check.sh
+    owner: root
+    group: root
+    mode: "0755"
+  when:
+    - security_hardening_aide_enabled | default(false)
+    - security_hardening_aide_check_enabled | default(true)
+  tags: [security, aide]
+
+- name: Security Hardening | AIDE | Deploy the check systemd service and timer
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - aide-check.service
+    - aide-check.timer
+  when:
+    - security_hardening_aide_enabled | default(false)
+    - security_hardening_aide_check_enabled | default(true)
+  tags: [security, aide]
+
+- name: Security Hardening | AIDE | Enable and start the check timer
+  ansible.builtin.systemd:
+    name: aide-check.timer
+    enabled: true
+    state: started
+    daemon_reload: true
+  when:
+    - security_hardening_aide_enabled | default(false)
+    - security_hardening_aide_check_enabled | default(true)
+  tags: [security, aide]
+
+# Runs LAST (after the check tooling is on disk) so the refreshed baseline
+# blesses the final state, including /usr/local/bin/aide-check.sh and the unit
+# files. Guarded behind a flag: pass -e security_hardening_aide_reinit=true ONCE
+# to re-baseline after legitimate changes; normal converges skip it (idempotent).
+- name: Security Hardening | AIDE | Re-initialize baseline on demand
+  ansible.builtin.shell: |
+    set -o pipefail
+    /usr/bin/aide --config=/etc/aide/aide.conf --init
+    mv -f /var/lib/aide/aide.db.new /var/lib/aide/aide.db
+  args:
+    executable: /bin/bash
+  changed_when: true
+  when:
+    - security_hardening_aide_enabled | default(false)
+    - security_hardening_aide_reinit | default(false)
+  tags: [security, aide]

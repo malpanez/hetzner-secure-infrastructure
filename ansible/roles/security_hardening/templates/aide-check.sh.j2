@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+# {{ ansible_managed }}
+# AIDE file-integrity check -> node_exporter textfile metrics.
+#
+# Runs `aide --check` against the baseline, parses the summary and publishes
+# aide_check_* gauges (success, timestamp, duration, added/removed/changed
+# entries, baseline mtime) so Prometheus can alert on integrity changes or a
+# stalled checker. AIDE exits non-zero (1..7, a bitmask of new/removed/changed)
+# when it FINDS differences -- that is NOT a script failure, so we capture the
+# code and always exit 0 (a non-zero exit would trip the SystemdUnitFailed
+# alert). Exit codes >= 14 are real AIDE errors. Metrics are written atomically.
+set -uo pipefail
+
+AIDE_BIN=/usr/bin/aide
+AIDE_CONF=/etc/aide/aide.conf
+AIDE_DB=/var/lib/aide/aide.db
+TEXTFILE_DIR="{{ security_hardening_aide_textfile_dir }}"
+PROM_FILE="${TEXTFILE_DIR}/aide_check.prom"
+LOG_DIR=/var/log/aide
+KEEP_REPORTS=30
+
+mkdir -p "$TEXTFILE_DIR" "$LOG_DIR"
+
+now="$(date +%s)"
+report="${LOG_DIR}/aide-check-$(date -u +%Y%m%dT%H%M%SZ).log"
+success=1
+added=0
+removed=0
+changed=0
+duration=0
+
+if [[ ! -f "$AIDE_DB" ]]; then
+  # No baseline -> cannot check. Report failure so AideCheckFailed fires.
+  success=0
+  echo "AIDE baseline $AIDE_DB is missing -- re-initialise it (security_hardening_aide_reinit=true)." >"$report"
+else
+  start="$(date +%s)"
+  # --check reads the db and reports to stdout; capture output + exit code
+  # without letting a non-zero (= changes found) abort the script.
+  out="$("$AIDE_BIN" --config="$AIDE_CONF" --check 2>&1)" && rc=0 || rc=$?
+  duration=$(( "$(date +%s)" - start ))
+  printf '%s\n' "$out" >"$report"
+
+  if (( rc >= 14 )); then
+    success=0
+  fi
+  added="$(  printf '%s\n' "$out" | sed -n 's/^[[:space:]]*Added entries:[[:space:]]*\([0-9]\{1,\}\).*/\1/p'   | head -1)"
+  removed="$(printf '%s\n' "$out" | sed -n 's/^[[:space:]]*Removed entries:[[:space:]]*\([0-9]\{1,\}\).*/\1/p' | head -1)"
+  changed="$(printf '%s\n' "$out" | sed -n 's/^[[:space:]]*Changed entries:[[:space:]]*\([0-9]\{1,\}\).*/\1/p' | head -1)"
+  added="${added:-0}"
+  removed="${removed:-0}"
+  changed="${changed:-0}"
+fi
+
+db_mtime=0
+[[ -f "$AIDE_DB" ]] && db_mtime="$(stat -c %Y "$AIDE_DB" 2>/dev/null || echo 0)"
+
+# Retain only the newest KEEP_REPORTS reports.
+ls -1t "${LOG_DIR}"/aide-check-*.log 2>/dev/null | tail -n +$(( KEEP_REPORTS + 1 )) | xargs -r rm -f
+
+tmp="$(mktemp "${PROM_FILE}.XXXXXX")"
+{
+  echo "# HELP aide_check_success Whether the last AIDE check ran without an execution error (1) or failed (0)."
+  echo "# TYPE aide_check_success gauge"
+  echo "aide_check_success ${success}"
+  echo "# HELP aide_check_last_run_timestamp_seconds Unix time of the last AIDE check."
+  echo "# TYPE aide_check_last_run_timestamp_seconds gauge"
+  echo "aide_check_last_run_timestamp_seconds ${now}"
+  echo "# HELP aide_check_duration_seconds Wall-clock duration of the last AIDE check."
+  echo "# TYPE aide_check_duration_seconds gauge"
+  echo "aide_check_duration_seconds ${duration}"
+  echo "# HELP aide_check_added_entries Files present now but absent from the baseline."
+  echo "# TYPE aide_check_added_entries gauge"
+  echo "aide_check_added_entries ${added}"
+  echo "# HELP aide_check_removed_entries Files in the baseline but missing now."
+  echo "# TYPE aide_check_removed_entries gauge"
+  echo "aide_check_removed_entries ${removed}"
+  echo "# HELP aide_check_changed_entries Files whose tracked attributes changed vs the baseline."
+  echo "# TYPE aide_check_changed_entries gauge"
+  echo "aide_check_changed_entries ${changed}"
+  echo "# HELP aide_database_mtime_timestamp_seconds Mtime of the AIDE baseline database (its age)."
+  echo "# TYPE aide_database_mtime_timestamp_seconds gauge"
+  echo "aide_database_mtime_timestamp_seconds ${db_mtime}"
+} >"$tmp"
+
+chmod 0644 "$tmp"
+mv "$tmp" "$PROM_FILE"
+
+exit 0

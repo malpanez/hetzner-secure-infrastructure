@@ -1,0 +1,23 @@
+[Unit]
+# {{ ansible_managed }}
+Description=AIDE file-integrity check (node_exporter textfile metrics)
+Documentation=man:aide(1)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/usr/local/bin/aide-check.sh
+# AIDE walks the whole monitored filesystem — yield to the WordPress workload so
+# a daily integrity scan never competes with live requests.
+Nice=15
+IOSchedulingClass=idle
+# Hardening: AIDE only READS the filesystem (read-only is fine) and writes the
+# report and .prom. ProtectHome is deliberately NOT set — the baseline covers
+# /root/.ssh and the admin home, which ProtectHome would hide (false "removed").
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/aide /var/log/aide {{ security_hardening_aide_textfile_dir }}
+PrivateTmp=true
+RestrictSUIDSGID=true

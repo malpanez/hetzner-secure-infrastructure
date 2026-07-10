@@ -1,0 +1,14 @@
+[Unit]
+# {{ ansible_managed }}
+Description=Run the AIDE file-integrity check (OnCalendar {{ security_hardening_aide_check_calendar }})
+
+[Timer]
+# Wall-clock schedule: fires within one interval of the timer being enabled, so
+# no priming run is needed at deploy time. Persistent catches a missed run after
+# downtime. RandomizedDelaySec spreads the I/O so it never lands on a round hour.
+OnCalendar={{ security_hardening_aide_check_calendar }}
+Persistent=true
+RandomizedDelaySec=15m
+
+[Install]
+WantedBy=timers.target
