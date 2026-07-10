@@ -1,5 +1,9 @@
 # Fail2ban configuration
 # Managed by Ansible - DO NOT EDIT MANUALLY
+#
+# Backend note: Debian 13 is journald-based. The sshd jail uses backend=systemd
+# (reads SSH auth events from the journal — no logpath needed); file-based jails
+# (nginx access logs) keep backend=auto + logpath.
 
 [DEFAULT]
 bantime  = {{ fail2ban_bantime }}
@@ -12,7 +16,10 @@ ignoreip = {{ fail2ban_ignoreip | join(' ') }}
 enabled = {{ service.enabled | ternary('true', 'false') }}
 port = {{ service.port }}
 filter = {{ service.filter }}
+backend = {{ service.backend | default('auto') }}
+{% if (service.backend | default('auto')) != 'systemd' %}
 logpath = {{ service.logpath }}
+{% endif %}
 maxretry = {{ service.maxretry }}
 bantime = {{ service.bantime }}
 findtime = {{ service.findtime }}

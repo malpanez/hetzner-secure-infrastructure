@@ -52,7 +52,8 @@ fail2ban_services:
     enabled: "{{ fail2ban_ssh_enabled }}"
     port: "{{ fail2ban_ssh_port }}"
     filter: sshd
-    logpath: /var/log/auth.log
+    backend: systemd  # Debian 13 journald — read SSH events from the journal, not a file
+    logpath: /var/log/auth.log  # unused when backend=systemd; kept for non-journald fallback
     maxretry: "{{ fail2ban_ssh_maxretry }}"
     bantime: "{{ fail2ban_ssh_bantime }}"
     findtime: "{{ fail2ban_findtime }}"
