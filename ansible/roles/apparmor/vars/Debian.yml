@@ -22,3 +22,8 @@ apparmor_parser_command: apparmor_parser
 apparmor_status_command: aa-status
 apparmor_enforce_command: aa-enforce
 apparmor_complain_command: aa-complain
+
+# Per-profile mode -> aa-* command (used by apparmor_confined_services[].mode)
+apparmor_mode_commands:
+  complain: "{{ apparmor_complain_command }}"
+  enforce: "{{ apparmor_enforce_command }}"

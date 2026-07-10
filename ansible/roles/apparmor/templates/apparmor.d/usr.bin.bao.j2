@@ -1,0 +1,89 @@
+# AppArmor profile for OpenBao (bao) — covers BOTH instances (same binary)
+# {{ ansible_managed }}
+# ---------------------------------------------------------------------------
+# OBSERVE-ONLY PROFILE — flags=(complain).
+# LOGS denials but BLOCKS NOTHING. This is the SECRETS VAULT: the profile is a
+# BASELINE for observation only. Harvest 24-72h with `aa-logprof` before any
+# switch to enforce. A surprise enforce that blocks raft I/O or the transit
+# auto-unseal client leaves the vault SEALED (unseal is manual on this host).
+#
+# ONE profile, TWO services, ONE binary (/usr/bin/bao):
+#   * openbao.service         (primary, :8200) -config=/etc/openbao.d/config.hcl
+#                             raft /mnt/openbao-raft, transit-unseal client -> :8201
+#   * openbao-transit.service (:8201) -config=/etc/openbao-transit.d/config.hcl
+#                             raft /var/lib/openbao-transit-raft
+# Both run as user `openbao`. This profile therefore allows the union of both
+# instances' paths (config dirs, TLS dirs, raft dirs).
+# ---------------------------------------------------------------------------
+
+#include <tunables/global>
+
+/usr/bin/bao flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/nameservice>
+  #include <abstractions/ssl_certs>
+
+  # -- Capabilities (unit: Ambient=CAP_IPC_LOCK, Bounding=CAP_SYSLOG CAP_IPC_LOCK)
+  capability ipc_lock,          # mlock secret memory (never swap key material)
+  capability syslog,            # in the bounding set; log delivery
+
+  # -- Network --------------------------------------------------------------
+  network inet stream,          # API :8200/:8201, raft cluster :8202/:8203,
+                                # + primary's transit-unseal client -> 127.0.0.1:8201
+  network inet6 stream,
+  network inet dgram,           # DNS
+  network inet6 dgram,
+  network unix stream,
+  network unix dgram,           # sd_notify (Type=notify)
+  network netlink raw,          # Go net: interface/route enumeration via netlink
+
+  # -- Binary ---------------------------------------------------------------
+  /usr/bin/bao mr,
+
+  # -- Primary instance config + internal-CA TLS (crt/key) ------------------
+  /etc/openbao.d/ r,
+  /etc/openbao.d/** r,
+
+  # -- Transit instance config + internal-CA TLS (crt/key) ------------------
+  /etc/openbao-transit.d/ r,
+  /etc/openbao-transit.d/** r,
+
+  # -- System trust store (verify transit cert against internal CA) ---------
+  /etc/ssl/certs/ca-certificates.crt r,
+  /usr/local/share/ca-certificates/ r,
+  /usr/local/share/ca-certificates/** r,
+
+  # -- Raft storage: primary (BoltDB vault.db uses flock -> needs 'k') ------
+  /mnt/openbao-raft/ rw,
+  /mnt/openbao-raft/** rwk,
+
+  # -- Raft storage: transit ------------------------------------------------
+  /var/lib/openbao-transit-raft/ rw,
+  /var/lib/openbao-transit-raft/** rwk,
+
+  # -- Temp (PrivateTmp=yes; Go/BoltDB snapshot streaming scratch) ----------
+  owner /tmp/ rw,
+  owner /tmp/** rwk,
+
+  # -- systemd notify (Type=notify) -----------------------------------------
+  /run/systemd/notify w,
+
+  # -- Go runtime / process introspection -----------------------------------
+  @{PROC}/sys/kernel/random/boot_id r,
+  @{PROC}/sys/vm/max_map_count r,
+  @{PROC}/sys/vm/overcommit_memory r,
+  owner @{PROC}/@{pid}/maps r,
+  owner @{PROC}/@{pid}/status r,
+  owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/task/ r,
+  owner @{PROC}/@{pid}/fd/ r,
+
+  # -- Deny-list the dangerous ---------------------------------------------
+  deny /etc/shadow r,
+  deny /etc/gshadow r,
+
+  # Local customizations (optional stub; `if exists` avoids a parse failure when
+  # the role has not been told to create /etc/apparmor.d/local/usr.bin.bao)
+  include if exists <local/usr.bin.bao>
+}

@@ -1,0 +1,71 @@
+# AppArmor profile for valkey-server (WordPress object cache, 127.0.0.1:6379)
+# {{ ansible_managed }}
+# ---------------------------------------------------------------------------
+# OBSERVE-ONLY PROFILE — flags=(complain).
+# LOGS denials but BLOCKS NOTHING. Harvest 24-72h with `aa-logprof` before any
+# switch to enforce. A surprise enforce here breaks the WP object cache (site
+# slowdown / cache-miss storms), not an outright outage, but treat it the same.
+#
+# ATTACHMENT NOTE: on this host /usr/bin/valkey-server is a SYMLINK to
+# /usr/bin/valkey-check-rdb (a multi-call binary that dispatches on argv[0]).
+# AppArmor attaches profiles on the RESOLVED executable path, so the attachment
+# below matches BOTH names via brace alternation. If it attaches on only one,
+# `aa-status` will show which — keep both to be safe.
+# ---------------------------------------------------------------------------
+
+#include <tunables/global>
+
+profile valkey-server /usr/bin/valkey-{server,check-rdb} flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/nameservice>
+
+  # No capabilities: the systemd unit ships CapabilityBoundingSet= (empty),
+  # so valkey holds NONE. Intentionally no `capability` rules here.
+
+  # -- Network (unit: RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX) ------
+  network inet stream,          # bind 127.0.0.1:6379
+  network inet6 stream,
+  network unix stream,          # internal socketpairs (IO/bg threads)
+
+  # -- Binary (symlink target is the real inode) ----------------------------
+  /usr/bin/valkey-server mr,
+  /usr/bin/valkey-check-rdb mr,
+
+  # -- Configuration (read-only; CONFIG REWRITE unused with cluster off) ----
+  /etc/valkey/ r,
+  /etc/valkey/valkey.conf r,
+
+  # -- Data dir (dir=/var/lib/valkey; dump.rdb + temp-<pid>.rdb on SAVE) -----
+  /var/lib/valkey/ rw,
+  /var/lib/valkey/** rw,
+
+  # -- Logs (logfile=/var/log/valkey/valkey.log) ----------------------------
+  /var/log/valkey/ rw,
+  /var/log/valkey/** rw,
+
+  # -- Runtime dir (pidfile + optional unixsocket) --------------------------
+  /run/valkey/ rw,
+  /run/valkey/** rw,
+  /var/run/valkey/ rw,
+  /var/run/valkey/** rw,
+
+  # -- systemd notify (Type=notify, supervised systemd) ---------------------
+  /run/systemd/notify w,
+
+  # -- Kernel tunables valkey inspects at startup (emits warnings if denied) -
+  @{PROC}/sys/vm/overcommit_memory r,
+  @{PROC}/sys/net/core/somaxconn r,
+  /sys/kernel/mm/transparent_hugepage/enabled r,
+  /sys/kernel/mm/transparent_hugepage/defrag r,
+  owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/@{pid}/smaps r,
+  owner @{PROC}/@{pid}/oom_score_adj rw,
+
+  # -- Deny-list the dangerous ---------------------------------------------
+  deny /etc/shadow r,
+  deny /etc/gshadow r,
+
+  # Local customizations (optional stub; `if exists` avoids a parse failure when
+  # the role has not been told to create /etc/apparmor.d/local/usr.bin.valkey-server)
+  include if exists <local/usr.bin.valkey-server>
+}

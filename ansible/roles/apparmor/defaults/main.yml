@@ -28,6 +28,15 @@ apparmor_profiles:
   - usr.sbin.sshd
   - usr.bin.fail2ban-server
 
+# Services brought under a custom AppArmor profile (authored in
+# templates/apparmor.d/). Each item: {profile, template, mode}. template: ''
+# means a stock/distro profile already on disk (nothing to render). mode
+# defaults to 'complain' — observe denials first, then switch to 'enforce'
+# per-item once the complain log is clean. Empty by default (generic role);
+# set per-host in inventory. Attaching a loaded profile still needs the service
+# to be restarted (AppArmor binds at exec) — the role does NOT restart services.
+apparmor_confined_services: []
+
 # NOTE: GRUB management removed - AppArmor enabled by default on Debian 10+
 # Source: https://wiki.debian.org/AppArmor/HowToUse
 

@@ -1,0 +1,87 @@
+# AppArmor profile for nginx (TLS reverse proxy + FastCGI to php-fpm)
+# {{ ansible_managed }}
+# ---------------------------------------------------------------------------
+# OBSERVE-ONLY PROFILE — flags=(complain).
+# This profile LOGS denials but BLOCKS NOTHING. It is deliberately loaded in
+# complain mode for a 24-72h harvest window. Do NOT switch to enforce until the
+# audit log has been reviewed with `aa-logprof` / `journalctl -k | grep
+# apparmor=\"DENIED\"` and the residual (non-obvious) paths have been added as
+# explicit rules. A surprise enforce on nginx takes both sites down (502).
+# ---------------------------------------------------------------------------
+
+#include <tunables/global>
+
+/usr/sbin/nginx flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/nameservice>
+  #include <abstractions/openssl>
+
+  # -- Capabilities ---------------------------------------------------------
+  # master runs as root, spawns workers as www-data
+  capability setuid,            # drop to www-data workers
+  capability setgid,
+  capability kill,              # root master signals www-data workers
+  capability dac_override,      # master opens www-data-owned cache/pid/log
+  capability net_bind_service,  # bind :80 / :443
+
+  # -- Network --------------------------------------------------------------
+  network inet stream,          # :80/:443 listen + proxy to 127.0.0.1 & S3
+  network inet6 stream,
+  network inet dgram,           # DNS resolution (proxy_pass hostname)
+  network inet6 dgram,
+  network unix stream,          # FastCGI to php-fpm over unix socket
+
+  # master <-> worker signalling (same profile). Peer left unqualified for the
+  # complain baseline; aa-logprof will suggest scoping peer= to nginx once the
+  # exact signal set is observed.
+  signal (send, receive),
+
+  # -- Binary ---------------------------------------------------------------
+  /usr/sbin/nginx mrix,         # mmap+read; ix allows self re-exec on USR2 upgrade
+
+  # -- Configuration (read-only) -------------------------------------------
+  /etc/nginx/ r,
+  /etc/nginx/** r,
+
+  # -- TLS (Cloudflare origin cert + key) ----------------------------------
+  /etc/ssl/cloudflare/ r,
+  /etc/ssl/cloudflare/origin.pem r,
+  /etc/ssl/cloudflare/origin.key r,
+
+  # -- PHP-FPM upstream sockets (nginx -> php-fpm; glob covers per-site pools) --
+  /run/php/php*-fpm.sock rw,
+
+  # -- Web roots (static assets; nginx never writes here) ------------------
+  /var/www/ r,
+  /var/www/** r,
+
+  # -- FastCGI page cache (use_temp_path=off, written in place) -------------
+  /var/cache/nginx/ r,
+  /var/cache/nginx/** rw,
+
+  # -- Temp spool: client body / fastcgi / proxy / scgi / uwsgi -------------
+  /var/lib/nginx/ r,
+  /var/lib/nginx/** rw,
+
+  # -- Logs (master opens/creates as root, workers inherit fds) -------------
+  /var/log/nginx/ r,
+  /var/log/nginx/** rw,
+
+  # -- PID file -------------------------------------------------------------
+  /run/nginx.pid rw,
+  /var/run/nginx.pid rw,
+
+  # -- System topology (worker_processes/worker_cpu_affinity auto) ----------
+  @{PROC}/cpuinfo r,
+  /sys/devices/system/cpu/ r,
+  /sys/devices/system/cpu/online r,
+  owner @{PROC}/@{pid}/fd/ r,
+
+  # -- Deny-list the dangerous (nginx must NEVER read these) ----------------
+  deny /etc/shadow r,
+  deny /etc/gshadow r,
+
+  # Local customizations (optional stub; `if exists` avoids a parse failure when
+  # the role has not been told to create /etc/apparmor.d/local/usr.sbin.nginx)
+  include if exists <local/usr.sbin.nginx>
+}
