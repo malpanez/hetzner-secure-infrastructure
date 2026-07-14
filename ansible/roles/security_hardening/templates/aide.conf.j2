@@ -144,9 +144,15 @@ DataFiles = p+i+n+u+g+s+b+m+c+sha256+xattrs
 /etc/php                    ConfFiles
 !/etc/php/.*\.dpkg-.*$
 
-# WordPress plugins and themes (monitor for changes)
-{{ wp_root }}/wp-content/plugins     DataFiles
-{{ wp_root }}/wp-content/themes      DataFiles
+# WordPress mu-plugins — the auto-loaded backdoor vector, which must never change
+# unattended, so it stays hashed here.
+#
+# wp-content/{plugins,themes} are deliberately NOT hashed: they auto-update, so a
+# static AIDE baseline goes stale on every update and floods the file-integrity
+# alert with legitimate churn (plugins/themes were the bulk of the monitored WP
+# files). Verify that code with the authoritative `wp core/plugin verify-checksums`
+# instead — it compares against the official WordPress.org checksums and does NOT
+# go stale on updates (run it on a timer and alert on a non-zero exit).
 {{ wp_root }}/wp-content/mu-plugins  DataFiles
 
 # Exclude WordPress cache and uploads (too dynamic)
