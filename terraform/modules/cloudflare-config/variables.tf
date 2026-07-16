@@ -140,6 +140,18 @@ variable "wp_admin_challenge_enabled" {
   default     = false # Disabled by default - security via Nginx rate limiting + WP 2FA
 }
 
+variable "enable_wp_login_rate_limit" {
+  description = "Rate-limit /wp-login.php at the Cloudflare edge to block brute-force floods before they reach the origin (http_ratelimit phase). A block, not a challenge, so no ad-blocker lockout; normal logins never trip it. Free plan allows 1 rate-limit rule — set false if you already use it elsewhere."
+  type        = bool
+  default     = true
+}
+
+variable "wp_login_rate_limit_requests_per_period" {
+  description = "Requests to /wp-login.php per 10s per IP before blocking. Honored on paid plans; the Free plan enforces its own low effective threshold (~5 rapid requests) regardless of this value."
+  type        = number
+  default     = 20
+}
+
 variable "security_level" {
   description = "Cloudflare security level (off, essentially_off, low, medium, high, under_attack)"
   type        = string
