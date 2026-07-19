@@ -144,23 +144,42 @@ DataFiles = p+i+n+u+g+s+b+m+c+sha256+xattrs
 /etc/php                    ConfFiles
 !/etc/php/.*\.dpkg-.*$
 
-# WordPress mu-plugins — the auto-loaded backdoor vector, which must never change
-# unattended, so it stays hashed here.
+# WordPress docroots, from security_hardening_aide_wp_docroots (empty by default,
+# so a host with no WordPress gets no rules here at all).
 #
-# wp-content/{plugins,themes} are deliberately NOT hashed: they auto-update, so a
-# static AIDE baseline goes stale on every update and floods the file-integrity
-# alert with legitimate churn (plugins/themes were the bulk of the monitored WP
-# files). Verify that code with the authoritative `wp core/plugin verify-checksums`
-# instead — it compares against the official WordPress.org checksums and does NOT
-# go stale on updates (run it on a timer and alert on a non-zero exit).
-{{ wp_root }}/wp-content/mu-plugins  DataFiles
+# HASHED — the entry points, wp-config and mu-plugins. These are the classic
+# code-injection targets: mu-plugins auto-loads (so it must never change
+# unattended) and wp-config.php holds the DB credentials and salts. They are a
+# handful of files that only change on a deliberate deploy, so they are high
+# signal with near-zero churn.
+#
+# NOT HASHED, deliberately — anything that updates itself:
+#   * wp-content/{plugins,themes} — plugin auto-updates and theme bumps.
+#   * wp-admin/ and wp-includes/ (core) — minor core auto-updates are the security
+#     patches, so they should stay enabled. Core is thousands of files, so every
+#     patch release rewrites those trees and a static baseline goes stale at once:
+#     one WordPress patch release produced 32 added/removed/changed entries on a
+#     two-site host. That is pure noise, and noise trains you to ignore the alert.
+#
+# Verify those trees with `wp core/plugin/theme verify-checksums` instead: it
+# compares against the official WordPress.org checksums and is version-aware, so
+# unlike a static hash baseline it never goes stale — strictly stronger here. Run
+# it on a timer and alert on a non-zero exit.
+{% for wp_root in security_hardening_aide_wp_docroots | default([]) %}
 
-# Exclude WordPress cache and uploads (too dynamic)
+# --- {{ wp_root }} ---
+{{ wp_root }}/index.php              DataFiles
+{{ wp_root }}/wp-config.php          ConfFiles
+{{ wp_root }}/wp-settings.php        DataFiles
+{{ wp_root }}/.htaccess              ConfFiles
+{{ wp_root }}/wp-content/mu-plugins  DataFiles
+# Too dynamic to hash.
 !{{ wp_root }}/wp-content/cache
 !{{ wp_root }}/wp-content/uploads
 !{{ wp_root }}/wp-content/upgrade
 !{{ wp_root }}/wp-content/backup.*
 !{{ wp_root }}/wp-content/.*\.log$
+{% endfor %}
 
 # Database configuration
 /etc/mysql                  ConfFiles

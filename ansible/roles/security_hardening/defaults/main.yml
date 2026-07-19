@@ -27,6 +27,13 @@ security_hardening_aide_textfile_dir: /var/lib/node_exporter/textfile_collector
 security_hardening_aide_check_calendar: "*-*-* 05:30:00"
 # Set true ONCE (via -e) to force-refresh the baseline after legitimate changes.
 security_hardening_aide_reinit: false
+# WordPress docroots to file-integrity monitor, e.g.
+#   ["/var/www/example.com", "/var/www/blog.example.com"]
+# Empty by default so non-WordPress hosts get no WordPress rules at all. Listing
+# them explicitly is deliberate: a single hardcoded default (/var/www/wordpress)
+# silently matches nothing on a host that does not use that path, which looks
+# like monitoring while monitoring nothing.
+security_hardening_aide_wp_docroots: []
 
 # Auditd Configuration
 # NOTE: Auditd does NOT require kernel parameters on Debian 13
