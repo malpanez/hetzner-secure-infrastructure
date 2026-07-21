@@ -32,7 +32,7 @@ duration=0
 if [[ ! -f "$AIDE_DB" ]]; then
   # No baseline -> cannot check. Report failure so AideCheckFailed fires.
   success=0
-  echo "AIDE baseline $AIDE_DB is missing -- re-initialise it (security_hardening_aide_reinit=true)." >"$report"
+  echo "AIDE baseline $AIDE_DB is missing -- re-initialise it by running this role's aide tag with -e '{\"security_hardening_aide_reinit\": true}' (JSON: a bare =true is a string and ansible-core rejects the conditional)." >"$report"
 else
   start="$(date +%s)"
   # --check reads the db and reports to stdout; capture output + exit code

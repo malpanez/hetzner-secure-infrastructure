@@ -222,8 +222,14 @@
 
 # Runs LAST (after the check tooling is on disk) so the refreshed baseline
 # blesses the final state, including /usr/local/bin/aide-check.sh and the unit
-# files. Guarded behind a flag: pass -e security_hardening_aide_reinit=true ONCE
-# to re-baseline after legitimate changes; normal converges skip it (idempotent).
+# files. Guarded behind a flag: pass -e '{"security_hardening_aide_reinit": true}'
+# ONCE to re-baseline after legitimate changes; normal converges skip it
+# (idempotent). The flag must be JSON — `-e security_hardening_aide_reinit=true`
+# passes the string "true" and ansible-core rejects the resulting conditional
+# ("Conditional result was derived from value of type 'str'").
+# Re-baseline only after confirming the changes are legitimate: match the file
+# ctimes against the package manager log (dpkg.log / unattended-upgrades), then
+# `dpkg -V <pkg>` (empty output = on-disk file matches the official package).
 - name: Security Hardening | AIDE | Re-initialize baseline on demand
   ansible.builtin.shell: |
     set -o pipefail
