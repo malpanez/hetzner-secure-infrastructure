@@ -7,6 +7,10 @@
     # Disable transit for molecule tests (don't need auto-unseal in CI)
     openbao_transit_instance_enabled: false
     openbao_transit_enabled: false
+    # Disable the primary transit-wait ExecStartPre gate: the throwaway container
+    # runs bao sealed and never unseals the transit, so the gate would hang the
+    # start until TimeoutStartSec.
+    openbao_primary_transit_gate: false
 
   pre_tasks:
     - name: Update apt cache

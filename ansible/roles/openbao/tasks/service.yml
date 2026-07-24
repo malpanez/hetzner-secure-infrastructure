@@ -27,6 +27,7 @@
     owner: root
     group: root
     mode: "0755"
+  when: openbao_primary_transit_gate | default(true) | bool
   tags: [openbao, systemd]
 
 - name: OpenBao | Service | Ensure primary drop-in dir exists
@@ -36,18 +37,23 @@
     owner: root
     group: root
     mode: "0755"
+  when: openbao_primary_transit_gate | default(true) | bool
   tags: [openbao, systemd]
 
 - name: OpenBao | Service | Deploy transit-wait ExecStartPre drop-in
   # Gates the primary on the transit being UNSEALED so a boot with a still-sealed
   # transit waits in start-pre instead of burning the bounded start-limit in
   # 99-selfheal.conf -> no manual `reset-failed && start` after a reboot.
+  # Disabled (openbao_primary_transit_gate=false) in molecule: the throwaway
+  # container runs bao sealed and never unseals the transit, so the gate would
+  # hang the start until TimeoutStartSec.
   ansible.builtin.copy:
     src: openbao-50-wait-transit.conf
     dest: /etc/systemd/system/openbao.service.d/50-wait-transit.conf
     owner: root
     group: root
     mode: "0644"
+  when: openbao_primary_transit_gate | default(true) | bool
   notify: reload systemd
   tags: [openbao, systemd]
 

@@ -75,6 +75,12 @@ openbao_systemd_restart_sec: 5
 openbao_systemd_limit_nofile: 65536
 openbao_systemd_limit_memlock: infinity
 
+# ExecStartPre gate that makes the primary wait (in start-pre) for the transit
+# to be UNSEALED before starting, so a boot with a still-sealed transit does not
+# crash-loop into the bounded 99-selfheal start-limit (no manual reset-failed +
+# start after a reboot). Set false where the transit is never unsealed (molecule).
+openbao_primary_transit_gate: true
+
 # ========================================
 # Initialization (Post-installation)
 # ========================================
