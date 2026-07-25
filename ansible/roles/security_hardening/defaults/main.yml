@@ -27,6 +27,10 @@ security_hardening_aide_textfile_dir: /var/lib/node_exporter/textfile_collector
 security_hardening_aide_check_calendar: "*-*-* 05:30:00"
 # Set true ONCE (via -e) to force-refresh the baseline after legitimate changes.
 security_hardening_aide_reinit: false
+# How far back the classifier correlates a changed file with an apt/dpkg upgrade.
+# Longer than the gap between the change landing and the next daily check, but
+# short enough that an old upgrade cannot excuse a fresh change.
+security_hardening_aide_classify_window_days: 7
 # WordPress docroots to file-integrity monitor, e.g.
 #   ["/var/www/example.com", "/var/www/blog.example.com"]
 # Empty by default so non-WordPress hosts get no WordPress rules at all. Listing

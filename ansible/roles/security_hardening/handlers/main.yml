@@ -20,3 +20,17 @@
 # ansible.posix.mount con state=mounted realiza el mount inmediatamente,
 # haciendo innecesarios los handlers de remount.
 # Además, evitamos ignore_errors que ocultaba fallos silenciosamente.
+
+# This role writes the AIDE tooling itself into /usr/local/bin, which AIDE
+# watches. Without this, deploying the checker makes the checker report itself
+# as an unexplained addition the next morning. Runs after the templates so the
+# refreshed baseline blesses the final state. No-op if AIDE is not installed.
+- name: rebaseline aide
+  ansible.builtin.shell: |
+    set -o pipefail
+    [ -x /usr/local/bin/aide-rebaseline.sh ] || exit 0
+    /usr/local/bin/aide-rebaseline.sh
+  args:
+    executable: /bin/bash
+  changed_when: true
+  tags: [security, aide]
