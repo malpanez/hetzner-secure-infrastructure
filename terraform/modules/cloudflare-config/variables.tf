@@ -130,6 +130,12 @@ variable "csp_frame_src_public_extra" {
   default     = []
 }
 
+variable "csp_script_src_public_extra" {
+  description = "Additional script-src origins for the public site, e.g. a payment gateway SDK loaded via <script> (Stripe: https://js.stripe.com). Listing it in connect-src/frame-src alone is NOT enough. The admin variant already allows a blanket https:."
+  type        = list(string)
+  default     = []
+}
+
 # ========================================
 # Security Settings
 # ========================================
