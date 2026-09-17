@@ -90,8 +90,56 @@ variable "enable_custom_error_pages" {
   default     = false
 }
 
-variable "enable_cloudflare_access" {
-  description = "Enable Cloudflare Access for wp-admin (requires paid plan)"
+variable "hotlink_protection" {
+  description = "Cloudflare hotlink protection. Turn OFF on sites whose og:image is shared on social networks: it answers 403 when the Referer is another site, so link previews render with no image."
+  type        = string
+  default     = "on"
+
+  validation {
+    condition     = contains(["on", "off"], var.hotlink_protection)
+    error_message = "hotlink_protection must be \"on\" or \"off\"."
+  }
+}
+
+# ========================================
+# Zero Trust Access for /wp-admin
+# ========================================
+# Replaces the old enable_cloudflare_access bool, which created an application
+# with NO policy attached. An Access application without policies denies
+# everyone, so flipping that flag locked the operators out of their own admin.
+
+variable "wp_admin_access_emails" {
+  description = "Emails allowed through Cloudflare Access to /wp-admin/. Empty disables the gate entirely (no application is created)."
+  type        = list(string)
+  default     = []
+}
+
+variable "wp_admin_access_hosts" {
+  description = "Hosts whose /wp-admin/ is gated. Empty means [domain_name]. List every WordPress host, subdomains included: an Access app matches one host."
+  type        = list(string)
+  default     = []
+}
+
+variable "wp_admin_access_login_hosts" {
+  description = "Hosts where /wp-login.php is ALSO gated. Leave a host out when its users receive password-reset links (/wp-login.php?action=rp&key=...): Access matches by PATH and cannot exempt a query string, so gating it breaks every reset."
+  type        = list(string)
+  default     = []
+}
+
+variable "wp_admin_access_session_duration" {
+  description = "How long an Access session lasts before the identity prompt returns. Long on purpose: the people behind it are instructors, not operators."
+  type        = string
+  default     = "168h"
+}
+
+variable "wp_admin_access_break_glass_ips" {
+  description = "CIDRs that reach /wp-admin/ without the identity prompt. Intended as a way back in when the identity provider is unreachable."
+  type        = list(string)
+  default     = []
+}
+
+variable "monitoring_access_include_alertmanager" {
+  description = "Also gate alertmanager.<domain>. Alertmanager has no authentication and its API can SILENCE alerts, so never publish it without this."
   type        = bool
   default     = false
 }
@@ -130,6 +178,12 @@ variable "csp_frame_src_public_extra" {
   default     = []
 }
 
+variable "csp_script_src_public_extra" {
+  description = "Additional script-src origins for the public site, e.g. a payment gateway SDK loaded via <script> (Stripe: https://js.stripe.com). Listing it in connect-src/frame-src alone is NOT enough. The admin variant already allows a blanket https:."
+  type        = list(string)
+  default     = []
+}
+
 # ========================================
 # Security Settings
 # ========================================
@@ -138,6 +192,18 @@ variable "wp_admin_challenge_enabled" {
   description = "Enable Cloudflare challenge for wp-admin/wp-login (set false if using Pi-hole or ad blockers that block challenges.cloudflare.com)"
   type        = bool
   default     = false # Disabled by default - security via Nginx rate limiting + WP 2FA
+}
+
+variable "enable_wp_login_rate_limit" {
+  description = "Rate-limit /wp-login.php at the Cloudflare edge to block brute-force floods before they reach the origin (http_ratelimit phase). A block, not a challenge, so no ad-blocker lockout; normal logins never trip it. Free plan allows 1 rate-limit rule — set false if you already use it elsewhere."
+  type        = bool
+  default     = true
+}
+
+variable "wp_login_rate_limit_requests_per_period" {
+  description = "Requests to /wp-login.php per 10s per IP before blocking. Honored on paid plans; the Free plan enforces its own low effective threshold (~5 rapid requests) regardless of this value."
+  type        = number
+  default     = 20
 }
 
 variable "security_level" {

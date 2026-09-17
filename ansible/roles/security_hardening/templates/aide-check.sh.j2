@@ -14,6 +14,7 @@ set -uo pipefail
 AIDE_BIN=/usr/bin/aide
 AIDE_CONF=/etc/aide/aide.conf
 AIDE_DB=/var/lib/aide/aide.db
+CLASSIFY_BIN=/usr/local/bin/aide-classify.sh
 TEXTFILE_DIR="{{ security_hardening_aide_textfile_dir }}"
 PROM_FILE="${TEXTFILE_DIR}/aide_check.prom"
 LOG_DIR=/var/log/aide
@@ -28,11 +29,15 @@ added=0
 removed=0
 changed=0
 duration=0
+explained=0
+unexplained=0
+sensitive=0
+classified=0
 
 if [[ ! -f "$AIDE_DB" ]]; then
   # No baseline -> cannot check. Report failure so AideCheckFailed fires.
   success=0
-  echo "AIDE baseline $AIDE_DB is missing -- re-initialise it (security_hardening_aide_reinit=true)." >"$report"
+  echo "AIDE baseline $AIDE_DB is missing -- re-initialise it by running the security_hardening role's aide tag with -e '{\"security_hardening_aide_reinit\": true}' (JSON: a bare =true is a string and the conditional is rejected)." >"$report"
 else
   start="$(date +%s)"
   # --check reads the db and reports to stdout; capture output + exit code
@@ -50,13 +55,37 @@ else
   added="${added:-0}"
   removed="${removed:-0}"
   changed="${changed:-0}"
+
+  # Classify the findings so the alert carries evidence instead of a raw count:
+  # package churn verified against dpkg gets separated from everything else.
+  # Only UNEXPLAINED findings are worth waking someone up for.
+  if (( added + removed + changed > 0 )) && [[ -x "$CLASSIFY_BIN" ]]; then
+    class_report="${report%.log}-classification.txt"
+    if class_out="$("$CLASSIFY_BIN" "$report" "$class_report" 2>/dev/null)"; then
+      for kv in $class_out; do
+        case "$kv" in
+          explained=*)   explained="${kv#*=}"   ;;
+          unexplained=*) unexplained="${kv#*=}" ;;
+          sensitive=*)   sensitive="${kv#*=}"   ;;
+        esac
+      done
+      classified=1
+    fi
+  fi
+fi
+
+# Fail safe: if the classifier could not run, treat every finding as unexplained
+# rather than silently reporting zero (a broken classifier must never look calm).
+if (( ! classified )); then
+  unexplained=$(( added + removed + changed ))
 fi
 
 db_mtime=0
 [[ -f "$AIDE_DB" ]] && db_mtime="$(stat -c %Y "$AIDE_DB" 2>/dev/null || echo 0)"
 
-# Retain only the newest KEEP_REPORTS reports.
+# Retain only the newest KEEP_REPORTS reports (and their classification files).
 ls -1t "${LOG_DIR}"/aide-check-*.log 2>/dev/null | tail -n +$(( KEEP_REPORTS + 1 )) | xargs -r rm -f
+ls -1t "${LOG_DIR}"/aide-check-*-classification.txt 2>/dev/null | tail -n +$(( KEEP_REPORTS + 1 )) | xargs -r rm -f
 
 tmp="$(mktemp "${PROM_FILE}.XXXXXX")"
 {
@@ -81,6 +110,15 @@ tmp="$(mktemp "${PROM_FILE}.XXXXXX")"
   echo "# HELP aide_database_mtime_timestamp_seconds Mtime of the AIDE baseline database (its age)."
   echo "# TYPE aide_database_mtime_timestamp_seconds gauge"
   echo "aide_database_mtime_timestamp_seconds ${db_mtime}"
+  echo "# HELP aide_check_explained_entries Findings attributed to a verified package upgrade (packaged + dpkg -V clean + recent apt activity + not a sensitive path)."
+  echo "# TYPE aide_check_explained_entries gauge"
+  echo "aide_check_explained_entries ${explained}"
+  echo "# HELP aide_check_unexplained_entries Findings NOT attributable to a verified package upgrade. This is the actionable number."
+  echo "# TYPE aide_check_unexplained_entries gauge"
+  echo "aide_check_unexplained_entries ${unexplained}"
+  echo "# HELP aide_check_sensitive_entries Unexplained findings sitting on sensitive paths (auth, ssh, audit, cron, systemd, /usr/local)."
+  echo "# TYPE aide_check_sensitive_entries gauge"
+  echo "aide_check_sensitive_entries ${sensitive}"
 } >"$tmp"
 
 chmod 0644 "$tmp"

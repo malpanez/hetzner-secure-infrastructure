@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# {{ ansible_managed }}
+# Refresh the AIDE baseline after a DELIBERATE, config-managed change.
+#
+# WHY THIS EXISTS: when Ansible deploys a file that AIDE watches (a script in
+# /usr/local/bin, a systemd unit...), the next daily check reports it as an
+# unexplained addition and pages someone about a change we made on purpose.
+# That noise is worse than useless: it trains the operator to wave through the
+# exact alert that is supposed to catch an intrusion. So a role that writes a
+# monitored file re-baselines in the SAME run -- the change is verified by
+# definition, because it is whatever config management just rendered from git.
+#
+# Deliberately NOT a general "make the alert go away" button: it refreshes the
+# baseline unconditionally, so only call it from a handler that fired because
+# config management actually changed something.
+set -uo pipefail
+
+AIDE_BIN=/usr/bin/aide
+AIDE_CONF=/etc/aide/aide.conf
+AIDE_DB=/var/lib/aide/aide.db
+LOG_DIR=/var/log/aide
+LOCK=/var/lock/aide-rebaseline.lock
+
+[[ -x "$AIDE_BIN" && -f "$AIDE_CONF" ]] || { echo "AIDE no instalado -- nada que hacer"; exit 0; }
+
+mkdir -p "$LOG_DIR"
+log="${LOG_DIR}/aide-rebaseline-$(date -u +%Y%m%dT%H%M%SZ).log"
+
+# Serialise against the daily aide-check timer: a baseline swapped mid-check
+# would make that check report garbage.
+exec 9>"$LOCK"
+if ! flock -w 1800 9; then
+  echo "no se pudo tomar el lock en 30 min -- abortado" | tee -a "$log"
+  exit 1
+fi
+
+{
+  echo "Re-baseline AIDE -- $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+  echo "Motivo: despliegue de configuración (invocado por Ansible)"
+} >"$log"
+
+# Keep the previous baseline: if this refresh ever blesses something it should
+# not have, the old database is the only way to see what changed.
+if [[ -f "$AIDE_DB" ]]; then
+  cp -a "$AIDE_DB" "${AIDE_DB}.bak-$(date -u +%Y%m%dT%H%M%SZ)" 2>/dev/null || true
+  # Retain the newest 10 rollback copies.
+  ls -1t "${AIDE_DB}".bak-* 2>/dev/null | tail -n +11 | xargs -r rm -f
+fi
+
+if "$AIDE_BIN" --config="$AIDE_CONF" --init >>"$log" 2>&1 \
+  && mv -f /var/lib/aide/aide.db.new "$AIDE_DB"; then
+  echo "OK: baseline actualizado" >>"$log"
+  exit 0
+fi
+
+echo "ERROR: el re-baseline falló -- el baseline anterior sigue vigente" >>"$log"
+exit 1

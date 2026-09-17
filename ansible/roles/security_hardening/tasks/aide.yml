@@ -182,6 +182,38 @@
     - security_hardening_aide_check_enabled | default(true)
   tags: [security, aide]
 
+- name: Security Hardening | AIDE | Deploy the re-baseline helper
+  # Lets any role that deploys an AIDE-monitored file refresh the baseline in
+  # the same run, so a deliberate deploy never pages anyone. Kept as a script
+  # rather than a shared handler because notifying a handler that is not in the
+  # current play is a hard error in ansible-core -- that would break standalone
+  # `--tags` runs.
+  ansible.builtin.template:
+    src: aide-rebaseline.sh.j2
+    dest: /usr/local/bin/aide-rebaseline.sh
+    owner: root
+    group: root
+    mode: "0755"
+  when: security_hardening_aide_enabled | default(false)
+  notify: rebaseline aide
+  tags: [security, aide]
+
+- name: Security Hardening | AIDE | Deploy the finding classifier
+  # Separates verified package churn from everything else, so the alert carries
+  # evidence (which package, which upgrade) instead of a bare count. Sensitive
+  # paths and unpackaged files are never auto-explained.
+  ansible.builtin.template:
+    src: aide-classify.sh.j2
+    dest: /usr/local/bin/aide-classify.sh
+    owner: root
+    group: root
+    mode: "0755"
+  when:
+    - security_hardening_aide_enabled | default(false)
+    - security_hardening_aide_check_enabled | default(true)
+  notify: rebaseline aide
+  tags: [security, aide]
+
 - name: Security Hardening | AIDE | Deploy the check script
   ansible.builtin.template:
     src: aide-check.sh.j2
@@ -192,6 +224,7 @@
   when:
     - security_hardening_aide_enabled | default(false)
     - security_hardening_aide_check_enabled | default(true)
+  notify: rebaseline aide
   tags: [security, aide]
 
 - name: Security Hardening | AIDE | Deploy the check systemd service and timer
@@ -222,8 +255,14 @@
 
 # Runs LAST (after the check tooling is on disk) so the refreshed baseline
 # blesses the final state, including /usr/local/bin/aide-check.sh and the unit
-# files. Guarded behind a flag: pass -e security_hardening_aide_reinit=true ONCE
-# to re-baseline after legitimate changes; normal converges skip it (idempotent).
+# files. Guarded behind a flag: pass -e '{"security_hardening_aide_reinit": true}'
+# ONCE to re-baseline after legitimate changes; normal converges skip it
+# (idempotent). The flag must be JSON — `-e security_hardening_aide_reinit=true`
+# passes the string "true" and ansible-core rejects the resulting conditional
+# ("Conditional result was derived from value of type 'str'").
+# Re-baseline only after confirming the changes are legitimate: match the file
+# ctimes against the package manager log (dpkg.log / unattended-upgrades), then
+# `dpkg -V <pkg>` (empty output = on-disk file matches the official package).
 - name: Security Hardening | AIDE | Re-initialize baseline on demand
   ansible.builtin.shell: |
     set -o pipefail

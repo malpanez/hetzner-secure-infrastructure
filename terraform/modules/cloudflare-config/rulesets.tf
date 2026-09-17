@@ -33,10 +33,26 @@ locals {
     "blob:",
   ]
 
+  # The public script-src is the strict one — the admin variant already allows a
+  # blanket `https:`. A third-party SDK loaded via <script> from its own origin
+  # (a payment gateway, an analytics vendor) needs to be listed HERE: having it
+  # in connect-src/frame-src is not enough, the script tag itself is blocked and
+  # the feature silently never initialises.
+  #
+  # Defaults are byte-identical to the literal this replaced, so an existing
+  # consumer that sets no extras gets exactly the same header as before.
+  csp_script_src_public_base = [
+    "'self'",
+    "'unsafe-inline'",
+    "'unsafe-eval'",
+    "blob:",
+  ]
+
   csp_connect_src_admin  = concat(local.csp_connect_src_admin_base, var.csp_connect_src_admin_extra)
   csp_connect_src_public = concat(local.csp_connect_src_public_base, var.csp_connect_src_public_extra)
   csp_frame_src_admin    = concat(local.csp_frame_src_admin_base, var.csp_frame_src_admin_extra)
   csp_frame_src_public   = concat(local.csp_frame_src_public_base, var.csp_frame_src_public_extra)
+  csp_script_src_public  = concat(local.csp_script_src_public_base, var.csp_script_src_public_extra)
 }
 
 resource "cloudflare_ruleset" "security_headers" {
@@ -106,7 +122,7 @@ resource "cloudflare_ruleset" "security_headers" {
       headers {
         name      = "Content-Security-Policy"
         operation = "set"
-        value     = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline' https: https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src ${join(" ", local.csp_connect_src_public)}; frame-src ${join(" ", local.csp_frame_src_public)}; frame-ancestors 'self'; worker-src 'self' blob:; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"
+        value     = "default-src 'self'; script-src ${join(" ", local.csp_script_src_public)}; style-src 'self' 'unsafe-inline' https: https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src ${join(" ", local.csp_connect_src_public)}; frame-src ${join(" ", local.csp_frame_src_public)}; frame-ancestors 'self'; worker-src 'self' blob:; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"
       }
       headers {
         name      = "Permissions-Policy"

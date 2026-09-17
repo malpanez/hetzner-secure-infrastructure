@@ -1,0 +1,265 @@
+#!/usr/bin/env bash
+# {{ ansible_managed }}
+# AIDE finding classifier -- turns a raw `aide --check` report into an
+# evidence-backed triage so the operator decides in seconds, not in minutes.
+#
+# For every path AIDE flags it answers the same questions we ask by hand:
+#   1. Is the path SENSITIVE (audit/ssh/pam/sudoers/cron/systemd/...)?
+#      -> always human. `/etc/audit/audit.rules` is the case study: it is
+#         rewritten by a system tool and looks exactly like package churn, yet
+#         it is precisely where an anti-forensic change would hide.
+#   2. Does it belong to a dpkg package? Unpackaged files (our own scripts in
+#      /usr/local/bin, or a dropped payload) can never be auto-explained.
+#   3. Does it still match the official package (`dpkg -V`)? A hash mismatch is
+#      a strong signal -- faking a ctime is easy, faking the package hash is not.
+#   4. Was that package touched by apt/unattended-upgrades inside the window?
+#      That is what turns "this file changed" into "this upgrade changed it".
+#
+# ONLY "packaged + verifies clean + recent apt activity + not sensitive" counts
+# as EXPLAINED. Everything else -- including every REMOVED entry -- stays
+# UNEXPLAINED, because a deletion is never routine churn.
+#
+# PERFORMANCE: a kernel bump flags >13k paths, so everything is set-based --
+# one pass to index dpkg's file lists, `dpkg -V` only on the packages actually
+# implicated, and a single awk pass to classify. No per-file subprocesses.
+#
+# stdout: `explained=<n> unexplained=<n> sensitive=<n>` (parsed by aide-check.sh)
+# $2:     human-readable breakdown written here (optional)
+set -uo pipefail
+
+REPORT="${1:?usage: aide-classify.sh <aide-report> [breakdown-out]}"
+OUT="${2:-/dev/null}"
+WINDOW_DAYS="${AIDE_CLASSIFY_WINDOW_DAYS:-{{ security_hardening_aide_classify_window_days | default(7) }}}"
+
+# Never auto-explained: identity, remote access, auth, audit, scheduling, unit
+# files, and anything under /usr/local (unpackaged by definition).
+# Written with [.] instead of \. so it survives being passed into awk as a var.
+SENSITIVE_RE='^/etc/(passwd|shadow|group|gshadow|sudoers)|^/etc/sudoers[.]d/|^/etc/ssh/|^/etc/pam[.]d/|^/etc/security/|^/etc/audit/|^/etc/cron|^/var/spool/cron|^/root/|^/home/[^/]+/[.]ssh/|^/etc/systemd/system/|^/usr/local/'
+
+tmpd="$(mktemp -d)"
+trap 'rm -rf "$tmpd"' EXIT
+
+# --- 1. Flagged paths, from the report's summary sections only ---------------
+# (the "Detailed information" block repeats the same paths in another format)
+awk '
+  /^Added entries:/                      { sec = "added";   next }
+  /^Removed entries:/                    { sec = "removed"; next }
+  /^Changed entries:/                    { sec = "changed"; next }
+  /^Detailed information about changes:/ { sec = "";        next }
+  /^The attributes of the/               { sec = "";        next }
+  sec != "" && /: \// {
+      t = substr($0, 1, 1)
+      p = $0
+      sub(/^[^:]*: */, "", p)
+      if (p ~ /^\//) { print sec "\t" t "\t" p }
+  }
+' "$REPORT" >"$tmpd/findings"
+
+if [[ ! -s "$tmpd/findings" ]]; then
+  echo "explained=0 unexplained=0 sensitive=0"
+  : >"$OUT"
+  exit 0
+fi
+
+cut -f3 "$tmpd/findings" | sort -u >"$tmpd/paths"
+
+# --- 2. path -> package, straight from dpkg's own file lists ------------------
+# One awk over every .list beats one `dpkg -S` per file by orders of magnitude.
+awk '{ n = FILENAME; sub(/^.*\//, "", n); sub(/\.list$/, "", n); print $0 "\t" n }' \
+  /var/lib/dpkg/info/*.list 2>/dev/null | sort -u -t$'\t' -k1,1 >"$tmpd/pkgindex"
+join -t$'\t' -1 1 -2 1 "$tmpd/paths" "$tmpd/pkgindex" 2>/dev/null >"$tmpd/path_pkg"
+
+# --- 3. Do those files still match their package? ----------------------------
+# Verify ONLY the implicated packages: `dpkg -V` with no args re-hashes the
+# whole system and dominates the runtime.
+cut -f2 "$tmpd/path_pkg" | sort -u >"$tmpd/pkgs"
+: >"$tmpd/verify_fail"
+if [[ -s "$tmpd/pkgs" ]]; then
+  xargs -r -a "$tmpd/pkgs" -n 50 dpkg -V 2>/dev/null | awk '{ print $NF }' | sort -u >"$tmpd/verify_fail"
+fi
+
+# --- 4. Packages apt/unattended-upgrades touched inside the window -----------
+# dpkg.log timestamps are `YYYY-MM-DD HH:MM:SS`, so a string compare is a valid
+# chronological compare and avoids spawning `date` per line.
+cutoff="$(date -d "-${WINDOW_DAYS} days" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || echo '0000-00-00 00:00:00')"
+{
+  [[ -f /var/log/dpkg.log ]] && cat /var/log/dpkg.log
+  [[ -f /var/log/dpkg.log.1 ]] && cat /var/log/dpkg.log.1
+} 2>/dev/null >"$tmpd/dpkglog"
+awk -v c="$cutoff" '
+  ($1 " " $2) >= c && ($3 == "upgrade" || $3 == "install" || $3 == "configure") { print $4 }
+' "$tmpd/dpkglog" | sort -u >"$tmpd/recent_pkgs"
+
+# Packages UNINSTALLED in the window. A removal is not routine churn on its own,
+# but "the old kernel's 6416 files vanished because linux-image-<oldver> was
+# removed" is: those paths carry the package name (…/linux-image-6.12.94…/…),
+# so a name match is real evidence rather than a guess. Anything deleted that
+# does NOT match a removed package still escalates.
+awk -v c="$cutoff" '
+  ($1 " " $2) >= c && ($3 == "remove" || $3 == "purge") { print $4 }
+' "$tmpd/dpkglog" | sed 's/:.*$//' | sort -u >"$tmpd/removed_pkgs"
+
+# An UPGRADE deletes the old SONAME files (libdns-9.20.23-….so vanishes when
+# bind9-libs goes 9.20.23 -> 9.20.26). dpkg.log field 5 is that OLD version, so
+# it is hard evidence for those removals rather than a guess.
+awk -v c="$cutoff" '
+  ($1 " " $2) >= c && $3 == "upgrade" && $5 != "" { v = $5; sub(/^[0-9]+:/, "", v); print v }
+' "$tmpd/dpkglog" | sort -u >"$tmpd/old_versions"
+
+# --- 5. Classify: one awk pass, everything else already in set form ----------
+awk -F'\t' \
+  -v sens_re="$SENSITIVE_RE" \
+  -v window="$WINDOW_DAYS" \
+  -v f_vf="$tmpd/verify_fail" \
+  -v f_pkg="$tmpd/path_pkg" \
+  -v f_rec="$tmpd/recent_pkgs" \
+  -v f_rmpkg="$tmpd/removed_pkgs" \
+  -v f_oldver="$tmpd/old_versions" \
+  -v f_expl="$tmpd/report_expl" \
+  -v f_unexpl="$tmpd/report_unexpl" \
+  -v f_counts="$tmpd/counts" '
+# Version-like tail of a package name: linux-image-6.12.96+deb13-arm64 ->
+# "6.12.96+deb13-arm64". Require >=5 chars so the "6" in libtiff6 can never
+# match half the filesystem.
+function verstok(pkg,   i, c, t) {
+    for (i = 1; i <= length(pkg); i++) {
+        c = substr(pkg, i, 1)
+        if (c >= "0" && c <= "9") { t = substr(pkg, i); break }
+    }
+    return (length(t) >= 5) ? t : ""
+}
+BEGIN {
+    while ((getline line < f_vf)  > 0) { VF[line] = 1 }
+    while ((getline line < f_rec) > 0) { RECENT[line] = 1; sub(/:.*$/, "", line); RECENT[line] = 1 }
+    while ((getline line < f_pkg) > 0) { split(line, a, "\t"); PKG[a[1]] = a[2] }
+    nrm = 0
+    while ((getline line < f_rmpkg) > 0) { if (line != "") { RMPKG[++nrm] = line } }
+
+    ntok = 0
+    for (k in RECENT) { t = verstok(k); if (t != "") { TOK[++ntok] = t; TOKPKG[ntok] = k } }
+    for (i = 1; i <= nrm; i++) { t = verstok(RMPKG[i]); if (t != "") { TOK[++ntok] = t; TOKPKG[ntok] = RMPKG[i] } }
+    while ((getline line < f_oldver) > 0) {
+        if (length(line) >= 5) { TOK[++ntok] = line; TOKPKG[ntok] = "la versión anterior " line }
+    }
+}
+{
+    kind = $1; type = $2; path = $3
+    if (path == "" || seen[path SUBSEP kind]++) { next }
+    n++; K[n] = kind; T[n] = type; P[n] = path
+}
+END {
+    nex = 0
+    # --- Phase 1: everything that is not a directory -------------------------
+    for (i = 1; i <= n; i++) {
+        if (T[i] == "d") { continue }
+        path = P[i]; kind = K[i]; ok = 0
+
+        if (path ~ sens_re) {
+            reason = "ruta sensible -- revisión humana obligatoria"
+            sens++
+        } else if (path in VF) {
+            reason = "NO coincide con el paquete oficial (dpkg -V falla)"
+            if (path in PKG) { reason = reason " [" PKG[path] "]" }
+        } else if (kind == "removed") {
+            reason = "fichero ELIMINADO y ninguna desinstalación reciente lo explica"
+            for (j = 1; j <= nrm; j++) {
+                if (index(path, RMPKG[j]) > 0) {
+                    reason = "desinstalación de " RMPKG[j] " en los últimos " window "d"; ok = 1; break
+                }
+            }
+            if (!ok) {
+                for (j = 1; j <= ntok; j++) {
+                    if (index(path, TOK[j]) > 0) {
+                        reason = "eliminado junto a " TOKPKG[j]; ok = 1; break
+                    }
+                }
+            }
+        } else if (!(path in PKG)) {
+            reason = "no pertenece a ningún paquete"
+            for (j = 1; j <= ntok; j++) {
+                if (index(path, TOK[j]) > 0) {
+                    reason = "generado por " TOKPKG[j] " (no empaquetado, la ruta lleva su versión)"
+                    ok = 1; break
+                }
+            }
+        } else {
+            pk = PKG[path]; base = pk; sub(/:.*$/, "", base)
+            if ((pk in RECENT) || (base in RECENT)) {
+                reason = "upgrade de " pk " en los últimos " window "d + dpkg -V limpio"; ok = 1
+            } else {
+                reason = "pertenece a " pk " pero NO hay upgrade reciente que lo explique"
+            }
+        }
+        RES[i] = ok; WHY[i] = reason
+        if (ok) { EXPL[++nex] = path }
+    }
+
+    # --- Phase 2: directories ------------------------------------------------
+    # A directory only ever shows up because its mtime moved when something
+    # inside it changed. If that something is already explained, so is the
+    # directory. Sensitive directories still escalate.
+    for (i = 1; i <= n; i++) {
+        if (T[i] != "d") { continue }
+        path = P[i]; ok = 0
+        if (path ~ sens_re) {
+            reason = "ruta sensible -- revisión humana obligatoria"; sens++
+        } else {
+            reason = "directorio cuyo mtime cambió sin que nada explicado cuelgue de él"
+            pfx = path "/"
+            for (j = 1; j <= nex; j++) {
+                if (index(EXPL[j], pfx) == 1) {
+                    reason = "mtime del directorio por cambios ya explicados en su interior"
+                    ok = 1; break
+                }
+            }
+        }
+        RES[i] = ok; WHY[i] = reason
+    }
+
+    # --- Tally + reports -----------------------------------------------------
+    for (i = 1; i <= n; i++) {
+        if (RES[i]) {
+            expl++
+            if (expl <= 20) { print "  [" K[i] "] " P[i] "\n      " WHY[i] > f_expl }
+        } else {
+            unexpl++
+            if (unexpl <= 60) { print "  [" K[i] "] " P[i] "\n      " WHY[i] > f_unexpl }
+        }
+    }
+    printf "explained=%d unexplained=%d sensitive=%d\n", expl, unexpl, sens
+    printf "%d %d %d\n", expl, unexpl, sens > f_counts
+}
+' "$tmpd/findings" >"$tmpd/summary"
+
+read -r explained unexplained sensitive <"$tmpd/counts" 2>/dev/null || { explained=0; unexplained=0; sensitive=0; }
+
+# --- 6. Human breakdown ------------------------------------------------------
+{
+  echo "Clasificación AIDE -- $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+  echo "Informe: ${REPORT}"
+  echo "Ventana de correlación con apt: ${WINDOW_DAYS} días"
+  echo
+  echo "SIN EXPLICAR: ${unexplained}  (de ellos, en rutas sensibles: ${sensitive})"
+  if (( unexplained > 0 )); then
+    echo "--------------------------------------------------------------"
+    cat "$tmpd/report_unexpl" 2>/dev/null
+    if (( unexplained > 60 )); then
+      echo "  ... y $(( unexplained - 60 )) más (lista completa en el informe de AIDE)"
+    fi
+    echo "--------------------------------------------------------------"
+    echo "Estos requieren decisión humana. Antes de re-baselinear, contrasta"
+    echo "con /var/log/dpkg.log y /var/log/unattended-upgrades/, y para un"
+    echo "cambio de configuración deliberado compara el hash con el del repo."
+  fi
+  echo
+  echo "EXPLICADOS por upgrade de paquete verificado: ${explained}"
+  if (( explained > 0 )); then
+    cat "$tmpd/report_expl" 2>/dev/null
+    if (( explained > 20 )); then
+      echo "  ... y $(( explained - 20 )) más del mismo tipo"
+    fi
+  fi
+} >"$OUT" 2>/dev/null
+
+cat "$tmpd/summary"
+exit 0

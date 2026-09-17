@@ -28,8 +28,14 @@ Blocks XML-RPC attacks (common WordPress vulnerability)
 
 ### 2. **Login Protection**
 
-- Rate limiting on wp-login.php (5 attempts/minute)
-- CAPTCHA challenges after threshold
+- **Edge rate limiting on `/wp-login.php`** (`waf-ratelimit.tf`, `http_ratelimit` phase):
+  blocks IPs that flood the login endpoint before they reach the origin. A `block` (not a
+  challenge), so no ad-blocker lockout and a normal 2-3-request login never trips it.
+  Enabled by default (`enable_wp_login_rate_limit`); the threshold
+  (`wp_login_rate_limit_requests_per_period`) is honored on paid plans, while the Free plan
+  enforces its own low effective threshold (~5 rapid requests).
+- Optional Cloudflare challenge on wp-login/wp-admin (`wp_admin_challenge_enabled`,
+  disabled by default — ad blockers can break the challenge widget).
 
 ### 3. **Config File Protection**
 
@@ -173,10 +179,15 @@ The module configures these firewall rules:
 | Priority | Rule | Action | Description |
 |----------|------|--------|-------------|
 | 1 | Block XML-RPC | Block | Prevent XML-RPC attacks |
-| 2 | Rate Limit Login | Challenge | CAPTCHA after 5 attempts/min |
+| 2 | Login Challenge (optional) | Challenge | wp-login/wp-admin; **disabled by default** (`wp_admin_challenge_enabled`) |
 | 3 | Block wp-config.php | Block | Prevent config file access |
 | 4 | Block Attack Patterns | Block | Path traversal, XSS, SQLi |
 | 5 | Protect Courses | Challenge | Require login for courses |
+
+In addition, `waf-ratelimit.tf` adds a separate `http_ratelimit`-phase rule that **blocks**
+IPs flooding `/wp-login.php` (enabled by default, `enable_wp_login_rate_limit`). It sits in a
+different phase, so it does not count against the Free plan's 1-ruleset-per-phase limit for
+the firewall rules above.
 
 ## Cache Rules (Rulesets v5)
 
