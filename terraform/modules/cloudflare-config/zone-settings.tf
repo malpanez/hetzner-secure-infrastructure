@@ -19,13 +19,19 @@ resource "cloudflare_zone_settings_override" "security" {
     opportunistic_encryption = "on"     # Enable opportunistic encryption
 
     # Security Settings
-    security_level      = "medium" # Medium security level
-    challenge_ttl       = 1800     # Challenge TTL 30 minutes
-    browser_check       = "on"     # Browser integrity check
-    hotlink_protection  = "on"     # Prevent hotlinking
-    email_obfuscation   = "on"     # Obfuscate email addresses
-    server_side_exclude = "on"     # Server-side excludes
-    privacy_pass        = "on"     # Privacy Pass support
+    security_level = "medium" # Medium security level
+    challenge_ttl  = 1800     # Challenge TTL 30 minutes
+    browser_check  = "on"     # Browser integrity check
+    # Hotlink protection answers 403 to images when the Referer is another
+    # site — including l.instagram.com, google.com and link previews. On a
+    # site whose og:image IS the sales asset that is a cost, not a defence:
+    # every share renders without the image. Measured on a live zone with it
+    # ON: Referer instagram -> 403, Referer google -> 403, own site -> 200.
+    # Default stays "on" so this is not a behaviour change for consumers.
+    hotlink_protection  = var.hotlink_protection
+    email_obfuscation   = "on" # Obfuscate email addresses
+    server_side_exclude = "on" # Server-side excludes
+    privacy_pass        = "on" # Privacy Pass support
 
     # Performance Settings
     brotli        = "on"  # Brotli compression

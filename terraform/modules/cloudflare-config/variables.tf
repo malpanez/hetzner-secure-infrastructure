@@ -90,8 +90,56 @@ variable "enable_custom_error_pages" {
   default     = false
 }
 
-variable "enable_cloudflare_access" {
-  description = "Enable Cloudflare Access for wp-admin (requires paid plan)"
+variable "hotlink_protection" {
+  description = "Cloudflare hotlink protection. Turn OFF on sites whose og:image is shared on social networks: it answers 403 when the Referer is another site, so link previews render with no image."
+  type        = string
+  default     = "on"
+
+  validation {
+    condition     = contains(["on", "off"], var.hotlink_protection)
+    error_message = "hotlink_protection must be \"on\" or \"off\"."
+  }
+}
+
+# ========================================
+# Zero Trust Access for /wp-admin
+# ========================================
+# Replaces the old enable_cloudflare_access bool, which created an application
+# with NO policy attached. An Access application without policies denies
+# everyone, so flipping that flag locked the operators out of their own admin.
+
+variable "wp_admin_access_emails" {
+  description = "Emails allowed through Cloudflare Access to /wp-admin/. Empty disables the gate entirely (no application is created)."
+  type        = list(string)
+  default     = []
+}
+
+variable "wp_admin_access_hosts" {
+  description = "Hosts whose /wp-admin/ is gated. Empty means [domain_name]. List every WordPress host, subdomains included: an Access app matches one host."
+  type        = list(string)
+  default     = []
+}
+
+variable "wp_admin_access_login_hosts" {
+  description = "Hosts where /wp-login.php is ALSO gated. Leave a host out when its users receive password-reset links (/wp-login.php?action=rp&key=...): Access matches by PATH and cannot exempt a query string, so gating it breaks every reset."
+  type        = list(string)
+  default     = []
+}
+
+variable "wp_admin_access_session_duration" {
+  description = "How long an Access session lasts before the identity prompt returns. Long on purpose: the people behind it are instructors, not operators."
+  type        = string
+  default     = "168h"
+}
+
+variable "wp_admin_access_break_glass_ips" {
+  description = "CIDRs that reach /wp-admin/ without the identity prompt. Intended as a way back in when the identity provider is unreachable."
+  type        = list(string)
+  default     = []
+}
+
+variable "monitoring_access_include_alertmanager" {
+  description = "Also gate alertmanager.<domain>. Alertmanager has no authentication and its API can SILENCE alerts, so never publish it without this."
   type        = bool
   default     = false
 }

@@ -3,6 +3,41 @@
 All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/) · Versioning: [SemVer](https://semver.org/).
 
+## [1.0.8] - 2026-09-17
+
+### Changed
+
+- **BREAKING — `enable_cloudflare_access` is gone; use `wp_admin_access_emails`.** The old
+  boolean created a single Access application, on the apex only, with **no policy attached**.
+  An Access application with zero policies denies everyone, so the flag that read like
+  "turn on 2FA for admins" actually locked the operators out of their own `/wp-admin`.
+  Setting emails is now what creates the gate; an empty list creates nothing.
+- **`hotlink_protection` is now a variable (default `"on"`, unchanged behaviour).** Turn it
+  off on any site whose `og:image` is shared on social networks. Measured on a live zone with
+  it on: `Referer: l.instagram.com` -> 403, `Referer: google.com` -> 403, own site -> 200 —
+  every shared link renders its preview without the image.
+
+### Added
+
+- `wp_admin_access_hosts` — one Access application matches ONE host, so a WordPress install
+  on a subdomain needs its own entry.
+- `wp_admin_access_login_hosts` — opt IN per host to also gate `/wp-login.php`. Leave out any
+  host whose users reset passwords: the reset link is `/wp-login.php?action=rp&key=...`,
+  Access matches by **path** and has no query-string condition, so gating that path breaks
+  every password reset.
+- Automatic **Bypass** applications for `admin-ajax.php` and `admin-post.php`. Both live under
+  `/wp-admin/` and are used by logged-OUT visitors (WooCommerce carts; any front-end form
+  posting to `admin-post.php`). Without them the public site answers a login prompt to
+  machines. They are separate applications, not policies, because Cloudflare resolves
+  overlapping paths by taking the more specific application.
+- `wp_admin_access_break_glass_ips` — a way back in when the identity provider is unreachable.
+- `wp_admin_access_session_duration` (default `168h`) — long on purpose: the people behind
+  this gate are instructors, not operators.
+- `monitoring_access_include_alertmanager` (default `false`) — opt-in gate for
+  `alertmanager.<domain>`. Alertmanager has no authentication and, unlike Prometheus, is not
+  read-only: its API **silences alerts**. Publishing it ungated hands an attacker the ability
+  to mute the alerting and then work unobserved. Never create its DNS record first.
+
 ## [1.1.0] - 2026-07-09
 
 ### Added
