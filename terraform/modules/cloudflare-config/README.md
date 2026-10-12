@@ -201,7 +201,42 @@ the firewall rules above.
 | 2 | `/wp-login.php` | Bypass cache |
 | 3 | `/wp-content/` | Cache 30d edge / 7d browser |
 | 4 | `*.css/.js/images/fonts` | Cache 7d edge / 1d browser |
-| 5 | `*.html` and `/` | Cache 1h |
+| 5 | `*.html` and `/`, on every host not listed in `html_cache_excluded_hosts` | Cache 1h, origin `Cache-Control` ignored |
+
+### Session-dependent hosts: set `html_cache_excluded_hosts`
+
+The ruleset is zone-wide, so every rule above applies to **every proxied host of the
+zone**, not only the apex. Rule 5 sets its TTLs with `override_origin`, which discards
+the origin's `Cache-Control`, `no-store, private` included. If any host of the zone
+renders `/` or a `*.html` URL differently per session (membership site, LMS, account
+area), the front page of a logged-in user is stored at the edge and served to the next
+visitor, with or without cookies.
+
+List those hosts and rule 5 stops matching them, for `/` and for `*.html` alike:
+
+```hcl
+module "cloudflare" {
+  source = "../../modules/cloudflare-config"
+
+  domain_name      = "example.com"
+  server_ipv4      = "203.0.113.10"
+  extra_subdomains = ["members", "lms"]
+
+  # Full lowercase hostnames, not labels
+  html_cache_excluded_hosts = ["members.example.com", "lms.example.com"]
+}
+```
+
+- The default is `[]`: nothing is excluded until you set it, and the rule's expression
+  is then exactly what it was before the variable existed.
+- Only rule 5 changes. Rules 3 and 4 and any `extra_cache_path_prefixes` still cache
+  on the excluded hosts, also with `override_origin`: a file that needs a login must
+  not be served from `/wp-content/`, a cached prefix, or a URL ending in one of the
+  rule 4 extensions.
+- After the first apply, purge the edge cache for the excluded hosts so that nothing
+  stored before the change is left behind.
+- Check it from outside: `curl -sI https://members.example.com/ | grep -i cf-cache-status`
+  must not answer `HIT`.
 
 ## Rate Limiting
 
@@ -235,7 +270,8 @@ The module configures:
 
 - `/wp-admin/*` - WordPress admin
 - `/wp-login.php` - Login page
-- Dynamic pages - Automatic based on headers
+- Dynamic pages - Automatic based on headers, **except** `/` and `*.html`: rule 5 caches
+  those for 1 hour whatever the origin sends (see `html_cache_excluded_hosts` above)
 
 ## Security Headers
 
@@ -277,6 +313,7 @@ When `enable_course_protection = true`:
 | `extra_subdomains` | Extra A-record subdomains to origin | `list(string)` | `[]` | No |
 | `media_path_bic_off` | Path prefix with BIC/challenges disabled | `string` | `""` | No |
 | `enable_course_protection` | Protect course content | `bool` | `true` | No |
+| `html_cache_excluded_hosts` | Hosts left out of the 1h HTML cache rule (session-dependent sites) | `list(string)` | `[]` | No |
 | `csp_connect_src_admin_extra` | Extra connect-src (wp-admin/wp-login) | `list(string)` | `[]` | No |
 | `csp_frame_src_admin_extra` | Extra frame-src (wp-admin/wp-login) | `list(string)` | `[]` | No |
 | `csp_connect_src_public_extra` | Extra connect-src (public) | `list(string)` | `[]` | No |

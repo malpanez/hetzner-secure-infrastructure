@@ -295,6 +295,24 @@ variable "cache_bypass_user_agents" {
   default     = []
 }
 
+# The validation is not cosmetic. Each entry is interpolated inside a quoted
+# string literal of the cache rule's expression, so a `"` or a `}` in it would
+# close the literal or the set and rewrite the rule. It also catches the two
+# mistakes that would make the exclusion match nothing while looking applied:
+# a bare label ("members", the convention extra_subdomains uses) and an
+# uppercase or URL-shaped value, neither of which ever equals a request host.
+variable "html_cache_excluded_hosts" {
+  description = "Hosts left OUT of the 1-hour HTML cache rule (rule 5: `/` and `*.html`). The cache ruleset is zone-wide and that rule uses override_origin, so on every proxied host of the zone it ignores the origin's `Cache-Control: no-store, private`. List every host whose pages depend on the session (membership site, LMS, account area): otherwise one logged-in user's front page is stored at the edge and served to the next visitor, cookies or not. Full lowercase hostnames (e.g. [\"members.example.com\"]), not labels. Only rule 5 is affected. Empty list (default) leaves the rule's expression unchanged."
+  type        = list(string)
+  default     = []
+  nullable    = false
+
+  validation {
+    condition     = alltrue([for h in var.html_cache_excluded_hosts : can(regex("^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$", h))])
+    error_message = "Each entry must be a full lowercase hostname such as members.example.com: no scheme, port, path, wildcard, uppercase or empty string."
+  }
+}
+
 # ========================================
 # Tags/Labels
 # ========================================

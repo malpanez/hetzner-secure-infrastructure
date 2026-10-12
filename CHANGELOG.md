@@ -3,6 +3,32 @@
 All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/) · Versioning: [SemVer](https://semver.org/).
 
+## [1.0.9] - 2026-10-12
+
+### Security
+
+- **`cloudflare-config`: the 1-hour HTML cache rule can serve one user's page to another.
+  Exclude session-dependent hosts with the new `html_cache_excluded_hosts`.** The cache
+  ruleset is zone-wide, so rule 5 (`/` and `*.html`) matches on every proxied host of the
+  zone, and its `override_origin` TTL discards the origin's `Cache-Control: no-store, private`.
+  Measured on a live zone that also serves a login-walled site on a subdomain: an anonymous
+  request for `/` got `200` with `cf-cache-status: HIT` and another session's personalised
+  front page, while the origin answers that same request with a `302` to the login page.
+  **You are affected, on every release up to 1.0.8, if any host of your zone renders `/` or a
+  `*.html` URL differently per session** (membership site, LMS, account area). Upgrade, list
+  those hosts, apply, then purge the edge cache for them. The default is unchanged: nothing
+  is excluded until you set the variable.
+
+### Added
+
+- `html_cache_excluded_hosts` (default `[]`) — full lowercase hostnames left out of rule 5,
+  e.g. `["members.example.com", "lms.example.com"]`. With the default the rule's expression
+  is byte-identical to 1.0.8, so existing consumers see no diff in their plan. Entries are
+  validated as plain hostnames (no scheme, port, path, wildcard or uppercase) because they are
+  interpolated into the rule expression. Only rule 5 changes: the `/wp-content/`,
+  static-extension and `extra_cache_path_prefixes` rules still cache on every host, so a file
+  that needs a login must not be served from those paths.
+
 ## [1.0.8] - 2026-09-17
 
 ### Changed

@@ -163,6 +163,29 @@ resource "cloudflare_ruleset" "security_headers" {
 # --------------------------------------------------------
 # Cache Rules - Consolidated (FREE PLAN: 1 ruleset per phase)
 # --------------------------------------------------------
+# The ruleset is zone-wide: every rule below is evaluated for EVERY proxied host
+# of the zone, not only the apex. The HTML rule (rule 5) matches "/" and sets
+# its TTLs with override_origin, which discards the origin's Cache-Control,
+# `no-store, private` included. On a host whose pages depend on the session
+# (membership site, LMS, account area) that stores one logged-in user's front
+# page at the edge and serves it to the next visitor, cookies or not.
+# html_cache_excluded_hosts takes such hosts out of rule 5, and only rule 5.
+#
+# With the default (empty list) the expression is byte-identical to the literal
+# this replaced, so an existing consumer sees no diff in its plan.
+#
+# Why lower(): string comparison in the Rules language is case-sensitive,
+# http.host is documented as the Host header of the client request, and nothing
+# in the docs says it is normalised to lowercase. Lowercasing it makes the
+# exclusion hold either way instead of depending on that. Elements of an inline
+# set are separated by spaces, not commas. The hosts land inside quoted
+# literals: the variable's validation is what keeps a `"` or a `}` out of here.
+locals {
+  html_cache_paths_expression   = "(ends_with(http.request.uri.path, \".html\") or http.request.uri.path eq \"/\")"
+  html_cache_excluded_hosts_set = join(" ", formatlist("\"%s\"", var.html_cache_excluded_hosts))
+  html_cache_expression         = length(var.html_cache_excluded_hosts) == 0 ? local.html_cache_paths_expression : "(${local.html_cache_paths_expression} and not (lower(http.host) in {${local.html_cache_excluded_hosts_set}}))"
+}
+
 resource "cloudflare_ruleset" "cache_rules" {
   zone_id     = data.cloudflare_zone.main.id
   name        = "wordpress-cache-rules"
@@ -242,10 +265,11 @@ resource "cloudflare_ruleset" "cache_rules" {
     }
   }
 
-  # Rule 5: Default HTML caching (short)
+  # Rule 5: Default HTML caching (short). Hosts in html_cache_excluded_hosts
+  # are left out of it; see local.html_cache_expression above for why.
   rules {
     description = "Cache HTML pages for 1 hour"
-    expression  = "(ends_with(http.request.uri.path, \".html\") or http.request.uri.path eq \"/\")"
+    expression  = local.html_cache_expression
     action      = "set_cache_settings"
     enabled     = true
     action_parameters {
