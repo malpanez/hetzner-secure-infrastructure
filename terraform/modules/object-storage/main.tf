@@ -30,7 +30,6 @@ resource "aws_s3_bucket_acl" "backups" {
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "backups" {
-  #checkov:skip=CKV_AWS_300:abort-incomplete-MPU not added — this lifecycle is deliberately minimal and alphabetically ordered for Ceph phantom-diff avoidance; an untested attribute risks a phantom diff on the production backups module
   bucket = aws_s3_bucket.backups.id
 
   # S3-compatible endpoints (Hetzner Object Storage) never echo this
@@ -44,6 +43,22 @@ resource "aws_s3_bucket_lifecycle_configuration" "backups" {
   # Rules are declared in alphabetical id order on purpose: Ceph-based
   # endpoints return lifecycle rules sorted by id, and the provider diffs
   # `rule` as an ordered list — any other order is a permanent phantom diff.
+  #
+  # abort-multipart is bucket-wide via `prefix = ""`, not `filter {}`: Ceph
+  # stores an empty filter in the legacy form (<Prefix></Prefix>, no <Filter>)
+  # and returns it that way, so `filter {}` is a permanent phantom diff. The
+  # provider's deprecation warning on `prefix` is the price.
+  rule {
+    id     = "abort-multipart"
+    status = "Enabled"
+
+    prefix = ""
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = var.abort_incomplete_multipart_upload_days
+    }
+  }
+
   rule {
     id     = "expire-daily"
     status = "Enabled"

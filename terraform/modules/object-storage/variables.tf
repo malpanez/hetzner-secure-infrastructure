@@ -20,3 +20,14 @@ variable "region" {
   type        = string
   default     = "nbg1"
 }
+
+variable "abort_incomplete_multipart_upload_days" {
+  description = "Days after initiation before an incomplete multipart upload is aborted and its parts deleted (bucket-wide)"
+  type        = number
+  default     = 7
+
+  validation {
+    condition     = var.abort_incomplete_multipart_upload_days >= 1 && floor(var.abort_incomplete_multipart_upload_days) == var.abort_incomplete_multipart_upload_days
+    error_message = "abort_incomplete_multipart_upload_days must be a whole number of days, at least 1."
+  }
+}
