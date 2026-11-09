@@ -3,6 +3,24 @@
 All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/) · Versioning: [SemVer](https://semver.org/).
 
+## [1.0.10] - 2026-11-09
+
+### Added
+
+- **`object-storage`: abort incomplete multipart uploads on the backups bucket.** A new
+  bucket-wide rule, `abort-multipart`, aborts an unfinished multipart upload and deletes its
+  parts after `abort_incomplete_multipart_upload_days` (default `7`, whole days, at least 1).
+  Before, an upload cut off mid-way left its parts in the bucket, billed and never expired,
+  because no `expire-*` rule matches them. The `CKV_AWS_300` waiver is gone.
+  **Your next plan shows one in-place update** of `aws_s3_bucket_lifecycle_configuration.backups`
+  (a fourth rule, first in the list); the three retention rules do not change. Expect the
+  provider's consistency-wait timeout on that apply even when the PUT lands: check
+  `get-bucket-lifecycle-configuration` before re-applying. The rule is declared with
+  `prefix = ""`, not `filter {}`, and its id sorts first, so Ceph-based endpoints read it back
+  without a phantom diff; the provider prints a deprecation warning for `prefix`.
+- `object-storage`: `tofu test` suite (`tests/lifecycle.tftest.hcl`, mocked provider) for the
+  rule order, the abort rule and the unchanged retention.
+
 ## [1.0.9] - 2026-10-12
 
 ### Security
